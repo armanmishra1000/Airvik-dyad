@@ -23,6 +23,7 @@ import {
 import { mockGuests, mockRooms, mockRoomTypes, mockRatePlans } from "@/data";
 import type { ReservationWithDetails } from "./columns";
 import { format, differenceInDays } from "date-fns";
+import { AddChargeDialog } from "./add-charge-dialog";
 
 interface ReservationDetailsDrawerProps {
   reservation: ReservationWithDetails | null;
@@ -142,7 +143,14 @@ export function ReservationDetailsDrawer({
 
             {/* Folio */}
             <div>
-              <h3 className="font-semibold mb-4">Folio / Charges</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold">Folio / Charges</h3>
+                <AddChargeDialog reservationId={reservation.id}>
+                  <Button variant="outline" size="sm">
+                    Add Charge
+                  </Button>
+                </AddChargeDialog>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>

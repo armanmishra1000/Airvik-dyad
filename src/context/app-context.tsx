@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { formatISO } from "date-fns";
 import {
   mockReservations,
   mockGuests,
   type Reservation,
   type Guest,
   type ReservationStatus,
+  type FolioItem,
 } from "@/data";
 
 // Define keys for local storage
@@ -22,6 +24,10 @@ interface AppContextType {
     status: ReservationStatus
   ) => void;
   addGuest: (guest: Omit<Guest, "id">) => Guest;
+  addFolioItem: (
+    reservationId: string,
+    item: Omit<FolioItem, "id" | "timestamp">
+  ) => void;
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
@@ -29,14 +35,17 @@ const AppContext = React.createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   // Initialize state with mock data. This will be used for the server render
   // and the initial client render, preventing a mismatch.
-  const [reservations, setReservations] = React.useState<Reservation[]>(mockReservations);
+  const [reservations, setReservations] =
+    React.useState<Reservation[]>(mockReservations);
   const [guests, setGuests] = React.useState<Guest[]>(mockGuests);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
   // After the component mounts on the client, load the data from localStorage.
   React.useEffect(() => {
     try {
-      const storedReservations = window.localStorage.getItem(RESERVATIONS_STORAGE_KEY);
+      const storedReservations = window.localStorage.getItem(
+        RESERVATIONS_STORAGE_KEY
+      );
       if (storedReservations) {
         setReservations(JSON.parse(storedReservations));
       }
@@ -106,12 +115,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const addFolioItem = (
+    reservationId: string,
+    itemData: Omit<FolioItem, "id" | "timestamp">
+  ) => {
+    setReservations((prev) =>
+      prev.map((res) => {
+        if (res.id === reservationId) {
+          const newFolioItem: FolioItem = {
+            ...itemData,
+            id: `f-${Date.now()}`,
+            timestamp: formatISO(new Date()),
+          };
+          return {
+            ...res,
+            folio: [...res.folio, newFolioItem],
+            totalAmount: res.totalAmount + newFolioItem.amount,
+          };
+        }
+        return res;
+      })
+    );
+  };
+
   const value = {
     reservations,
     guests,
     addReservation,
     updateReservationStatus,
     addGuest,
+    addFolioItem,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
