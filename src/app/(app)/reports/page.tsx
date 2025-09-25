@@ -5,6 +5,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { OccupancyReport } from "./components/occupancy-report";
+import { RevenueReport } from "./components/revenue-report";
 
 export default function ReportsPage() {
   return (
@@ -18,8 +19,8 @@ export default function ReportsPage() {
       <Tabs defaultValue="occupancy" className="w-full">
         <TabsList>
           <TabsTrigger value="occupancy">Occupancy Report</TabsTrigger>
-          <TabsTrigger value="revenue" disabled>
-            Revenue (Coming Soon)
+          <TabsTrigger value="revenue">
+            Revenue
           </TabsTrigger>
           <TabsTrigger value="guests" disabled>
             Guests (Coming Soon)
@@ -27,6 +28,9 @@ export default function ReportsPage() {
         </TabsList>
         <TabsContent value="occupancy" className="pt-4">
           <OccupancyReport />
+        </TabsContent>
+        <TabsContent value="revenue" className="pt-4">
+          <RevenueReport />
         </TabsContent>
       </Tabs>
     </div>
