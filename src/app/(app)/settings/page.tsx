@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/form";
 import { useAppContext } from "@/context/app-context";
 import { RolesPermissions } from "./components/roles-permissions";
+import { UsersManagement } from "./components/users-management";
 
 const propertySchema = z.object({
   name: z.string().min(1, "Property name is required."),
@@ -38,7 +39,7 @@ const propertySchema = z.object({
 });
 
 export default function SettingsPage() {
-  const { property, updateProperty } = useAppContext();
+  const { property, updateProperty, hasPermission } = useAppContext();
 
   const form = useForm<z.infer<typeof propertySchema>>({
     resolver: zodResolver(propertySchema),
@@ -72,7 +73,7 @@ export default function SettingsPage() {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="property">Property</TabsTrigger>
           <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="users" disabled={!hasPermission("read:user")}>Users</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
         <TabsContent value="property">
@@ -126,18 +127,7 @@ export default function SettingsPage() {
             <RolesPermissions />
         </TabsContent>
         <TabsContent value="users">
-          <Card>
-            <CardHeader>
-              <CardTitle>Users & Permissions</CardTitle>
-              <CardDescription>
-                Manage who can access your property dashboard.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p>User management is not yet implemented.</p>
-              <Button disabled>Invite User</Button>
-            </CardContent>
-          </Card>
+          <UsersManagement />
         </TabsContent>
         <TabsContent value="billing">
           <Card>
