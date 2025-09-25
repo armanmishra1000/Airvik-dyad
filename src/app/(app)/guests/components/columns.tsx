@@ -1,6 +1,6 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, RowData } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { Guest } from "@/data"
 import { GuestFormDialog } from "./guest-form-dialog"
+
+declare module '@tanstack/react-table' {
+    interface TableMeta<TData extends RowData> {
+      openDeleteDialog: (guest: TData) => void
+    }
+}
 
 export const columns: ColumnDef<Guest>[] = [
   {
@@ -33,7 +39,7 @@ export const columns: ColumnDef<Guest>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const guest = row.original
  
       return (
@@ -51,7 +57,12 @@ export const columns: ColumnDef<Guest>[] = [
                     Edit
                 </DropdownMenuItem>
             </GuestFormDialog>
-            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+            <DropdownMenuItem 
+                className="text-destructive"
+                onSelect={() => table.options.meta?.openDeleteDialog(guest)}
+            >
+                Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
