@@ -1,9 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { cn } from "@/lib/utils";
+import { useAppContext } from "@/context/app-context";
 
 export default function AppLayout({
   children,
@@ -11,6 +13,20 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
+  const { currentUser } = useAppContext();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    // Redirect to login if no user is authenticated
+    if (!currentUser) {
+      router.push("/login");
+    }
+  }, [currentUser, router]);
+
+  // Render nothing until the user is checked, to avoid flashing the layout
+  if (!currentUser) {
+    return null;
+  }
 
   return (
     <div
