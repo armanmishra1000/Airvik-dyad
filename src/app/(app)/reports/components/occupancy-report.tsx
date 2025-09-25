@@ -16,8 +16,6 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -35,7 +33,7 @@ export function OccupancyReport() {
   const { reservations } = useAppContext();
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
-    to: new new Date(),
+    to: new Date(),
   });
 
   const chartData = React.useMemo(() => {
