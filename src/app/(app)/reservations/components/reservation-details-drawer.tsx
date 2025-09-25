@@ -22,8 +22,10 @@ import {
 } from "@/components/ui/table";
 import { mockGuests, mockRooms, mockRoomTypes, mockRatePlans } from "@/data";
 import type { ReservationWithDetails } from "./columns";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, parseISO } from "date-fns";
 import { AddChargeDialog } from "./add-charge-dialog";
+import { RecordPaymentDialog } from "./record-payment-dialog";
+import { cn } from "@/lib/utils";
 
 interface ReservationDetailsDrawerProps {
   reservation: ReservationWithDetails | null;
@@ -78,6 +80,13 @@ export function ReservationDetailsDrawer({
 
   const canBeCheckedIn = reservation.status === "Confirmed";
   const canBeCheckedOut = reservation.status === "Checked-in";
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
+  };
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -145,15 +154,23 @@ export function ReservationDetailsDrawer({
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold">Folio / Charges</h3>
-                <AddChargeDialog reservationId={reservation.id}>
-                  <Button variant="outline" size="sm">
-                    Add Charge
-                  </Button>
-                </AddChargeDialog>
+                <div className="flex gap-2">
+                  <RecordPaymentDialog reservationId={reservation.id}>
+                    <Button variant="outline" size="sm">
+                      Record Payment
+                    </Button>
+                  </RecordPaymentDialog>
+                  <AddChargeDialog reservationId={reservation.id}>
+                    <Button variant="outline" size="sm">
+                      Add Charge
+                    </Button>
+                  </AddChargeDialog>
+                </div>
               </div>
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[120px]">Date</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
                   </TableRow>
@@ -161,22 +178,26 @@ export function ReservationDetailsDrawer({
                 <TableBody>
                   {reservation.folio.map((item) => (
                     <TableRow key={item.id}>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(parseISO(item.timestamp), "MMM d, yyyy")}
+                      </TableCell>
                       <TableCell>{item.description}</TableCell>
-                      <TableCell className="text-right">
-                        {new Intl.NumberFormat("en-US", {
-                          style: "currency",
-                          currency: "USD",
-                        }).format(item.amount)}
+                      <TableCell
+                        className={cn(
+                          "text-right",
+                          item.amount < 0 && "text-green-600"
+                        )}
+                      >
+                        {item.amount < 0
+                          ? `- ${formatCurrency(Math.abs(item.amount))}`
+                          : formatCurrency(item.amount)}
                       </TableCell>
                     </TableRow>
                   ))}
-                  <TableRow className="font-bold">
-                    <TableCell>Total</TableCell>
+                  <TableRow className="font-bold bg-muted/50">
+                    <TableCell colSpan={2}>Balance Due</TableCell>
                     <TableCell className="text-right">
-                      {new Intl.NumberFormat("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      }).format(reservation.totalAmount)}
+                      {formatCurrency(reservation.totalAmount)}
                     </TableCell>
                   </TableRow>
                 </TableBody>
