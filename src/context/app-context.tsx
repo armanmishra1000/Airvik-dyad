@@ -62,10 +62,13 @@ interface AppContextType {
   ) => void;
   addRoom: (room: Omit<Room, "id">) => void;
   updateRoom: (roomId: string, updatedData: Partial<Omit<Room, "id">>) => void;
+  deleteRoom: (roomId: string) => void;
   addRoomType: (roomType: Omit<RoomType, "id" | "photos">) => void;
   updateRoomType: (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id" | "photos">>) => void;
+  deleteRoomType: (roomTypeId: string) => void;
   addRatePlan: (ratePlan: Omit<RatePlan, "id">) => void;
   updateRatePlan: (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => void;
+  deleteRatePlan: (ratePlanId: string) => void;
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
@@ -183,7 +186,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const deleteGuest = (guestId: string) => {
     setGuests(prev => prev.filter(g => g.id !== guestId));
-    // Optional: Also cancel or re-assign reservations associated with this guest
   };
 
   const addReservation = (reservationData: Omit<Reservation, "id">) => {
@@ -280,17 +282,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setRooms(prev => prev.map(r => r.id === roomId ? { ...r, ...updatedData } : r));
   };
 
+  const deleteRoom = (roomId: string) => {
+    setRooms(prev => prev.filter(r => r.id !== roomId));
+  };
+
   const addRoomType = (roomTypeData: Omit<RoomType, "id" | "photos">) => {
     const newRoomType: RoomType = {
       ...roomTypeData,
       id: `rt-${Date.now()}`,
-      photos: [], // Placeholder for photo uploads
+      photos: [],
     };
     setRoomTypes((prev) => [...prev, newRoomType]);
   };
 
   const updateRoomType = (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id" | "photos">>) => {
     setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? { ...rt, ...updatedData } : rt));
+  };
+
+  const deleteRoomType = (roomTypeId: string) => {
+    setRoomTypes(prev => prev.filter(rt => rt.id !== roomTypeId));
   };
 
   const addRatePlan = (ratePlanData: Omit<RatePlan, "id">) => {
@@ -303,6 +313,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateRatePlan = (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => {
     setRatePlans(prev => prev.map(rp => rp.id === ratePlanId ? { ...rp, ...updatedData } : rp));
+  };
+
+  const deleteRatePlan = (ratePlanId: string) => {
+    setRatePlans(prev => prev.filter(rp => rp.id !== ratePlanId));
   };
 
   const value = {
@@ -324,10 +338,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateAssignmentStatus,
     addRoom,
     updateRoom,
+    deleteRoom,
     addRoomType,
     updateRoomType,
+    deleteRoomType,
     addRatePlan,
     updateRatePlan,
+    deleteRatePlan,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

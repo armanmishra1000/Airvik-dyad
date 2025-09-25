@@ -1,6 +1,6 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, RowData } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -9,12 +9,17 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import type { RoomType } from "@/data"
 import { RoomTypeFormDialog } from "./room-type-form-dialog"
+
+declare module '@tanstack/react-table' {
+    interface TableMeta<TData extends RowData> {
+      openDeleteDialog: (item: TData) => void
+    }
+}
 
 export const columns: ColumnDef<RoomType>[] = [
   {
@@ -42,9 +47,9 @@ export const columns: ColumnDef<RoomType>[] = [
             return <span className="text-muted-foreground">N/A</span>
         }
         return (
-            <div className="flex flex-wrap">
+            <div className="flex flex-wrap gap-1">
                 {amenities.map(amenity => (
-                    <Badge key={amenity} variant="secondary" className="mr-1 mb-1">{amenity}</Badge>
+                    <Badge key={amenity} variant="secondary">{amenity}</Badge>
                 ))}
             </div>
         )
@@ -52,7 +57,7 @@ export const columns: ColumnDef<RoomType>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const roomType = row.original
  
       return (
@@ -70,7 +75,12 @@ export const columns: ColumnDef<RoomType>[] = [
                     Edit
                 </DropdownMenuItem>
             </RoomTypeFormDialog>
-            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+            <DropdownMenuItem 
+                className="text-destructive"
+                onSelect={() => table.options.meta?.openDeleteDialog(roomType)}
+            >
+                Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
