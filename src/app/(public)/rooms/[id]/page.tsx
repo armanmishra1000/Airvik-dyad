@@ -13,6 +13,7 @@ import {
   formatISO,
   areIntervalsOverlapping,
   parseISO,
+  eachDayOfInterval,
 } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -80,6 +81,48 @@ export default function RoomDetailsPage() {
       : 0;
   const totalCost = nights * standardRatePlan.price;
 
+  const disabledDates = React.useMemo(() => {
+    if (!roomType) return [];
+
+    const roomsOfType = mockRooms.filter((r) => r.roomTypeId === roomType.id);
+    const numberOfRooms = roomsOfType.length;
+    if (numberOfRooms === 0) return [];
+
+    const bookingsCountByDate: { [key: string]: number } = {};
+
+    const relevantReservations = reservations.filter(
+      (res) =>
+        roomsOfType.some((r) => r.id === res.roomId) &&
+        res.status !== "Cancelled"
+    );
+
+    relevantReservations.forEach((res) => {
+      const interval = {
+        start: parseISO(res.checkInDate),
+        end: parseISO(res.checkOutDate),
+      };
+      const bookingDays = eachDayOfInterval(interval);
+      if (bookingDays.length > 0) {
+        bookingDays.pop(); // Don't count checkout day as booked
+      }
+
+      bookingDays.forEach((day) => {
+        const dayString = formatISO(day, { representation: "date" });
+        bookingsCountByDate[dayString] =
+          (bookingsCountByDate[dayString] || 0) + 1;
+      });
+    });
+
+    const fullyBookedDates: Date[] = [];
+    for (const dateString in bookingsCountByDate) {
+      if (bookingsCountByDate[dateString] >= numberOfRooms) {
+        fullyBookedDates.push(parseISO(dateString));
+      }
+    }
+
+    return fullyBookedDates;
+  }, [roomType, reservations]);
+
   if (!roomType) {
     notFound();
   }
@@ -94,7 +137,10 @@ export default function RoomDetailsPage() {
           res.status !== "Cancelled" &&
           areIntervalsOverlapping(
             { start: values.dateRange.from, end: values.dateRange.to },
-            { start: parseISO(res.checkInDate), end: parseISO(res.checkOutDate) }
+            {
+              start: parseISO(res.checkInDate),
+              end: parseISO(res.checkOutDate),
+            }
           )
       );
       return !isBooked;
@@ -270,7 +316,10 @@ export default function RoomDetailsPage() {
                               }}
                               onSelect={field.onChange}
                               numberOfMonths={1}
-                              disabled={{ before: new Date() }}
+                              disabled={[
+                                ...disabledDates,
+                                { before: new Date() },
+                              ]}
                             />
                           </PopoverContent>
                         </Popover>
