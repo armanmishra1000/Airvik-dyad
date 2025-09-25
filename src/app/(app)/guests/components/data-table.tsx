@@ -36,7 +36,8 @@ export function GuestsDataTable<TData extends Guest, TValue>({
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [guestToDelete, setGuestToDelete] = React.useState<TData | null>(null)
-  const { deleteGuest } = useAppContext()
+  const { deleteGuest, currentUser } = useAppContext()
+  const isManager = currentUser?.role === 'manager';
 
   const handleDeleteConfirm = () => {
     if (guestToDelete) {
@@ -73,9 +74,11 @@ export function GuestsDataTable<TData extends Guest, TValue>({
     <>
       <div className="space-y-4">
           <div className="flex items-center justify-end">
-              <GuestFormDialog>
-                  <Button>Add Guest</Button>
-              </GuestFormDialog>
+              {isManager && (
+                <GuestFormDialog>
+                    <Button>Add Guest</Button>
+                </GuestFormDialog>
+              )}
           </div>
         <div className="rounded-md border">
           <Table>

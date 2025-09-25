@@ -10,6 +10,7 @@ import {
   mockRoomTypes,
   mockRatePlans,
   mockProperty,
+  mockUsers,
   type Reservation,
   type Guest,
   type ReservationStatus,
@@ -20,6 +21,7 @@ import {
   type RoomType,
   type RatePlan,
   type Property,
+  type User,
 } from "@/data";
 
 // Define keys for local storage
@@ -30,6 +32,7 @@ const ROOMS_STORAGE_KEY = "hotel-pms-rooms";
 const ROOM_TYPES_STORAGE_KEY = "hotel-pms-room-types";
 const RATE_PLANS_STORAGE_KEY = "hotel-pms-rate-plans";
 const PROPERTY_STORAGE_KEY = "hotel-pms-property";
+const CURRENT_USER_STORAGE_KEY = "hotel-pms-current-user";
 
 interface AppContextType {
   property: Property;
@@ -39,6 +42,9 @@ interface AppContextType {
   rooms: Room[];
   roomTypes: RoomType[];
   ratePlans: RatePlan[];
+  currentUser: User | null;
+  users: User[];
+  setCurrentUser: (user: User | null) => void;
   updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
   addReservation: (reservation: Omit<Reservation, "id">) => void;
   updateReservationStatus: (
@@ -83,6 +89,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [rooms, setRooms] = React.useState<Room[]>(mockRooms);
   const [roomTypes, setRoomTypes] = React.useState<RoomType[]>(mockRoomTypes);
   const [ratePlans, setRatePlans] = React.useState<RatePlan[]>(mockRatePlans);
+  const [currentUser, setCurrentUser] = React.useState<User | null>(mockUsers[0]);
+  const [users] = React.useState<User[]>(mockUsers);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
   React.useEffect(() => {
@@ -112,6 +120,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const storedRatePlans = window.localStorage.getItem(RATE_PLANS_STORAGE_KEY);
       if (storedRatePlans) setRatePlans(JSON.parse(storedRatePlans));
+
+      const storedUser = window.localStorage.getItem(CURRENT_USER_STORAGE_KEY);
+      if (storedUser) setCurrentUser(JSON.parse(storedUser));
 
     } catch (error) {
       console.error("Error reading from localStorage", error);
@@ -166,6 +177,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       window.localStorage.setItem(RATE_PLANS_STORAGE_KEY, JSON.stringify(ratePlans));
     }
   }, [ratePlans, isInitialized]);
+
+  React.useEffect(() => {
+    if (isInitialized) {
+      window.localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser));
+    }
+  }, [currentUser, isInitialized]);
 
   const updateProperty = (updatedData: Partial<Omit<Property, "id">>) => {
     setProperty(prev => ({ ...prev, ...updatedData }));
@@ -353,6 +370,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     rooms,
     roomTypes,
     ratePlans,
+    currentUser,
+    users,
+    setCurrentUser,
     updateProperty,
     addReservation,
     updateReservationStatus,
