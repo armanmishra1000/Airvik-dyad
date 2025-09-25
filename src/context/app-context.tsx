@@ -27,55 +27,56 @@ interface AppContextType {
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  // Initialize state from a function to avoid running localStorage on the server
-  const [reservations, setReservations] = React.useState<Reservation[]>(() => {
-    if (typeof window === "undefined") {
-      return mockReservations;
-    }
-    try {
-      const item = window.localStorage.getItem(RESERVATIONS_STORAGE_KEY);
-      // Dates are stored as strings in JSON, so we need to parse them back
-      const parsed = item ? JSON.parse(item) : mockReservations;
-      return parsed;
-    } catch (error) {
-      console.error("Error reading reservations from localStorage", error);
-      return mockReservations;
-    }
-  });
+  // Initialize state with mock data. This will be used for the server render
+  // and the initial client render, preventing a mismatch.
+  const [reservations, setReservations] = React.useState<Reservation[]>(mockReservations);
+  const [guests, setGuests] = React.useState<Guest[]>(mockGuests);
+  const [isInitialized, setIsInitialized] = React.useState(false);
 
-  const [guests, setGuests] = React.useState<Guest[]>(() => {
-    if (typeof window === "undefined") {
-      return mockGuests;
-    }
-    try {
-      const item = window.localStorage.getItem(GUESTS_STORAGE_KEY);
-      return item ? JSON.parse(item) : mockGuests;
-    } catch (error) {
-      console.error("Error reading guests from localStorage", error);
-      return mockGuests;
-    }
-  });
-
-  // Effect to save reservations to localStorage whenever they change
+  // After the component mounts on the client, load the data from localStorage.
   React.useEffect(() => {
     try {
-      window.localStorage.setItem(
-        RESERVATIONS_STORAGE_KEY,
-        JSON.stringify(reservations)
-      );
+      const storedReservations = window.localStorage.getItem(RESERVATIONS_STORAGE_KEY);
+      if (storedReservations) {
+        setReservations(JSON.parse(storedReservations));
+      }
+      const storedGuests = window.localStorage.getItem(GUESTS_STORAGE_KEY);
+      if (storedGuests) {
+        setGuests(JSON.parse(storedGuests));
+      }
     } catch (error) {
-      console.error("Error saving reservations to localStorage", error);
+      console.error("Error reading from localStorage", error);
     }
-  }, [reservations]);
+    // Mark as initialized so we can start saving to localStorage.
+    setIsInitialized(true);
+  }, []);
 
-  // Effect to save guests to localStorage whenever they change
+  // Effect to save reservations to localStorage whenever they change.
+  // We only run this after the initial data has been loaded to avoid
+  // overwriting localStorage with the initial mock data.
   React.useEffect(() => {
-    try {
-      window.localStorage.setItem(GUESTS_STORAGE_KEY, JSON.stringify(guests));
-    } catch (error) {
-      console.error("Error saving guests to localStorage", error);
+    if (isInitialized) {
+      try {
+        window.localStorage.setItem(
+          RESERVATIONS_STORAGE_KEY,
+          JSON.stringify(reservations)
+        );
+      } catch (error) {
+        console.error("Error saving reservations to localStorage", error);
+      }
     }
-  }, [guests]);
+  }, [reservations, isInitialized]);
+
+  // Effect to save guests to localStorage whenever they change.
+  React.useEffect(() => {
+    if (isInitialized) {
+      try {
+        window.localStorage.setItem(GUESTS_STORAGE_KEY, JSON.stringify(guests));
+      } catch (error) {
+        console.error("Error saving guests to localStorage", error);
+      }
+    }
+  }, [guests, isInitialized]);
 
   const addGuest = (guestData: Omit<Guest, "id">): Guest => {
     const newGuest: Guest = {
