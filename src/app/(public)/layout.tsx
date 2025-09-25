@@ -1,6 +1,6 @@
 import * as React from "react";
-import { PublicHeader } from "./header";
-import { PublicFooter } from "./footer";
+import { PublicHeader } from "@/components/public/header";
+import { PublicFooter } from "@/components/public/footer";
 
 export default function PublicLayout({
   children,
