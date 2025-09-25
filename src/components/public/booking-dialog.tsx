@@ -42,6 +42,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/app-context";
 import type { RoomType } from "@/data";
+import type { BookingSearchFormValues } from "./booking-widget";
 
 const searchSchema = z.object({
   dateRange: z.object({
@@ -54,9 +55,14 @@ const searchSchema = z.object({
 interface BookingDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  initialSearchValues?: BookingSearchFormValues;
 }
 
-export function BookingDialog({ isOpen, onOpenChange }: BookingDialogProps) {
+export function BookingDialog({
+  isOpen,
+  onOpenChange,
+  initialSearchValues,
+}: BookingDialogProps) {
   const router = useRouter();
   const { reservations, rooms, roomTypes } = useAppContext();
   const [availableRoomTypes, setAvailableRoomTypes] = React.useState<
@@ -66,59 +72,76 @@ export function BookingDialog({ isOpen, onOpenChange }: BookingDialogProps) {
 
   const form = useForm<z.infer<typeof searchSchema>>({
     resolver: zodResolver(searchSchema),
-    defaultValues: {
+    defaultValues: initialSearchValues || {
       guests: 1,
     },
   });
 
-  const onSubmit = (values: z.infer<typeof searchSchema>) => {
-    setIsLoading(true);
-    setAvailableRoomTypes(null);
+  const runSearch = React.useCallback(
+    (values: BookingSearchFormValues) => {
+      setIsLoading(true);
+      setAvailableRoomTypes(null);
 
-    // Simulate network delay
-    setTimeout(() => {
-      const available = roomTypes.filter((rt) => {
-        const roomsOfType = rooms.filter((r) => r.roomTypeId === rt.id);
-        const totalRooms = roomsOfType.length;
-        if (totalRooms === 0) return false;
+      setTimeout(() => {
+        const available = roomTypes.filter((rt) => {
+          const roomsOfType = rooms.filter((r) => r.roomTypeId === rt.id);
+          const totalRooms = roomsOfType.length;
+          if (totalRooms === 0) return false;
 
-        const bookingsCountByDate: { [key: string]: number } = {};
-        const relevantReservations = reservations.filter(
-          (res) =>
-            roomsOfType.some((r) => r.id === res.roomId) &&
-            res.status !== "Cancelled" &&
-            areIntervalsOverlapping(
-              { start: values.dateRange.from, end: values.dateRange.to },
-              {
-                start: parseISO(res.checkInDate),
-                end: parseISO(res.checkOutDate),
-              }
-            )
-        );
+          const bookingsCountByDate: { [key: string]: number } = {};
+          const relevantReservations = reservations.filter(
+            (res) =>
+              roomsOfType.some((r) => r.id === res.roomId) &&
+              res.status !== "Cancelled" &&
+              areIntervalsOverlapping(
+                { start: values.dateRange.from, end: values.dateRange.to },
+                {
+                  start: parseISO(res.checkInDate),
+                  end: parseISO(res.checkOutDate),
+                }
+              )
+          );
 
-        relevantReservations.forEach((res) => {
-          const interval = {
-            start: parseISO(res.checkInDate),
-            end: parseISO(res.checkOutDate),
-          };
-          const bookingDays = eachDayOfInterval(interval);
-          if (bookingDays.length > 0) bookingDays.pop();
-          bookingDays.forEach((day) => {
-            const dayString = format(day, "yyyy-MM-dd");
-            bookingsCountByDate[dayString] =
-              (bookingsCountByDate[dayString] || 0) + 1;
+          relevantReservations.forEach((res) => {
+            const interval = {
+              start: parseISO(res.checkInDate),
+              end: parseISO(res.checkOutDate),
+            };
+            const bookingDays = eachDayOfInterval(interval);
+            if (bookingDays.length > 0) bookingDays.pop();
+            bookingDays.forEach((day) => {
+              const dayString = format(day, "yyyy-MM-dd");
+              bookingsCountByDate[dayString] =
+                (bookingsCountByDate[dayString] || 0) + 1;
+            });
           });
+
+          const isAvailable = Object.values(bookingsCountByDate).every(
+            (count) => count < totalRooms
+          );
+          return isAvailable;
         });
 
-        const isAvailable = Object.values(bookingsCountByDate).every(
-          (count) => count < totalRooms
-        );
-        return isAvailable;
-      });
+        setAvailableRoomTypes(available);
+        setIsLoading(false);
+      }, 500);
+    },
+    [reservations, roomTypes, rooms]
+  );
 
-      setAvailableRoomTypes(available);
-      setIsLoading(false);
-    }, 500);
+  React.useEffect(() => {
+    if (isOpen && initialSearchValues) {
+      form.reset(initialSearchValues);
+      runSearch(initialSearchValues);
+    }
+    if (!isOpen) {
+      setAvailableRoomTypes(null);
+      form.reset({ guests: 1, dateRange: undefined });
+    }
+  }, [isOpen, initialSearchValues, runSearch, form]);
+
+  const onSubmit = (values: z.infer<typeof searchSchema>) => {
+    runSearch(values);
   };
 
   const handleBookNow = (roomTypeId: string) => {

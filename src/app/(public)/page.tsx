@@ -1,7 +1,25 @@
+"use client";
+
+import * as React from "react";
 import { mockRoomTypes } from "@/data";
 import { RoomTypeCard } from "@/components/public/room-type-card";
+import {
+  BookingWidget,
+  type BookingSearchFormValues,
+} from "@/components/public/booking-widget";
+import { BookingDialog } from "@/components/public/booking-dialog";
 
 export default function PublicHomePage() {
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = React.useState(false);
+  const [initialSearch, setInitialSearch] = React.useState<
+    BookingSearchFormValues | undefined
+  >();
+
+  const handleSearch = (values: BookingSearchFormValues) => {
+    setInitialSearch(values);
+    setIsBookingDialogOpen(true);
+  };
+
   return (
     <div>
       <section className="py-12 md:py-20 bg-muted/20">
@@ -13,6 +31,9 @@ export default function PublicHomePage() {
             Explore our collection of beautifully designed rooms and suites,
             each offering a unique blend of luxury and tranquility.
           </p>
+        </div>
+        <div className="container mx-auto px-4 mt-8">
+          <BookingWidget onSearch={handleSearch} />
         </div>
       </section>
 
@@ -26,6 +47,12 @@ export default function PublicHomePage() {
           </div>
         </div>
       </section>
+
+      <BookingDialog
+        isOpen={isBookingDialogOpen}
+        onOpenChange={setIsBookingDialogOpen}
+        initialSearchValues={initialSearch}
+      />
     </div>
   );
 }
