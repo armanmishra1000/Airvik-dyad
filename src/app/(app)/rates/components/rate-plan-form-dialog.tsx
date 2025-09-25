@@ -1,0 +1,148 @@
+"use client";
+
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import type { RatePlan } from "@/data";
+
+const ratePlanSchema = z.object({
+  name: z.string().min(1, "Rate plan name is required."),
+  price: z.coerce.number().min(0, "Price must be a positive number."),
+  minStay: z.coerce.number().min(1, "Minimum stay must be at least 1."),
+  cancellationPolicy: z.string().min(1, "Cancellation policy is required."),
+});
+
+interface RatePlanFormDialogProps {
+  ratePlan?: RatePlan;
+  children: React.ReactNode;
+}
+
+export function RatePlanFormDialog({
+  ratePlan,
+  children,
+}: RatePlanFormDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const isEditing = !!ratePlan;
+
+  const form = useForm<z.infer<typeof ratePlanSchema>>({
+    resolver: zodResolver(ratePlanSchema),
+    defaultValues: {
+      name: ratePlan?.name || "",
+      price: ratePlan?.price || 0,
+      minStay: ratePlan?.rules.minStay || 1,
+      cancellationPolicy: ratePlan?.rules.cancellationPolicy || "",
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof ratePlanSchema>) {
+    console.log(values);
+    toast.success(
+      `Rate plan ${isEditing ? "updated" : "created"} successfully!`
+    );
+    form.reset();
+    setOpen(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {isEditing ? "Edit Rate Plan" : "Add New Rate Plan"}
+          </DialogTitle>
+          <DialogDescription>
+            Fill in the details for the rate plan.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Standard Rate" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price (per night)</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="minStay"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Minimum Stay (nights)</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="cancellationPolicy"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cancellation Policy</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Describe the cancellation rules..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="submit">
+                {isEditing ? "Save Changes" : "Create Rate Plan"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
