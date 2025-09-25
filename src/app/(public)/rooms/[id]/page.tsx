@@ -3,7 +3,7 @@
 import * as React from "react";
 import { notFound, useParams, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Users, Bed, Calendar as CalendarIcon } from "lucide-react";
+import { Users, Bed, Calendar as CalendarIcon, Check } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -213,6 +213,22 @@ export default function RoomDetailsPage() {
             </div>
           </div>
           <p className="text-lg leading-relaxed">{roomType.description}</p>
+
+          {roomType.amenities.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold font-serif mb-4">
+                What this room offers
+              </h2>
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
+                {roomType.amenities.map((amenity) => (
+                  <li key={amenity} className="flex items-center gap-3">
+                    <Check className="h-5 w-5 text-primary" />
+                    <span>{amenity}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
         <div>
           <Card>
