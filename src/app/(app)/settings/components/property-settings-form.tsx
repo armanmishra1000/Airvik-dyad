@@ -34,7 +34,7 @@ const propertySchema = z.object({
   address: z.string().min(1, "Address is required."),
   phone: z.string().min(1, "Phone number is required."),
   email: z.string().email("Please enter a valid email."),
-  logoUrl: z.string().url("Please enter a valid URL for the logo.").or(z.literal("")),
+  logoUrl: z.string().optional(),
   photos: z.string().optional(),
   googleMapsUrl: z.string().url("Please enter a valid Google Maps embed URL."),
 });
@@ -72,6 +72,7 @@ export function PropertySettingsForm() {
   function onSubmit(values: z.infer<typeof propertySchema>) {
     const updatedData = {
       ...values,
+      logoUrl: values.logoUrl || "",
       photos: values.photos ? values.photos.split(",").map(p => p.trim()) : [],
     };
     updateProperty(updatedData);
@@ -100,7 +101,7 @@ export function PropertySettingsForm() {
                 <FormItem>
                   <FormLabel>Logo</FormLabel>
                   <FormControl>
-                    <ImageUpload value={field.value} onChange={field.onChange} />
+                    <ImageUpload value={field.value || ""} onChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
