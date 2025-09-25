@@ -80,6 +80,11 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const reservation = row.original
+      const canBeCancelled = ![
+        "Cancelled",
+        "Checked-out",
+        "No-show",
+      ].includes(reservation.status);
  
       return (
         <DropdownMenu>
@@ -100,6 +105,14 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
             <DropdownMenuItem>View guest details</DropdownMenuItem>
             <DropdownMenuItem onClick={() => table.options.meta?.viewReservation(reservation)}>
                 View reservation details
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => table.options.meta?.openCancelDialog(reservation.id)}
+              disabled={!canBeCancelled}
+              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              Cancel Reservation
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
