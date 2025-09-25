@@ -40,9 +40,15 @@ export function RatePlansDataTable<TData extends RatePlan, TValue>({
 
   const handleDeleteConfirm = () => {
     if (itemToDelete) {
-      deleteRatePlan(itemToDelete.id)
-      toast.success(`Rate plan "${itemToDelete.name}" has been deleted.`)
-      setItemToDelete(null)
+      const success = deleteRatePlan(itemToDelete.id);
+      if (success) {
+        toast.success(`Rate plan "${itemToDelete.name}" has been deleted.`);
+      } else {
+        toast.error("Failed to delete rate plan.", {
+          description: "This rate plan is in use by one or more reservations.",
+        });
+      }
+      setItemToDelete(null);
     }
   }
 

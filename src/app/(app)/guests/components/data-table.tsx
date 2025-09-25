@@ -40,9 +40,15 @@ export function GuestsDataTable<TData extends Guest, TValue>({
 
   const handleDeleteConfirm = () => {
     if (guestToDelete) {
-      deleteGuest(guestToDelete.id)
-      toast.success(`Guest "${guestToDelete.firstName} ${guestToDelete.lastName}" has been deleted.`)
-      setGuestToDelete(null)
+      const success = deleteGuest(guestToDelete.id);
+      if (success) {
+        toast.success(`Guest "${guestToDelete.firstName} ${guestToDelete.lastName}" has been deleted.`);
+      } else {
+        toast.error("Failed to delete guest.", {
+          description: "This guest has active reservations and cannot be deleted.",
+        });
+      }
+      setGuestToDelete(null);
     }
   }
 
