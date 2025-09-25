@@ -50,10 +50,7 @@ export const columns: ColumnDef<Guest>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const guest = row.original
-      const { currentUser } = useAppContext();
-      const isManager = currentUser?.role === 'manager';
-
-      if (!isManager) return null;
+      const { hasPermission } = useAppContext();
  
       return (
         <DropdownMenu>
@@ -65,17 +62,21 @@ export const columns: ColumnDef<Guest>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <GuestFormDialog guest={guest}>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    Edit
+            {hasPermission("update:guest") && (
+                <GuestFormDialog guest={guest}>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        Edit
+                    </DropdownMenuItem>
+                </GuestFormDialog>
+            )}
+            {hasPermission("delete:guest") && (
+                <DropdownMenuItem 
+                    className="text-destructive"
+                    onSelect={() => table.options.meta?.openDeleteDialog(guest)}
+                >
+                    Delete
                 </DropdownMenuItem>
-            </GuestFormDialog>
-            <DropdownMenuItem 
-                className="text-destructive"
-                onSelect={() => table.options.meta?.openDeleteDialog(guest)}
-            >
-                Delete
-            </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )

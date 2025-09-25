@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { RatePlan } from "@/data"
 import { RatePlanFormDialog } from "./rate-plan-form-dialog"
+import { useAppContext } from "@/context/app-context"
 
 declare module '@tanstack/react-table' {
     interface TableMeta<TData extends RowData> {
@@ -42,6 +43,7 @@ export const columns: ColumnDef<RatePlan>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const ratePlan = row.original
+      const { hasPermission } = useAppContext();
  
       return (
         <DropdownMenu>
@@ -53,17 +55,21 @@ export const columns: ColumnDef<RatePlan>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <RatePlanFormDialog ratePlan={ratePlan}>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    Edit
+            {hasPermission("update:rate_plan") && (
+                <RatePlanFormDialog ratePlan={ratePlan}>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        Edit
+                    </DropdownMenuItem>
+                </RatePlanFormDialog>
+            )}
+            {hasPermission("delete:rate_plan") && (
+                <DropdownMenuItem 
+                    className="text-destructive"
+                    onSelect={() => table.options.meta?.openDeleteDialog(ratePlan)}
+                >
+                    Delete
                 </DropdownMenuItem>
-            </RatePlanFormDialog>
-            <DropdownMenuItem 
-                className="text-destructive"
-                onSelect={() => table.options.meta?.openDeleteDialog(ratePlan)}
-            >
-                Delete
-            </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )
