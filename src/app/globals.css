@@ -117,4 +117,21 @@
   body {
     @apply bg-background text-foreground;
   }
+  .has-reservation {
+    position: relative;
+  }
+  .has-reservation:not([class~="--outside"]):not([class~="--disabled"]) {
+    font-weight: 600;
+  }
+  .has-reservation::after {
+    content: "";
+    position: absolute;
+    background-color: hsl(var(--primary));
+    border-radius: 9999px;
+    width: 6px;
+    height: 6px;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
