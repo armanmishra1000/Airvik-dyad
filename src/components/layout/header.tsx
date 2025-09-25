@@ -5,7 +5,6 @@ import {
   CircleUser,
   Menu,
   Package2,
-  Search,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -20,7 +19,6 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAppContext } from "@/context/app-context";
 import { ThemeToggle } from "../theme-toggle";
@@ -36,8 +34,9 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
-  const { property, currentUser, users, setCurrentUser } = useAppContext();
+  const { property, currentUser, users, roles, setCurrentUser } = useAppContext();
   const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
+  const userRole = roles.find(r => r.id === currentUser?.roleId);
 
   const handleUserChange = (userId: string) => {
     const user = users.find(u => u.id === userId);
@@ -91,14 +90,14 @@ export function Header() {
             <DropdownMenuLabel>
                 {currentUser ? currentUser.name : "No user"}
                 <p className="text-xs font-normal text-muted-foreground">
-                    {currentUser?.role}
+                    {userRole?.name}
                 </p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuRadioGroup value={currentUser?.id} onValueChange={handleUserChange}>
                 <DropdownMenuLabel>Switch User</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {users.map(user => (
+                {users && users.map(user => (
                     <DropdownMenuRadioItem key={user.id} value={user.id}>
                         {user.name}
                     </DropdownMenuRadioItem>

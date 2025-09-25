@@ -15,39 +15,26 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/app-context";
-import type { UserRole } from "@/data";
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Dashboard", roles: ["manager", "receptionist", "housekeeper"] },
-  { href: "/reservations", icon: Calendar, label: "Reservations", roles: ["manager", "receptionist"] },
-  { href: "/calendar", icon: Calendar, label: "Calendar", roles: ["manager", "receptionist"] },
-  { href: "/housekeeping", icon: ClipboardList, label: "Housekeeping", roles: ["manager", "housekeeper"] },
-  { href: "/guests", icon: Users, label: "Guests", roles: ["manager", "receptionist"] },
-  { href: "/room-types", icon: Layers, label: "Room Types", roles: ["manager"] },
-  { href: "/rooms", icon: BedDouble, label: "Rooms", roles: ["manager"] },
-  { href: "/rates", icon: DollarSign, label: "Rate Plans", roles: ["manager"] },
-  { href: "/reports", icon: BarChart3, label: "Reports", roles: ["manager"] },
+  { href: "/dashboard", icon: Home, label: "Dashboard", requiredPermission: "read:reservation" },
+  { href: "/reservations", icon: Calendar, label: "Reservations", requiredPermission: "read:reservation" },
+  { href: "/calendar", icon: Calendar, label: "Calendar", requiredPermission: "read:reservation" },
+  { href: "/housekeeping", icon: ClipboardList, label: "Housekeeping", requiredPermission: "read:room" },
+  { href: "/guests", icon: Users, label: "Guests", requiredPermission: "read:guest" },
+  { href: "/room-types", icon: Layers, label: "Room Types", requiredPermission: "read:room_type" },
+  { href: "/rooms", icon: BedDouble, label: "Rooms", requiredPermission: "read:room" },
+  { href: "/rates", icon: DollarSign, label: "Rate Plans", requiredPermission: "read:rate_plan" },
+  { href: "/reports", icon: BarChart3, label: "Reports", requiredPermission: "read:report" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { property, currentUser } = useAppContext();
+  const { property, hasPermission } = useAppContext();
 
-  const userRole = currentUser?.role;
-
-  const accessibleNavItems = navItems.filter(item => 
-    userRole && item.roles.includes(userRole)
-  );
+  const accessibleNavItems = navItems.filter(item => hasPermission(item.requiredPermission as any));
 
   return (
     <div className="hidden border-r bg-background md:block">
@@ -76,7 +63,7 @@ export function Sidebar() {
           </nav>
         </div>
         <div className="mt-auto p-4">
-          {userRole === 'manager' && (
+          {hasPermission('update:setting') && (
             <Link
               href="/settings"
               className={cn(
