@@ -2,6 +2,7 @@
 
 import { ColumnDef, RowData } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -22,12 +23,19 @@ declare module '@tanstack/react-table' {
 
 export const columns: ColumnDef<Guest>[] = [
   {
-    accessorKey: "firstName",
-    header: "First Name",
-  },
-  {
-    accessorKey: "lastName",
-    header: "Last Name",
+    id: "name",
+    header: "Name",
+    cell: ({ row }) => {
+      const guest = row.original
+      return (
+        <Link
+          href={`/guests/${guest.id}`}
+          className="font-medium text-primary hover:underline"
+        >
+          {guest.firstName} {guest.lastName}
+        </Link>
+      )
+    },
   },
   {
     accessorKey: "email",
