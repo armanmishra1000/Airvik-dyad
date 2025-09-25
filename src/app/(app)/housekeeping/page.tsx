@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { formatISO } from "date-fns";
-import { mockRoomTypes, mockUsers } from "@/data";
+import { mockRooms, mockRoomTypes, mockUsers } from "@/data";
 import type { RoomStatus } from "@/data";
 import { HousekeepingToolbar } from "./components/housekeeping-toolbar";
 import { RoomStatusCard } from "./components/room-status-card";
