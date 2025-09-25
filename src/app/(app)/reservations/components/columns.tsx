@@ -93,12 +93,12 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     id: "actions",
     cell: ({ row, table }) => {
-      const reservation = row.original
-      const canBeCancelled = ![
-        "Cancelled",
-        "Checked-out",
-        "No-show",
-      ].includes(reservation.status);
+      const reservation = row.original;
+      const status = reservation.status;
+ 
+      const canBeCancelled = !["Cancelled", "Checked-out", "No-show"].includes(status);
+      const canBeCheckedIn = status === "Confirmed";
+      const canBeCheckedOut = status === "Checked-in";
  
       return (
         <DropdownMenu>
@@ -110,15 +110,26 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => table.options.meta?.viewReservation(reservation)}>
+                View Details
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(reservation.id)}
             >
               Copy reservation ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View guest details</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => table.options.meta?.viewReservation(reservation)}>
-                View reservation details
+            <DropdownMenuItem
+              onClick={() => table.options.meta?.checkInReservation(reservation.id)}
+              disabled={!canBeCheckedIn}
+            >
+              Check-in
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => table.options.meta?.checkOutReservation(reservation.id)}
+              disabled={!canBeCheckedOut}
+            >
+              Check-out
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
