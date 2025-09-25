@@ -32,6 +32,7 @@ declare module '@tanstack/react-table' {
       viewReservation: (reservation: TData) => void
       cancelReservation: (reservationId: string) => void
       checkInReservation: (reservationId: string) => void
+      checkOutReservation: (reservationId: string) => void
     }
   }
 
@@ -40,6 +41,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   onCancelReservation: (reservationId: string) => void
   onCheckInReservation: (reservationId: string) => void
+  onCheckOutReservation: (reservationId: string) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -47,6 +49,7 @@ export function DataTable<TData, TValue>({
   data,
   onCancelReservation,
   onCheckInReservation,
+  onCheckOutReservation,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -74,6 +77,7 @@ export function DataTable<TData, TValue>({
         },
         cancelReservation: onCancelReservation,
         checkInReservation: onCheckInReservation,
+        checkOutReservation: onCheckOutReservation,
     }
   })
 
@@ -131,6 +135,7 @@ export function DataTable<TData, TValue>({
         reservation={selectedReservation}
         onCancelReservation={table.options.meta?.cancelReservation}
         onCheckInReservation={table.options.meta?.checkInReservation}
+        onCheckOutReservation={table.options.meta?.checkOutReservation}
       />
     </div>
   )

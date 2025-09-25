@@ -30,6 +30,7 @@ interface ReservationDetailsDrawerProps {
   onClose: () => void;
   onCancelReservation: (reservationId: string) => void;
   onCheckInReservation: (reservationId: string) => void;
+  onCheckOutReservation: (reservationId: string) => void;
 }
 
 export function ReservationDetailsDrawer({
@@ -38,6 +39,7 @@ export function ReservationDetailsDrawer({
   onClose,
   onCancelReservation,
   onCheckInReservation,
+  onCheckOutReservation,
 }: ReservationDetailsDrawerProps) {
   if (!reservation) return null;
 
@@ -60,6 +62,11 @@ export function ReservationDetailsDrawer({
     onClose();
   };
 
+  const handleCheckOut = () => {
+    onCheckOutReservation(reservation.id);
+    onClose();
+  };
+
   const canBeCancelled = ![
     "Cancelled",
     "Checked-out",
@@ -67,6 +74,7 @@ export function ReservationDetailsDrawer({
   ].includes(reservation.status);
 
   const canBeCheckedIn = reservation.status === "Confirmed";
+  const canBeCheckedOut = reservation.status === "Checked-in";
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -166,19 +174,24 @@ export function ReservationDetailsDrawer({
             </div>
           </div>
           <DrawerFooter>
-            <Button onClick={handleCheckIn} disabled={!canBeCheckedIn}>
-              Check-in
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={!canBeCancelled}
-            >
-              Cancel Reservation
-            </Button>
-            <DrawerClose asChild>
-              <Button variant="ghost">Close</Button>
-            </DrawerClose>
+            <div className="flex justify-end gap-2">
+                <Button onClick={handleCheckIn} disabled={!canBeCheckedIn}>
+                Check-in
+                </Button>
+                <Button onClick={handleCheckOut} disabled={!canBeCheckedOut}>
+                Check-out
+                </Button>
+                <Button
+                variant="outline"
+                onClick={handleCancel}
+                disabled={!canBeCancelled}
+                >
+                Cancel Reservation
+                </Button>
+                <DrawerClose asChild>
+                <Button variant="ghost">Close</Button>
+                </DrawerClose>
+            </div>
           </DrawerFooter>
         </div>
       </DrawerContent>
