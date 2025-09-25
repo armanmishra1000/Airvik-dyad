@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ReservationCalendar } from "./components/reservation-calendar";
-import { mockReservations, mockGuests, mockRooms } from "@/data";
+import { mockRooms } from "@/data";
 import { format, parseISO, isWithinInterval, startOfDay } from "date-fns";
 import {
   Card,
@@ -12,8 +12,10 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useAppContext } from "@/context/app-context";
 
 export default function CalendarPage() {
+  const { reservations, guests } = useAppContext();
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
     new Date()
   );
@@ -21,20 +23,20 @@ export default function CalendarPage() {
   const selectedDateReservations = React.useMemo(() => {
     if (!selectedDate) return [];
     const day = startOfDay(selectedDate);
-    return mockReservations.filter((res) => {
+    return reservations.filter((res) => {
       if (res.status === "Cancelled") return false;
       const checkIn = parseISO(res.checkInDate);
       // The interval ends at the start of the checkout day
       const checkOut = parseISO(res.checkOutDate);
       return isWithinInterval(day, { start: checkIn, end: checkOut }) && day.getTime() !== checkOut.getTime();
     });
-  }, [selectedDate]);
+  }, [selectedDate, reservations]);
 
   return (
     <div className="grid md:grid-cols-2 gap-6 items-start">
       <Card>
         <ReservationCalendar
-          reservations={mockReservations}
+          reservations={reservations}
           selectedDate={selectedDate}
           onDateSelect={setSelectedDate}
         />
@@ -53,7 +55,7 @@ export default function CalendarPage() {
         <CardContent className="space-y-4">
           {selectedDateReservations.length > 0 ? (
             selectedDateReservations.map((res) => {
-              const guest = mockGuests.find((g) => g.id === res.guestId);
+              const guest = guests.find((g) => g.id === res.guestId);
               const room = mockRooms.find((r) => r.id === res.roomId);
               return (
                 <div
