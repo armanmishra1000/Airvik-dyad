@@ -28,6 +28,7 @@ const navItems = [
     { href: "/calendar", label: "Calendar" },
     { href: "/housekeeping", label: "Housekeeping" },
     { href: "/guests", label: "Guests" },
+    { href: "/reports", label: "Reports" },
   ];
 
 export function Header() {
