@@ -1,3 +1,11 @@
+"use client";
+
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
+
 import {
   Card,
   CardContent,
@@ -13,9 +21,44 @@ import {
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useAppContext } from "@/context/app-context";
+
+const propertySchema = z.object({
+  name: z.string().min(1, "Property name is required."),
+  address: z.string().min(1, "Address is required."),
+});
 
 export default function SettingsPage() {
+  const { property, updateProperty } = useAppContext();
+
+  const form = useForm<z.infer<typeof propertySchema>>({
+    resolver: zodResolver(propertySchema),
+    values: {
+      name: property.name,
+      address: property.address,
+    },
+  });
+
+  React.useEffect(() => {
+    form.reset({
+      name: property.name,
+      address: property.address,
+    });
+  }, [property, form]);
+
+  function onSubmit(values: z.infer<typeof propertySchema>) {
+    updateProperty(values);
+    toast.success("Property details updated successfully!");
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -35,19 +78,45 @@ export default function SettingsPage() {
             <CardHeader>
               <CardTitle>Property Details</CardTitle>
               <CardDescription>
-                Update your hotel's information. This is a placeholder and will not save.
+                Update your hotel's information. Changes will be saved
+                immediately.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Property Name</Label>
-                <Input id="name" defaultValue="The Grand Horizon Hotel" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input id="address" defaultValue="123 Ocean View Drive, Miami, FL 33139" />
-              </div>
-              <Button>Save Changes</Button>
+            <CardContent>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Property Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit">Save Changes</Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         </TabsContent>

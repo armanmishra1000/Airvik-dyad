@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { mockProperty } from "@/data";
+import { useAppContext } from "@/context/app-context";
 import { ThemeToggle } from "../theme-toggle";
 
 const navItems = [
@@ -34,6 +34,7 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
+  const { property } = useAppContext();
   const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
 
   return (
@@ -52,7 +53,7 @@ export function Header() {
               className="flex items-center gap-2 text-lg font-semibold mb-4"
             >
               <Package2 className="h-6 w-6" />
-              <span className="">{mockProperty.name}</span>
+              <span className="">{property.name}</span>
             </Link>
             {navItems.map(({ href, label }) => (
                  <Link
