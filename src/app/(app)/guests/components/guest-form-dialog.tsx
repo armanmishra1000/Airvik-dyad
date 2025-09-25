@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type { Guest } from "@/data";
+import { useAppContext } from "@/context/app-context";
 
 const guestSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
@@ -44,6 +45,7 @@ export function GuestFormDialog({
   children,
 }: GuestFormDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const { addGuest, updateGuest } = useAppContext();
   const isEditing = !!guest;
 
   const form = useForm<z.infer<typeof guestSchema>>({
@@ -57,7 +59,12 @@ export function GuestFormDialog({
   });
 
   function onSubmit(values: z.infer<typeof guestSchema>) {
-    console.log(values);
+    if (isEditing && guest) {
+      updateGuest(guest.id, values);
+    } else {
+      addGuest(values);
+    }
+    
     toast.success(
       `Guest ${isEditing ? "updated" : "created"} successfully!`
     );

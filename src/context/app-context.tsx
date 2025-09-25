@@ -28,6 +28,7 @@ interface AppContextType {
     status: ReservationStatus
   ) => void;
   addGuest: (guest: Omit<Guest, "id">) => Guest;
+  updateGuest: (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => void;
   addFolioItem: (
     reservationId: string,
     item: Omit<FolioItem, "id" | "timestamp">
@@ -104,6 +105,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
     setGuests((prev) => [...prev, newGuest]);
     return newGuest;
+  };
+
+  const updateGuest = (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => {
+    setGuests(prev => prev.map(g => g.id === guestId ? { ...g, ...updatedData } : g));
   };
 
   const addReservation = (reservationData: Omit<Reservation, "id">) => {
@@ -195,6 +200,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addReservation,
     updateReservationStatus,
     addGuest,
+    updateGuest,
     addFolioItem,
     assignHousekeeper,
     updateAssignmentStatus,
