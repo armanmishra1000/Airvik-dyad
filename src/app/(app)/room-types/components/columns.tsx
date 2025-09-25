@@ -9,39 +9,51 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import type { Room } from "@/data"
-import { mockRoomTypes } from "@/data"
-import { RoomFormDialog } from "./room-form-dialog"
+import type { RoomType } from "@/data"
+import { RoomTypeFormDialog } from "./room-type-form-dialog"
 
-export const columns: ColumnDef<Room>[] = [
+export const columns: ColumnDef<RoomType>[] = [
   {
-    accessorKey: "roomNumber",
-    header: "Room Number",
+    accessorKey: "name",
+    header: "Name",
   },
   {
-    accessorKey: "roomTypeId",
-    header: "Room Type",
+    accessorKey: "maxOccupancy",
+    header: "Max Occupancy",
+  },
+  {
+    accessorKey: "bedTypes",
+    header: "Bed Types",
     cell: ({ row }) => {
-        const roomTypeId = row.getValue("roomTypeId") as string;
-        const roomType = mockRoomTypes.find(rt => rt.id === roomTypeId);
-        return <span>{roomType?.name || "Unknown"}</span>
+        const bedTypes = row.getValue("bedTypes") as string[];
+        return <span>{bedTypes.join(", ")}</span>
     }
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "amenities",
+    header: "Amenities",
     cell: ({ row }) => {
-        const status = row.getValue("status") as string;
-        return <Badge variant="outline">{status}</Badge>
+        const amenities = row.getValue("amenities") as string[];
+        if (!amenities || amenities.length === 0) {
+            return <span className="text-muted-foreground">N/A</span>
+        }
+        return (
+            <div className="flex flex-wrap">
+                {amenities.map(amenity => (
+                    <Badge key={amenity} variant="secondary" className="mr-1 mb-1">{amenity}</Badge>
+                ))}
+            </div>
+        )
     }
   },
   {
     id: "actions",
     cell: ({ row }) => {
-      const room = row.original
+      const roomType = row.original
  
       return (
         <DropdownMenu>
@@ -53,11 +65,11 @@ export const columns: ColumnDef<Room>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <RoomFormDialog room={room}>
+            <RoomTypeFormDialog roomType={roomType}>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     Edit
                 </DropdownMenuItem>
-            </RoomFormDialog>
+            </RoomTypeFormDialog>
             <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

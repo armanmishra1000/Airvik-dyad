@@ -20,10 +20,10 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { DataTablePagination } from "@/app/(app)/reservations/components/data-table-pagination"
-import { RoomFormDialog } from "./room-form-dialog"
+import { DataTablePagination } from "@/app/(app)/reservations/components/data-table-pagination" // Reusing pagination
+import { RoomTypeFormDialog } from "./room-type-form-dialog"
 
-export function RoomsDataTable<TData, TValue>({
+export function RoomTypesDataTable<TData, TValue>({
   columns,
   data,
 }: {
@@ -47,9 +47,9 @@ export function RoomsDataTable<TData, TValue>({
   return (
     <div className="space-y-4">
         <div className="flex items-center justify-end">
-            <RoomFormDialog>
-                <Button>Add Room</Button>
-            </RoomFormDialog>
+            <RoomTypeFormDialog>
+                <Button>Add Room Type</Button>
+            </RoomTypeFormDialog>
         </div>
       <div className="rounded-md border">
         <Table>

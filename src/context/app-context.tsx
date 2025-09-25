@@ -6,22 +6,27 @@ import {
   mockReservations,
   mockGuests,
   mockHousekeeping,
+  mockRooms,
   type Reservation,
   type Guest,
   type ReservationStatus,
   type FolioItem,
   type HousekeepingAssignment,
+  type Room,
+  type RoomStatus,
 } from "@/data";
 
 // Define keys for local storage
 const RESERVATIONS_STORAGE_KEY = "hotel-pms-reservations";
 const GUESTS_STORAGE_KEY = "hotel-pms-guests";
 const HOUSEKEEPING_STORAGE_KEY = "hotel-pms-housekeeping";
+const ROOMS_STORAGE_KEY = "hotel-pms-rooms";
 
 interface AppContextType {
   reservations: Reservation[];
   guests: Guest[];
   housekeepingAssignments: HousekeepingAssignment[];
+  rooms: Room[];
   addReservation: (reservation: Omit<Reservation, "id">) => void;
   updateReservationStatus: (
     reservationId: string,
@@ -41,6 +46,8 @@ interface AppContextType {
     roomId: string,
     status: "Pending" | "Completed"
   ) => void;
+  addRoom: (room: Omit<Room, "id">) => void;
+  updateRoom: (roomId: string, updatedData: Partial<Omit<Room, "id">>) => void;
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
@@ -51,6 +58,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [guests, setGuests] = React.useState<Guest[]>(mockGuests);
   const [housekeepingAssignments, setHousekeepingAssignments] =
     React.useState<HousekeepingAssignment[]>(mockHousekeeping);
+  const [rooms, setRooms] = React.useState<Room[]>(mockRooms);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
   React.useEffect(() => {
@@ -68,6 +76,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       );
       if (storedHousekeeping)
         setHousekeepingAssignments(JSON.parse(storedHousekeeping));
+      
+      const storedRooms = window.localStorage.getItem(ROOMS_STORAGE_KEY);
+      if (storedRooms) setRooms(JSON.parse(storedRooms));
+
     } catch (error) {
       console.error("Error reading from localStorage", error);
     }
@@ -97,6 +109,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       );
     }
   }, [housekeepingAssignments, isInitialized]);
+
+  React.useEffect(() => {
+    if (isInitialized) {
+      window.localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(rooms));
+    }
+  }, [rooms, isInitialized]);
 
   const addGuest = (guestData: Omit<Guest, "id">): Guest => {
     const newGuest: Guest = {
@@ -193,10 +211,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const addRoom = (roomData: Omit<Room, "id">) => {
+    const newRoom: Room = {
+      ...roomData,
+      id: `room-${Date.now()}`,
+    };
+    setRooms((prev) => [...prev, newRoom]);
+  };
+
+  const updateRoom = (roomId: string, updatedData: Partial<Omit<Room, "id">>) => {
+    setRooms(prev => prev.map(r => r.id === roomId ? { ...r, ...updatedData } : r));
+  };
+
   const value = {
     reservations,
     guests,
     housekeepingAssignments,
+    rooms,
     addReservation,
     updateReservationStatus,
     addGuest,
@@ -204,6 +235,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addFolioItem,
     assignHousekeeper,
     updateAssignmentStatus,
+    addRoom,
+    updateRoom,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
