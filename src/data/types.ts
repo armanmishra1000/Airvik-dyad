@@ -1,10 +1,20 @@
 export type UserRole = "manager" | "receptionist" | "housekeeper";
 
+export type PermissionAction = "create" | "read" | "update" | "delete";
+export type PermissionResource = "guest" | "reservation" | "room" | "room_type" | "rate_plan" | "report" | "setting" | "user";
+export type Permission = `${PermissionAction}:${PermissionResource}`;
+
+export interface Role {
+  id: string;
+  name: string;
+  permissions: Permission[];
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  roleId: string;
   avatarUrl?: string;
 }
 
