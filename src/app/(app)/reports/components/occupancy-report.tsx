@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { addDays, format, eachDayOfInterval, isWithinInterval, parseISO, isSameDay } from "date-fns";
+import { addDays, format, eachDayOfInterval, isWithinInterval, parseISO, isSameDay, subDays } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Calendar as CalendarIcon } from "lucide-react";
 
@@ -35,7 +35,7 @@ export function OccupancyReport() {
   const { reservations } = useAppContext();
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
-    to: new Date(),
+    to: new new Date(),
   });
 
   const chartData = React.useMemo(() => {
