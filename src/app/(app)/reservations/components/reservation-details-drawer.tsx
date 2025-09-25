@@ -31,6 +31,7 @@ interface ReservationDetailsDrawerProps {
   onCancelReservation: (reservationId: string) => void;
   onCheckInReservation: (reservationId: string) => void;
   onCheckOutReservation: (reservationId: string) => void;
+  onOpenCancelDialog: (reservationId: string) => void;
 }
 
 export function ReservationDetailsDrawer({
@@ -40,6 +41,7 @@ export function ReservationDetailsDrawer({
   onCancelReservation,
   onCheckInReservation,
   onCheckOutReservation,
+  onOpenCancelDialog,
 }: ReservationDetailsDrawerProps) {
   if (!reservation) return null;
 
@@ -53,7 +55,7 @@ export function ReservationDetailsDrawer({
   );
 
   const handleCancel = () => {
-    onCancelReservation(reservation.id);
+    onOpenCancelDialog(reservation.id);
     onClose();
   };
 

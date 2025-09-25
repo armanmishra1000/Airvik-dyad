@@ -26,6 +26,7 @@ import { DataTableToolbar } from "./data-table-toolbar"
 import { DataTablePagination } from "./data-table-pagination"
 import { ReservationDetailsDrawer } from "./reservation-details-drawer"
 import { ReservationWithDetails } from "./columns"
+import { CancelReservationDialog } from "./cancel-reservation-dialog"
 
 declare module '@tanstack/react-table' {
     interface TableMeta<TData extends RowData> {
@@ -33,6 +34,7 @@ declare module '@tanstack/react-table' {
       cancelReservation: (reservationId: string) => void
       checkInReservation: (reservationId: string) => void
       checkOutReservation: (reservationId: string) => void
+      openCancelDialog: (reservationId: string) => void
     }
   }
 
@@ -56,6 +58,18 @@ export function DataTable<TData, TValue>({
     []
   )
   const [selectedReservation, setSelectedReservation] = React.useState<ReservationWithDetails | null>(null);
+  const [reservationToCancel, setReservationToCancel] = React.useState<string | null>(null);
+
+  const handleOpenCancelDialog = (reservationId: string) => {
+    setReservationToCancel(reservationId);
+  };
+
+  const handleConfirmCancellation = () => {
+    if (reservationToCancel) {
+      onCancelReservation(reservationToCancel);
+    }
+    setReservationToCancel(null);
+  };
 
 
   const table = useReactTable({
@@ -78,6 +92,7 @@ export function DataTable<TData, TValue>({
         cancelReservation: onCancelReservation,
         checkInReservation: onCheckInReservation,
         checkOutReservation: onCheckOutReservation,
+        openCancelDialog: handleOpenCancelDialog,
     }
   })
 
@@ -136,6 +151,12 @@ export function DataTable<TData, TValue>({
         onCancelReservation={table.options.meta?.cancelReservation}
         onCheckInReservation={table.options.meta?.checkInReservation}
         onCheckOutReservation={table.options.meta?.checkOutReservation}
+        onOpenCancelDialog={table.options.meta?.openCancelDialog}
+      />
+      <CancelReservationDialog
+        isOpen={!!reservationToCancel}
+        onOpenChange={(isOpen) => !isOpen && setReservationToCancel(null)}
+        onConfirm={handleConfirmCancellation}
       />
     </div>
   )
