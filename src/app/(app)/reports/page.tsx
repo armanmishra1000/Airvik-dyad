@@ -1,35 +1,10 @@
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { BarChart3, DollarSign, Users, BedDouble } from "lucide-react";
-
-const reportTypes = [
-  {
-    title: "Occupancy Report",
-    description: "Analyze room occupancy rates over various periods.",
-    icon: BedDouble,
-  },
-  {
-    title: "Revenue Report",
-    description: "Track revenue from rooms, services, and other charges.",
-    icon: DollarSign,
-  },
-  {
-    title: "Guest Demographics",
-    description: "Understand your guest origins and booking patterns.",
-    icon: Users,
-  },
-  {
-    title: "Housekeeping Performance",
-    description: "Monitor room cleaning times and staff assignments.",
-    icon: BarChart3,
-  },
-];
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { OccupancyReport } from "./components/occupancy-report";
 
 export default function ReportsPage() {
   return (
@@ -40,26 +15,20 @@ export default function ReportsPage() {
           Generate and view reports for your property.
         </p>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {reportTypes.map((report) => (
-          <Card key={report.title}>
-            <CardHeader>
-              <div className="flex items-center gap-4">
-                <report.icon className="h-8 w-8 text-muted-foreground" />
-                <div>
-                  <CardTitle>{report.title}</CardTitle>
-                  <CardDescription>{report.description}</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" disabled>
-                Generate Report (Coming Soon)
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Tabs defaultValue="occupancy" className="w-full">
+        <TabsList>
+          <TabsTrigger value="occupancy">Occupancy Report</TabsTrigger>
+          <TabsTrigger value="revenue" disabled>
+            Revenue (Coming Soon)
+          </TabsTrigger>
+          <TabsTrigger value="guests" disabled>
+            Guests (Coming Soon)
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="occupancy" className="pt-4">
+          <OccupancyReport />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
