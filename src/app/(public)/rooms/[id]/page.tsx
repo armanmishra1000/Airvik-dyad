@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import Image from "next/image";
 import { Users, Bed } from "lucide-react";
 import { mockRoomTypes, mockRatePlans } from "@/data";
@@ -23,7 +23,8 @@ import { differenceInDays, format } from "date-fns";
 // Use the standard rate plan for price calculation
 const standardRatePlan = mockRatePlans.find(rp => rp.id === 'rp-standard') || mockRatePlans[0];
 
-export default function RoomDetailsPage({ params }: { params: { id: string } }) {
+export default function RoomDetailsPage() {
+  const params = useParams<{ id: string }>();
   const roomType = mockRoomTypes.find((rt) => rt.id === params.id);
 
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
