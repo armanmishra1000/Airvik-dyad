@@ -33,6 +33,7 @@ const roomTypeSchema = z.object({
   description: z.string().optional(),
   maxOccupancy: z.coerce.number().min(1, "Max occupancy must be at least 1."),
   bedTypes: z.string().min(1, "Please enter at least one bed type."),
+  amenities: z.string().optional(),
 });
 
 interface RoomTypeFormDialogProps {
@@ -54,6 +55,7 @@ export function RoomTypeFormDialog({
       description: roomType?.description || "",
       maxOccupancy: roomType?.maxOccupancy || 1,
       bedTypes: roomType?.bedTypes.join(", ") || "",
+      amenities: roomType?.amenities.join(", ") || "",
     },
   });
 
@@ -61,6 +63,7 @@ export function RoomTypeFormDialog({
     console.log({
       ...values,
       bedTypes: values.bedTypes.split(",").map((s) => s.trim()),
+      amenities: values.amenities?.split(",").map((s) => s.trim()) || [],
     });
     toast.success(
       `Room type ${isEditing ? "updated" : "created"} successfully!`
@@ -133,6 +136,22 @@ export function RoomTypeFormDialog({
                   <FormLabel>Bed Types</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., 1 King, 1 Sofa Bed" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="amenities"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Amenities</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="e.g., Wi-Fi, Ocean View, Balcony"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

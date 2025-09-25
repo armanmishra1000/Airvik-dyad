@@ -53,6 +53,7 @@ export const mockRoomTypes: RoomType[] = [
     description: "A cozy room perfect for the solo traveler.",
     maxOccupancy: 1,
     bedTypes: ["1 Twin"],
+    amenities: ["Wi-Fi", "Air Conditioning", "TV"],
     photos: ["/room-single-1.jpg", "/room-single-2.jpg"],
   },
   {
@@ -61,6 +62,7 @@ export const mockRoomTypes: RoomType[] = [
     description: "Spacious room with two double beds, ideal for families.",
     maxOccupancy: 4,
     bedTypes: ["2 Double"],
+    amenities: ["Wi-Fi", "Air Conditioning", "TV", "Mini-fridge"],
     photos: ["/room-double-1.jpg", "/room-double-2.jpg"],
   },
   {
@@ -69,6 +71,7 @@ export const mockRoomTypes: RoomType[] = [
     description: "Luxurious suite with a king bed and a stunning ocean view.",
     maxOccupancy: 2,
     bedTypes: ["1 King"],
+    amenities: ["Wi-Fi", "Ocean View", "Balcony", "Jacuzzi Tub", "Mini-bar"],
     photos: ["/room-suite-1.jpg", "/room-suite-2.jpg"],
   },
 ];

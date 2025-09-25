@@ -27,6 +27,7 @@ export interface RoomType {
   description: string;
   maxOccupancy: number;
   bedTypes: string[];
+  amenities: string[];
   photos: string[];
 }
 

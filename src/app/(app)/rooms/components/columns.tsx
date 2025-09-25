@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
 import type { RoomType } from "@/data"
 import { RoomTypeFormDialog } from "./room-type-form-dialog"
 
@@ -30,6 +31,23 @@ export const columns: ColumnDef<RoomType>[] = [
     cell: ({ row }) => {
         const bedTypes = row.getValue("bedTypes") as string[];
         return <span>{bedTypes.join(", ")}</span>
+    }
+  },
+  {
+    accessorKey: "amenities",
+    header: "Amenities",
+    cell: ({ row }) => {
+        const amenities = row.getValue("amenities") as string[];
+        if (!amenities || amenities.length === 0) {
+            return <span className="text-muted-foreground">N/A</span>
+        }
+        return (
+            <div className="flex flex-wrap">
+                {amenities.map(amenity => (
+                    <Badge key={amenity} variant="secondary" className="mr-1 mb-1">{amenity}</Badge>
+                ))}
+            </div>
+        )
     }
   },
   {
