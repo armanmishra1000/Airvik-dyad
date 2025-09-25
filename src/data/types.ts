@@ -22,9 +22,13 @@ export interface Property {
   id: string;
   name: string;
   address: string;
+  phone: string;
+  email: string;
+  logoUrl: string;
+  photos: string[];
+  googleMapsUrl: string;
   timezone: string;
   currency: string;
-  logoUrl: string;
   brandColors: {
     primary: string;
     secondary: string;

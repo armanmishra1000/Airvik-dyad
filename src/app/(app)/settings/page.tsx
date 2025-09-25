@@ -21,9 +21,11 @@ import {
 } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -36,6 +38,11 @@ import { UsersManagement } from "./components/users-management";
 const propertySchema = z.object({
   name: z.string().min(1, "Property name is required."),
   address: z.string().min(1, "Address is required."),
+  phone: z.string().min(1, "Phone number is required."),
+  email: z.string().email("Please enter a valid email."),
+  logoUrl: z.string().url("Please enter a valid URL for the logo."),
+  photos: z.string().optional(),
+  googleMapsUrl: z.string().url("Please enter a valid Google Maps embed URL."),
 });
 
 export default function SettingsPage() {
@@ -46,6 +53,11 @@ export default function SettingsPage() {
     values: {
       name: property.name,
       address: property.address,
+      phone: property.phone,
+      email: property.email,
+      logoUrl: property.logoUrl,
+      photos: property.photos.join(", "),
+      googleMapsUrl: property.googleMapsUrl,
     },
   });
 
@@ -53,11 +65,20 @@ export default function SettingsPage() {
     form.reset({
       name: property.name,
       address: property.address,
+      phone: property.phone,
+      email: property.email,
+      logoUrl: property.logoUrl,
+      photos: property.photos.join(", "),
+      googleMapsUrl: property.googleMapsUrl,
     });
   }, [property, form]);
 
   function onSubmit(values: z.infer<typeof propertySchema>) {
-    updateProperty(values);
+    const updatedData = {
+      ...values,
+      photos: values.photos ? values.photos.split(",").map(p => p.trim()) : [],
+    };
+    updateProperty(updatedData);
     toast.success("Property details updated successfully!");
   }
 
@@ -89,21 +110,62 @@ export default function SettingsPage() {
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-4"
+                  className="space-y-6"
                 >
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Property Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Property Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="logoUrl"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Logo URL</FormLabel>
+                          <FormControl>
+                            <Input placeholder="https://example.com/logo.png" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contact Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormField
                     control={form.control}
                     name="address"
@@ -113,6 +175,38 @@ export default function SettingsPage() {
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="googleMapsUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Google Maps Embed URL</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Go to Google Maps, find your location, click "Share", then "Embed a map", and copy the src URL.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="photos"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Property Photos</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Add URLs to property photos, separated by commas.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

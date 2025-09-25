@@ -18,9 +18,17 @@ export const mockProperty: Property = {
   id: "prop-001",
   name: "The Grand Horizon Hotel",
   address: "123 Ocean View Drive, Miami, FL 33139",
+  phone: "+1 (305) 555-1234",
+  email: "contact@grandhorizon.com",
+  logoUrl: "/logo-placeholder.svg",
+  photos: [
+    "/room-suite-1.jpg",
+    "/room-double-1.jpg",
+    "/room-single-1.jpg",
+  ],
+  googleMapsUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3593.86888855555!2d-80.1341!3d25.7825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88d9b47f0a0f0a0b%3A0x4f7a4f7a4f7a4f7a!2sSouth%20Beach!5e0!3m2!1sen!2sus!4v1622000000000!5m2!1sen!2sus",
   timezone: "America/New_York",
   currency: "USD",
-  logoUrl: "/logo-placeholder.svg",
   brandColors: {
     primary: "#0077b6",
     secondary: "#f7b801",
