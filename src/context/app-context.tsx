@@ -11,6 +11,7 @@ import {
   mockRatePlans,
   mockProperty,
   mockUsers,
+  mockRoles,
   type Reservation,
   type Guest,
   type ReservationStatus,
@@ -22,6 +23,8 @@ import {
   type RatePlan,
   type Property,
   type User,
+  type Role,
+  type Permission,
 } from "@/data";
 
 // Define keys for local storage
@@ -33,6 +36,7 @@ const ROOM_TYPES_STORAGE_KEY = "hotel-pms-room-types";
 const RATE_PLANS_STORAGE_KEY = "hotel-pms-rate-plans";
 const PROPERTY_STORAGE_KEY = "hotel-pms-property";
 const CURRENT_USER_STORAGE_KEY = "hotel-pms-current-user";
+const ROLES_STORAGE_KEY = "hotel-pms-roles";
 
 interface AppContextType {
   property: Property;
@@ -44,7 +48,9 @@ interface AppContextType {
   ratePlans: RatePlan[];
   currentUser: User | null;
   users: User[];
+  roles: Role[];
   setCurrentUser: (user: User | null) => void;
+  hasPermission: (permission: Permission) => boolean;
   updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
   addReservation: (reservation: Omit<Reservation, "id">) => void;
   updateReservationStatus: (
@@ -75,6 +81,9 @@ interface AppContextType {
   addRatePlan: (ratePlan: Omit<RatePlan, "id">) => void;
   updateRatePlan: (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => void;
   deleteRatePlan: (ratePlanId: string) => boolean;
+  addRole: (role: Omit<Role, "id">) => void;
+  updateRole: (roleId: string, updatedData: Partial<Omit<Role, "id">>) => void;
+  deleteRole: (roleId: string) => boolean;
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
@@ -91,6 +100,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ratePlans, setRatePlans] = React.useState<RatePlan[]>(mockRatePlans);
   const [currentUser, setCurrentUser] = React.useState<User | null>(mockUsers[0]);
   const [users] = React.useState<User[]>(mockUsers);
+  const [roles, setRoles] = React.useState<Role[]>(mockRoles);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
   React.useEffect(() => {
@@ -98,19 +108,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const storedProperty = window.localStorage.getItem(PROPERTY_STORAGE_KEY);
       if (storedProperty) setProperty(JSON.parse(storedProperty));
 
-      const storedReservations = window.localStorage.getItem(
-        RESERVATIONS_STORAGE_KEY
-      );
+      const storedReservations = window.localStorage.getItem(RESERVATIONS_STORAGE_KEY);
       if (storedReservations) setReservations(JSON.parse(storedReservations));
 
       const storedGuests = window.localStorage.getItem(GUESTS_STORAGE_KEY);
       if (storedGuests) setGuests(JSON.parse(storedGuests));
 
-      const storedHousekeeping = window.localStorage.getItem(
-        HOUSEKEEPING_STORAGE_KEY
-      );
-      if (storedHousekeeping)
-        setHousekeepingAssignments(JSON.parse(storedHousekeeping));
+      const storedHousekeeping = window.localStorage.getItem(HOUSEKEEPING_STORAGE_KEY);
+      if (storedHousekeeping) setHousekeepingAssignments(JSON.parse(storedHousekeeping));
       
       const storedRooms = window.localStorage.getItem(ROOMS_STORAGE_KEY);
       if (storedRooms) setRooms(JSON.parse(storedRooms));
@@ -124,273 +129,59 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const storedUser = window.localStorage.getItem(CURRENT_USER_STORAGE_KEY);
       if (storedUser) setCurrentUser(JSON.parse(storedUser));
 
+      const storedRoles = window.localStorage.getItem(ROLES_STORAGE_KEY);
+      if (storedRoles) setRoles(JSON.parse(storedRoles));
+
     } catch (error) {
       console.error("Error reading from localStorage", error);
     }
     setIsInitialized(true);
   }, []);
 
-  React.useEffect(() => {
-    if (isInitialized) {
-      window.localStorage.setItem(PROPERTY_STORAGE_KEY, JSON.stringify(property));
-    }
-  }, [property, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(PROPERTY_STORAGE_KEY, JSON.stringify(property)); }, [property, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(RESERVATIONS_STORAGE_KEY, JSON.stringify(reservations)); }, [reservations, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(GUESTS_STORAGE_KEY, JSON.stringify(guests)); }, [guests, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(HOUSEKEEPING_STORAGE_KEY, JSON.stringify(housekeepingAssignments)); }, [housekeepingAssignments, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(rooms)); }, [rooms, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(ROOM_TYPES_STORAGE_KEY, JSON.stringify(roomTypes)); }, [roomTypes, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(RATE_PLANS_STORAGE_KEY, JSON.stringify(ratePlans)); }, [ratePlans, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser)); }, [currentUser, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(roles)); }, [roles, isInitialized]);
 
-  React.useEffect(() => {
-    if (isInitialized) {
-      window.localStorage.setItem(
-        RESERVATIONS_STORAGE_KEY,
-        JSON.stringify(reservations)
-      );
-    }
-  }, [reservations, isInitialized]);
-
-  React.useEffect(() => {
-    if (isInitialized) {
-      window.localStorage.setItem(GUESTS_STORAGE_KEY, JSON.stringify(guests));
-    }
-  }, [guests, isInitialized]);
-
-  React.useEffect(() => {
-    if (isInitialized) {
-      window.localStorage.setItem(
-        HOUSEKEEPING_STORAGE_KEY,
-        JSON.stringify(housekeepingAssignments)
-      );
-    }
-  }, [housekeepingAssignments, isInitialized]);
-
-  React.useEffect(() => {
-    if (isInitialized) {
-      window.localStorage.setItem(ROOMS_STORAGE_KEY, JSON.stringify(rooms));
-    }
-  }, [rooms, isInitialized]);
-
-  React.useEffect(() => {
-    if (isInitialized) {
-      window.localStorage.setItem(ROOM_TYPES_STORAGE_KEY, JSON.stringify(roomTypes));
-    }
-  }, [roomTypes, isInitialized]);
-
-  React.useEffect(() => {
-    if (isInitialized) {
-      window.localStorage.setItem(RATE_PLANS_STORAGE_KEY, JSON.stringify(ratePlans));
-    }
-  }, [ratePlans, isInitialized]);
-
-  React.useEffect(() => {
-    if (isInitialized) {
-      window.localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser));
-    }
-  }, [currentUser, isInitialized]);
-
-  const updateProperty = (updatedData: Partial<Omit<Property, "id">>) => {
-    setProperty(prev => ({ ...prev, ...updatedData }));
+  const hasPermission = (permission: Permission): boolean => {
+    if (!currentUser) return false;
+    const userRole = roles.find(r => r.id === currentUser.roleId);
+    if (!userRole) return false;
+    return userRole.permissions.includes(permission);
   };
 
-  const addGuest = (guestData: Omit<Guest, "id">): Guest => {
-    const newGuest: Guest = {
-      ...guestData,
-      id: `guest-${Date.now()}`,
-    };
-    setGuests((prev) => [...prev, newGuest]);
-    return newGuest;
-  };
-
-  const updateGuest = (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => {
-    setGuests(prev => prev.map(g => g.id === guestId ? { ...g, ...updatedData } : g));
-  };
-
-  const deleteGuest = (guestId: string): boolean => {
-    const activeStatuses: ReservationStatus[] = ["Confirmed", "Checked-in", "Tentative", "No-show"];
-    const hasActiveReservations = reservations.some(
-      (res) => res.guestId === guestId && activeStatuses.includes(res.status)
-    );
-    if (hasActiveReservations) {
-      return false;
-    }
-    setGuests(prev => prev.filter(g => g.id !== guestId));
-    return true;
-  };
-
-  const addReservation = (reservationData: Omit<Reservation, "id">) => {
-    const newReservation: Reservation = {
-      ...reservationData,
-      id: `res-${Date.now()}`,
-    };
-    setReservations((prev) => [...prev, newReservation]);
-  };
-
-  const updateReservationStatus = (
-    reservationId: string,
-    status: ReservationStatus
-  ) => {
-    setReservations((prev) =>
-      prev.map((res) =>
-        res.id === reservationId ? { ...res, status } : res
-      )
-    );
-  };
-
-  const addFolioItem = (
-    reservationId: string,
-    itemData: Omit<FolioItem, "id" | "timestamp">
-  ) => {
-    setReservations((prev) =>
-      prev.map((res) => {
-        if (res.id === reservationId) {
-          const newFolioItem: FolioItem = {
-            ...itemData,
-            id: `f-${Date.now()}`,
-            timestamp: formatISO(new Date()),
-          };
-          return {
-            ...res,
-            folio: [...res.folio, newFolioItem],
-            totalAmount: res.totalAmount + newFolioItem.amount,
-          };
-        }
-        return res;
-      })
-    );
-  };
-
-  const assignHousekeeper = ({
-    roomId,
-    userId,
-  }: {
-    roomId: string;
-    userId: string;
-  }) => {
-    const today = formatISO(new Date(), { representation: "date" });
-    const newAssignment: HousekeepingAssignment = {
-      roomId,
-      assignedTo: userId,
-      date: today,
-      status: "Pending",
-    };
-
-    setHousekeepingAssignments((prev) => {
-      const existingIndex = prev.findIndex(
-        (a) => a.roomId === roomId && a.date === today
-      );
-      if (existingIndex > -1) {
-        const updated = [...prev];
-        updated[existingIndex] = newAssignment;
-        return updated;
-      }
-      return [...prev, newAssignment];
-    });
-  };
-
-  const updateAssignmentStatus = (
-    roomId: string,
-    status: "Pending" | "Completed"
-  ) => {
-    const today = formatISO(new Date(), { representation: "date" });
-    setHousekeepingAssignments((prev) =>
-      prev.map((a) =>
-        a.roomId === roomId && a.date === today ? { ...a, status } : a
-      )
-    );
-  };
-
-  const addRoom = (roomData: Omit<Room, "id">) => {
-    const newRoom: Room = {
-      ...roomData,
-      id: `room-${Date.now()}`,
-    };
-    setRooms((prev) => [...prev, newRoom]);
-  };
-
-  const updateRoom = (roomId: string, updatedData: Partial<Omit<Room, "id">>) => {
-    setRooms(prev => prev.map(r => r.id === roomId ? { ...r, ...updatedData } : r));
-  };
-
-  const deleteRoom = (roomId: string): boolean => {
-    const activeStatuses: ReservationStatus[] = ["Confirmed", "Checked-in", "Tentative", "No-show"];
-    const hasActiveReservations = reservations.some(
-      (res) => res.roomId === roomId && activeStatuses.includes(res.status)
-    );
-    if (hasActiveReservations) {
-      return false;
-    }
-    setRooms(prev => prev.filter(r => r.id !== roomId));
-    return true;
-  };
-
-  const addRoomType = (roomTypeData: Omit<RoomType, "id" | "photos">) => {
-    const newRoomType: RoomType = {
-      ...roomTypeData,
-      id: `rt-${Date.now()}`,
-      photos: [],
-    };
-    setRoomTypes((prev) => [...prev, newRoomType]);
-  };
-
-  const updateRoomType = (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id" | "photos">>) => {
-    setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? { ...rt, ...updatedData } : rt));
-  };
-
-  const deleteRoomType = (roomTypeId: string): boolean => {
-    const isUsed = rooms.some(room => room.roomTypeId === roomTypeId);
-    if (isUsed) {
-      return false;
-    }
-    setRoomTypes(prev => prev.filter(rt => rt.id !== roomTypeId));
-    return true;
-  };
-
-  const addRatePlan = (ratePlanData: Omit<RatePlan, "id">) => {
-    const newRatePlan: RatePlan = {
-      ...ratePlanData,
-      id: `rp-${Date.now()}`,
-    };
-    setRatePlans((prev) => [...prev, newRatePlan]);
-  };
-
-  const updateRatePlan = (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => {
-    setRatePlans(prev => prev.map(rp => rp.id === ratePlanId ? { ...rp, ...updatedData } : rp));
-  };
-
-  const deleteRatePlan = (ratePlanId: string): boolean => {
-    const isUsed = reservations.some(res => res.ratePlanId === ratePlanId);
-    if (isUsed) {
-      return false;
-    }
-    setRatePlans(prev => prev.filter(rp => rp.id !== ratePlanId));
-    return true;
-  };
+  const updateProperty = (updatedData: Partial<Omit<Property, "id">>) => setProperty(prev => ({ ...prev, ...updatedData }));
+  const addGuest = (guestData: Omit<Guest, "id">): Guest => { const newGuest: Guest = { ...guestData, id: `guest-${Date.now()}` }; setGuests(prev => [...prev, newGuest]); return newGuest; };
+  const updateGuest = (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => setGuests(prev => prev.map(g => g.id === guestId ? { ...g, ...updatedData } : g));
+  const deleteGuest = (guestId: string): boolean => { const hasActive = reservations.some(res => res.guestId === guestId && ["Confirmed", "Checked-in"].includes(res.status)); if (hasActive) return false; setGuests(prev => prev.filter(g => g.id !== guestId)); return true; };
+  const addReservation = (reservationData: Omit<Reservation, "id">) => { const newReservation: Reservation = { ...reservationData, id: `res-${Date.now()}` }; setReservations(prev => [...prev, newReservation]); };
+  const updateReservationStatus = (reservationId: string, status: ReservationStatus) => setReservations(prev => prev.map(res => res.id === reservationId ? { ...res, status } : res));
+  const addFolioItem = (reservationId: string, itemData: Omit<FolioItem, "id" | "timestamp">) => { setReservations(prev => prev.map(res => { if (res.id === reservationId) { const newItem: FolioItem = { ...itemData, id: `f-${Date.now()}`, timestamp: formatISO(new Date()) }; return { ...res, folio: [...res.folio, newItem], totalAmount: res.totalAmount + newItem.amount }; } return res; })); };
+  const assignHousekeeper = ({ roomId, userId }: { roomId: string; userId: string; }) => { const today = formatISO(new Date(), { representation: "date" }); const newAssignment: HousekeepingAssignment = { roomId, assignedTo: userId, date: today, status: "Pending" }; setHousekeepingAssignments(prev => { const existingIndex = prev.findIndex(a => a.roomId === roomId && a.date === today); if (existingIndex > -1) { const updated = [...prev]; updated[existingIndex] = newAssignment; return updated; } return [...prev, newAssignment]; }); };
+  const updateAssignmentStatus = (roomId: string, status: "Pending" | "Completed") => { const today = formatISO(new Date(), { representation: "date" }); setHousekeepingAssignments(prev => prev.map(a => a.roomId === roomId && a.date === today ? { ...a, status } : a)); };
+  const addRoom = (roomData: Omit<Room, "id">) => { const newRoom: Room = { ...roomData, id: `room-${Date.now()}` }; setRooms(prev => [...prev, newRoom]); };
+  const updateRoom = (roomId: string, updatedData: Partial<Omit<Room, "id">>) => setRooms(prev => prev.map(r => r.id === roomId ? { ...r, ...updatedData } : r));
+  const deleteRoom = (roomId: string): boolean => { const hasActive = reservations.some(res => res.roomId === roomId && ["Confirmed", "Checked-in"].includes(res.status)); if (hasActive) return false; setRooms(prev => prev.filter(r => r.id !== roomId)); return true; };
+  const addRoomType = (roomTypeData: Omit<RoomType, "id" | "photos">) => { const newRoomType: RoomType = { ...roomTypeData, id: `rt-${Date.now()}`, photos: [] }; setRoomTypes(prev => [...prev, newRoomType]); };
+  const updateRoomType = (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id" | "photos">>) => setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? { ...rt, ...updatedData } : rt));
+  const deleteRoomType = (roomTypeId: string): boolean => { const isUsed = rooms.some(room => room.roomTypeId === roomTypeId); if (isUsed) return false; setRoomTypes(prev => prev.filter(rt => rt.id !== roomTypeId)); return true; };
+  const addRatePlan = (ratePlanData: Omit<RatePlan, "id">) => { const newRatePlan: RatePlan = { ...ratePlanData, id: `rp-${Date.now()}` }; setRatePlans(prev => [...prev, newRatePlan]); };
+  const updateRatePlan = (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => setRatePlans(prev => prev.map(rp => rp.id === ratePlanId ? { ...rp, ...updatedData } : rp));
+  const deleteRatePlan = (ratePlanId: string): boolean => { const isUsed = reservations.some(res => res.ratePlanId === ratePlanId); if (isUsed) return false; setRatePlans(prev => prev.filter(rp => rp.id !== ratePlanId)); return true; };
+  const addRole = (roleData: Omit<Role, "id">) => { const newRole: Role = { ...roleData, id: `role-${Date.now()}` }; setRoles(prev => [...prev, newRole]); };
+  const updateRole = (roleId: string, updatedData: Partial<Omit<Role, "id">>) => setRoles(prev => prev.map(r => r.id === roleId ? { ...r, ...updatedData } : r));
+  const deleteRole = (roleId: string): boolean => { const isUsed = users.some(u => u.roleId === roleId); if (isUsed) return false; setRoles(prev => prev.filter(r => r.id !== roleId)); return true; };
 
   const value = {
-    property,
-    reservations,
-    guests,
-    housekeepingAssignments,
-    rooms,
-    roomTypes,
-    ratePlans,
-    currentUser,
-    users,
-    setCurrentUser,
-    updateProperty,
-    addReservation,
-    updateReservationStatus,
-    addGuest,
-    updateGuest,
-    deleteGuest,
-    addFolioItem,
-    assignHousekeeper,
-    updateAssignmentStatus,
-    addRoom,
-    updateRoom,
-    deleteRoom,
-    addRoomType,
-    updateRoomType,
-    deleteRoomType,
-    addRatePlan,
-    updateRatePlan,
-    deleteRatePlan,
+    property, reservations, guests, housekeepingAssignments, rooms, roomTypes, ratePlans, currentUser, users, roles,
+    setCurrentUser, hasPermission, updateProperty, addReservation, updateReservationStatus, addGuest, updateGuest, deleteGuest,
+    addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
+    deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

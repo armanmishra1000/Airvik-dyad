@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@hook/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
 
@@ -30,6 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useAppContext } from "@/context/app-context";
+import { RolesPermissions } from "./components/roles-permissions";
 
 const propertySchema = z.object({
   name: z.string().min(1, "Property name is required."),
@@ -68,8 +69,9 @@ export default function SettingsPage() {
         </p>
       </div>
       <Tabs defaultValue="property" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="property">Property</TabsTrigger>
+          <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
@@ -119,6 +121,9 @@ export default function SettingsPage() {
               </Form>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="roles">
+            <RolesPermissions />
         </TabsContent>
         <TabsContent value="users">
           <Card>
