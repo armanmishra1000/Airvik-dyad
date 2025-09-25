@@ -3,8 +3,15 @@
 import * as React from "react";
 import { notFound, useParams } from "next/navigation";
 import Image from "next/image";
-import { Users, Bed } from "lucide-react";
-import { mockRoomTypes, mockRatePlans } from "@/data";
+import { Users, Bed, Calendar as CalendarIcon } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { format, differenceInDays, formatISO } from "date-fns";
+import type { DateRange } from "react-day-picker";
+import { toast } from "sonner";
+
+import { mockRoomTypes, mockRatePlans, mockRooms } from "@/data";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,48 +20,99 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
-import { toast } from "sonner";
-import type { DateRange } from "react-day-picker";
-import { differenceInDays, format } from "date-fns";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useAppContext } from "@/context/app-context";
+import { cn } from "@/lib/utils";
 
-// Use the standard rate plan for price calculation
-const standardRatePlan = mockRatePlans.find(rp => rp.id === 'rp-standard') || mockRatePlans[0];
+const bookingSchema = z.object({
+  firstName: z.string().min(1, "First name is required."),
+  lastName: z.string().min(1, "Last name is required."),
+  email: z.string().email("Please enter a valid email."),
+  dateRange: z.object({
+    from: z.date({ required_error: "Check-in date is required." }),
+    to: z.date({ required_error: "Check-out date is required." }),
+  }),
+  guests: z.coerce.number().min(1, "At least one guest is required."),
+});
+
+const standardRatePlan =
+  mockRatePlans.find((rp) => rp.id === "rp-standard") || mockRatePlans[0];
 
 export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
+  const { addGuest, addReservation } = useAppContext();
   const roomType = mockRoomTypes.find((rt) => rt.id === params.id);
 
-  const [dateRange, setDateRange] = React.useState<DateRange | undefined>();
-  const [guests, setGuests] = React.useState(1);
+  const form = useForm<z.infer<typeof bookingSchema>>({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      guests: 1,
+    },
+  });
 
-  if (!roomType) {
-    notFound();
-  }
-
+  const dateRange = form.watch("dateRange");
   const nights =
     dateRange?.from && dateRange?.to
       ? differenceInDays(dateRange.to, dateRange.from)
       : 0;
   const totalCost = nights * standardRatePlan.price;
 
-  const handleBooking = () => {
-    if (!dateRange?.from || !dateRange?.to) {
-      toast.error("Please select a check-in and check-out date.");
-      return;
-    }
-    if (guests < 1) {
-      toast.error("Please select at least one guest.");
+  if (!roomType) {
+    notFound();
+  }
+
+  function onSubmit(values: z.infer<typeof bookingSchema>) {
+    const availableRoom = mockRooms.find((r) => r.roomTypeId === roomType?.id);
+    if (!availableRoom) {
+      toast.error(
+        "Sorry, no rooms of this type are available for the selected dates."
+      );
       return;
     }
 
-    toast.success("Booking Confirmed!", {
-      description: `Your booking for ${nights} nights has been made. Total: $${totalCost.toFixed(2)}`,
+    const newGuest = addGuest({
+      firstName: values.firstName,
+      lastName: values.lastName,
+      email: values.email,
+      phone: "",
     });
-    // In a real app, this would create a new reservation and redirect to a confirmation page.
-  };
+
+    addReservation({
+      guestId: newGuest.id,
+      roomId: availableRoom.id,
+      ratePlanId: standardRatePlan.id,
+      checkInDate: formatISO(values.dateRange.from, { representation: "date" }),
+      checkOutDate: formatISO(values.dateRange.to, { representation: "date" }),
+      numberOfGuests: values.guests,
+      status: "Confirmed",
+      notes: "Booked via public website.",
+      folio: [{ id: "f-initial", description: "Room Charge", amount: totalCost, timestamp: formatISO(new Date()) }],
+      totalAmount: totalCost,
+    });
+
+    toast.success("Booking Confirmed!", {
+      description: `Your booking for ${nights} nights is complete. You will receive a confirmation email.`,
+    });
+
+    form.reset();
+  }
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -86,41 +144,143 @@ export default function RoomDetailsPage() {
             <CardHeader>
               <CardTitle>Book Your Stay</CardTitle>
               <CardDescription>
-                Select your dates to check availability.
+                Fill in your details to complete the booking.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Check-in / Check-out</Label>
-                <Calendar
-                  mode="range"
-                  className="p-0"
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  numberOfMonths={1}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="guests">Number of Guests</Label>
-                <Input
-                  id="guests"
-                  type="number"
-                  value={guests}
-                  onChange={(e) => setGuests(Number(e.target.value))}
-                  min={1}
-                  max={roomType.maxOccupancy}
-                />
-              </div>
-              {nights > 0 && (
-                <div className="text-center font-semibold text-lg border-t pt-4">
-                  <p>
-                    Total for {nights} night(s): ${totalCost.toFixed(2)}
-                  </p>
-                </div>
-              )}
-              <Button className="w-full" onClick={handleBooking}>
-                Book Now
-              </Button>
+            <CardContent>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="John" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="john.doe@example.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="dateRange"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Check-in / Check-out</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !field.value?.from && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value?.from ? (
+                                  field.value.to ? (
+                                    <>
+                                      {format(field.value.from, "LLL dd, y")}{" "}
+                                      - {format(field.value.to, "LLL dd, y")}
+                                    </>
+                                  ) : (
+                                    format(field.value.from, "LLL dd, y")
+                                  )
+                                ) : (
+                                  <span>Pick a date range</span>
+                                )}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-auto p-0"
+                            align="start"
+                          >
+                            <Calendar
+                              initialFocus
+                              mode="range"
+                              defaultMonth={field.value?.from}
+                              selected={{
+                                from: field.value?.from,
+                                to: field.value?.to,
+                              }}
+                              onSelect={field.onChange}
+                              numberOfMonths={1}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="guests"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Number of Guests</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={roomType.maxOccupancy}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {nights > 0 && (
+                    <div className="text-center font-semibold text-lg border-t pt-4">
+                      <p>
+                        Total for {nights} night(s): ${totalCost.toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+                  <Button className="w-full" type="submit">
+                    Confirm Booking
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         </div>

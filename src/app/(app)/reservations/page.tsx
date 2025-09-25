@@ -2,49 +2,36 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { mockReservations, mockGuests, mockRooms } from "@/data";
-import { columns, ReservationWithDetails } from "./components/columns";
+import { mockRooms } from "@/data";
+import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
-
-// Combine data for easier lookup in the table
-const initialReservations = mockReservations.map((res) => {
-  const guest = mockGuests.find((g) => g.id === res.guestId);
-  const room = mockRooms.find((r) => r.id === res.roomId);
-  return {
-    ...res,
-    guestName: guest ? `${guest.firstName} ${guest.lastName}` : "N/A",
-    roomNumber: room ? room.roomNumber : "N/A",
-  };
-});
+import { useAppContext } from "@/context/app-context";
 
 export default function ReservationsPage() {
-  const [reservations, setReservations] =
-    React.useState<ReservationWithDetails[]>(initialReservations);
+  const { reservations, guests, updateReservationStatus } = useAppContext();
+
+  const reservationsWithDetails = React.useMemo(() => reservations.map((res) => {
+    const guest = guests.find((g) => g.id === res.guestId);
+    const room = mockRooms.find((r) => r.id === res.roomId);
+    return {
+      ...res,
+      guestName: guest ? `${guest.firstName} ${guest.lastName}` : "N/A",
+      roomNumber: room ? room.roomNumber : "N/A",
+    };
+  }), [reservations, guests]);
 
   const handleCancelReservation = (reservationId: string) => {
-    setReservations((prev) =>
-      prev.map((res) =>
-        res.id === reservationId ? { ...res, status: "Cancelled" } : res
-      )
-    );
+    updateReservationStatus(reservationId, "Cancelled");
     toast.success("Reservation cancelled successfully.");
   };
 
   const handleCheckInReservation = (reservationId: string) => {
-    setReservations((prev) =>
-      prev.map((res) =>
-        res.id === reservationId ? { ...res, status: "Checked-in" } : res
-      )
-    );
+    updateReservationStatus(reservationId, "Checked-in");
     toast.success("Guest checked-in successfully.");
   };
 
   const handleCheckOutReservation = (reservationId: string) => {
-    setReservations((prev) =>
-      prev.map((res) =>
-        res.id === reservationId ? { ...res, status: "Checked-out" } : res
-      )
-    );
+    updateReservationStatus(reservationId, "Checked-out");
     toast.success("Guest checked-out successfully.");
   };
 
@@ -52,7 +39,7 @@ export default function ReservationsPage() {
     <div className="space-y-4">
       <DataTable
         columns={columns}
-        data={reservations}
+        data={reservationsWithDetails}
         onCancelReservation={handleCancelReservation}
         onCheckInReservation={handleCheckInReservation}
         onCheckOutReservation={handleCheckOutReservation}

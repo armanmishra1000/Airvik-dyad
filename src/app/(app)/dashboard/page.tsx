@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import {
     Activity,
     ArrowUpRight,
@@ -35,13 +38,16 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-  import { mockReservations, mockGuests, mockRooms } from "@/data"
+  import { mockRooms } from "@/data"
   import { format, isToday } from "date-fns"
+  import { useAppContext } from "@/context/app-context";
   
   export default function DashboardPage() {
-    const todayArrivals = mockReservations.filter(r => isToday(new Date(r.checkInDate)));
-    const todayDepartures = mockReservations.filter(r => isToday(new Date(r.checkOutDate)));
-    const checkedInGuests = mockReservations.filter(r => r.status === 'Checked-in').length;
+    const { reservations, guests } = useAppContext();
+
+    const todayArrivals = reservations.filter(r => isToday(new Date(r.checkInDate)));
+    const todayDepartures = reservations.filter(r => isToday(new Date(r.checkOutDate)));
+    const checkedInGuests = reservations.filter(r => r.status === 'Checked-in').length;
     const availableRooms = mockRooms.filter(r => r.status === 'Clean' || r.status === 'Inspected').length;
     const occupancy = ((mockRooms.length - availableRooms) / mockRooms.length) * 100;
 
@@ -120,7 +126,7 @@ import {
                 </TableHeader>
                 <TableBody>
                     {todayArrivals.map(res => {
-                        const guest = mockGuests.find(g => g.id === res.guestId);
+                        const guest = guests.find(g => g.id === res.guestId);
                         const room = mockRooms.find(r => r.id === res.roomId);
                         return (
                             <TableRow key={res.id}>
