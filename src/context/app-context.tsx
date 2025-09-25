@@ -9,6 +9,7 @@ import {
   mockRooms,
   mockRoomTypes,
   mockRatePlans,
+  mockProperty,
   type Reservation,
   type Guest,
   type ReservationStatus,
@@ -18,6 +19,7 @@ import {
   type RoomStatus,
   type RoomType,
   type RatePlan,
+  type Property,
 } from "@/data";
 
 // Define keys for local storage
@@ -27,14 +29,17 @@ const HOUSEKEEPING_STORAGE_KEY = "hotel-pms-housekeeping";
 const ROOMS_STORAGE_KEY = "hotel-pms-rooms";
 const ROOM_TYPES_STORAGE_KEY = "hotel-pms-room-types";
 const RATE_PLANS_STORAGE_KEY = "hotel-pms-rate-plans";
+const PROPERTY_STORAGE_KEY = "hotel-pms-property";
 
 interface AppContextType {
+  property: Property;
   reservations: Reservation[];
   guests: Guest[];
   housekeepingAssignments: HousekeepingAssignment[];
   rooms: Room[];
   roomTypes: RoomType[];
   ratePlans: RatePlan[];
+  updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
   addReservation: (reservation: Omit<Reservation, "id">) => void;
   updateReservationStatus: (
     reservationId: string,
@@ -65,6 +70,7 @@ interface AppContextType {
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [property, setProperty] = React.useState<Property>(mockProperty);
   const [reservations, setReservations] =
     React.useState<Reservation[]>(mockReservations);
   const [guests, setGuests] = React.useState<Guest[]>(mockGuests);
@@ -77,6 +83,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     try {
+      const storedProperty = window.localStorage.getItem(PROPERTY_STORAGE_KEY);
+      if (storedProperty) setProperty(JSON.parse(storedProperty));
+
       const storedReservations = window.localStorage.getItem(
         RESERVATIONS_STORAGE_KEY
       );
@@ -105,6 +114,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
     setIsInitialized(true);
   }, []);
+
+  React.useEffect(() => {
+    if (isInitialized) {
+      window.localStorage.setItem(PROPERTY_STORAGE_KEY, JSON.stringify(property));
+    }
+  }, [property, isInitialized]);
 
   React.useEffect(() => {
     if (isInitialized) {
@@ -147,6 +162,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       window.localStorage.setItem(RATE_PLANS_STORAGE_KEY, JSON.stringify(ratePlans));
     }
   }, [ratePlans, isInitialized]);
+
+  const updateProperty = (updatedData: Partial<Omit<Property, "id">>) => {
+    setProperty(prev => ({ ...prev, ...updatedData }));
+  };
 
   const addGuest = (guestData: Omit<Guest, "id">): Guest => {
     const newGuest: Guest = {
@@ -281,12 +300,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const value = {
+    property,
     reservations,
     guests,
     housekeepingAssignments,
     rooms,
     roomTypes,
     ratePlans,
+    updateProperty,
     addReservation,
     updateReservationStatus,
     addGuest,

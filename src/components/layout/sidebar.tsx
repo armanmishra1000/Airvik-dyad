@@ -24,7 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { mockProperty } from "@/data";
+import { useAppContext } from "@/context/app-context";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Dashboard" },
@@ -40,6 +40,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { property } = useAppContext();
 
   return (
     <div className="hidden border-r bg-background md:block">
@@ -47,7 +48,7 @@ export function Sidebar() {
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <Package2 className="h-6 w-6" />
-            <span className="">{mockProperty.name}</span>
+            <span className="">{property.name}</span>
           </Link>
         </div>
         <div className="flex-1">
