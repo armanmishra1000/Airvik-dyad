@@ -56,7 +56,7 @@ export default function SettingsPage() {
       phone: property.phone,
       email: property.email,
       logoUrl: property.logoUrl,
-      photos: property.photos.join(", "),
+      photos: property.photos?.join(", ") || "",
       googleMapsUrl: property.googleMapsUrl,
     },
   });
@@ -68,7 +68,7 @@ export default function SettingsPage() {
       phone: property.phone,
       email: property.email,
       logoUrl: property.logoUrl,
-      photos: property.photos.join(", "),
+      photos: property.photos?.join(", ") || "",
       googleMapsUrl: property.googleMapsUrl,
     });
   }, [property, form]);
