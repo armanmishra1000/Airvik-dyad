@@ -2,7 +2,7 @@
 
 import { Table } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { CreateReservationDialog } from "./create-reservation-dialog"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -23,7 +23,7 @@ export function DataTableToolbar<TData>({
           className="h-8 w-[150px] lg:w-[250px]"
         />
       </div>
-      <Button>Add Reservation</Button>
+      <CreateReservationDialog />
     </div>
   )
 }
