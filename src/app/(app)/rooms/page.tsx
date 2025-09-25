@@ -1,11 +1,15 @@
-import { mockRoomTypes } from "@/data";
+"use client";
+
+import { useAppContext } from "@/context/app-context";
 import { columns } from "./components/columns";
-import { RoomTypesDataTable } from "./components/data-table";
+import { RoomsDataTable } from "./components/data-table";
 
 export default function RoomsPage() {
+  const { rooms } = useAppContext();
+
   return (
     <div className="space-y-4">
-      <RoomTypesDataTable columns={columns} data={mockRoomTypes} />
+      <RoomsDataTable columns={columns} data={rooms} />
     </div>
   );
 }

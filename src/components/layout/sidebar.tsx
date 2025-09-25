@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {
-  Bell,
   Home,
   Calendar,
   Users,
@@ -12,6 +11,7 @@ import {
   Settings,
   Package2,
   ClipboardList,
+  Layers,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 
@@ -32,6 +32,7 @@ const navItems = [
   { href: "/calendar", icon: Calendar, label: "Calendar" },
   { href: "/housekeeping", icon: ClipboardList, label: "Housekeeping" },
   { href: "/guests", icon: Users, label: "Guests" },
+  { href: "/room-types", icon: Layers, label: "Room Types" },
   { href: "/rooms", icon: BedDouble, label: "Rooms" },
   { href: "/rates", icon: DollarSign, label: "Rate Plans" },
   { href: "/reports", icon: BarChart3, label: "Reports" },
