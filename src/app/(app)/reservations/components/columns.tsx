@@ -78,7 +78,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const reservation = row.original
  
       return (
@@ -98,7 +98,9 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>View guest details</DropdownMenuItem>
-            <DropdownMenuItem>View reservation details</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => table.options.meta?.viewReservation(reservation)}>
+                View reservation details
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
