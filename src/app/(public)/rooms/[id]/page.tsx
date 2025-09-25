@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { notFound, useParams, useSearchParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import { Users, Bed, Calendar as CalendarIcon, Check } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -187,11 +186,10 @@ export default function RoomDetailsPage() {
               {photosToShow.map((photo, index) => (
                 <CarouselItem key={index}>
                   <div className="relative aspect-video">
-                    <Image
+                    <img
                       src={photo}
                       alt={`${roomType.name} photo ${index + 1}`}
-                      fill
-                      className="object-cover"
+                      className="absolute inset-0 h-full w-full object-cover"
                     />
                   </div>
                 </CarouselItem>

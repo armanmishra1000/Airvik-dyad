@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import { ColumnDef, RowData } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 
@@ -32,11 +31,10 @@ export const columns: ColumnDef<RoomType>[] = [
       const imageUrl = roomType.mainPhotoUrl || roomType.photos?.[0] || "/room-placeholder.svg"
       return (
         <div className="w-16 h-10 relative rounded-md overflow-hidden">
-            <Image 
+            <img 
                 src={imageUrl}
                 alt={roomType.name}
-                fill
-                className="object-cover"
+                className="absolute inset-0 h-full w-full object-cover"
             />
         </div>
       )

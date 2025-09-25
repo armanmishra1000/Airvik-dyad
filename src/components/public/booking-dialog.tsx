@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Users, Search } from "lucide-react";
-import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -205,15 +204,14 @@ export function BookingDialog({
                     <div key={rt.id}>
                       <div className="flex gap-4">
                         <div className="w-24 h-16 relative rounded-md overflow-hidden flex-shrink-0">
-                          <Image
+                          <img
                             src={
                               rt.mainPhotoUrl ||
                               rt.photos[0] ||
                               "/room-placeholder.svg"
                             }
                             alt={rt.name}
-                            fill
-                            className="object-cover"
+                            className="absolute inset-0 h-full w-full object-cover"
                           />
                         </div>
                         <div className="flex-1">
