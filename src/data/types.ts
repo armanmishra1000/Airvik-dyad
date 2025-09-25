@@ -43,6 +43,7 @@ export interface RoomType {
   bedTypes: string[];
   amenities: string[];
   photos: string[];
+  mainPhotoUrl?: string;
 }
 
 export type RoomStatus = "Clean" | "Dirty" | "Inspected" | "Maintenance";
@@ -52,6 +53,7 @@ export interface Room {
   roomNumber: string;
   roomTypeId: string;
   status: RoomStatus;
+  photos?: string[];
 }
 
 export interface RatePlan {

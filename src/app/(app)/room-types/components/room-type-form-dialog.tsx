@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { RoomType } from "@/data";
 import { useAppContext } from "@/context/app-context";
+import { MultiImageUpload } from "@/components/shared/multi-image-upload";
 
 const roomTypeSchema = z.object({
   name: z.string().min(1, "Room type name is required."),
@@ -35,6 +36,8 @@ const roomTypeSchema = z.object({
   maxOccupancy: z.coerce.number().min(1, "Max occupancy must be at least 1."),
   bedTypes: z.string().min(1, "Please enter at least one bed type."),
   amenities: z.string().optional(),
+  photos: z.array(z.string()).optional(),
+  mainPhotoUrl: z.string().optional(),
 });
 
 interface RoomTypeFormDialogProps {
@@ -58,6 +61,8 @@ export function RoomTypeFormDialog({
       maxOccupancy: roomType?.maxOccupancy || 1,
       bedTypes: roomType?.bedTypes.join(", ") || "",
       amenities: roomType?.amenities.join(", ") || "",
+      photos: roomType?.photos || [],
+      mainPhotoUrl: roomType?.mainPhotoUrl || "",
     },
   });
 
@@ -67,6 +72,8 @@ export function RoomTypeFormDialog({
       description: values.description || "",
       bedTypes: values.bedTypes.split(",").map((s) => s.trim()),
       amenities: values.amenities?.split(",").map((s) => s.trim()) || [],
+      photos: values.photos || [],
+      mainPhotoUrl: values.mainPhotoUrl || values.photos?.[0] || "",
     };
 
     if (isEditing && roomType) {
@@ -85,7 +92,7 @@ export function RoomTypeFormDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Room Type" : "Add New Room Type"}
@@ -161,6 +168,24 @@ export function RoomTypeFormDialog({
                     <Textarea
                       placeholder="e.g., Wi-Fi, Ocean View, Balcony"
                       {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="photos"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Photos</FormLabel>
+                  <FormControl>
+                    <MultiImageUpload
+                      value={field.value || []}
+                      onChange={field.onChange}
+                      mainPhotoUrl={form.watch("mainPhotoUrl")}
+                      onSetMain={(url) => form.setValue("mainPhotoUrl", url)}
                     />
                   </FormControl>
                   <FormMessage />

@@ -193,7 +193,7 @@ export default function RoomDetailsPage() {
         <div className="md:col-span-2">
           <div className="relative aspect-video mb-4">
             <Image
-              src={roomType.photos[0] || "/room-placeholder.jpg"}
+              src={roomType.mainPhotoUrl || roomType.photos[0] || "/room-placeholder.jpg"}
               alt={roomType.name}
               fill
               className="object-cover rounded-lg"

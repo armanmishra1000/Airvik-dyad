@@ -98,6 +98,7 @@ export const mockRoomTypes: RoomType[] = [
     bedTypes: ["1 Twin"],
     amenities: ["Wi-Fi", "Air Conditioning", "TV"],
     photos: ["/room-single-1.jpg", "/room-single-2.jpg"],
+    mainPhotoUrl: "/room-single-1.jpg",
   },
   {
     id: "rt-double",
@@ -107,6 +108,7 @@ export const mockRoomTypes: RoomType[] = [
     bedTypes: ["2 Double"],
     amenities: ["Wi-Fi", "Air Conditioning", "TV", "Mini-fridge"],
     photos: ["/room-double-1.jpg", "/room-double-2.jpg"],
+    mainPhotoUrl: "/room-double-1.jpg",
   },
   {
     id: "rt-suite",
@@ -116,16 +118,17 @@ export const mockRoomTypes: RoomType[] = [
     bedTypes: ["1 King"],
     amenities: ["Wi-Fi", "Ocean View", "Balcony", "Jacuzzi Tub", "Mini-bar"],
     photos: ["/room-suite-1.jpg", "/room-suite-2.jpg"],
+    mainPhotoUrl: "/room-suite-1.jpg",
   },
 ];
 
 export const mockRooms: Room[] = [
-  { id: "room-101", roomNumber: "101", roomTypeId: "rt-single", status: "Clean" },
-  { id: "room-102", roomNumber: "102", roomTypeId: "rt-single", status: "Dirty" },
-  { id: "room-201", roomNumber: "201", roomTypeId: "rt-double", status: "Clean" },
-  { id: "room-202", roomNumber: "202", roomTypeId: "rt-double", status: "Inspected" },
-  { id: "room-301", roomNumber: "301", roomTypeId: "rt-suite", status: "Maintenance" },
-  { id: "room-302", roomNumber: "302", roomTypeId: "rt-suite", status: "Clean" },
+  { id: "room-101", roomNumber: "101", roomTypeId: "rt-single", status: "Clean", photos: [] },
+  { id: "room-102", roomNumber: "102", roomTypeId: "rt-single", status: "Dirty", photos: [] },
+  { id: "room-201", roomNumber: "201", roomTypeId: "rt-double", status: "Clean", photos: [] },
+  { id: "room-202", roomNumber: "202", roomTypeId: "rt-double", status: "Inspected", photos: [] },
+  { id: "room-301", roomNumber: "301", roomTypeId: "rt-suite", status: "Maintenance", photos: [] },
+  { id: "room-302", roomNumber: "302", roomTypeId: "rt-suite", status: "Clean", photos: [] },
 ];
 
 export const mockRatePlans: RatePlan[] = [
