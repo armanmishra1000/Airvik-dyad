@@ -7,7 +7,7 @@ import { HousekeepingToolbar } from "./components/housekeeping-toolbar";
 import { RoomStatusCard } from "./components/room-status-card";
 
 // Combine room data with room type details for easier display
-const roomsWithDetails = mockRooms.map((room) => {
+const initialRooms = mockRooms.map((room) => {
   const roomType = mockRoomTypes.find((rt) => rt.id === room.roomTypeId);
   return {
     ...room,
@@ -16,16 +16,25 @@ const roomsWithDetails = mockRooms.map((room) => {
 });
 
 export default function HousekeepingPage() {
+  const [rooms, setRooms] = React.useState(initialRooms);
   const [statusFilter, setStatusFilter] = React.useState<RoomStatus | "all">(
     "all"
   );
 
+  const handleStatusUpdate = (roomId: string, newStatus: RoomStatus) => {
+    setRooms((prevRooms) =>
+      prevRooms.map((room) =>
+        room.id === roomId ? { ...room, status: newStatus } : room
+      )
+    );
+  };
+
   const filteredRooms = React.useMemo(() => {
     if (statusFilter === "all") {
-      return roomsWithDetails;
+      return rooms;
     }
-    return roomsWithDetails.filter((room) => room.status === statusFilter);
-  }, [statusFilter]);
+    return rooms.filter((room) => room.status === statusFilter);
+  }, [statusFilter, rooms]);
 
   return (
     <div className="space-y-4">
@@ -35,12 +44,16 @@ export default function HousekeepingPage() {
       />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filteredRooms.map((room) => (
-          <RoomStatusCard key={room.id} room={room} />
+          <RoomStatusCard
+            key={room.id}
+            room={room}
+            onStatusUpdate={handleStatusUpdate}
+          />
         ))}
       </div>
       {filteredRooms.length === 0 && (
         <div className="text-center text-muted-foreground py-12">
-            <p>No rooms match the selected status.</p>
+          <p>No rooms match the selected status.</p>
         </div>
       )}
     </div>
