@@ -22,9 +22,9 @@ export const mockProperty: Property = {
   email: "contact@grandhorizon.com",
   logoUrl: "/logo-placeholder.svg",
   photos: [
-    "/room-suite-1.jpg",
-    "/room-double-1.jpg",
-    "/room-single-1.jpg",
+    "/room-suite-1.svg",
+    "/room-double-1.svg",
+    "/room-single-1.svg",
   ],
   googleMapsUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3593.86888855555!2d-80.1341!3d25.7825!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x88d9b47f0a0f0a0b%3A0x4f7a4f7a4f7a4f7a!2sSouth%20Beach!5e0!3m2!1sen!2sus!4v1622000000000!5m2!1sen!2sus",
   timezone: "America/New_York",
@@ -97,8 +97,8 @@ export const mockRoomTypes: RoomType[] = [
     maxOccupancy: 1,
     bedTypes: ["1 Twin"],
     amenities: ["Wi-Fi", "Air Conditioning", "TV"],
-    photos: ["/room-single-1.jpg", "/room-single-2.jpg"],
-    mainPhotoUrl: "/room-single-1.jpg",
+    photos: ["/room-single-1.svg", "/room-single-2.svg"],
+    mainPhotoUrl: "/room-single-1.svg",
   },
   {
     id: "rt-double",
@@ -107,8 +107,8 @@ export const mockRoomTypes: RoomType[] = [
     maxOccupancy: 4,
     bedTypes: ["2 Double"],
     amenities: ["Wi-Fi", "Air Conditioning", "TV", "Mini-fridge"],
-    photos: ["/room-double-1.jpg", "/room-double-2.jpg"],
-    mainPhotoUrl: "/room-double-1.jpg",
+    photos: ["/room-double-1.svg", "/room-double-2.svg"],
+    mainPhotoUrl: "/room-double-1.svg",
   },
   {
     id: "rt-suite",
@@ -117,8 +117,8 @@ export const mockRoomTypes: RoomType[] = [
     maxOccupancy: 2,
     bedTypes: ["1 King"],
     amenities: ["Wi-Fi", "Ocean View", "Balcony", "Jacuzzi Tub", "Mini-bar"],
-    photos: ["/room-suite-1.jpg", "/room-suite-2.jpg"],
-    mainPhotoUrl: "/room-suite-1.jpg",
+    photos: ["/room-suite-1.svg", "/room-suite-2.svg"],
+    mainPhotoUrl: "/room-suite-1.svg",
   },
 ];
 

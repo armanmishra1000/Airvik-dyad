@@ -209,7 +209,7 @@ export function BookingDialog({
                             src={
                               rt.mainPhotoUrl ||
                               rt.photos[0] ||
-                              "/room-placeholder.jpg"
+                              "/room-placeholder.svg"
                             }
                             alt={rt.name}
                             fill

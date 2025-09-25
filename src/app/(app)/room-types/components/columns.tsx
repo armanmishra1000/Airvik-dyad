@@ -29,7 +29,7 @@ export const columns: ColumnDef<RoomType>[] = [
     header: "Image",
     cell: ({ row }) => {
       const roomType = row.original
-      const imageUrl = roomType.mainPhotoUrl || roomType.photos?.[0] || "/room-placeholder.jpg"
+      const imageUrl = roomType.mainPhotoUrl || roomType.photos?.[0] || "/room-placeholder.svg"
       return (
         <div className="w-16 h-10 relative rounded-md overflow-hidden">
             <Image 

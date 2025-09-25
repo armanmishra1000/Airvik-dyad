@@ -106,7 +106,7 @@ export default function RoomDetailsPage() {
 
   const photosToShow = React.useMemo(() => {
     if (!roomType || !roomType.photos || roomType.photos.length === 0) {
-      return ["/room-placeholder.jpg"];
+      return ["/room-placeholder.svg"];
     }
     const sortedPhotos = [...roomType.photos];
     if (roomType.mainPhotoUrl) {

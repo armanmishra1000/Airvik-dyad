@@ -34,7 +34,7 @@ export function RoomTypeCard({ roomType, searchParams }: RoomTypeCardProps) {
             src={
               roomType.mainPhotoUrl ||
               roomType.photos[0] ||
-              "/room-placeholder.jpg"
+              "/room-placeholder.svg"
             }
             alt={roomType.name}
             fill
