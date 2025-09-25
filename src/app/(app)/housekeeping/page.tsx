@@ -1,22 +1,24 @@
 "use client";
 
 import * as React from "react";
-import { mockRooms, mockRoomTypes } from "@/data";
-import type { Room, RoomStatus } from "@/data";
+import { formatISO } from "date-fns";
+import { mockRoomTypes, mockUsers } from "@/data";
+import type { RoomStatus } from "@/data";
 import { HousekeepingToolbar } from "./components/housekeeping-toolbar";
 import { RoomStatusCard } from "./components/room-status-card";
-
-// Combine room data with room type details for easier display
-const initialRooms = mockRooms.map((room) => {
-  const roomType = mockRoomTypes.find((rt) => rt.id === room.roomTypeId);
-  return {
-    ...room,
-    roomTypeName: roomType?.name || "Unknown",
-  };
-});
+import { useAppContext } from "@/context/app-context";
 
 export default function HousekeepingPage() {
-  const [rooms, setRooms] = React.useState(initialRooms);
+  const { housekeepingAssignments, updateAssignmentStatus } = useAppContext();
+  const [rooms, setRooms] = React.useState(() =>
+    mockRooms.map((room) => {
+      const roomType = mockRoomTypes.find((rt) => rt.id === room.roomTypeId);
+      return {
+        ...room,
+        roomTypeName: roomType?.name || "Unknown",
+      };
+    })
+  );
   const [statusFilter, setStatusFilter] = React.useState<RoomStatus | "all">(
     "all"
   );
@@ -27,14 +29,35 @@ export default function HousekeepingPage() {
         room.id === roomId ? { ...room, status: newStatus } : room
       )
     );
+    // If a room is marked clean, complete any pending assignment for today
+    if (newStatus === "Clean") {
+      updateAssignmentStatus(roomId, "Completed");
+    }
   };
+
+  const roomsWithAssignments = React.useMemo(() => {
+    const today = formatISO(new Date(), { representation: "date" });
+    return rooms.map((room) => {
+      const assignment = housekeepingAssignments.find(
+        (a) => a.roomId === room.id && a.date === today
+      );
+      const housekeeper = assignment
+        ? mockUsers.find((u) => u.id === assignment.assignedTo)
+        : undefined;
+      return {
+        ...room,
+        assignment,
+        housekeeperName: housekeeper?.name,
+      };
+    });
+  }, [rooms, housekeepingAssignments]);
 
   const filteredRooms = React.useMemo(() => {
     if (statusFilter === "all") {
-      return rooms;
+      return roomsWithAssignments;
     }
-    return rooms.filter((room) => room.status === statusFilter);
-  }, [statusFilter, rooms]);
+    return roomsWithAssignments.filter((room) => room.status === statusFilter);
+  }, [statusFilter, roomsWithAssignments]);
 
   return (
     <div className="space-y-4">
