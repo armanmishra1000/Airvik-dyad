@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { notFound, useParams, useSearchParams } from "next/navigation";
+import { notFound, useParams, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Users, Bed, Calendar as CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -70,7 +70,8 @@ const standardRatePlan =
 export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
-  const { addGuest, addReservation, reservations, roomTypes } = useAppContext();
+  const router = useRouter();
+  const { reservations, roomTypes } = useAppContext();
   const roomType = roomTypes.find((rt) => rt.id === params.id);
 
   const form = useForm<z.infer<typeof bookingSchema>>({
@@ -165,63 +166,16 @@ export default function RoomDetailsPage() {
   }
 
   function onSubmit(values: z.infer<typeof bookingSchema>) {
-    const roomsOfType = mockRooms.filter((r) => r.roomTypeId === roomType?.id);
-
-    const availableRoom = roomsOfType.find((room) => {
-      const isBooked = reservations.some(
-        (res) =>
-          res.roomId === room.id &&
-          res.status !== "Cancelled" &&
-          areIntervalsOverlapping(
-            { start: values.dateRange.from, end: values.dateRange.to },
-            {
-              start: parseISO(res.checkInDate),
-              end: parseISO(res.checkOutDate),
-            }
-          )
-      );
-      return !isBooked;
-    });
-
-    if (!availableRoom) {
-      toast.error(
-        "Sorry, no rooms of this type are available for the selected dates."
-      );
-      return;
-    }
-
-    const newGuest = addGuest({
+    const query = new URLSearchParams({
+      roomTypeId: roomType!.id,
       firstName: values.firstName,
       lastName: values.lastName,
       email: values.email,
-      phone: "",
+      from: formatISO(values.dateRange.from, { representation: "date" }),
+      to: formatISO(values.dateRange.to, { representation: "date" }),
+      guests: values.guests.toString(),
     });
-
-    addReservation({
-      guestId: newGuest.id,
-      roomId: availableRoom.id,
-      ratePlanId: standardRatePlan.id,
-      checkInDate: formatISO(values.dateRange.from, { representation: "date" }),
-      checkOutDate: formatISO(values.dateRange.to, { representation: "date" }),
-      numberOfGuests: values.guests,
-      status: "Confirmed",
-      notes: "Booked via public website.",
-      folio: [
-        {
-          id: "f-initial",
-          description: "Room Charge",
-          amount: totalCost,
-          timestamp: formatISO(new Date()),
-        },
-      ],
-      totalAmount: totalCost,
-    });
-
-    toast.success("Booking Confirmed!", {
-      description: `Your booking for ${nights} nights is complete. You will receive a confirmation email.`,
-    });
-
-    form.reset();
+    router.push(`/book/review?${query.toString()}`);
   }
 
   return (
@@ -402,7 +356,7 @@ export default function RoomDetailsPage() {
                     </div>
                   )}
                   <Button className="w-full" type="submit">
-                    Confirm Booking
+                    Review and Book
                   </Button>
                 </form>
               </Form>
