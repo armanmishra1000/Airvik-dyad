@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { Guest } from "@/data"
 import { GuestFormDialog } from "./guest-form-dialog"
+import { useAppContext } from "@/context/app-context"
 
 declare module '@tanstack/react-table' {
     interface TableMeta<TData extends RowData> {
@@ -49,6 +50,10 @@ export const columns: ColumnDef<Guest>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const guest = row.original
+      const { currentUser } = useAppContext();
+      const isManager = currentUser?.role === 'manager';
+
+      if (!isManager) return null;
  
       return (
         <DropdownMenu>

@@ -17,6 +17,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -34,8 +36,13 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
-  const { property } = useAppContext();
+  const { property, currentUser, users, setCurrentUser } = useAppContext();
   const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
+
+  const handleUserChange = (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    setCurrentUser(user || null);
+  };
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
@@ -81,10 +88,22 @@ export function Header() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>
+                {currentUser ? currentUser.name : "No user"}
+                <p className="text-xs font-normal text-muted-foreground">
+                    {currentUser?.role}
+                </p>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuRadioGroup value={currentUser?.id} onValueChange={handleUserChange}>
+                <DropdownMenuLabel>Switch User</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {users.map(user => (
+                    <DropdownMenuRadioItem key={user.id} value={user.id}>
+                        {user.name}
+                    </DropdownMenuRadioItem>
+                ))}
+            </DropdownMenuRadioGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Logout</DropdownMenuItem>
           </DropdownMenuContent>
