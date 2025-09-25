@@ -27,7 +27,7 @@ import {
   import { mockRooms } from "@/data"
   import { isToday } from "date-fns"
   import { useAppContext } from "@/context/app-context";
-  import { AvailabilityCalendar } from "./components/availability-calendar";
+  import { AvailabilityCalendar } from "@/components/shared/availability-calendar";
   
   export default function DashboardPage() {
     const { reservations, guests } = useAppContext();
