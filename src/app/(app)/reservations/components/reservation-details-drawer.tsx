@@ -29,6 +29,7 @@ interface ReservationDetailsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onCancelReservation: (reservationId: string) => void;
+  onCheckInReservation: (reservationId: string) => void;
 }
 
 export function ReservationDetailsDrawer({
@@ -36,6 +37,7 @@ export function ReservationDetailsDrawer({
   isOpen,
   onClose,
   onCancelReservation,
+  onCheckInReservation,
 }: ReservationDetailsDrawerProps) {
   if (!reservation) return null;
 
@@ -50,7 +52,12 @@ export function ReservationDetailsDrawer({
 
   const handleCancel = () => {
     onCancelReservation(reservation.id);
-    onClose(); // Close the drawer after cancelling
+    onClose();
+  };
+
+  const handleCheckIn = () => {
+    onCheckInReservation(reservation.id);
+    onClose();
   };
 
   const canBeCancelled = ![
@@ -58,6 +65,8 @@ export function ReservationDetailsDrawer({
     "Checked-out",
     "No-show",
   ].includes(reservation.status);
+
+  const canBeCheckedIn = reservation.status === "Confirmed";
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -157,7 +166,9 @@ export function ReservationDetailsDrawer({
             </div>
           </div>
           <DrawerFooter>
-            <Button>Check-in</Button>
+            <Button onClick={handleCheckIn} disabled={!canBeCheckedIn}>
+              Check-in
+            </Button>
             <Button
               variant="outline"
               onClick={handleCancel}
