@@ -5,19 +5,23 @@ import { formatISO } from "date-fns";
 import {
   mockReservations,
   mockGuests,
+  mockHousekeeping,
   type Reservation,
   type Guest,
   type ReservationStatus,
   type FolioItem,
+  type HousekeepingAssignment,
 } from "@/data";
 
 // Define keys for local storage
 const RESERVATIONS_STORAGE_KEY = "hotel-pms-reservations";
 const GUESTS_STORAGE_KEY = "hotel-pms-guests";
+const HOUSEKEEPING_STORAGE_KEY = "hotel-pms-housekeeping";
 
 interface AppContextType {
   reservations: Reservation[];
   guests: Guest[];
+  housekeepingAssignments: HousekeepingAssignment[];
   addReservation: (reservation: Omit<Reservation, "id">) => void;
   updateReservationStatus: (
     reservationId: string,
@@ -28,64 +32,70 @@ interface AppContextType {
     reservationId: string,
     item: Omit<FolioItem, "id" | "timestamp">
   ) => void;
+  assignHousekeeper: (assignment: {
+    roomId: string;
+    userId: string;
+  }) => void;
+  updateAssignmentStatus: (
+    roomId: string,
+    status: "Pending" | "Completed"
+  ) => void;
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  // Initialize state with mock data. This will be used for the server render
-  // and the initial client render, preventing a mismatch.
   const [reservations, setReservations] =
     React.useState<Reservation[]>(mockReservations);
   const [guests, setGuests] = React.useState<Guest[]>(mockGuests);
+  const [housekeepingAssignments, setHousekeepingAssignments] =
+    React.useState<HousekeepingAssignment[]>(mockHousekeeping);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
-  // After the component mounts on the client, load the data from localStorage.
   React.useEffect(() => {
     try {
       const storedReservations = window.localStorage.getItem(
         RESERVATIONS_STORAGE_KEY
       );
-      if (storedReservations) {
-        setReservations(JSON.parse(storedReservations));
-      }
+      if (storedReservations) setReservations(JSON.parse(storedReservations));
+
       const storedGuests = window.localStorage.getItem(GUESTS_STORAGE_KEY);
-      if (storedGuests) {
-        setGuests(JSON.parse(storedGuests));
-      }
+      if (storedGuests) setGuests(JSON.parse(storedGuests));
+
+      const storedHousekeeping = window.localStorage.getItem(
+        HOUSEKEEPING_STORAGE_KEY
+      );
+      if (storedHousekeeping)
+        setHousekeepingAssignments(JSON.parse(storedHousekeeping));
     } catch (error) {
       console.error("Error reading from localStorage", error);
     }
-    // Mark as initialized so we can start saving to localStorage.
     setIsInitialized(true);
   }, []);
 
-  // Effect to save reservations to localStorage whenever they change.
-  // We only run this after the initial data has been loaded to avoid
-  // overwriting localStorage with the initial mock data.
   React.useEffect(() => {
     if (isInitialized) {
-      try {
-        window.localStorage.setItem(
-          RESERVATIONS_STORAGE_KEY,
-          JSON.stringify(reservations)
-        );
-      } catch (error) {
-        console.error("Error saving reservations to localStorage", error);
-      }
+      window.localStorage.setItem(
+        RESERVATIONS_STORAGE_KEY,
+        JSON.stringify(reservations)
+      );
     }
   }, [reservations, isInitialized]);
 
-  // Effect to save guests to localStorage whenever they change.
   React.useEffect(() => {
     if (isInitialized) {
-      try {
-        window.localStorage.setItem(GUESTS_STORAGE_KEY, JSON.stringify(guests));
-      } catch (error) {
-        console.error("Error saving guests to localStorage", error);
-      }
+      window.localStorage.setItem(GUESTS_STORAGE_KEY, JSON.stringify(guests));
     }
   }, [guests, isInitialized]);
+
+  React.useEffect(() => {
+    if (isInitialized) {
+      window.localStorage.setItem(
+        HOUSEKEEPING_STORAGE_KEY,
+        JSON.stringify(housekeepingAssignments)
+      );
+    }
+  }, [housekeepingAssignments, isInitialized]);
 
   const addGuest = (guestData: Omit<Guest, "id">): Guest => {
     const newGuest: Guest = {
@@ -138,13 +148,56 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const assignHousekeeper = ({
+    roomId,
+    userId,
+  }: {
+    roomId: string;
+    userId: string;
+  }) => {
+    const today = formatISO(new Date(), { representation: "date" });
+    const newAssignment: HousekeepingAssignment = {
+      roomId,
+      assignedTo: userId,
+      date: today,
+      status: "Pending",
+    };
+
+    setHousekeepingAssignments((prev) => {
+      const existingIndex = prev.findIndex(
+        (a) => a.roomId === roomId && a.date === today
+      );
+      if (existingIndex > -1) {
+        const updated = [...prev];
+        updated[existingIndex] = newAssignment;
+        return updated;
+      }
+      return [...prev, newAssignment];
+    });
+  };
+
+  const updateAssignmentStatus = (
+    roomId: string,
+    status: "Pending" | "Completed"
+  ) => {
+    const today = formatISO(new Date(), { representation: "date" });
+    setHousekeepingAssignments((prev) =>
+      prev.map((a) =>
+        a.roomId === roomId && a.date === today ? { ...a, status } : a
+      )
+    );
+  };
+
   const value = {
     reservations,
     guests,
+    housekeepingAssignments,
     addReservation,
     updateReservationStatus,
     addGuest,
     addFolioItem,
+    assignHousekeeper,
+    updateAssignmentStatus,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

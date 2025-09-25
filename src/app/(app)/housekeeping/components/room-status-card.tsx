@@ -10,12 +10,15 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Room, RoomStatus } from "@/data";
-import { BedDouble, User, Wrench } from "lucide-react";
+import type { Room, RoomStatus, HousekeepingAssignment } from "@/data";
+import { User, Wrench } from "lucide-react";
 import { UpdateStatusDialog } from "./update-status-dialog";
+import { AssignHousekeeperDialog } from "./assign-housekeeper-dialog";
 
 interface RoomWithDetails extends Room {
   roomTypeName: string;
+  assignment?: HousekeepingAssignment;
+  housekeeperName?: string;
 }
 
 interface RoomStatusCardProps {
@@ -39,7 +42,7 @@ export function RoomStatusCard({ room, onStatusUpdate }: RoomStatusCardProps) {
   const { variant, label } = statusStyles[room.status];
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
@@ -49,11 +52,30 @@ export function RoomStatusCard({ room, onStatusUpdate }: RoomStatusCardProps) {
           <Badge variant={variant}>{label}</Badge>
         </div>
       </CardHeader>
-      <CardContent>
-        {/* Placeholder for guest name if occupied */}
-        <div className="text-sm text-muted-foreground">Vacant</div>
+      <CardContent className="flex-1">
+        {room.assignment && room.status === "Dirty" ? (
+          <div className="text-sm text-muted-foreground flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span>
+              Assigned to: <strong>{room.housekeeperName}</strong> (
+              {room.assignment.status})
+            </span>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">Vacant</div>
+        )}
       </CardContent>
       <CardFooter className="flex justify-end gap-2">
+        {room.status === "Dirty" && (
+          <AssignHousekeeperDialog
+            roomId={room.id}
+            currentAssigneeId={room.assignment?.assignedTo}
+          >
+            <Button variant="secondary" size="sm">
+              {room.assignment ? "Re-assign" : "Assign"}
+            </Button>
+          </AssignHousekeeperDialog>
+        )}
         <UpdateStatusDialog
           room={room}
           onUpdate={(newStatus) => onStatusUpdate(room.id, newStatus)}
@@ -62,12 +84,6 @@ export function RoomStatusCard({ room, onStatusUpdate }: RoomStatusCardProps) {
             Update Status
           </Button>
         </UpdateStatusDialog>
-        {room.status !== "Maintenance" && (
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Wrench className="h-4 w-4" />
-            <span className="sr-only">Request Maintenance</span>
-          </Button>
-        )}
       </CardFooter>
     </Card>
   );
