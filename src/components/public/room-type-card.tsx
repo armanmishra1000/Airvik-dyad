@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Users, Bed } from "lucide-react";
 import {
   Card,
@@ -30,15 +29,14 @@ export function RoomTypeCard({ roomType, searchParams }: RoomTypeCardProps) {
     <Card className="flex flex-col">
       <CardHeader className="p-0">
         <div className="aspect-video relative">
-          <Image
+          <img
             src={
               roomType.mainPhotoUrl ||
               roomType.photos[0] ||
               "/room-placeholder.svg"
             }
             alt={roomType.name}
-            fill
-            className="object-cover rounded-t-lg"
+            className="absolute inset-0 h-full w-full object-cover rounded-t-lg"
           />
         </div>
       </CardHeader>

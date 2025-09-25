@@ -1,7 +1,6 @@
 "use client";
 
 import { useParams, notFound } from "next/navigation";
-import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import { CheckCircle2, MapPin, Phone } from "lucide-react";
 
@@ -46,15 +45,14 @@ export default function BookingConfirmationPage() {
           <CardContent className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="relative w-32 h-20 rounded-md overflow-hidden flex-shrink-0">
-                <Image
+                <img
                   src={
                     roomType?.mainPhotoUrl ||
                     roomType?.photos[0] ||
                     "/room-placeholder.svg"
                   }
                   alt={roomType?.name || "Room"}
-                  fill
-                  className="object-cover"
+                  className="absolute inset-0 h-full w-full object-cover"
                 />
               </div>
               <div>
