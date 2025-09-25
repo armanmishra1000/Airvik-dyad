@@ -42,6 +42,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { useAppContext } from "@/context/app-context";
 import { cn } from "@/lib/utils";
 
@@ -61,8 +68,8 @@ const standardRatePlan =
 
 export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { addGuest, addReservation, reservations } = useAppContext();
-  const roomType = mockRoomTypes.find((rt) => rt.id === params.id);
+  const { addGuest, addReservation, reservations, roomTypes } = useAppContext();
+  const roomType = roomTypes.find((rt) => rt.id === params.id);
 
   const form = useForm<z.infer<typeof bookingSchema>>({
     resolver: zodResolver(bookingSchema),
@@ -80,6 +87,21 @@ export default function RoomDetailsPage() {
       ? differenceInDays(dateRange.to, dateRange.from)
       : 0;
   const totalCost = nights * standardRatePlan.price;
+
+  const photosToShow = React.useMemo(() => {
+    if (!roomType || !roomType.photos || roomType.photos.length === 0) {
+      return ["/room-placeholder.jpg"];
+    }
+    const sortedPhotos = [...roomType.photos];
+    if (roomType.mainPhotoUrl) {
+      const mainIndex = sortedPhotos.indexOf(roomType.mainPhotoUrl);
+      if (mainIndex > -1) {
+        sortedPhotos.splice(mainIndex, 1);
+        sortedPhotos.unshift(roomType.mainPhotoUrl);
+      }
+    }
+    return sortedPhotos;
+  }, [roomType]);
 
   const disabledDates = React.useMemo(() => {
     if (!roomType) return [];
@@ -191,14 +213,25 @@ export default function RoomDetailsPage() {
     <div className="container mx-auto px-4 py-12">
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
-          <div className="relative aspect-video mb-4">
-            <Image
-              src={roomType.mainPhotoUrl || roomType.photos[0] || "/room-placeholder.jpg"}
-              alt={roomType.name}
-              fill
-              className="object-cover rounded-lg"
-            />
-          </div>
+          <Carousel className="w-full rounded-lg overflow-hidden mb-4">
+            <CarouselContent>
+              {photosToShow.map((photo, index) => (
+                <CarouselItem key={index}>
+                  <div className="relative aspect-video">
+                    <Image
+                      src={photo}
+                      alt={`${roomType.name} photo ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="absolute left-4" />
+            <CarouselNext className="absolute right-4" />
+          </Carousel>
+
           <h1 className="text-4xl font-bold font-serif">{roomType.name}</h1>
           <div className="flex items-center gap-6 text-muted-foreground mt-4 mb-6">
             <div className="flex items-center gap-2">
