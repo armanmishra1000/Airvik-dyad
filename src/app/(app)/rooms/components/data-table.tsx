@@ -40,9 +40,15 @@ export function RoomsDataTable<TData extends Room, TValue>({
 
   const handleDeleteConfirm = () => {
     if (itemToDelete) {
-      deleteRoom(itemToDelete.id)
-      toast.success(`Room "${itemToDelete.roomNumber}" has been deleted.`)
-      setItemToDelete(null)
+      const success = deleteRoom(itemToDelete.id);
+      if (success) {
+        toast.success(`Room "${itemToDelete.roomNumber}" has been deleted.`);
+      } else {
+        toast.error("Failed to delete room.", {
+          description: "This room has active reservations and cannot be deleted.",
+        });
+      }
+      setItemToDelete(null);
     }
   }
 

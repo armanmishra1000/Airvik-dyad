@@ -47,7 +47,7 @@ interface AppContextType {
   ) => void;
   addGuest: (guest: Omit<Guest, "id">) => Guest;
   updateGuest: (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => void;
-  deleteGuest: (guestId: string) => void;
+  deleteGuest: (guestId: string) => boolean;
   addFolioItem: (
     reservationId: string,
     item: Omit<FolioItem, "id" | "timestamp">
@@ -62,13 +62,13 @@ interface AppContextType {
   ) => void;
   addRoom: (room: Omit<Room, "id">) => void;
   updateRoom: (roomId: string, updatedData: Partial<Omit<Room, "id">>) => void;
-  deleteRoom: (roomId: string) => void;
+  deleteRoom: (roomId: string) => boolean;
   addRoomType: (roomType: Omit<RoomType, "id" | "photos">) => void;
   updateRoomType: (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id" | "photos">>) => void;
-  deleteRoomType: (roomTypeId: string) => void;
+  deleteRoomType: (roomTypeId: string) => boolean;
   addRatePlan: (ratePlan: Omit<RatePlan, "id">) => void;
   updateRatePlan: (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => void;
-  deleteRatePlan: (ratePlanId: string) => void;
+  deleteRatePlan: (ratePlanId: string) => boolean;
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
@@ -184,8 +184,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setGuests(prev => prev.map(g => g.id === guestId ? { ...g, ...updatedData } : g));
   };
 
-  const deleteGuest = (guestId: string) => {
+  const deleteGuest = (guestId: string): boolean => {
+    const activeStatuses: ReservationStatus[] = ["Confirmed", "Checked-in", "Tentative", "No-show"];
+    const hasActiveReservations = reservations.some(
+      (res) => res.guestId === guestId && activeStatuses.includes(res.status)
+    );
+    if (hasActiveReservations) {
+      return false;
+    }
     setGuests(prev => prev.filter(g => g.id !== guestId));
+    return true;
   };
 
   const addReservation = (reservationData: Omit<Reservation, "id">) => {
@@ -282,8 +290,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setRooms(prev => prev.map(r => r.id === roomId ? { ...r, ...updatedData } : r));
   };
 
-  const deleteRoom = (roomId: string) => {
+  const deleteRoom = (roomId: string): boolean => {
+    const activeStatuses: ReservationStatus[] = ["Confirmed", "Checked-in", "Tentative", "No-show"];
+    const hasActiveReservations = reservations.some(
+      (res) => res.roomId === roomId && activeStatuses.includes(res.status)
+    );
+    if (hasActiveReservations) {
+      return false;
+    }
     setRooms(prev => prev.filter(r => r.id !== roomId));
+    return true;
   };
 
   const addRoomType = (roomTypeData: Omit<RoomType, "id" | "photos">) => {
@@ -299,8 +315,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? { ...rt, ...updatedData } : rt));
   };
 
-  const deleteRoomType = (roomTypeId: string) => {
+  const deleteRoomType = (roomTypeId: string): boolean => {
+    const isUsed = rooms.some(room => room.roomTypeId === roomTypeId);
+    if (isUsed) {
+      return false;
+    }
     setRoomTypes(prev => prev.filter(rt => rt.id !== roomTypeId));
+    return true;
   };
 
   const addRatePlan = (ratePlanData: Omit<RatePlan, "id">) => {
@@ -315,8 +336,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setRatePlans(prev => prev.map(rp => rp.id === ratePlanId ? { ...rp, ...updatedData } : rp));
   };
 
-  const deleteRatePlan = (ratePlanId: string) => {
+  const deleteRatePlan = (ratePlanId: string): boolean => {
+    const isUsed = reservations.some(res => res.ratePlanId === ratePlanId);
+    if (isUsed) {
+      return false;
+    }
     setRatePlans(prev => prev.filter(rp => rp.id !== ratePlanId));
+    return true;
   };
 
   const value = {

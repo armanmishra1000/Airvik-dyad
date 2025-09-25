@@ -40,9 +40,15 @@ export function RoomTypesDataTable<TData extends RoomType, TValue>({
 
   const handleDeleteConfirm = () => {
     if (itemToDelete) {
-      deleteRoomType(itemToDelete.id)
-      toast.success(`Room type "${itemToDelete.name}" has been deleted.`)
-      setItemToDelete(null)
+      const success = deleteRoomType(itemToDelete.id);
+      if (success) {
+        toast.success(`Room type "${itemToDelete.name}" has been deleted.`);
+      } else {
+        toast.error("Failed to delete room type.", {
+          description: "This room type is still in use by one or more rooms.",
+        });
+      }
+      setItemToDelete(null);
     }
   }
 
