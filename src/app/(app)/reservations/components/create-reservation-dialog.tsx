@@ -4,7 +4,13 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
+import {
+  format,
+  formatISO,
+  differenceInDays,
+  parseISO,
+  areIntervalsOverlapping,
+} from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,6 +48,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { mockGuests, mockRooms, mockRatePlans } from "@/data";
+import { useAppContext } from "@/context/app-context";
 
 const reservationSchema = z.object({
   guestId: z.string({ required_error: "Please select a guest." }),
@@ -57,6 +64,7 @@ const reservationSchema = z.object({
 
 export function CreateReservationDialog() {
   const [open, setOpen] = React.useState(false);
+  const { reservations, addReservation } = useAppContext();
   const form = useForm<z.infer<typeof reservationSchema>>({
     resolver: zodResolver(reservationSchema),
     defaultValues: {
@@ -64,8 +72,66 @@ export function CreateReservationDialog() {
     },
   });
 
+  const selectedDateRange = form.watch("dateRange");
+
+  const availableRooms = React.useMemo(() => {
+    if (!selectedDateRange?.from || !selectedDateRange?.to) {
+      return mockRooms;
+    }
+
+    return mockRooms.filter((room) => {
+      const isBooked = reservations.some(
+        (res) =>
+          res.roomId === room.id &&
+          res.status !== "Cancelled" &&
+          areIntervalsOverlapping(
+            { start: selectedDateRange.from!, end: selectedDateRange.to! },
+            { start: parseISO(res.checkInDate), end: parseISO(res.checkOutDate) }
+          )
+      );
+      return !isBooked;
+    });
+  }, [selectedDateRange, reservations]);
+
+  React.useEffect(() => {
+    const selectedRoomId = form.getValues("roomId");
+    if (selectedRoomId) {
+      const isSelectedRoomAvailable = availableRooms.some(
+        (room) => room.id === selectedRoomId
+      );
+      if (!isSelectedRoomAvailable) {
+        form.resetField("roomId");
+      }
+    }
+  }, [availableRooms, form]);
+
   function onSubmit(values: z.infer<typeof reservationSchema>) {
-    console.log(values);
+    const ratePlan =
+      mockRatePlans.find((rp) => rp.id === "rp-standard") || mockRatePlans[0];
+    const nights = differenceInDays(values.dateRange.to, values.dateRange.from);
+    const totalAmount = nights * ratePlan.price;
+
+    addReservation({
+      guestId: values.guestId,
+      roomId: values.roomId,
+      ratePlanId: ratePlan.id,
+      checkInDate: formatISO(values.dateRange.from, {
+        representation: "date",
+      }),
+      checkOutDate: formatISO(values.dateRange.to, { representation: "date" }),
+      numberOfGuests: values.numberOfGuests,
+      status: "Confirmed",
+      folio: [
+        {
+          id: `f-${Date.now()}`,
+          description: "Room Charge",
+          amount: totalAmount,
+          timestamp: formatISO(new Date()),
+        },
+      ],
+      totalAmount: totalAmount,
+    });
+
     toast.success("Reservation created successfully!");
     form.reset();
     setOpen(false);
@@ -149,7 +215,10 @@ export function CreateReservationDialog() {
                         initialFocus
                         mode="range"
                         defaultMonth={field.value?.from}
-                        selected={{ from: field.value?.from, to: field.value?.to }}
+                        selected={{
+                          from: field.value?.from,
+                          to: field.value?.to,
+                        }}
                         onSelect={field.onChange}
                         numberOfMonths={2}
                       />
@@ -167,19 +236,32 @@ export function CreateReservationDialog() {
                   <FormLabel>Room</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
+                    disabled={!selectedDateRange?.from}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a room" />
+                        <SelectValue
+                          placeholder={
+                            !selectedDateRange?.from
+                              ? "Select dates first"
+                              : "Select an available room"
+                          }
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mockRooms.map((room) => (
-                        <SelectItem key={room.id} value={room.id}>
-                          Room {room.roomNumber}
-                        </SelectItem>
-                      ))}
+                      {availableRooms.length > 0 ? (
+                        availableRooms.map((room) => (
+                          <SelectItem key={room.id} value={room.id}>
+                            Room {room.roomNumber}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          No rooms available.
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
