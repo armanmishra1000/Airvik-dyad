@@ -4,6 +4,7 @@ import * as React from "react"
 import {
   ColumnDef,
   ColumnFiltersState,
+  RowData,
   SortingState,
   flexRender,
   getCoreRowModel,
@@ -23,6 +24,14 @@ import {
 } from "@/components/ui/table"
 import { DataTableToolbar } from "./data-table-toolbar"
 import { DataTablePagination } from "./data-table-pagination"
+import { ReservationDetailsDrawer } from "./reservation-details-drawer"
+import { ReservationWithDetails } from "./columns"
+
+declare module '@tanstack/react-table' {
+    interface TableMeta<TData extends RowData> {
+      viewReservation: (reservation: TData) => void
+    }
+  }
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -37,6 +46,8 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
+  const [selectedReservation, setSelectedReservation] = React.useState<ReservationWithDetails | null>(null);
+
 
   const table = useReactTable({
     data,
@@ -51,6 +62,11 @@ export function DataTable<TData, TValue>({
       sorting,
       columnFilters,
     },
+    meta: {
+        viewReservation: (reservation) => {
+            setSelectedReservation(reservation as ReservationWithDetails)
+        }
+    }
   })
 
   return (
@@ -101,6 +117,11 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       <DataTablePagination table={table} />
+      <ReservationDetailsDrawer 
+        isOpen={!!selectedReservation}
+        onClose={() => setSelectedReservation(null)}
+        reservation={selectedReservation}
+      />
     </div>
   )
 }
