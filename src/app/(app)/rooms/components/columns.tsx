@@ -32,7 +32,7 @@ export const columns: ColumnDef<Room>[] = [
           const { roomTypes } = useAppContext()
           const roomType = roomTypes.find(rt => rt.id === room.roomTypeId)
           
-          const imageUrl = room.photos?.[0] || roomType?.mainPhotoUrl || roomType?.photos?.[0] || "/room-placeholder.jpg"
+          const imageUrl = room.photos?.[0] || roomType?.mainPhotoUrl || roomType?.photos?.[0] || "/room-placeholder.svg"
           
           return (
             <div className="w-16 h-10 relative rounded-md overflow-hidden">
