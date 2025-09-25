@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { RoomType } from "@/data";
+import { useAppContext } from "@/context/app-context";
 
 const roomTypeSchema = z.object({
   name: z.string().min(1, "Room type name is required."),
@@ -46,6 +47,7 @@ export function RoomTypeFormDialog({
   children,
 }: RoomTypeFormDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const { addRoomType, updateRoomType } = useAppContext();
   const isEditing = !!roomType;
 
   const form = useForm<z.infer<typeof roomTypeSchema>>({
@@ -60,11 +62,19 @@ export function RoomTypeFormDialog({
   });
 
   function onSubmit(values: z.infer<typeof roomTypeSchema>) {
-    console.log({
+    const processedValues = {
       ...values,
+      description: values.description || "",
       bedTypes: values.bedTypes.split(",").map((s) => s.trim()),
       amenities: values.amenities?.split(",").map((s) => s.trim()) || [],
-    });
+    };
+
+    if (isEditing && roomType) {
+      updateRoomType(roomType.id, processedValues);
+    } else {
+      addRoomType(processedValues);
+    }
+
     toast.success(
       `Room type ${isEditing ? "updated" : "created"} successfully!`
     );
