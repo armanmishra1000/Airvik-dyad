@@ -7,7 +7,13 @@ import { Users, Bed, Calendar as CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format, differenceInDays, formatISO } from "date-fns";
+import {
+  format,
+  differenceInDays,
+  formatISO,
+  areIntervalsOverlapping,
+  parseISO,
+} from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
 
@@ -54,7 +60,7 @@ const standardRatePlan =
 
 export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { addGuest, addReservation } = useAppContext();
+  const { addGuest, addReservation, reservations } = useAppContext();
   const roomType = mockRoomTypes.find((rt) => rt.id === params.id);
 
   const form = useForm<z.infer<typeof bookingSchema>>({
@@ -79,7 +85,21 @@ export default function RoomDetailsPage() {
   }
 
   function onSubmit(values: z.infer<typeof bookingSchema>) {
-    const availableRoom = mockRooms.find((r) => r.roomTypeId === roomType?.id);
+    const roomsOfType = mockRooms.filter((r) => r.roomTypeId === roomType?.id);
+
+    const availableRoom = roomsOfType.find((room) => {
+      const isBooked = reservations.some(
+        (res) =>
+          res.roomId === room.id &&
+          res.status !== "Cancelled" &&
+          areIntervalsOverlapping(
+            { start: values.dateRange.from, end: values.dateRange.to },
+            { start: parseISO(res.checkInDate), end: parseISO(res.checkOutDate) }
+          )
+      );
+      return !isBooked;
+    });
+
     if (!availableRoom) {
       toast.error(
         "Sorry, no rooms of this type are available for the selected dates."
@@ -103,7 +123,14 @@ export default function RoomDetailsPage() {
       numberOfGuests: values.guests,
       status: "Confirmed",
       notes: "Booked via public website.",
-      folio: [{ id: "f-initial", description: "Room Charge", amount: totalCost, timestamp: formatISO(new Date()) }],
+      folio: [
+        {
+          id: "f-initial",
+          description: "Room Charge",
+          amount: totalCost,
+          timestamp: formatISO(new Date()),
+        },
+      ],
       totalAmount: totalCost,
     });
 
@@ -243,6 +270,7 @@ export default function RoomDetailsPage() {
                               }}
                               onSelect={field.onChange}
                               numberOfMonths={1}
+                              disabled={{ before: new Date() }}
                             />
                           </PopoverContent>
                         </Popover>
