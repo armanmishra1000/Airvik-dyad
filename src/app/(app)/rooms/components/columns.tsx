@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { ColumnDef, RowData } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 
@@ -13,7 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import type { Room } from "@/data"
-import { mockRoomTypes } from "@/data"
 import { RoomFormDialog } from "./room-form-dialog"
 import { useAppContext } from "@/context/app-context"
 
@@ -24,6 +24,28 @@ declare module '@tanstack/react-table' {
 }
 
 export const columns: ColumnDef<Room>[] = [
+    {
+        id: "image",
+        header: "Image",
+        cell: ({ row }) => {
+          const room = row.original
+          const { roomTypes } = useAppContext()
+          const roomType = roomTypes.find(rt => rt.id === room.roomTypeId)
+          
+          const imageUrl = room.photos?.[0] || roomType?.mainPhotoUrl || roomType?.photos?.[0] || "/room-placeholder.jpg"
+          
+          return (
+            <div className="w-16 h-10 relative rounded-md overflow-hidden">
+                <Image 
+                    src={imageUrl}
+                    alt={`Room ${room.roomNumber}`}
+                    fill
+                    className="object-cover"
+                />
+            </div>
+          )
+        },
+      },
   {
     accessorKey: "roomNumber",
     header: "Room Number",
@@ -32,8 +54,9 @@ export const columns: ColumnDef<Room>[] = [
     accessorKey: "roomTypeId",
     header: "Room Type",
     cell: ({ row }) => {
+        const { roomTypes } = useAppContext()
         const roomTypeId = row.getValue("roomTypeId") as string;
-        const roomType = mockRoomTypes.find(rt => rt.id === roomTypeId);
+        const roomType = roomTypes.find(rt => rt.id === roomTypeId);
         return <span>{roomType?.name || "Unknown"}</span>
     }
   },
