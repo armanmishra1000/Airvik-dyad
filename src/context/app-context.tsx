@@ -76,8 +76,8 @@ interface AppContextType {
   addRoom: (room: Omit<Room, "id">) => void;
   updateRoom: (roomId: string, updatedData: Partial<Omit<Room, "id">>) => void;
   deleteRoom: (roomId: string) => boolean;
-  addRoomType: (roomType: Omit<RoomType, "id" | "photos">) => void;
-  updateRoomType: (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id" | "photos">>) => void;
+  addRoomType: (roomType: Omit<RoomType, "id">) => void;
+  updateRoomType: (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id">>) => void;
   deleteRoomType: (roomTypeId: string) => boolean;
   addRatePlan: (ratePlan: Omit<RatePlan, "id">) => void;
   updateRatePlan: (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => void;
@@ -175,8 +175,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addRoom = (roomData: Omit<Room, "id">) => { const newRoom: Room = { ...roomData, id: `room-${Date.now()}` }; setRooms(prev => [...prev, newRoom]); };
   const updateRoom = (roomId: string, updatedData: Partial<Omit<Room, "id">>) => setRooms(prev => prev.map(r => r.id === roomId ? { ...r, ...updatedData } : r));
   const deleteRoom = (roomId: string): boolean => { const hasActive = reservations.some(res => res.roomId === roomId && ["Confirmed", "Checked-in"].includes(res.status)); if (hasActive) return false; setRooms(prev => prev.filter(r => r.id !== roomId)); return true; };
-  const addRoomType = (roomTypeData: Omit<RoomType, "id" | "photos">) => { const newRoomType: RoomType = { ...roomTypeData, id: `rt-${Date.now()}`, photos: [] }; setRoomTypes(prev => [...prev, newRoomType]); };
-  const updateRoomType = (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id" | "photos">>) => setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? { ...rt, ...updatedData } : rt));
+  const addRoomType = (roomTypeData: Omit<RoomType, "id">) => { const newRoomType: RoomType = { ...roomTypeData, id: `rt-${Date.now()}` }; setRoomTypes(prev => [...prev, newRoomType]); };
+  const updateRoomType = (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id">>) => setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? { ...rt, ...updatedData } : rt));
   const deleteRoomType = (roomTypeId: string): boolean => { const isUsed = rooms.some(room => room.roomTypeId === roomTypeId); if (isUsed) return false; setRoomTypes(prev => prev.filter(rt => rt.id !== roomTypeId)); return true; };
   const addRatePlan = (ratePlanData: Omit<RatePlan, "id">) => { const newRatePlan: RatePlan = { ...ratePlanData, id: `rp-${Date.now()}` }; setRatePlans(prev => [...prev, newRatePlan]); };
   const updateRatePlan = (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => setRatePlans(prev => prev.map(rp => rp.id === ratePlanId ? { ...rp, ...updatedData } : rp));

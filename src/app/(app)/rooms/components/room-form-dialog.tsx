@@ -34,11 +34,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { mockRoomTypes, type Room, type RoomStatus } from "@/data";
 import { useAppContext } from "@/context/app-context";
+import { MultiImageUpload } from "@/components/shared/multi-image-upload";
 
 const roomSchema = z.object({
   roomNumber: z.string().min(1, "Room number is required."),
   roomTypeId: z.string({ required_error: "Please select a room type." }),
   status: z.string({ required_error: "Please select a status." }),
+  photos: z.array(z.string()).optional(),
 });
 
 interface RoomFormDialogProps {
@@ -62,11 +64,12 @@ export function RoomFormDialog({
       roomNumber: room?.roomNumber || "",
       roomTypeId: room?.roomTypeId || "",
       status: room?.status || "Clean",
+      photos: room?.photos || [],
     },
   });
 
   function onSubmit(values: z.infer<typeof roomSchema>) {
-    const roomData = { ...values, status: values.status as RoomStatus };
+    const roomData = { ...values, status: values.status as RoomStatus, photos: values.photos || [] };
     if (isEditing && room) {
       updateRoom(room.id, roomData);
     } else {
@@ -83,7 +86,7 @@ export function RoomFormDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Room" : "Add New Room"}
@@ -157,6 +160,22 @@ export function RoomFormDialog({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="photos"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Room-Specific Photos</FormLabel>
+                  <FormControl>
+                    <MultiImageUpload
+                      value={field.value || []}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

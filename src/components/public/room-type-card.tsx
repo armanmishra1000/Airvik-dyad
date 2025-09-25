@@ -22,7 +22,7 @@ export function RoomTypeCard({ roomType }: RoomTypeCardProps) {
       <CardHeader className="p-0">
         <div className="aspect-video relative">
           <Image
-            src={roomType.photos[0] || "/room-placeholder.jpg"}
+            src={roomType.mainPhotoUrl || roomType.photos[0] || "/room-placeholder.jpg"}
             alt={roomType.name}
             fill
             className="object-cover rounded-t-lg"
