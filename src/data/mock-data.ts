@@ -8,6 +8,8 @@ import type {
   Guest,
   Reservation,
   HousekeepingAssignment,
+  Role,
+  Permission,
 } from "./types";
 
 const today = new Date();
@@ -25,24 +27,57 @@ export const mockProperty: Property = {
   },
 };
 
+export const allPermissions: Permission[] = [
+    "create:guest", "read:guest", "update:guest", "delete:guest",
+    "create:reservation", "read:reservation", "update:reservation", "delete:reservation",
+    "create:room", "read:room", "update:room", "delete:room",
+    "create:room_type", "read:room_type", "update:room_type", "delete:room_type",
+    "create:rate_plan", "read:rate_plan", "update:rate_plan", "delete:rate_plan",
+    "read:report",
+    "update:setting",
+    "create:user", "read:user", "update:user", "delete:user",
+];
+
+export const mockRoles: Role[] = [
+    {
+        id: "role-manager",
+        name: "Manager",
+        permissions: allPermissions,
+    },
+    {
+        id: "role-receptionist",
+        name: "Receptionist",
+        permissions: [
+            "create:guest", "read:guest", "update:guest",
+            "create:reservation", "read:reservation", "update:reservation",
+            "read:room", "read:room_type", "read:rate_plan",
+        ],
+    },
+    {
+        id: "role-housekeeper",
+        name: "Housekeeper",
+        permissions: ["read:room", "update:room"],
+    }
+];
+
 export const mockUsers: User[] = [
   {
     id: "user-001",
     name: "Alice Manager",
     email: "alice@grandhorizon.com",
-    role: "manager",
+    roleId: "role-manager",
   },
   {
     id: "user-002",
     name: "Bob Reception",
     email: "bob@grandhorizon.com",
-    role: "receptionist",
+    roleId: "role-receptionist",
   },
   {
     id: "user-003",
     name: "Charlie Keeper",
     email: "charlie@grandhorizon.com",
-    role: "housekeeper",
+    roleId: "role-housekeeper",
   },
 ];
 
