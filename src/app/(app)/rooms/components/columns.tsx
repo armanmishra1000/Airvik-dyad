@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { RoomType } from "@/data"
+import { RoomTypeFormDialog } from "./room-type-form-dialog"
 
 export const columns: ColumnDef<RoomType>[] = [
   {
@@ -46,7 +47,11 @@ export const columns: ColumnDef<RoomType>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <RoomTypeFormDialog roomType={roomType}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    Edit
+                </DropdownMenuItem>
+            </RoomTypeFormDialog>
             <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
