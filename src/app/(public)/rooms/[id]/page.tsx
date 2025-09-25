@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Users, Bed, Calendar as CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -14,6 +14,7 @@ import {
   areIntervalsOverlapping,
   parseISO,
   eachDayOfInterval,
+  parse,
 } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -68,6 +69,7 @@ const standardRatePlan =
 
 export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const { addGuest, addReservation, reservations, roomTypes } = useAppContext();
   const roomType = roomTypes.find((rt) => rt.id === params.id);
 
@@ -77,7 +79,20 @@ export default function RoomDetailsPage() {
       firstName: "",
       lastName: "",
       email: "",
-      guests: 1,
+      guests: searchParams.get("guests")
+        ? Number(searchParams.get("guests"))
+        : 1,
+      dateRange:
+        searchParams.get("from") && searchParams.get("to")
+          ? {
+              from: parse(
+                searchParams.get("from")!,
+                "yyyy-MM-dd",
+                new Date()
+              ),
+              to: parse(searchParams.get("to")!, "yyyy-MM-dd", new Date()),
+            }
+          : undefined,
     },
   });
 
