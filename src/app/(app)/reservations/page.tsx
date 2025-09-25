@@ -30,12 +30,22 @@ export default function ReservationsPage() {
     toast.success("Reservation cancelled successfully.");
   };
 
+  const handleCheckInReservation = (reservationId: string) => {
+    setReservations((prev) =>
+      prev.map((res) =>
+        res.id === reservationId ? { ...res, status: "Checked-in" } : res
+      )
+    );
+    toast.success("Guest checked-in successfully.");
+  };
+
   return (
     <div className="space-y-4">
       <DataTable
         columns={columns}
         data={reservations}
         onCancelReservation={handleCancelReservation}
+        onCheckInReservation={handleCheckInReservation}
       />
     </div>
   );
