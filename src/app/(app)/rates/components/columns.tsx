@@ -1,6 +1,6 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, RowData } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { RatePlan } from "@/data"
 import { RatePlanFormDialog } from "./rate-plan-form-dialog"
+
+declare module '@tanstack/react-table' {
+    interface TableMeta<TData extends RowData> {
+      openDeleteDialog: (item: TData) => void
+    }
+}
 
 export const columns: ColumnDef<RatePlan>[] = [
   {
@@ -34,7 +40,7 @@ export const columns: ColumnDef<RatePlan>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const ratePlan = row.original
  
       return (
@@ -52,7 +58,12 @@ export const columns: ColumnDef<RatePlan>[] = [
                     Edit
                 </DropdownMenuItem>
             </RatePlanFormDialog>
-            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+            <DropdownMenuItem 
+                className="text-destructive"
+                onSelect={() => table.options.meta?.openDeleteDialog(ratePlan)}
+            >
+                Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )

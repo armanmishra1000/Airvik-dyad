@@ -1,6 +1,6 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, RowData } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,12 @@ import { Badge } from "@/components/ui/badge"
 import type { Room } from "@/data"
 import { mockRoomTypes } from "@/data"
 import { RoomFormDialog } from "./room-form-dialog"
+
+declare module '@tanstack/react-table' {
+    interface TableMeta<TData extends RowData> {
+      openDeleteDialog: (item: TData) => void
+    }
+}
 
 export const columns: ColumnDef<Room>[] = [
   {
@@ -40,7 +46,7 @@ export const columns: ColumnDef<Room>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const room = row.original
  
       return (
@@ -58,7 +64,12 @@ export const columns: ColumnDef<Room>[] = [
                     Edit
                 </DropdownMenuItem>
             </RoomFormDialog>
-            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+            <DropdownMenuItem 
+                className="text-destructive"
+                onSelect={() => table.options.meta?.openDeleteDialog(room)}
+            >
+                Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )
