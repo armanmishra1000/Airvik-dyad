@@ -122,9 +122,9 @@ export function ReservationDetailsDrawer({
                 <p className="text-sm">
                   <strong>Rate Plan:</strong> {ratePlan?.name}
                 </p>
-                <p className="text-sm">
+                <div className="text-sm">
                   <strong>Status:</strong> <Badge>{reservation.status}</Badge>
-                </p>
+                </div>
               </div>
             </div>
 
