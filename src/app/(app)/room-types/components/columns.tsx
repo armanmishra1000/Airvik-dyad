@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import type { RoomType } from "@/data"
 import { RoomTypeFormDialog } from "./room-type-form-dialog"
+import { useAppContext } from "@/context/app-context"
 
 declare module '@tanstack/react-table' {
     interface TableMeta<TData extends RowData> {
@@ -59,6 +60,7 @@ export const columns: ColumnDef<RoomType>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const roomType = row.original
+      const { hasPermission } = useAppContext();
  
       return (
         <DropdownMenu>
@@ -70,17 +72,21 @@ export const columns: ColumnDef<RoomType>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <RoomTypeFormDialog roomType={roomType}>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    Edit
+            {hasPermission("update:room_type") && (
+                <RoomTypeFormDialog roomType={roomType}>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        Edit
+                    </DropdownMenuItem>
+                </RoomTypeFormDialog>
+            )}
+            {hasPermission("delete:room_type") && (
+                <DropdownMenuItem 
+                    className="text-destructive"
+                    onSelect={() => table.options.meta?.openDeleteDialog(roomType)}
+                >
+                    Delete
                 </DropdownMenuItem>
-            </RoomTypeFormDialog>
-            <DropdownMenuItem 
-                className="text-destructive"
-                onSelect={() => table.options.meta?.openDeleteDialog(roomType)}
-            >
-                Delete
-            </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )

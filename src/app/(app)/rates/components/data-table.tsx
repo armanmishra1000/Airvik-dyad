@@ -36,7 +36,7 @@ export function RatePlansDataTable<TData extends RatePlan, TValue>({
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
-  const { deleteRatePlan } = useAppContext()
+  const { deleteRatePlan, hasPermission } = useAppContext()
 
   const handleDeleteConfirm = () => {
     if (itemToDelete) {
@@ -73,9 +73,11 @@ export function RatePlansDataTable<TData extends RatePlan, TValue>({
     <>
       <div className="space-y-4">
           <div className="flex items-center justify-end">
-              <RatePlanFormDialog>
-                  <Button>Add Rate Plan</Button>
-              </RatePlanFormDialog>
+              {hasPermission("create:rate_plan") && (
+                <RatePlanFormDialog>
+                    <Button>Add Rate Plan</Button>
+                </RatePlanFormDialog>
+              )}
           </div>
         <div className="rounded-md border">
           <Table>

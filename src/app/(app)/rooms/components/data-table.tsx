@@ -36,7 +36,7 @@ export function RoomsDataTable<TData extends Room, TValue>({
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
-  const { deleteRoom } = useAppContext()
+  const { deleteRoom, hasPermission } = useAppContext()
 
   const handleDeleteConfirm = () => {
     if (itemToDelete) {
@@ -73,9 +73,11 @@ export function RoomsDataTable<TData extends Room, TValue>({
     <>
       <div className="space-y-4">
           <div className="flex items-center justify-end">
-              <RoomFormDialog>
-                  <Button>Add Room</Button>
-              </RoomFormDialog>
+              {hasPermission("create:room") && (
+                <RoomFormDialog>
+                    <Button>Add Room</Button>
+                </RoomFormDialog>
+              )}
           </div>
         <div className="rounded-md border">
           <Table>
