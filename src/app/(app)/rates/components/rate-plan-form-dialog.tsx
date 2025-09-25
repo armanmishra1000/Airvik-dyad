@@ -27,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { RatePlan } from "@/data";
+import { useAppContext } from "@/context/app-context";
 
 const ratePlanSchema = z.object({
   name: z.string().min(1, "Rate plan name is required."),
@@ -45,6 +46,7 @@ export function RatePlanFormDialog({
   children,
 }: RatePlanFormDialogProps) {
   const [open, setOpen] = React.useState(false);
+  const { addRatePlan, updateRatePlan } = useAppContext();
   const isEditing = !!ratePlan;
 
   const form = useForm<z.infer<typeof ratePlanSchema>>({
@@ -58,7 +60,21 @@ export function RatePlanFormDialog({
   });
 
   function onSubmit(values: z.infer<typeof ratePlanSchema>) {
-    console.log(values);
+    const ratePlanData = {
+      name: values.name,
+      price: values.price,
+      rules: {
+        minStay: values.minStay,
+        cancellationPolicy: values.cancellationPolicy,
+      },
+    };
+
+    if (isEditing && ratePlan) {
+      updateRatePlan(ratePlan.id, ratePlanData);
+    } else {
+      addRatePlan(ratePlanData);
+    }
+
     toast.success(
       `Rate plan ${isEditing ? "updated" : "created"} successfully!`
     );
