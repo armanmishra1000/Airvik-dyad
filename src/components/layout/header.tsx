@@ -6,7 +6,7 @@ import {
   Menu,
   Package2,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +34,7 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { property, currentUser, users, roles, setCurrentUser } = useAppContext();
   const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
   const userRole = roles.find(r => r.id === currentUser?.roleId);
@@ -41,6 +42,11 @@ export function Header() {
   const handleUserChange = (userId: string) => {
     const user = users.find(u => u.id === userId);
     setCurrentUser(user || null);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    router.push("/login");
   };
 
   return (
@@ -104,7 +110,7 @@ export function Header() {
                 ))}
             </DropdownMenuRadioGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

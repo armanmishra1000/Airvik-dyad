@@ -25,6 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useAppContext } from "@/context/app-context";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -33,6 +34,8 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const router = useRouter();
+  const { users, setCurrentUser } = useAppContext();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,11 +45,20 @@ export function LoginForm() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast.success("Login successful!", {
-      description: "Redirecting you to the dashboard...",
-    });
-    router.push("/dashboard");
+    const user = users.find((u) => u.email === values.email);
+
+    // For local dev, we'll accept any password for a valid email
+    if (user) {
+      setCurrentUser(user);
+      toast.success("Login successful!", {
+        description: "Redirecting you to the dashboard...",
+      });
+      router.push("/dashboard");
+    } else {
+      toast.error("Invalid credentials", {
+        description: "Please check your email and password and try again.",
+      });
+    }
   }
 
   return (
