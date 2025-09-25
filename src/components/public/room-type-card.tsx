@@ -14,15 +14,28 @@ import type { RoomType } from "@/data";
 
 interface RoomTypeCardProps {
   roomType: RoomType;
+  searchParams?: {
+    from: string;
+    to: string;
+    guests: string;
+  };
 }
 
-export function RoomTypeCard({ roomType }: RoomTypeCardProps) {
+export function RoomTypeCard({ roomType, searchParams }: RoomTypeCardProps) {
+  const href = `/rooms/${roomType.id}`;
+  const query = searchParams ? new URLSearchParams(searchParams).toString() : "";
+  const finalHref = query ? `${href}?${query}` : href;
+
   return (
     <Card className="flex flex-col">
       <CardHeader className="p-0">
         <div className="aspect-video relative">
           <Image
-            src={roomType.mainPhotoUrl || roomType.photos[0] || "/room-placeholder.jpg"}
+            src={
+              roomType.mainPhotoUrl ||
+              roomType.photos[0] ||
+              "/room-placeholder.jpg"
+            }
             alt={roomType.name}
             fill
             className="object-cover rounded-t-lg"
@@ -47,7 +60,7 @@ export function RoomTypeCard({ roomType }: RoomTypeCardProps) {
       </div>
       <CardFooter>
         <Button asChild className="w-full">
-          <Link href={`/rooms/${roomType.id}`}>View Details & Book</Link>
+          <Link href={finalHref}>View Details & Book</Link>
         </Button>
       </CardFooter>
     </Card>

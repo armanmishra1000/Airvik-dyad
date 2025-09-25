@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { format } from "date-fns";
 import { RoomTypeCard } from "@/components/public/room-type-card";
 import {
   BookingWidget,
@@ -16,13 +17,31 @@ export default function PublicHomePage() {
   const { search, availableRoomTypes, isLoading, setAvailableRoomTypes } =
     useAvailabilitySearch();
   const [hasSearched, setHasSearched] = React.useState(false);
+  const [searchValues, setSearchValues] =
+    React.useState<BookingSearchFormValues | null>(null);
 
   const handleSearch = (values: BookingSearchFormValues) => {
     search(values.dateRange, values.guests);
     setHasSearched(true);
+    setSearchValues(values);
+  };
+
+  const handleClearSearch = () => {
+    setHasSearched(false);
+    setAvailableRoomTypes(null);
+    setSearchValues(null);
   };
 
   const roomsToDisplay = hasSearched ? availableRoomTypes : roomTypes;
+
+  const searchParamsForCard =
+    hasSearched && searchValues?.dateRange.from && searchValues?.dateRange.to
+      ? {
+          from: format(searchValues.dateRange.from, "yyyy-MM-dd"),
+          to: format(searchValues.dateRange.to, "yyyy-MM-dd"),
+          guests: searchValues.guests.toString(),
+        }
+      : undefined;
 
   return (
     <div>
@@ -48,13 +67,7 @@ export default function PublicHomePage() {
               {hasSearched ? "Available Rooms" : "Our Rooms"}
             </h2>
             {hasSearched && (
-              <Button
-                variant="link"
-                onClick={() => {
-                  setHasSearched(false);
-                  setAvailableRoomTypes(null);
-                }}
-              >
+              <Button variant="link" onClick={handleClearSearch}>
                 Clear Search & View All
               </Button>
             )}
@@ -76,7 +89,11 @@ export default function PublicHomePage() {
               {roomsToDisplay && roomsToDisplay.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {roomsToDisplay.map((roomType) => (
-                    <RoomTypeCard key={roomType.id} roomType={roomType} />
+                    <RoomTypeCard
+                      key={roomType.id}
+                      roomType={roomType}
+                      searchParams={searchParamsForCard}
+                    />
                   ))}
                 </div>
               ) : (
