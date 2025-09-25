@@ -145,12 +145,13 @@ export function BookingDialog({
   };
 
   const handleBookNow = (roomTypeId: string) => {
-    const { dateRange } = form.getValues();
+    const { dateRange, guests } = form.getValues();
     if (!dateRange?.from || !dateRange?.to) return;
 
     const query = new URLSearchParams({
       from: format(dateRange.from, "yyyy-MM-dd"),
       to: format(dateRange.to, "yyyy-MM-dd"),
+      guests: guests.toString(),
     });
     router.push(`/rooms/${roomTypeId}?${query.toString()}`);
     onOpenChange(false);
