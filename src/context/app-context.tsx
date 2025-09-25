@@ -37,6 +37,7 @@ const RATE_PLANS_STORAGE_KEY = "hotel-pms-rate-plans";
 const PROPERTY_STORAGE_KEY = "hotel-pms-property";
 const CURRENT_USER_STORAGE_KEY = "hotel-pms-current-user";
 const ROLES_STORAGE_KEY = "hotel-pms-roles";
+const USERS_STORAGE_KEY = "hotel-pms-users";
 
 interface AppContextType {
   property: Property;
@@ -84,6 +85,9 @@ interface AppContextType {
   addRole: (role: Omit<Role, "id">) => void;
   updateRole: (roleId: string, updatedData: Partial<Omit<Role, "id">>) => void;
   deleteRole: (roleId: string) => boolean;
+  addUser: (user: Omit<User, "id">) => void;
+  updateUser: (userId: string, updatedData: Partial<Omit<User, "id">>) => void;
+  deleteUser: (userId: string) => boolean;
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
@@ -99,7 +103,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [roomTypes, setRoomTypes] = React.useState<RoomType[]>(mockRoomTypes);
   const [ratePlans, setRatePlans] = React.useState<RatePlan[]>(mockRatePlans);
   const [currentUser, setCurrentUser] = React.useState<User | null>(mockUsers[0]);
-  const [users] = React.useState<User[]>(mockUsers);
+  const [users, setUsers] = React.useState<User[]>(mockUsers);
   const [roles, setRoles] = React.useState<Role[]>(mockRoles);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
@@ -132,6 +136,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const storedRoles = window.localStorage.getItem(ROLES_STORAGE_KEY);
       if (storedRoles) setRoles(JSON.parse(storedRoles));
 
+      const storedUsers = window.localStorage.getItem(USERS_STORAGE_KEY);
+      if (storedUsers) setUsers(JSON.parse(storedUsers));
+
     } catch (error) {
       console.error("Error reading from localStorage", error);
     }
@@ -147,6 +154,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(RATE_PLANS_STORAGE_KEY, JSON.stringify(ratePlans)); }, [ratePlans, isInitialized]);
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser)); }, [currentUser, isInitialized]);
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(roles)); }, [roles, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users)); }, [users, isInitialized]);
 
   const hasPermission = (permission: Permission): boolean => {
     if (!currentUser) return false;
@@ -176,12 +184,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addRole = (roleData: Omit<Role, "id">) => { const newRole: Role = { ...roleData, id: `role-${Date.now()}` }; setRoles(prev => [...prev, newRole]); };
   const updateRole = (roleId: string, updatedData: Partial<Omit<Role, "id">>) => setRoles(prev => prev.map(r => r.id === roleId ? { ...r, ...updatedData } : r));
   const deleteRole = (roleId: string): boolean => { const isUsed = users.some(u => u.roleId === roleId); if (isUsed) return false; setRoles(prev => prev.filter(r => r.id !== roleId)); return true; };
+  const addUser = (userData: Omit<User, "id">) => { const newUser: User = { ...userData, id: `user-${Date.now()}` }; setUsers(prev => [...prev, newUser]); };
+  const updateUser = (userId: string, updatedData: Partial<Omit<User, "id">>) => setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updatedData } : u));
+  const deleteUser = (userId: string): boolean => { if (userId === currentUser?.id) return false; const isAssigned = housekeepingAssignments.some(a => a.assignedTo === userId); if (isAssigned) return false; setUsers(prev => prev.filter(u => u.id !== userId)); return true; };
 
   const value = {
     property, reservations, guests, housekeepingAssignments, rooms, roomTypes, ratePlans, currentUser, users, roles,
     setCurrentUser, hasPermission, updateProperty, addReservation, updateReservationStatus, addGuest, updateGuest, deleteGuest,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
-    deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole,
+    deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, addUser, updateUser, deleteUser,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
