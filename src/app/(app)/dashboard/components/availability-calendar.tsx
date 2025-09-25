@@ -36,8 +36,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { mockRooms } from "@/data";
+import { mockRooms, ReservationStatus } from "@/data";
 import { useAppContext } from "@/context/app-context";
+import { cn } from "@/lib/utils";
+
+const getStatusColor = (status: ReservationStatus) => {
+  switch (status) {
+    case "Checked-in":
+      return "bg-green-600 hover:bg-green-700";
+    case "Confirmed":
+      return "bg-blue-600 hover:bg-blue-700";
+    case "Tentative":
+      return "bg-yellow-500 hover:bg-yellow-600";
+    default:
+      return "bg-gray-500";
+  }
+};
 
 export function AvailabilityCalendar() {
   const { reservations, guests } = useAppContext();
@@ -49,22 +63,14 @@ export function AvailabilityCalendar() {
     return eachDayOfInterval({ start, end });
   }, [currentMonth]);
 
-  const handlePrevMonth = () => {
-    setCurrentMonth((prev) => subMonths(prev, 1));
-  };
+  const handlePrevMonth = () => setCurrentMonth((prev) => subMonths(prev, 1));
+  const handleNextMonth = () => setCurrentMonth((prev) => addMonths(prev, 1));
 
-  const handleNextMonth = () => {
-    setCurrentMonth((prev) => addMonths(prev, 1));
-  };
-
-  const getReservationForRoomAndDate = (roomId: string, date: Date) => {
+  const getReservationForDate = (roomId: string, date: Date) => {
     return reservations.find((res) => {
-      if (res.roomId !== roomId || res.status === "Cancelled") {
-        return false;
-      }
+      if (res.roomId !== roomId || res.status === "Cancelled") return false;
       const checkIn = parseISO(res.checkInDate);
       const checkOut = parseISO(res.checkOutDate);
-      // The interval includes the check-in day but not the check-out day
       return (
         isWithinInterval(date, { start: checkIn, end: checkOut }) &&
         !isSameDay(date, checkOut)
@@ -75,11 +81,11 @@ export function AvailabilityCalendar() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <CardTitle>Availability Overview</CardTitle>
             <CardDescription>
-              Monthly view of room bookings.
+              Monthly view of room bookings. Hover over a booking for details.
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -96,79 +102,141 @@ export function AvailabilityCalendar() {
         </div>
       </CardHeader>
       <CardContent>
-        <TooltipProvider>
-          <div className="overflow-x-auto">
-            <Table className="border">
+        <TooltipProvider delayDuration={0}>
+          <div className="overflow-x-auto border rounded-lg">
+            <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky left-0 z-10 bg-background border-r">
+                  <TableHead className="sticky left-0 z-10 bg-background/95 backdrop-blur-sm w-24 sm:w-32 border-r">
                     Room
                   </TableHead>
                   {daysInMonth.map((day) => (
-                    <TableHead key={day.toString()} className="text-center min-w-[60px]">
-                      {format(day, "d")}
+                    <TableHead
+                      key={day.toString()}
+                      className={cn(
+                        "text-center p-2 w-12",
+                        isSameDay(day, new Date()) && "bg-muted"
+                      )}
+                    >
+                      <div className="text-xs text-muted-foreground">
+                        {format(day, "E")}
+                      </div>
+                      <div className="text-base font-bold">
+                        {format(day, "d")}
+                      </div>
                     </TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockRooms.map((room) => (
-                  <TableRow key={room.id}>
-                    <TableCell className="font-medium sticky left-0 z-10 bg-background border-r">
-                      {room.roomNumber}
-                    </TableCell>
-                    {daysInMonth.map((day) => {
-                      const reservation = getReservationForRoomAndDate(
-                        room.id,
-                        day
-                      );
-                      const guest = reservation
-                        ? guests.find((g) => g.id === reservation.guestId)
-                        : null;
+                {mockRooms.map((room) => {
+                  const dayCells = [];
+                  for (let i = 0; i < daysInMonth.length; i++) {
+                    const day = daysInMonth[i];
+                    const reservation = getReservationForDate(room.id, day);
 
-                      return (
+                    if (!reservation) {
+                      dayCells.push(
                         <TableCell
                           key={day.toString()}
-                          className="p-0 text-center"
-                        >
-                          {reservation ? (
+                          className={cn(
+                            "border-l p-0",
+                            isSameDay(day, new Date()) && "bg-muted/50"
+                          )}
+                        />
+                      );
+                      continue;
+                    }
+
+                    const checkIn = parseISO(reservation.checkInDate);
+                    const isStartOfBookingInView =
+                      isSameDay(day, checkIn) || i === 0;
+
+                    if (isStartOfBookingInView) {
+                      let span = 0;
+                      for (let j = i; j < daysInMonth.length; j++) {
+                        if (
+                          getReservationForDate(room.id, daysInMonth[j])?.id ===
+                          reservation.id
+                        ) {
+                          span++;
+                        } else {
+                          break;
+                        }
+                      }
+
+                      if (span > 0) {
+                        const guest = guests.find(
+                          (g) => g.id === reservation.guestId
+                        );
+                        dayCells.push(
+                          <TableCell
+                            key={day.toString()}
+                            colSpan={span}
+                            className={cn(
+                              "p-0 border-l",
+                              isSameDay(day, new Date()) && "bg-muted/50"
+                            )}
+                          >
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <div className="bg-primary/80 text-primary-foreground h-full w-full flex items-center justify-center text-xs p-2 cursor-pointer">
-                                  {reservation.id.split("-")[1]}
+                                <div
+                                  className={cn(
+                                    "h-12 text-white rounded-md m-1 p-2 text-xs font-medium flex items-center overflow-hidden cursor-pointer transition-colors",
+                                    getStatusColor(reservation.status)
+                                  )}
+                                >
+                                  <span className="truncate">
+                                    {guest?.firstName} {guest?.lastName}
+                                  </span>
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>ID: {reservation.id}</p>
-                                <p>
-                                  Guest: {guest?.firstName} {guest?.lastName}
+                                <p className="font-bold">
+                                  {guest?.firstName} {guest?.lastName}
                                 </p>
+                                <p>Status: {reservation.status}</p>
                                 <p>
                                   Check-in:{" "}
-                                  {format(
-                                    parseISO(reservation.checkInDate),
-                                    "MMM d"
-                                  )}
+                                  {format(checkIn, "MMM d, yyyy")}
                                 </p>
                                 <p>
                                   Check-out:{" "}
                                   {format(
                                     parseISO(reservation.checkOutDate),
-                                    "MMM d"
+                                    "MMM d, yyyy"
                                   )}
                                 </p>
                               </TooltipContent>
                             </Tooltip>
-                          ) : (
-                            <div className="bg-background h-full w-full"></div>
-                          )}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
+                          </TableCell>
+                        );
+                        i += span - 1;
+                      }
+                    }
+                  }
+                  return (
+                    <TableRow key={room.id}>
+                      <TableCell className="font-medium sticky left-0 z-10 bg-background/95 backdrop-blur-sm border-r">
+                        {room.roomNumber}
+                      </TableCell>
+                      {dayCells}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
+          </div>
+          <div className="flex items-center gap-4 mt-4 text-sm">
+            <span className="font-semibold">Legend:</span>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-sm bg-blue-600" />
+              <span>Confirmed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-sm bg-green-600" />
+              <span>Checked-in</span>
+            </div>
           </div>
         </TooltipProvider>
       </CardContent>
