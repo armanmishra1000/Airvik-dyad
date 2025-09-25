@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { ColumnDef, RowData } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 
@@ -23,6 +24,24 @@ declare module '@tanstack/react-table' {
 }
 
 export const columns: ColumnDef<RoomType>[] = [
+  {
+    id: "image",
+    header: "Image",
+    cell: ({ row }) => {
+      const roomType = row.original
+      const imageUrl = roomType.mainPhotoUrl || roomType.photos?.[0] || "/room-placeholder.jpg"
+      return (
+        <div className="w-16 h-10 relative rounded-md overflow-hidden">
+            <Image 
+                src={imageUrl}
+                alt={roomType.name}
+                fill
+                className="object-cover"
+            />
+        </div>
+      )
+    },
+  },
   {
     accessorKey: "name",
     header: "Name",
