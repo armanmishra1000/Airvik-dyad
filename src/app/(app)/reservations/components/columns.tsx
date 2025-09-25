@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal } from "lucide-react"
+import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 
 import { Badge } from "@/components/ui/badge"
@@ -32,6 +32,15 @@ export type ReservationWithDetails = {
     roomNumber: string;
 }
 
+export const statuses = [
+    { value: "Tentative", label: "Tentative", icon: HelpCircle },
+    { value: "Confirmed", label: "Confirmed", icon: CheckCircle2 },
+    { value: "Checked-in", label: "Checked-in", icon: LogIn },
+    { value: "Checked-out", label: "Checked-out", icon: LogOut },
+    { value: "Cancelled", label: "Cancelled", icon: XCircle },
+    { value: "No-show", label: "No-show", icon: AlertCircle },
+  ]
+
 export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     accessorKey: "guestName",
@@ -54,13 +63,18 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     accessorKey: "status",
     header: "Status",
+    filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id))
+    },
     cell: ({ row }) => {
-        const status = row.getValue("status") as ReservationStatus;
+        const status = statuses.find(s => s.value === row.getValue("status"))
+        if (!status) return null
+
         const variant: "default" | "secondary" | "destructive" | "outline" = 
-            status === "Checked-in" ? "default" :
-            status === "Confirmed" ? "secondary" :
-            status === "Cancelled" ? "destructive" : "outline";
-        return <Badge variant={variant}>{status}</Badge>
+            status.value === "Checked-in" ? "default" :
+            status.value === "Confirmed" ? "secondary" :
+            status.value === "Cancelled" ? "destructive" : "outline";
+        return <Badge variant={variant}>{status.label}</Badge>
     }
   },
   {
