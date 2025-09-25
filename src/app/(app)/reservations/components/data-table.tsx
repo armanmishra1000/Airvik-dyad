@@ -6,8 +6,11 @@ import {
   ColumnFiltersState,
   RowData,
   SortingState,
+  VisibilityState,
   flexRender,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -57,6 +60,8 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({})
   const [selectedReservation, setSelectedReservation] = React.useState<ReservationWithDetails | null>(null);
   const [reservationToCancel, setReservationToCancel] = React.useState<string | null>(null);
 
@@ -81,9 +86,13 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     state: {
       sorting,
       columnFilters,
+      columnVisibility,
     },
     meta: {
         viewReservation: (reservation) => {

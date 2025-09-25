@@ -3,6 +3,9 @@
 import { Table } from "@tanstack/react-table"
 import { Input } from "@/components/ui/input"
 import { CreateReservationDialog } from "./create-reservation-dialog"
+import { DataTableViewOptions } from "./data-table-view-options"
+import { DataTableFacetedFilter } from "./data-table-faceted-filter"
+import { statuses } from "./columns"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -22,8 +25,18 @@ export function DataTableToolbar<TData>({
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
+        {table.getColumn("status") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("status")}
+            title="Status"
+            options={statuses}
+          />
+        )}
       </div>
-      <CreateReservationDialog />
+      <div className="flex items-center gap-2">
+        <DataTableViewOptions table={table} />
+        <CreateReservationDialog />
+      </div>
     </div>
   )
 }
