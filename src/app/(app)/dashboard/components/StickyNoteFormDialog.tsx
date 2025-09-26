@@ -24,6 +24,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { StickyNote } from "@/data";
@@ -31,7 +32,8 @@ import { useAppContext } from "@/context/app-context";
 import { cn } from "@/lib/utils";
 
 const noteSchema = z.object({
-  content: z.string().min(1, "Note content cannot be empty."),
+  title: z.string().min(1, "Title is required."),
+  description: z.string().optional(),
   color: z.enum(["yellow", "pink", "blue", "green"]),
 });
 
@@ -58,7 +60,8 @@ export function StickyNoteFormDialog({
   const form = useForm<z.infer<typeof noteSchema>>({
     resolver: zodResolver(noteSchema),
     defaultValues: {
-      content: note?.content || "",
+      title: note?.title || "",
+      description: note?.description || "",
       color: note?.color || "yellow",
     },
   });
@@ -93,14 +96,27 @@ export function StickyNoteFormDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="content"
+              name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Content</FormLabel>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Note title..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description (Optional)</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Your note here..."
-                      className="min-h-[120px]"
+                      placeholder="Your note details here..."
+                      className="min-h-[100px]"
                       {...field}
                     />
                   </FormControl>

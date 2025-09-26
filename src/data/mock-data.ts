@@ -256,13 +256,15 @@ export const mockHousekeeping: HousekeepingAssignment[] = [
 export const mockStickyNotes: StickyNote[] = [
   {
     id: 'note-1',
-    content: 'Remember to check the VIP arrivals for tomorrow.',
+    title: 'VIP Arrivals',
+    description: 'Remember to check the VIP arrivals for tomorrow.',
     color: 'yellow',
     createdAt: new Date().toISOString(),
   },
   {
     id: 'note-2',
-    content: 'Maintenance scheduled for the pool pump on Friday.',
+    title: 'Pool Maintenance',
+    description: 'Scheduled for the pool pump on Friday.',
     color: 'blue',
     createdAt: new Date().toISOString(),
   },

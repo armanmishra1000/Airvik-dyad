@@ -56,7 +56,7 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
 
   return (
     <Card className={cn("shadow-md hover:shadow-lg transition-shadow", colorClasses[note.color], rotationClass)}>
-      <CardHeader className="flex-row items-center justify-between p-3">
+      <CardHeader className="flex-row items-start justify-between p-3">
         <p className="text-xs text-muted-foreground">
           {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
         </p>
@@ -84,7 +84,10 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
         </DropdownMenu>
       </CardHeader>
       <CardContent className="p-3 pt-0">
-        <p className="whitespace-pre-wrap font-serif">{note.content}</p>
+        <h4 className="font-bold font-serif mb-1">{note.title}</h4>
+        {note.description && (
+          <p className="whitespace-pre-wrap font-serif text-sm">{note.description}</p>
+        )}
       </CardContent>
     </Card>
   );
