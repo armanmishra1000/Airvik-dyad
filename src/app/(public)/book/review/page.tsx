@@ -7,9 +7,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   format,
-  parseISO,
+  parse,
   differenceInDays,
   areIntervalsOverlapping,
+  parseISO,
 } from "date-fns";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -27,7 +28,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { mockRatePlans } from "@/data";
+import { mockRatePlans, type RoomType } from "@/data";
 
 const paymentSchema = z.object({
   cardName: z.string().min(1, "Name on card is required."),
@@ -39,6 +40,9 @@ const paymentSchema = z.object({
     .string()
     .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Invalid expiry date (MM/YY)."),
   cvc: z.string().min(3, "CVC must be 3 digits.").max(4, "CVC is too long."),
+  firstName: z.string().min(1, "First name is required."),
+  lastName: z.string().min(1, "Last name is required."),
+  email: z.string().email("Please enter a valid email."),
 });
 
 function BookingReviewContent() {
@@ -51,17 +55,21 @@ function BookingReviewContent() {
 
   const bookingDetails = React.useMemo(() => {
     return {
-      roomTypeId: searchParams.get("roomTypeId"),
-      firstName: searchParams.get("firstName"),
-      lastName: searchParams.get("lastName"),
-      email: searchParams.get("email"),
+      roomTypeIds: searchParams.getAll("roomTypeId"),
       from: searchParams.get("from"),
       to: searchParams.get("to"),
       guests: searchParams.get("guests"),
+      rooms: searchParams.get("rooms"),
     };
   }, [searchParams]);
 
-  const roomType = roomTypes.find((rt) => rt.id === bookingDetails.roomTypeId);
+  const selectedRoomTypes = React.useMemo(() => {
+    if (!bookingDetails.roomTypeIds) return [];
+    return bookingDetails.roomTypeIds
+      .map((id) => roomTypes.find((rt) => rt.id === id))
+      .filter(Boolean) as RoomType[];
+  }, [bookingDetails.roomTypeIds, roomTypes]);
+
   const ratePlan =
     mockRatePlans.find((rp) => rp.id === "rp-standard") || mockRatePlans[0];
 
@@ -72,10 +80,13 @@ function BookingReviewContent() {
       cardNumber: "",
       expiryDate: "",
       cvc: "",
+      firstName: "",
+      lastName: "",
+      email: "",
     },
   });
 
-  if (!roomType || !bookingDetails.from || !bookingDetails.to) {
+  if (selectedRoomTypes.length === 0 || !bookingDetails.from || !bookingDetails.to) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-bold">Invalid Booking Details</h1>
@@ -89,68 +100,79 @@ function BookingReviewContent() {
     );
   }
 
-  const fromDate = parseISO(bookingDetails.from);
-  const toDate = parseISO(bookingDetails.to);
+  const fromDate = parse(bookingDetails.from, "yyyy-MM-dd", new Date());
+  const toDate = parse(bookingDetails.to, "yyyy-MM-dd", new Date());
   const nights = differenceInDays(toDate, fromDate);
-  const totalCost = nights * ratePlan.price;
+  const totalCost = selectedRoomTypes.length * nights * ratePlan.price;
 
   function onSubmit(values: z.infer<typeof paymentSchema>) {
     setIsProcessing(true);
 
     setTimeout(() => {
-      const roomsOfType = rooms.filter((r) => r.roomTypeId === roomType?.id);
-      const availableRoom = roomsOfType.find((room) => {
-        return !reservations.some(
-          (res) =>
-            res.roomId === room.id &&
-            res.status !== "Cancelled" &&
-            areIntervalsOverlapping(
-              { start: fromDate, end: toDate },
-              { start: parseISO(res.checkInDate), end: parseISO(res.checkOutDate) }
-            )
-        );
-      });
+      // Find available physical rooms for the selection
+      const assignedRoomIds: string[] = [];
+      let allRoomsFound = true;
 
-      if (!availableRoom) {
-        toast.error("Room no longer available", {
+      for (const roomType of selectedRoomTypes) {
+        const roomsOfType = rooms.filter((r) => r.roomTypeId === roomType.id);
+        const availableRoom = roomsOfType.find((room) => {
+          // Check if this physical room is already assigned in this booking
+          if (assignedRoomIds.includes(room.id)) return false;
+
+          // Check if this physical room has conflicting reservations
+          return !reservations.some(
+            (res) =>
+              res.roomId === room.id &&
+              res.status !== "Cancelled" &&
+              areIntervalsOverlapping(
+                { start: fromDate, end: toDate },
+                {
+                  start: parseISO(res.checkInDate),
+                  end: parseISO(res.checkOutDate),
+                }
+              )
+          );
+        });
+
+        if (availableRoom) {
+          assignedRoomIds.push(availableRoom.id);
+        } else {
+          allRoomsFound = false;
+          break;
+        }
+      }
+
+      if (!allRoomsFound) {
+        toast.error("One or more rooms are no longer available", {
           description:
-            "Sorry, this room type sold out for your selected dates while you were booking.",
+            "Sorry, some rooms sold out for your selected dates while you were booking.",
         });
         setIsProcessing(false);
         return;
       }
 
       const newGuest = addGuest({
-        firstName: bookingDetails.firstName!,
-        lastName: bookingDetails.lastName!,
-        email: bookingDetails.email!,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
         phone: "",
       });
 
-      const newReservation = {
+      const newReservations = addReservation({
         guestId: newGuest.id,
-        roomId: availableRoom.id,
+        roomIds: assignedRoomIds,
         ratePlanId: ratePlan.id,
         checkInDate: bookingDetails.from!,
         checkOutDate: bookingDetails.to!,
         numberOfGuests: Number(bookingDetails.guests),
-        status: "Confirmed" as const,
+        status: "Confirmed",
         notes: "Booked via public website.",
-        folio: [
-          {
-            id: `f-${Date.now()}`,
-            description: "Room Charge",
-            amount: totalCost,
-            timestamp: new Date().toISOString(),
-          },
-        ],
-        totalAmount: totalCost,
         bookingDate: new Date().toISOString(),
-        source: 'website' as const,
-      };
+        source: "website",
+      });
 
-      const reservation = addReservation(newReservation);
-      router.push(`/book/confirmation/${reservation.id}`);
+      // Redirect to the confirmation page of the first reservation in the group
+      router.push(`/book/confirmation/${newReservations[0].id}`);
     }, 1000);
   }
 
@@ -163,74 +185,124 @@ function BookingReviewContent() {
         <div className="md:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Payment Information</CardTitle>
+              <CardTitle>Guest & Payment Information</CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-4"
+                  className="space-y-6"
                 >
-                  <FormField
-                    control={form.control}
-                    name="cardName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name on Card</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="cardNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Card Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder="•••• •••• •••• ••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Guest Details</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     <FormField
                       control={form.control}
-                      name="expiryDate"
+                      name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Expiry Date</FormLabel>
+                          <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="MM/YY" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="cvc"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>CVC</FormLabel>
-                          <FormControl>
-                            <Input placeholder="•••" {...field} />
+                            <Input type="email" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                   </div>
+                  <Separator />
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Payment Details</h3>
+                    <FormField
+                      control={form.control}
+                      name="cardName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name on Card</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="cardNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Card Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="•••• •••• •••• ••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="expiryDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Expiry Date</FormLabel>
+                            <FormControl>
+                              <Input placeholder="MM/YY" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="cvc"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>CVC</FormLabel>
+                            <FormControl>
+                              <Input placeholder="•••" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                   <Button
                     type="submit"
                     className="w-full text-lg"
                     disabled={isProcessing}
                   >
-                    {isProcessing ? "Processing..." : `Confirm & Pay $${totalCost.toFixed(2)}`}
+                    {isProcessing
+                      ? "Processing..."
+                      : `Confirm & Pay $${totalCost.toFixed(2)}`}
                   </Button>
                 </form>
               </Form>
@@ -239,48 +311,61 @@ function BookingReviewContent() {
         </div>
         <div className="space-y-6">
           <Card>
-            <CardContent className="p-0">
-              <div className="relative aspect-video">
-                <Image
-                  src={
-                    roomType.mainPhotoUrl ||
-                    roomType.photos[0] ||
-                    "/room-placeholder.jpg"
-                  }
-                  alt={roomType.name}
-                  fill
-                  className="object-cover rounded-t-lg"
-                />
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold">{roomType.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {format(fromDate, "MMM d, yyyy")} -{" "}
-                  {format(toDate, "MMM d, yyyy")}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
             <CardHeader>
               <CardTitle>Booking Summary</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>
-                  {ratePlan.name} ({nights} night
-                  {nights > 1 ? "s" : ""})
-                </span>
-                <span>${totalCost.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Taxes & Fees</span>
-                <span>Included</span>
-              </div>
+            <CardContent className="space-y-4">
+              {selectedRoomTypes.map((rt, index) => (
+                <div key={`${rt.id}-${index}`} className="flex gap-4">
+                  <div className="w-24 h-16 relative rounded-md overflow-hidden flex-shrink-0">
+                    <Image
+                      src={
+                        rt.mainPhotoUrl ||
+                        rt.photos[0] ||
+                        "/room-placeholder.jpg"
+                      }
+                      alt={rt.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">{rt.name}</h4>
+                    <p className="text-sm text-muted-foreground">1 Room</p>
+                  </div>
+                </div>
+              ))}
               <Separator />
-              <div className="flex justify-between font-bold text-base">
-                <span>Total</span>
-                <span>${totalCost.toFixed(2)}</span>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Dates</span>
+                  <span>
+                    {format(fromDate, "MMM d")} - {format(toDate, "MMM d, yyyy")}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>
+                    {ratePlan.name} ({nights} night
+                    {nights > 1 ? "s" : ""})
+                  </span>
+                  <span>
+                    $
+                    {(
+                      selectedRoomTypes.length *
+                      nights *
+                      ratePlan.price
+                    ).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Taxes & Fees</span>
+                  <span>Included</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between font-bold text-base">
+                  <span>Total</span>
+                  <span>${totalCost.toFixed(2)}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -292,7 +377,11 @@ function BookingReviewContent() {
 
 export default function BookingReviewPage() {
   return (
-    <React.Suspense fallback={<div className="text-center p-12">Loading booking details...</div>}>
+    <React.Suspense
+      fallback={
+        <div className="text-center p-12">Loading booking details...</div>
+      }
+    >
       <BookingReviewContent />
     </React.Suspense>
   );

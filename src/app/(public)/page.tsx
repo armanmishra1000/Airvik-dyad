@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
 import { RoomTypeCard } from "@/components/public/room-type-card";
 import {
   BookingWidget,
@@ -11,6 +10,8 @@ import { useAvailabilitySearch } from "@/hooks/use-availability-search";
 import { useAppContext } from "@/context/app-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { BookingSummary } from "@/components/public/booking-summary";
+import type { RoomType } from "@/data";
 
 export default function PublicHomePage() {
   const { roomTypes } = useAppContext();
@@ -19,31 +20,40 @@ export default function PublicHomePage() {
   const [hasSearched, setHasSearched] = React.useState(false);
   const [searchValues, setSearchValues] =
     React.useState<BookingSearchFormValues | null>(null);
+  const [selection, setSelection] = React.useState<RoomType[]>([]);
 
   const handleSearch = (values: BookingSearchFormValues) => {
     search(values.dateRange, values.guests, values.children, values.rooms);
     setHasSearched(true);
     setSearchValues(values);
+    setSelection([]); // Clear previous selection on new search
   };
 
   const handleClearSearch = () => {
     setHasSearched(false);
     setAvailableRoomTypes(null);
     setSearchValues(null);
+    setSelection([]);
+  };
+
+  const handleSelectRoom = (roomType: RoomType) => {
+    if (searchValues && selection.length < searchValues.rooms) {
+      setSelection((prev) => [...prev, roomType]);
+    }
+  };
+
+  const handleRemoveRoom = (index: number) => {
+    setSelection((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearSelection = () => {
+    setSelection([]);
   };
 
   const roomsToDisplay = hasSearched ? availableRoomTypes : roomTypes;
-
-  const searchParamsForCard =
-    hasSearched && searchValues?.dateRange.from && searchValues?.dateRange.to
-      ? {
-          from: format(searchValues.dateRange.from, "yyyy-MM-dd"),
-          to: format(searchValues.dateRange.to, "yyyy-MM-dd"),
-          guests: searchValues.guests.toString(),
-          children: (searchValues.children || 0).toString(),
-          rooms: searchValues.rooms.toString(),
-        }
-      : undefined;
+  const isSelectionComplete = searchValues
+    ? selection.length >= searchValues.rooms
+    : false;
 
   return (
     <div>
@@ -94,7 +104,9 @@ export default function PublicHomePage() {
                     <RoomTypeCard
                       key={roomType.id}
                       roomType={roomType}
-                      searchParams={searchParamsForCard}
+                      onSelect={handleSelectRoom}
+                      isSelectionComplete={isSelectionComplete}
+                      hasSearched={hasSearched}
                     />
                   ))}
                 </div>
@@ -112,6 +124,14 @@ export default function PublicHomePage() {
           )}
         </div>
       </section>
+      {hasSearched && searchValues && selection.length > 0 && (
+        <BookingSummary
+          selection={selection}
+          searchValues={searchValues}
+          onRemove={handleRemoveRoom}
+          onClear={handleClearSelection}
+        />
+      )}
     </div>
   );
 }
