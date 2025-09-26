@@ -68,7 +68,7 @@ interface AppContextType {
   addRoomType: (roomType: Omit<RoomType, "id">) => void;
   updateRoomType: (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id">>) => void;
   deleteRoomType: (roomTypeId: string) => Promise<boolean>;
-  addRatePlan: (ratePlan: Omit<RatePlan, "id">>) => void;
+  addRatePlan: (ratePlan: Omit<RatePlan, "id">) => void;
   updateRatePlan: (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => void;
   deleteRatePlan: (ratePlanId: string) => Promise<boolean>;
   addRole: (role: Omit<Role, "id">) => void;
