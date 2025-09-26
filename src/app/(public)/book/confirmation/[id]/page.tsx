@@ -102,7 +102,7 @@ export default function BookingConfirmationPage() {
               </div>
               <div className="aspect-video w-full overflow-hidden rounded-lg border mt-4">
                 <iframe
-                  src={property.googleMapsUrl}
+                  src={property.google_maps_url}
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

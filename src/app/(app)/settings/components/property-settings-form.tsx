@@ -34,9 +34,9 @@ const propertySchema = z.object({
   address: z.string().min(1, "Address is required."),
   phone: z.string().min(1, "Phone number is required."),
   email: z.string().email("Please enter a valid email."),
-  logoUrl: z.string().optional(),
+  logo_url: z.string().optional(),
   photos: z.string().optional(),
-  googleMapsUrl: z.string().url("Please enter a valid Google Maps embed URL."),
+  google_maps_url: z.string().url("Please enter a valid Google Maps embed URL."),
 });
 
 export function PropertySettingsForm() {
@@ -49,13 +49,13 @@ export function PropertySettingsForm() {
       address: property.address || "",
       phone: property.phone || "",
       email: property.email || "",
-      logoUrl: property.logoUrl || "",
+      logo_url: property.logo_url || "",
       photos: property.photos?.join(", ") || "",
-      googleMapsUrl: property.googleMapsUrl || "",
+      google_maps_url: property.google_maps_url || "",
     },
   });
 
-  const googleMapsUrl = form.watch("googleMapsUrl");
+  const google_maps_url = form.watch("google_maps_url");
 
   React.useEffect(() => {
     form.reset({
@@ -63,16 +63,16 @@ export function PropertySettingsForm() {
       address: property.address,
       phone: property.phone,
       email: property.email,
-      logoUrl: property.logoUrl,
+      logo_url: property.logo_url,
       photos: property.photos?.join(", ") || "",
-      googleMapsUrl: property.googleMapsUrl,
+      google_maps_url: property.google_maps_url,
     });
   }, [property, form]);
 
   function onSubmit(values: z.infer<typeof propertySchema>) {
     const updatedData = {
       ...values,
-      logoUrl: values.logoUrl || "",
+      logo_url: values.logo_url || "",
       photos: values.photos ? values.photos.split(",").map(p => p.trim()) : [],
     };
     updateProperty(updatedData);
@@ -96,7 +96,7 @@ export function PropertySettingsForm() {
           >
             <FormField
               control={form.control}
-              name="logoUrl"
+              name="logo_url"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Logo</FormLabel>
@@ -163,7 +163,7 @@ export function PropertySettingsForm() {
             </div>
             <FormField
               control={form.control}
-              name="googleMapsUrl"
+              name="google_maps_url"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Google Maps Embed URL</FormLabel>
@@ -177,12 +177,12 @@ export function PropertySettingsForm() {
                 </FormItem>
               )}
             />
-            {googleMapsUrl && (
+            {google_maps_url && (
               <div>
                 <Label>Map Preview</Label>
                 <div className="mt-2 aspect-video w-full overflow-hidden rounded-lg border">
                   <iframe
-                    src={googleMapsUrl}
+                    src={google_maps_url}
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}

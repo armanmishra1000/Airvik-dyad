@@ -37,9 +37,9 @@ export interface Property {
   address: string;
   phone: string;
   email: string;
-  logoUrl: string;
+  logo_url: string;
   photos: string[];
-  googleMapsUrl: string;
+  google_maps_url: string;
   timezone: string;
   currency: string;
   brandColors: {
