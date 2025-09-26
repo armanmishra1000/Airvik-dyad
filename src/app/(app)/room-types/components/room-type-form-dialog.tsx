@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { RoomType } from "@/data";
 import { useAppContext } from "@/context/app-context";
 import { MultiImageUpload } from "@/components/shared/multi-image-upload";
@@ -35,7 +36,7 @@ const roomTypeSchema = z.object({
   description: z.string().optional(),
   maxOccupancy: z.coerce.number().min(1, "Max occupancy must be at least 1."),
   bedTypes: z.string().min(1, "Please enter at least one bed type."),
-  amenities: z.string().optional(),
+  amenities: z.array(z.string()).optional(),
   photos: z.array(z.string()).optional(),
   mainPhotoUrl: z.string().optional(),
 });
@@ -50,7 +51,7 @@ export function RoomTypeFormDialog({
   children,
 }: RoomTypeFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addRoomType, updateRoomType } = useAppContext();
+  const { amenities: allAmenities, addRoomType, updateRoomType } = useAppContext();
   const isEditing = !!roomType;
 
   const form = useForm<z.infer<typeof roomTypeSchema>>({
@@ -60,7 +61,7 @@ export function RoomTypeFormDialog({
       description: roomType?.description || "",
       maxOccupancy: roomType?.maxOccupancy || 1,
       bedTypes: roomType?.bedTypes.join(", ") || "",
-      amenities: roomType?.amenities.join(", ") || "",
+      amenities: roomType?.amenities || [],
       photos: roomType?.photos || [],
       mainPhotoUrl: roomType?.mainPhotoUrl || "",
     },
@@ -71,7 +72,7 @@ export function RoomTypeFormDialog({
       ...values,
       description: values.description || "",
       bedTypes: values.bedTypes.split(",").map((s) => s.trim()),
-      amenities: values.amenities?.split(",").map((s) => s.trim()) || [],
+      amenities: values.amenities || [],
       photos: values.photos || [],
       mainPhotoUrl: values.mainPhotoUrl || values.photos?.[0] || "",
     };
@@ -161,15 +162,44 @@ export function RoomTypeFormDialog({
             <FormField
               control={form.control}
               name="amenities"
-              render={({ field }) => (
+              render={() => (
                 <FormItem>
                   <FormLabel>Amenities</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="e.g., Wi-Fi, Ocean View, Balcony"
-                      {...field}
-                    />
-                  </FormControl>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-md border p-4">
+                    {allAmenities.map((amenity) => (
+                      <FormField
+                        key={amenity.id}
+                        control={form.control}
+                        name="amenities"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={amenity.id}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(amenity.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...(field.value || []), amenity.id])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== amenity.id
+                                          )
+                                        )
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {amenity.name}
+                              </FormLabel>
+                            </FormItem>
+                          )
+                        }}
+                      />
+                    ))}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}

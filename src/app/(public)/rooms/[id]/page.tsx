@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { notFound, useParams, useSearchParams, useRouter } from "next/navigation";
-import { Users, Bed, Calendar as CalendarIcon, Check } from "lucide-react";
+import { Users, Bed, Calendar as CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,15 +10,13 @@ import {
   format,
   differenceInDays,
   formatISO,
-  areIntervalsOverlapping,
-  parseISO,
   eachDayOfInterval,
+  parseISO,
   parse,
 } from "date-fns";
 import type { DateRange } from "react-day-picker";
-import { toast } from "sonner";
 
-import { mockRoomTypes, mockRatePlans, mockRooms } from "@/data";
+import { mockRatePlans, mockRooms } from "@/data";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -51,6 +49,7 @@ import {
 } from "@/components/ui/carousel";
 import { useAppContext } from "@/context/app-context";
 import { cn } from "@/lib/utils";
+import { Icon } from "@/components/shared/icon";
 
 const bookingSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
@@ -70,7 +69,7 @@ export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { reservations, roomTypes } = useAppContext();
+  const { reservations, roomTypes, amenities: allAmenities } = useAppContext();
   const roomType = roomTypes.find((rt) => rt.id === params.id);
 
   const form = useForm<z.infer<typeof bookingSchema>>({
@@ -218,12 +217,16 @@ export default function RoomDetailsPage() {
                 What this room offers
               </h2>
               <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
-                {roomType.amenities.map((amenity) => (
-                  <li key={amenity} className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-primary" />
-                    <span>{amenity}</span>
-                  </li>
-                ))}
+                {roomType.amenities.map((amenityId) => {
+                  const amenity = allAmenities.find(a => a.id === amenityId);
+                  if (!amenity) return null;
+                  return (
+                    <li key={amenity.id} className="flex items-center gap-3">
+                      <Icon name={amenity.icon} className="h-5 w-5 text-primary" />
+                      <span>{amenity.name}</span>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           )}
