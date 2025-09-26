@@ -59,7 +59,8 @@ export function UserFormDialog({
   children,
 }: UserFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { roles, updateUser } = useAppContext();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const { roles, updateUser, refetchUsers } = useAppContext();
   const isEditing = !!user;
 
   const form = useForm<UserFormValues>({
@@ -73,29 +74,37 @@ export function UserFormDialog({
   });
 
   async function onSubmit(values: UserFormValues) {
-    if (isEditing && user) {
-      // Update user logic (e.g., role change)
-      updateUser(user.id, { name: values.name, roleId: values.roleId });
-      toast.success("User updated successfully!");
-    } else {
-      // Create user logic using Edge Function
-      const selectedRole = roles.find(r => r.id === values.roleId);
-      const { error } = await supabase.functions.invoke('create-user', {
-        body: {
-          email: values.email,
-          password: values.password,
-          name: values.name,
-          role_name: selectedRole?.name,
-        },
-      });
-
-      if (error) {
-        toast.error("Failed to create user", { description: error.message });
-      } else {
-        toast.success("User created successfully!");
-        form.reset();
+    setIsSubmitting(true);
+    try {
+      if (isEditing && user) {
+        updateUser(user.id, { name: values.name, roleId: values.roleId });
+        toast.success("User updated successfully!");
+        await refetchUsers();
         setOpen(false);
+      } else {
+        const selectedRole = roles.find(r => r.id === values.roleId);
+        const { error } = await supabase.functions.invoke('create-user', {
+          body: {
+            email: values.email,
+            password: values.password,
+            name: values.name,
+            role_name: selectedRole?.name,
+          },
+        });
+
+        if (error) {
+          toast.error("Failed to create user", { description: error.message });
+        } else {
+          toast.success("User created successfully!");
+          await refetchUsers();
+          form.reset();
+          setOpen(false);
+        }
       }
+    } catch (e: any) {
+      toast.error("An unexpected error occurred", { description: e.message });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -182,8 +191,8 @@ export function UserFormDialog({
               )}
             />
             <DialogFooter>
-              <Button type="submit">
-                {isEditing ? "Save Changes" : "Create User"}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : (isEditing ? "Save Changes" : "Create User")}
               </Button>
             </DialogFooter>
           </form>

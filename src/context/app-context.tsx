@@ -94,6 +94,7 @@ interface AppContextType {
   deleteRole: (roleId: string) => Promise<boolean>;
   updateUser: (userId: string, updatedData: Partial<Omit<User, "id">>) => void;
   deleteUser: (userId: string) => Promise<boolean>;
+  refetchUsers: () => Promise<void>;
   addAmenity: (amenity: Omit<Amenity, "id">) => void;
   updateAmenity: (amenityId: string, updatedData: Partial<Omit<Amenity, "id">>) => void;
   deleteAmenity: (amenityId: string) => Promise<boolean>;
@@ -124,6 +125,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(defaultDashboardLayout);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  const refetchUsers = React.useCallback(async () => {
+    const { data: usersData, error: usersError } = await supabase.functions.invoke('get-users');
+    if (usersError) {
+        console.error("Error refetching users:", usersError);
+    } else {
+        setUsers(usersData || []);
+    }
+  }, []);
+
   const fetchData = React.useCallback(async (user: AuthUser) => {
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
@@ -132,8 +142,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .single();
 
     if (profileError) {
-      console.error("Error fetching profile:", profileError);
-      throw profileError;
+      console.error("Error fetching profile, signing out:", profileError);
+      await supabase.auth.signOut();
+      return;
     }
     
     // @ts-ignore
@@ -426,7 +437,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     hasPermission, updateProperty, addReservation, updateReservation, updateReservationStatus, addGuest, updateGuest, deleteGuest,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
-    addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout,
+    refetchUsers, addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout,
   };
 
   if (isLoading) {
