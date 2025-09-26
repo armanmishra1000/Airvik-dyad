@@ -7,6 +7,7 @@ import type {
   Reservation, Guest, ReservationStatus, FolioItem, HousekeepingAssignment, Room, RoomType,
   RatePlan, Property, User, Role, Amenity, StickyNote, DashboardComponentId
 } from "@/data/types";
+import { formatISO } from "date-fns";
 
 const defaultProperty: Property = {
   id: "default-property-id",
@@ -74,7 +75,6 @@ export function useAppData() {
     fetchData();
   }, [fetchData]);
 
-  // --- MUTATOR FUNCTIONS ---
   const updateProperty = async (updatedData: Partial<Omit<Property, "id">>) => {
     const { data, error } = property.id === "default-property-id"
       ? await api.createProperty(updatedData)
@@ -89,9 +89,12 @@ export function useAppData() {
     setGuests(prev => [...prev, data]);
     return data;
   };
-  
-  // ... other mutator functions would follow the same pattern ...
-  // For brevity, I'll add a few more key examples
+
+  const updateGuest = async (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => {
+    const { data, error } = await api.updateGuest(guestId, updatedData);
+    if (error) throw error;
+    setGuests(prev => prev.map(g => g.id === guestId ? data : g));
+  };
 
   const deleteGuest = async (guestId: string) => {
     const { error } = await api.deleteGuest(guestId);
@@ -110,42 +113,171 @@ export function useAppData() {
     return reservationsWithEmptyFolio;
   };
 
+  const updateReservation = async (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => {
+    const { data, error } = await api.updateReservation(reservationId, updatedData);
+    if (error) throw error;
+    setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, ...data } : r));
+  };
+
+  const updateReservationStatus = async (reservationId: string, status: ReservationStatus) => {
+    const { error } = await api.updateReservationStatus(reservationId, status);
+    if (error) throw error;
+    setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, status } : r));
+  };
+
+  const addFolioItem = async (reservationId: string, item: Omit<FolioItem, "id" | "timestamp">) => {
+    const { data, error } = await api.addFolioItem({ ...item, reservation_id: reservationId });
+    if (error) throw error;
+    setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, folio: [...r.folio, data], totalAmount: r.totalAmount + data.amount } : r));
+  };
+
+  const addRoom = async (roomData: Omit<Room, "id">) => {
+    const { data, error } = await api.addRoom(roomData);
+    if (error) throw error;
+    setRooms(prev => [...prev, data]);
+  };
+
+  const updateRoom = async (roomId: string, updatedData: Partial<Omit<Room, "id">>) => {
+    const { data, error } = await api.updateRoom(roomId, updatedData);
+    if (error) throw error;
+    setRooms(prev => prev.map(r => r.id === roomId ? data : r));
+  };
+
+  const deleteRoom = async (roomId: string) => {
+    const { error } = await api.deleteRoom(roomId);
+    if (error) { console.error(error); return false; }
+    setRooms(prev => prev.filter(r => r.id !== roomId));
+    return true;
+  };
+
+  const addRoomType = async (roomTypeData: Omit<RoomType, "id">) => {
+    const { data, error } = await api.addRoomType(roomTypeData);
+    if (error) throw error;
+    setRoomTypes(prev => [...prev, data]);
+  };
+
+  const updateRoomType = async (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id">>) => {
+    const { data, error } = await api.updateRoomType(roomTypeId, updatedData);
+    if (error) throw error;
+    setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? data : rt));
+  };
+
+  const deleteRoomType = async (roomTypeId: string) => {
+    const { error } = await api.deleteRoomType(roomTypeId);
+    if (error) { console.error(error); return false; }
+    setRoomTypes(prev => prev.filter(rt => rt.id !== roomTypeId));
+    return true;
+  };
+
+  const addRatePlan = async (ratePlanData: Omit<RatePlan, "id">) => {
+    const { data, error } = await api.addRatePlan(ratePlanData);
+    if (error) throw error;
+    setRatePlans(prev => [...prev, data]);
+  };
+
+  const updateRatePlan = async (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => {
+    const { data, error } = await api.updateRatePlan(ratePlanId, updatedData);
+    if (error) throw error;
+    setRatePlans(prev => prev.map(rp => rp.id === ratePlanId ? data : rp));
+  };
+
+  const deleteRatePlan = async (ratePlanId: string) => {
+    const { error } = await api.deleteRatePlan(ratePlanId);
+    if (error) { console.error(error); return false; }
+    setRatePlans(prev => prev.filter(rp => rp.id !== ratePlanId));
+    return true;
+  };
+
+  const addRole = async (roleData: Omit<Role, "id">) => {
+    const { data, error } = await api.addRole(roleData);
+    if (error) throw error;
+    setRoles(prev => [...prev, data]);
+  };
+
+  const updateRole = async (roleId: string, updatedData: Partial<Omit<Role, "id">>) => {
+    const { data, error } = await api.updateRole(roleId, updatedData);
+    if (error) throw error;
+    setRoles(prev => prev.map(r => r.id === roleId ? data : r));
+  };
+
+  const deleteRole = async (roleId: string) => {
+    const { error } = await api.deleteRole(roleId);
+    if (error) { console.error(error); return false; }
+    setRoles(prev => prev.filter(r => r.id !== roleId));
+    return true;
+  };
+
+  const updateUser = async (userId: string, updatedData: Partial<Omit<User, "id">>) => {
+    const { data, error } = await api.updateUserProfile(userId, updatedData as any);
+    if (error) throw error;
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, name: data.name, roleId: data.role_id } : u));
+  };
+
+  const deleteUser = async (userId: string) => {
+    if (authUser?.id === userId) return false;
+    const { error } = await api.deleteAuthUser(userId);
+    if (error) { console.error(error); return false; }
+    setUsers(prev => prev.filter(u => u.id !== userId));
+    return true;
+  };
+
   const refetchUsers = React.useCallback(async () => {
     const { data, error } = await api.getUsers();
     if (error) console.error("Error refetching users:", error);
     else setUsers(data || []);
   }, []);
 
+  const addAmenity = async (amenityData: Omit<Amenity, "id">) => {
+    const { data, error } = await api.addAmenity(amenityData);
+    if (error) throw error;
+    setAmenities(prev => [...prev, data]);
+  };
+
+  const updateAmenity = async (amenityId: string, updatedData: Partial<Omit<Amenity, "id">>) => {
+    const { data, error } = await api.updateAmenity(amenityId, updatedData);
+    if (error) throw error;
+    setAmenities(prev => prev.map(a => a.id === amenityId ? data : a));
+  };
+
+  const deleteAmenity = async (amenityId: string) => {
+    const { error } = await api.deleteAmenity(amenityId);
+    if (error) { console.error(error); return false; }
+    setAmenities(prev => prev.filter(a => a.id !== amenityId));
+    return true;
+  };
+
+  const addStickyNote = async (noteData: Omit<StickyNote, "id" | "createdAt">) => {
+    const { data, error } = await api.addStickyNote({ ...noteData, user_id: authUser!.id });
+    if (error) throw error;
+    setStickyNotes(prev => [...prev, data]);
+  };
+
+  const updateStickyNote = async (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt">>) => {
+    const { data, error } = await api.updateStickyNote(noteId, updatedData);
+    if (error) throw error;
+    setStickyNotes(prev => prev.map(n => n.id === noteId ? data : n));
+  };
+
+  const deleteStickyNote = async (noteId: string) => {
+    const { error } = await api.deleteStickyNote(noteId);
+    if (error) throw error;
+    setStickyNotes(prev => prev.filter(n => n.id !== noteId));
+  };
+
+  const assignHousekeeper = async (assignment: { roomId: string; userId: string; }) => {
+    // This would involve an upsert operation in a real scenario
+    console.log("Assigning housekeeper:", assignment);
+  };
+
+  const updateAssignmentStatus = async (roomId: string, status: "Pending" | "Completed") => {
+    console.log("Updating assignment status:", roomId, status);
+  };
+
   return {
     property, reservations, guests, rooms, roomTypes, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
-    updateProperty, addGuest, deleteGuest, addReservation, refetchUsers,
-    // Stubs for other functions to avoid breaking components
-    updateGuest: async () => {},
-    updateReservation: async () => {},
-    updateReservationStatus: async () => {},
-    addFolioItem: async () => {},
-    assignHousekeeper: async () => {},
-    updateAssignmentStatus: async () => {},
-    addRoom: async () => {},
-    updateRoom: async () => {},
-    deleteRoom: async () => true,
-    addRoomType: async () => {},
-    updateRoomType: async () => {},
-    deleteRoomType: async () => true,
-    addRatePlan: async () => {},
-    updateRatePlan: async () => {},
-    deleteRatePlan: async () => true,
-    addRole: async () => {},
-    updateRole: async () => {},
-    deleteRole: async () => true,
-    updateUser: async () => {},
-    deleteUser: async () => true,
-    addAmenity: async () => {},
-    updateAmenity: async () => {},
-    deleteAmenity: async () => true,
-    addStickyNote: async () => {},
-    updateStickyNote: async () => {},
-    deleteStickyNote: async () => {},
-    updateDashboardLayout: setDashboardLayout,
+    updateProperty, addGuest, deleteGuest, addReservation, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
+    addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
+    deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
+    addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout: setDashboardLayout,
   };
 }

@@ -34,7 +34,6 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
@@ -71,18 +70,24 @@ export function AmenityFormDialog({
     },
   });
 
-  function onSubmit(values: z.infer<typeof amenitySchema>) {
-    if (isEditing && amenity) {
-      updateAmenity(amenity.id, values);
-    } else {
-      addAmenity(values);
+  async function onSubmit(values: z.infer<typeof amenitySchema>) {
+    try {
+      if (isEditing && amenity) {
+        await updateAmenity(amenity.id, values);
+      } else {
+        await addAmenity(values);
+      }
+      
+      toast.success(
+        `Amenity ${isEditing ? "updated" : "created"} successfully!`
+      );
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error("Failed to save amenity", {
+        description: (error as Error).message,
+      });
     }
-    
-    toast.success(
-      `Amenity ${isEditing ? "updated" : "created"} successfully!`
-    );
-    form.reset();
-    setOpen(false);
   }
 
   return (
