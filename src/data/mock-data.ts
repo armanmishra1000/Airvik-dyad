@@ -12,6 +12,7 @@ import type {
   Permission,
   Amenity,
   StickyNote,
+  DashboardComponentId,
 } from "./types";
 
 const today = new Date();
@@ -269,3 +270,5 @@ export const mockStickyNotes: StickyNote[] = [
     createdAt: new Date().toISOString(),
   },
 ];
+
+export const mockDashboardLayout: DashboardComponentId[] = ['stats', 'tables', 'notes', 'calendar'];

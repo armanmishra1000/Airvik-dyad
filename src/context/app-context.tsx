@@ -14,6 +14,7 @@ import {
   mockRoles,
   mockAmenities,
   mockStickyNotes,
+  mockDashboardLayout,
   type Reservation,
   type Guest,
   type ReservationStatus,
@@ -29,6 +30,7 @@ import {
   type Permission,
   type Amenity,
   type StickyNote,
+  type DashboardComponentId,
 } from "@/data";
 
 // Define keys for local storage
@@ -44,6 +46,7 @@ const ROLES_STORAGE_KEY = "hotel-pms-roles";
 const USERS_STORAGE_KEY = "hotel-pms-users";
 const AMENITIES_STORAGE_KEY = "hotel-pms-amenities";
 const STICKY_NOTES_STORAGE_KEY = "hotel-pms-sticky-notes";
+const DASHBOARD_LAYOUT_STORAGE_KEY = "hotel-pms-dashboard-layout";
 
 interface AppContextType {
   property: Property;
@@ -58,6 +61,7 @@ interface AppContextType {
   roles: Role[];
   amenities: Amenity[];
   stickyNotes: StickyNote[];
+  dashboardLayout: DashboardComponentId[];
   setCurrentUser: (user: User | null) => void;
   hasPermission: (permission: Permission) => boolean;
   updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
@@ -102,6 +106,7 @@ interface AppContextType {
   addStickyNote: (note: Omit<StickyNote, "id" | "createdAt">) => void;
   updateStickyNote: (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt">>) => void;
   deleteStickyNote: (noteId: string) => void;
+  updateDashboardLayout: (layout: DashboardComponentId[]) => void;
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
@@ -121,6 +126,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = React.useState<Role[]>(mockRoles);
   const [amenities, setAmenities] = React.useState<Amenity[]>(mockAmenities);
   const [stickyNotes, setStickyNotes] = React.useState<StickyNote[]>(mockStickyNotes);
+  const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(mockDashboardLayout);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
   React.useEffect(() => {
@@ -161,6 +167,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const storedStickyNotes = window.localStorage.getItem(STICKY_NOTES_STORAGE_KEY);
       if (storedStickyNotes) setStickyNotes(JSON.parse(storedStickyNotes));
 
+      const storedDashboardLayout = window.localStorage.getItem(DASHBOARD_LAYOUT_STORAGE_KEY);
+      if (storedDashboardLayout) setDashboardLayout(JSON.parse(storedDashboardLayout));
+
     } catch (error) {
       console.error("Error reading from localStorage", error);
     }
@@ -179,6 +188,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users)); }, [users, isInitialized]);
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(AMENITIES_STORAGE_KEY, JSON.stringify(amenities)); }, [amenities, isInitialized]);
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(STICKY_NOTES_STORAGE_KEY, JSON.stringify(stickyNotes)); }, [stickyNotes, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(DASHBOARD_LAYOUT_STORAGE_KEY, JSON.stringify(dashboardLayout)); }, [dashboardLayout, isInitialized]);
 
   const hasPermission = (permission: Permission): boolean => {
     if (!currentUser) return false;
@@ -217,13 +227,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addStickyNote = (noteData: Omit<StickyNote, "id" | "createdAt">) => { const newNote: StickyNote = { ...noteData, id: `note-${Date.now()}`, createdAt: new Date().toISOString() }; setStickyNotes(prev => [...prev, newNote]); };
   const updateStickyNote = (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt">>) => { setStickyNotes(prev => prev.map(note => note.id === noteId ? { ...note, ...updatedData } : note)); };
   const deleteStickyNote = (noteId: string) => { setStickyNotes(prev => prev.filter(note => note.id !== noteId)); };
+  const updateDashboardLayout = (layout: DashboardComponentId[]) => setDashboardLayout(layout);
 
   const value = {
-    property, reservations, guests, housekeepingAssignments, rooms, roomTypes, ratePlans, currentUser, users, roles, amenities, stickyNotes,
+    property, reservations, guests, housekeepingAssignments, rooms, roomTypes, ratePlans, currentUser, users, roles, amenities, stickyNotes, dashboardLayout,
     setCurrentUser, hasPermission, updateProperty, addReservation, updateReservationStatus, addGuest, updateGuest, deleteGuest,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, addUser, updateUser, deleteUser,
-    addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote,
+    addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
