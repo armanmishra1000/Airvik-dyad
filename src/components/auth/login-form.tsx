@@ -25,7 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import { useAppContext } from "@/context/app-context";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -34,7 +34,7 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const router = useRouter();
-  const { users, setCurrentUser } = useAppContext();
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,21 +44,24 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    const user = users.find((u) => u.email === values.email);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
 
-    // For local dev, we'll accept any password for a valid email
-    if (user) {
-      setCurrentUser(user);
+    if (error) {
+      toast.error("Login failed", {
+        description: error.message,
+      });
+    } else {
       toast.success("Login successful!", {
         description: "Redirecting you to the dashboard...",
       });
       router.push("/dashboard");
-    } else {
-      toast.error("Invalid credentials", {
-        description: "Please check your email and password and try again.",
-      });
     }
+    setIsLoading(false);
   }
 
   return (
@@ -80,7 +83,7 @@ export function LoginForm() {
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="manager@hotel.com"
+                      placeholder="hotelowner@gmail.com"
                       {...field}
                       type="email"
                     />
@@ -110,8 +113,8 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
         </Form>

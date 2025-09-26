@@ -16,12 +16,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAppContext } from "@/context/app-context";
 import { ThemeToggle } from "../theme-toggle";
+import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
     { href: "/dashboard", label: "Dashboard" },
@@ -35,17 +34,12 @@ const navItems = [
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { property, currentUser, users, roles, setCurrentUser } = useAppContext();
+  const { property, currentUser, roles } = useAppContext();
   const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
   const userRole = roles.find(r => r.id === currentUser?.roleId);
 
-  const handleUserChange = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    setCurrentUser(user || null);
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push("/login");
   };
 
@@ -99,16 +93,6 @@ export function Header() {
                     {userRole?.name}
                 </p>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={currentUser?.id} onValueChange={handleUserChange}>
-                <DropdownMenuLabel>Switch User</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {users && users.map(user => (
-                    <DropdownMenuRadioItem key={user.id} value={user.id}>
-                        {user.name}
-                    </DropdownMenuRadioItem>
-                ))}
-            </DropdownMenuRadioGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
           </DropdownMenuContent>

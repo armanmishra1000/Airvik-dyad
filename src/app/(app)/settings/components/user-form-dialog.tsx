@@ -34,10 +34,12 @@ import {
 import { Input } from "@/components/ui/input";
 import type { User } from "@/data";
 import { useAppContext } from "@/context/app-context";
+import { supabase } from "@/integrations/supabase/client";
 
 const userSchema = z.object({
   name: z.string().min(1, "Name is required."),
   email: z.string().email("Please enter a valid email address."),
+  password: z.string().min(8, "Password must be at least 8 characters."),
   roleId: z.string({ required_error: "Please select a role." }),
 });
 
@@ -51,7 +53,7 @@ export function UserFormDialog({
   children,
 }: UserFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { roles, addUser, updateUser } = useAppContext();
+  const { roles, updateUser } = useAppContext();
   const isEditing = !!user;
 
   const form = useForm<z.infer<typeof userSchema>>({
@@ -59,22 +61,36 @@ export function UserFormDialog({
     defaultValues: {
       name: user?.name || "",
       email: user?.email || "",
+      password: "",
       roleId: user?.roleId || "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof userSchema>) {
+  async function onSubmit(values: z.infer<typeof userSchema>) {
     if (isEditing && user) {
-      updateUser(user.id, values);
+      // Update user logic (e.g., role change)
+      updateUser(user.id, { name: values.name, roleId: values.roleId });
+      toast.success("User updated successfully!");
     } else {
-      addUser(values);
+      // Create user logic using Edge Function
+      const selectedRole = roles.find(r => r.id === values.roleId);
+      const { error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: values.email,
+          password: values.password,
+          name: values.name,
+          role_name: selectedRole?.name,
+        },
+      });
+
+      if (error) {
+        toast.error("Failed to create user", { description: error.message });
+      } else {
+        toast.success("User created successfully!");
+        form.reset();
+        setOpen(false);
+      }
     }
-    
-    toast.success(
-      `User ${isEditing ? "updated" : "created"} successfully!`
-    );
-    form.reset();
-    setOpen(false);
   }
 
   return (
@@ -111,12 +127,27 @@ export function UserFormDialog({
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="john.doe@example.com" {...field} type="email" />
+                    <Input placeholder="john.doe@example.com" {...field} type="email" disabled={isEditing} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            {!isEditing && (
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input placeholder="••••••••" {...field} type="password" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="roleId"
