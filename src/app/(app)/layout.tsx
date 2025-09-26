@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/auth-context";
+import { AppSkeleton } from "@/components/layout/app-skeleton";
 
 export default function AppLayout({
   children,
@@ -13,17 +14,23 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
-  const { currentUser } = useAuthContext();
+  const { currentUser, isLoading } = useAuthContext();
   const router = useRouter();
 
   React.useEffect(() => {
-    // Redirect to login if no user is authenticated
-    if (!currentUser) {
+    // Only check for redirection once the loading state is resolved
+    if (!isLoading && !currentUser) {
       router.push("/login");
     }
-  }, [currentUser, router]);
+  }, [currentUser, isLoading, router]);
 
-  // Render nothing until the user is checked, to avoid flashing the layout
+  // Show a skeleton while the auth state is loading
+  if (isLoading) {
+    return <AppSkeleton />;
+  }
+
+  // After loading, if there's still no user, the effect will redirect.
+  // Return null to prevent flashing the layout for an unauthenticated user.
   if (!currentUser) {
     return null;
   }
