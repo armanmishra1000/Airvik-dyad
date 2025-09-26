@@ -46,8 +46,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { mockGuests, mockRooms, mockRatePlans } from "@/data";
+import { mockGuests, mockRooms, mockRatePlans, mockRoomTypes } from "@/data";
 import { useAppContext } from "@/context/app-context";
 
 const reservationSchema = z.object({
@@ -56,7 +58,7 @@ const reservationSchema = z.object({
     from: z.date({ required_error: "Check-in date is required." }),
     to: z.date({ required_error: "Check-out date is required." }),
   }),
-  roomId: z.string({ required_error: "Please select a room." }),
+  roomIds: z.array(z.string()).min(1, "Please select at least one room."),
   numberOfGuests: z.coerce
     .number()
     .min(1, "At least one guest is required."),
@@ -69,6 +71,7 @@ export function CreateReservationDialog() {
     resolver: zodResolver(reservationSchema),
     defaultValues: {
       numberOfGuests: 1,
+      roomIds: [],
     },
   });
 
@@ -76,7 +79,7 @@ export function CreateReservationDialog() {
 
   const availableRooms = React.useMemo(() => {
     if (!selectedDateRange?.from || !selectedDateRange?.to) {
-      return mockRooms;
+      return [];
     }
 
     return mockRooms.filter((room) => {
@@ -94,26 +97,18 @@ export function CreateReservationDialog() {
   }, [selectedDateRange, reservations]);
 
   React.useEffect(() => {
-    const selectedRoomId = form.getValues("roomId");
-    if (selectedRoomId) {
-      const isSelectedRoomAvailable = availableRooms.some(
-        (room) => room.id === selectedRoomId
-      );
-      if (!isSelectedRoomAvailable) {
-        form.resetField("roomId");
-      }
-    }
-  }, [availableRooms, form]);
+    form.resetField("roomIds");
+  }, [selectedDateRange, form]);
 
   function onSubmit(values: z.infer<typeof reservationSchema>) {
     const ratePlan =
       mockRatePlans.find((rp) => rp.id === "rp-standard") || mockRatePlans[0];
     const nights = differenceInDays(values.dateRange.to, values.dateRange.from);
-    const totalAmount = nights * ratePlan.price;
+    const totalAmountPerRoom = nights * ratePlan.price;
 
     addReservation({
       guestId: values.guestId,
-      roomId: values.roomId,
+      roomIds: values.roomIds,
       ratePlanId: ratePlan.id,
       checkInDate: formatISO(values.dateRange.from, {
         representation: "date",
@@ -125,16 +120,16 @@ export function CreateReservationDialog() {
         {
           id: `f-${Date.now()}`,
           description: "Room Charge",
-          amount: totalAmount,
+          amount: totalAmountPerRoom,
           timestamp: formatISO(new Date()),
         },
       ],
-      totalAmount: totalAmount,
+      totalAmount: totalAmountPerRoom,
       bookingDate: formatISO(new Date()),
       source: 'reception',
     });
 
-    toast.success("Reservation created successfully!");
+    toast.success(`${values.roomIds.length} room(s) booked successfully!`);
     form.reset();
     setOpen(false);
   }
@@ -232,40 +227,54 @@ export function CreateReservationDialog() {
             />
             <FormField
               control={form.control}
-              name="roomId"
-              render={({ field }) => (
+              name="roomIds"
+              render={() => (
                 <FormItem>
-                  <FormLabel>Room</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={!selectedDateRange?.from}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={
-                            !selectedDateRange?.from
-                              ? "Select dates first"
-                              : "Select an available room"
-                          }
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
+                  <FormLabel>Available Rooms</FormLabel>
+                  <ScrollArea className="h-40 w-full rounded-md border">
+                    <div className="p-4">
                       {availableRooms.length > 0 ? (
-                        availableRooms.map((room) => (
-                          <SelectItem key={room.id} value={room.id}>
-                            Room {room.roomNumber}
-                          </SelectItem>
-                        ))
+                        availableRooms.map((room) => {
+                          const roomType = mockRoomTypes.find(rt => rt.id === room.roomTypeId);
+                          return (
+                            <FormField
+                              key={room.id}
+                              control={form.control}
+                              name="roomIds"
+                              render={({ field }) => (
+                                <FormItem
+                                  key={room.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0 mb-2"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(room.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, room.id])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== room.id
+                                              )
+                                            );
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    Room {room.roomNumber} ({roomType?.name})
+                                  </FormLabel>
+                                </FormItem>
+                              )}
+                            />
+                          );
+                        })
                       ) : (
-                        <div className="p-2 text-sm text-muted-foreground text-center">
-                          No rooms available.
+                        <div className="text-sm text-muted-foreground text-center pt-12">
+                          {selectedDateRange?.from ? "No rooms available." : "Select dates first."}
                         </div>
                       )}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  </ScrollArea>
                   <FormMessage />
                 </FormItem>
               )}

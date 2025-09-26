@@ -9,6 +9,7 @@ import { ReservationHeader } from "./components/ReservationHeader";
 import { GuestDetailsCard } from "./components/GuestDetailsCard";
 import { StayDetailsCard } from "./components/StayDetailsCard";
 import { BillingCard } from "./components/BillingCard";
+import { LinkedReservationsCard } from "./components/LinkedReservationsCard";
 
 export default function ReservationDetailsPage() {
   const params = useParams<{ id: string }>();
@@ -39,6 +40,7 @@ export default function ReservationDetailsPage() {
         <div className="lg:col-span-1 space-y-6">
           <GuestDetailsCard guest={guest} />
           <StayDetailsCard reservation={reservationWithDetails} />
+          <LinkedReservationsCard reservation={reservation} />
         </div>
         <div className="lg:col-span-2">
           <BillingCard reservation={reservationWithDetails} />
