@@ -145,6 +145,8 @@ function BookingReviewContent() {
           },
         ],
         totalAmount: totalCost,
+        bookingDate: new Date().toISOString(),
+        source: 'website' as const,
       };
 
       const reservation = addReservation(newReservation);

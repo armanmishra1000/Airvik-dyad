@@ -110,6 +110,8 @@ export interface Reservation {
   notes?: string;
   folio: FolioItem[];
   totalAmount: number;
+  bookingDate: string;
+  source: 'reception' | 'website';
 }
 
 export interface HousekeepingAssignment {

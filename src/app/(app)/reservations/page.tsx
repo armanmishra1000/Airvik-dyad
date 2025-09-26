@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
+import { differenceInDays, parseISO } from "date-fns";
 import { mockRooms } from "@/data";
 import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
@@ -13,10 +14,15 @@ export default function ReservationsPage() {
   const reservationsWithDetails = React.useMemo(() => reservations.map((res) => {
     const guest = guests.find((g) => g.id === res.guestId);
     const room = mockRooms.find((r) => r.id === res.roomId);
+    const nights = differenceInDays(
+        parseISO(res.checkOutDate),
+        parseISO(res.checkInDate)
+    );
     return {
       ...res,
       guestName: guest ? `${guest.firstName} ${guest.lastName}` : "N/A",
       roomNumber: room ? room.roomNumber : "N/A",
+      nights,
     };
   }), [reservations, guests]);
 

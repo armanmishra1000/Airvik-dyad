@@ -191,6 +191,8 @@ export const mockReservations: Reservation[] = [
     notes: "Late arrival expected around 10 PM.",
     folio: [{ id: "f-001", description: "Room Charge", amount: 450, timestamp: formatISO(today) }],
     totalAmount: 450,
+    bookingDate: formatISO(subDays(today, 2)),
+    source: 'reception',
   },
   // Departure Today
   {
@@ -207,6 +209,8 @@ export const mockReservations: Reservation[] = [
         { id: "f-003", description: "Minibar", amount: 25, timestamp: formatISO(subDays(today, 1)) }
     ],
     totalAmount: 325,
+    bookingDate: formatISO(subDays(today, 5)),
+    source: 'website',
   },
   // Future Booking
   {
@@ -220,6 +224,8 @@ export const mockReservations: Reservation[] = [
     status: "Confirmed",
     folio: [],
     totalAmount: 650,
+    bookingDate: formatISO(subDays(today, 1)),
+    source: 'reception',
   },
   // Past Booking
   {
@@ -233,6 +239,8 @@ export const mockReservations: Reservation[] = [
     status: "Checked-out",
     folio: [],
     totalAmount: 300,
+    bookingDate: formatISO(subDays(today, 12)),
+    source: 'website',
   },
     // Cancelled Booking
   {
@@ -246,6 +254,8 @@ export const mockReservations: Reservation[] = [
     status: "Cancelled",
     folio: [],
     totalAmount: 300,
+    bookingDate: formatISO(subDays(today, 3)),
+    source: 'reception',
   },
 ];
 

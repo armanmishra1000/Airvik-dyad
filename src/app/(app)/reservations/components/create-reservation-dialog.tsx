@@ -130,6 +130,8 @@ export function CreateReservationDialog() {
         },
       ],
       totalAmount: totalAmount,
+      bookingDate: formatISO(new Date()),
+      source: 'reception',
     });
 
     toast.success("Reservation created successfully!");
