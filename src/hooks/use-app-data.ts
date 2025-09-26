@@ -42,17 +42,18 @@ export function useAppData() {
     try {
       const [
         propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes,
-        rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes, housekeepingAssignmentsRes
+        rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes, housekeepingAssignmentsRes,
+        roomTypeAmenitiesRes
       ] = await Promise.all([
         api.getProperty(), api.getReservations(), api.getGuests(), api.getRooms(),
         api.getRoomTypes(), api.getRatePlans(), api.getRoles(), api.getAmenities(),
-        api.getStickyNotes(authUser.id), api.getFolioItems(), api.getUsers(), api.getHousekeepingAssignments()
+        api.getStickyNotes(authUser.id), api.getFolioItems(), api.getUsers(), api.getHousekeepingAssignments(),
+        api.getRoomTypeAmenities()
       ]);
 
       if (propertyRes.data) setProperty(propertyRes.data);
       setGuests(guestsRes.data || []);
       setRooms(roomsRes.data || []);
-      setRoomTypes(roomTypesRes.data || []);
       setRatePlans(ratePlansRes.data || []);
       setRoles(rolesRes.data || []);
       setAmenities(amenitiesRes.data || []);
@@ -65,6 +66,14 @@ export function useAppData() {
         folio: (folioItemsRes.data || []).filter(item => item.reservation_id === res.id)
       }));
       setReservations(reservationsWithFolios as any);
+
+      const roomTypesData = (roomTypesRes.data || []).map(rt => {
+        const amenitiesForRoomType = (roomTypeAmenitiesRes.data || [])
+          .filter(rta => rta.room_type_id === rt.id)
+          .map(rta => rta.amenity_id);
+        return api.fromDbRoomType({ ...rt, amenities: amenitiesForRoomType });
+      });
+      setRoomTypes(roomTypesData);
 
     } catch (error) {
       console.error("Failed to load app data:", error);
@@ -151,15 +160,17 @@ export function useAppData() {
   };
 
   const addRoomType = async (roomTypeData: Omit<RoomType, "id">) => {
-    const { data, error } = await api.addRoomType(roomTypeData);
+    const { data, error } = await api.upsertRoomType(roomTypeData);
     if (error) throw error;
-    setRoomTypes(prev => [...prev, data]);
+    const newRoomType = api.fromDbRoomType(data);
+    setRoomTypes(prev => [...prev, newRoomType]);
   };
 
   const updateRoomType = async (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id">>) => {
-    const { data, error } = await api.updateRoomType(roomTypeId, updatedData);
+    const { data, error } = await api.upsertRoomType({ ...updatedData, id: roomTypeId });
     if (error) throw error;
-    setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? data : rt));
+    const updatedRoomType = api.fromDbRoomType(data);
+    setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? updatedRoomType : rt));
   };
 
   const deleteRoomType = async (roomTypeId: string) => {

@@ -19,6 +19,18 @@ const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>) => {
     return dbData;
 };
 
+// Helper for room types
+export const fromDbRoomType = (dbRoomType: any): RoomType => ({
+    id: dbRoomType.id,
+    name: dbRoomType.name,
+    description: dbRoomType.description,
+    maxOccupancy: dbRoomType.max_occupancy,
+    bedTypes: dbRoomType.bed_types,
+    amenities: dbRoomType.amenities || [],
+    photos: dbRoomType.photos || [],
+    mainPhotoUrl: dbRoomType.main_photo_url,
+});
+
 // Property
 export const getProperty = () => supabase.from('properties').select('*').limit(1).single();
 export const updateProperty = (id: string, updatedData: Partial<Property>) => supabase.from('properties').update(updatedData).eq('id', id).select().single();
@@ -60,8 +72,20 @@ export const deleteRoom = (id: string) => supabase.from('rooms').delete().eq('id
 
 // Room Types
 export const getRoomTypes = () => supabase.from('room_types').select('*');
-export const addRoomType = (roomTypeData: Omit<RoomType, "id">) => supabase.from('room_types').insert([roomTypeData]).select().single();
-export const updateRoomType = (id: string, updatedData: Partial<RoomType>) => supabase.from('room_types').update(updatedData).eq('id', id).select().single();
+export const getRoomTypeAmenities = () => supabase.from('room_type_amenities').select('*');
+export const upsertRoomType = (roomTypeData: any) => {
+    const params = {
+        p_id: roomTypeData.id || null,
+        p_name: roomTypeData.name,
+        p_description: roomTypeData.description,
+        p_max_occupancy: roomTypeData.maxOccupancy,
+        p_bed_types: roomTypeData.bedTypes,
+        p_photos: roomTypeData.photos,
+        p_main_photo_url: roomTypeData.mainPhotoUrl,
+        p_amenity_ids: roomTypeData.amenities,
+    };
+    return supabase.rpc('upsert_room_type_with_amenities', params).single();
+};
 export const deleteRoomType = (id: string) => supabase.from('room_types').delete().eq('id', id);
 
 // Rate Plans
