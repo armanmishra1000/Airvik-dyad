@@ -119,7 +119,8 @@ export interface HousekeepingAssignment {
 
 export interface StickyNote {
   id: string;
-  content: string;
+  title: string;
+  description?: string;
   color: 'yellow' | 'pink' | 'blue' | 'green';
   createdAt: string;
 }
