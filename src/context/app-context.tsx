@@ -32,10 +32,6 @@ const defaultProperty: Property = {
   google_maps_url: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.617023443543!2d-73.98784668459395!3d40.74844097932803!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1620312953789!5m2!1sen!2sus",
   timezone: "America/New_York",
   currency: "USD",
-  brandColors: {
-    primary: "#F5A623",
-    secondary: "#4A90E2",
-  },
 };
 
 const defaultDashboardLayout: DashboardComponentId[] = ['stats', 'tables', 'calendar', 'notes'];
@@ -270,9 +266,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProperty = async (updatedData: Partial<Omit<Property, "id">>) => {
-    const { data, error } = await supabase.from('properties').update(updatedData).eq('id', property.id).select().single();
-    if (error) throw error;
-    setProperty(data);
+    // If the property has the default placeholder ID, it means it doesn't exist in the DB yet.
+    // In this case, we need to insert a new record.
+    if (property.id === "default-property-id") {
+      const { data, error } = await supabase
+        .from("properties")
+        .insert([updatedData]) // Supabase will generate the UUID
+        .select()
+        .single();
+      
+      if (error) throw error;
+      setProperty(data);
+    } else {
+      // If it has a real ID, we can update the existing record.
+      const { data, error } = await supabase
+        .from("properties")
+        .update(updatedData)
+        .eq("id", property.id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      setProperty(data);
+    }
   };
   const addGuest = async (guestData: Omit<Guest, "id">): Promise<Guest> => {
     const { data, error } = await supabase.from('guests').insert([guestData]).select().single();

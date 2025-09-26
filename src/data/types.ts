@@ -42,10 +42,6 @@ export interface Property {
   google_maps_url: string;
   timezone: string;
   currency: string;
-  brandColors: {
-    primary: string;
-    secondary: string;
-  };
 }
 
 export interface Amenity {
