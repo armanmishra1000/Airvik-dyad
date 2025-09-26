@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { ReservationWithDetails } from "@/app/(app)/reservations/components/columns";
-import { mockRoomTypes, mockRatePlans } from "@/data";
+import { mockRoomTypes, mockRatePlans, mockRooms } from "@/data";
 
 interface StayDetailsCardProps {
   reservation: ReservationWithDetails;
