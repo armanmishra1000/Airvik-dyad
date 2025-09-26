@@ -181,6 +181,7 @@ export const mockReservations: Reservation[] = [
   // Arrival Today
   {
     id: "res-001",
+    bookingId: "res-001",
     guestId: "guest-001",
     roomId: "room-101",
     ratePlanId: "rp-standard",
@@ -197,6 +198,7 @@ export const mockReservations: Reservation[] = [
   // Departure Today
   {
     id: "res-002",
+    bookingId: "res-002",
     guestId: "guest-002",
     roomId: "room-201",
     ratePlanId: "rp-standard",
@@ -215,6 +217,7 @@ export const mockReservations: Reservation[] = [
   // Future Booking
   {
     id: "res-003",
+    bookingId: "res-003",
     guestId: "guest-001",
     roomId: "room-302",
     ratePlanId: "rp-nonrefund",
@@ -230,6 +233,7 @@ export const mockReservations: Reservation[] = [
   // Past Booking
   {
     id: "res-004",
+    bookingId: "res-004",
     guestId: "guest-002",
     roomId: "room-102",
     ratePlanId: "rp-standard",
@@ -245,6 +249,7 @@ export const mockReservations: Reservation[] = [
     // Cancelled Booking
   {
     id: "res-005",
+    bookingId: "res-005",
     guestId: "guest-001",
     roomId: "room-202",
     ratePlanId: "rp-standard",
@@ -255,6 +260,37 @@ export const mockReservations: Reservation[] = [
     folio: [],
     totalAmount: 300,
     bookingDate: formatISO(subDays(today, 3)),
+    source: 'reception',
+  },
+  // Multi-room booking
+  {
+    id: "res-006",
+    bookingId: "booking-multi-1",
+    guestId: "guest-002",
+    roomId: "room-201",
+    ratePlanId: "rp-standard",
+    checkInDate: formatISO(addDays(today, 20), { representation: 'date' }),
+    checkOutDate: formatISO(addDays(today, 22), { representation: 'date' }),
+    numberOfGuests: 4,
+    status: "Confirmed",
+    folio: [],
+    totalAmount: 300,
+    bookingDate: formatISO(subDays(today, 1)),
+    source: 'reception',
+  },
+  {
+    id: "res-007",
+    bookingId: "booking-multi-1",
+    guestId: "guest-002",
+    roomId: "room-202",
+    ratePlanId: "rp-standard",
+    checkInDate: formatISO(addDays(today, 20), { representation: 'date' }),
+    checkOutDate: formatISO(addDays(today, 22), { representation: 'date' }),
+    numberOfGuests: 4,
+    status: "Confirmed",
+    folio: [],
+    totalAmount: 300,
+    bookingDate: formatISO(subDays(today, 1)),
     source: 'reception',
   },
 ];

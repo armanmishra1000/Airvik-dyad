@@ -100,6 +100,7 @@ export interface FolioItem {
 
 export interface Reservation {
   id: string;
+  bookingId: string; // Shared ID for multi-room bookings
   guestId: string;
   roomId: string;
   ratePlanId: string;

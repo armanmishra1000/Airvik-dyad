@@ -48,6 +48,8 @@ const AMENITIES_STORAGE_KEY = "hotel-pms-amenities";
 const STICKY_NOTES_STORAGE_KEY = "hotel-pms-sticky-notes";
 const DASHBOARD_LAYOUT_STORAGE_KEY = "hotel-pms-dashboard-layout";
 
+type AddReservationPayload = Omit<Reservation, "id" | "roomId" | "bookingId"> & { roomIds: string[] };
+
 interface AppContextType {
   property: Property;
   reservations: Reservation[];
@@ -65,7 +67,7 @@ interface AppContextType {
   setCurrentUser: (user: User | null) => void;
   hasPermission: (permission: Permission) => boolean;
   updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
-  addReservation: (reservation: Omit<Reservation, "id">) => Reservation;
+  addReservation: (reservation: AddReservationPayload) => Reservation[];
   updateReservation: (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => void;
   updateReservationStatus: (
     reservationId: string,
@@ -202,7 +204,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addGuest = (guestData: Omit<Guest, "id">): Guest => { const newGuest: Guest = { ...guestData, id: `guest-${Date.now()}` }; setGuests(prev => [...prev, newGuest]); return newGuest; };
   const updateGuest = (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => setGuests(prev => prev.map(g => g.id === guestId ? { ...g, ...updatedData } : g));
   const deleteGuest = (guestId: string): boolean => { const hasActive = reservations.some(res => res.guestId === guestId && ["Confirmed", "Checked-in"].includes(res.status)); if (hasActive) return false; setGuests(prev => prev.filter(g => g.id !== guestId)); return true; };
-  const addReservation = (reservationData: Omit<Reservation, "id">): Reservation => { const newReservation: Reservation = { ...reservationData, id: `res-${Date.now()}` }; setReservations(prev => [...prev, newReservation]); return newReservation; };
+  
+  const addReservation = (reservationData: AddReservationPayload): Reservation[] => {
+    const { roomIds, ...rest } = reservationData;
+    const bookingId = `booking-${Date.now()}`;
+    const newReservations: Reservation[] = roomIds.map((roomId, index) => ({
+      ...rest,
+      id: `res-${Date.now()}-${index}`,
+      bookingId,
+      roomId,
+    }));
+    setReservations(prev => [...prev, ...newReservations]);
+    return newReservations;
+  };
+
   const updateReservation = (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => { setReservations(prev => prev.map(res => res.id === reservationId ? { ...res, ...updatedData } : res)); };
   const updateReservationStatus = (reservationId: string, status: ReservationStatus) => setReservations(prev => prev.map(res => res.id === reservationId ? { ...res, status } : res));
   const addFolioItem = (reservationId: string, itemData: Omit<FolioItem, "id" | "timestamp">) => { setReservations(prev => prev.map(res => { if (res.id === reservationId) { const newItem: FolioItem = { ...itemData, id: `f-${Date.now()}`, timestamp: formatISO(new Date()) }; return { ...res, folio: [...res.folio, newItem], totalAmount: res.totalAmount + newItem.amount }; } return res; })); };
