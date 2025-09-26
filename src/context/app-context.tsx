@@ -125,6 +125,86 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(defaultDashboardLayout);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  React.useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const user = session?.user;
+
+      if (user) {
+        // We have a user, now try to get their data.
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*, roles(*)')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          // Profile is missing or there was an error. This is a failed login.
+          console.error("Profile fetch failed, signing out.", profileError);
+          await supabase.auth.signOut();
+          // After sign out, this listener will fire again with a null session.
+          // The 'else' block below will handle the final state.
+        } else {
+          // Profile found, now fetch everything else.
+          try {
+            setAuthUser(user);
+            // @ts-ignore
+            setCurrentUser({ id: profile.id, name: profile.name, email: user.email, roleId: profile.role_id });
+            // @ts-ignore
+            setUserRole(profile.roles);
+
+            const [
+                reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, 
+                rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes
+            ] = await Promise.all([
+                supabase.from('reservations').select('*'),
+                supabase.from('guests').select('*'),
+                supabase.from('rooms').select('*'),
+                supabase.from('room_types').select('*'),
+                supabase.from('rate_plans').select('*'),
+                supabase.from('roles').select('*'),
+                supabase.from('amenities').select('*'),
+                supabase.from('sticky_notes').select('*').eq('user_id', user.id),
+                supabase.from('properties').select('*').limit(1).single(),
+                supabase.from('folio_items').select('*'),
+            ]);
+            
+            const { data: usersData } = await supabase.functions.invoke('get-users');
+
+            if (propertyRes.data) setProperty(propertyRes.data as Property);
+            const reservationsData = reservationsRes.data || [];
+            const folioItemsData = folioItemsRes.data || [];
+            const reservationsWithFolios = reservationsData.map(res => ({
+                ...res,
+                folio: folioItemsData.filter(item => item.reservation_id === res.id)
+            }));
+            setReservations((reservationsWithFolios as unknown as Reservation[]) || []);
+            setGuests((guestsRes.data as Guest[]) || []);
+            setRooms((roomsRes.data as Room[]) || []);
+            setRoomTypes((roomTypesRes.data as RoomType[]) || []);
+            setRatePlans((ratePlansRes.data as RatePlan[]) || []);
+            setUsers(usersData || []);
+            setRoles((rolesRes.data as Role[]) || []);
+            setAmenities((amenitiesRes.data as Amenity[]) || []);
+            setStickyNotes((stickyNotesRes.data as StickyNote[]) || []);
+
+            setIsLoading(false); // Success, we are done loading.
+          } catch (error) {
+              console.error("Error fetching app data after profile success, signing out.", error);
+              await supabase.auth.signOut();
+          }
+        }
+      } else {
+        // No user session.
+        setAuthUser(null);
+        setCurrentUser(null);
+        setUserRole(null);
+        setIsLoading(false); // No user, we are done loading.
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const refetchUsers = React.useCallback(async () => {
     const { data: usersData, error: usersError } = await supabase.functions.invoke('get-users');
     if (usersError) {
@@ -133,93 +213,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setUsers(usersData || []);
     }
   }, []);
-
-  const fetchData = React.useCallback(async (user: AuthUser) => {
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*, roles(*)')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError) {
-      // Throw an error to be caught by the onAuthStateChange handler.
-      // This is crucial for handling cases where a user exists in auth
-      // but not in the profiles table (e.g., failed signup).
-      throw new Error(`Failed to fetch profile for user ${user.id}: ${profileError.message}`);
-    }
-    
-    // @ts-ignore
-    setCurrentUser({ id: profile.id, name: profile.name, email: user.email, roleId: profile.role_id });
-    // @ts-ignore
-    setUserRole(profile.roles);
-
-    const [
-        reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, 
-        rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes
-    ] = await Promise.all([
-        supabase.from('reservations').select('*'),
-        supabase.from('guests').select('*'),
-        supabase.from('rooms').select('*'),
-        supabase.from('room_types').select('*'),
-        supabase.from('rate_plans').select('*'),
-        supabase.from('roles').select('*'),
-        supabase.from('amenities').select('*'),
-        supabase.from('sticky_notes').select('*').eq('user_id', user.id),
-        supabase.from('properties').select('*').limit(1).single(),
-        supabase.from('folio_items').select('*'),
-    ]);
-
-    const { data: usersData, error: usersError } = await supabase.functions.invoke('get-users');
-    if (usersError) {
-        console.error("Error fetching users:", usersError);
-    }
-
-    if (propertyRes.data) {
-        setProperty(propertyRes.data as Property);
-    }
-
-    const reservationsData = reservationsRes.data || [];
-    const folioItemsData = folioItemsRes.data || [];
-
-    const reservationsWithFolios = reservationsData.map(res => ({
-        ...res,
-        folio: folioItemsData.filter(item => item.reservation_id === res.id)
-    }));
-
-    setReservations((reservationsWithFolios as unknown as Reservation[]) || []);
-    setGuests((guestsRes.data as Guest[]) || []);
-    setRooms((roomsRes.data as Room[]) || []);
-    setRoomTypes((roomTypesRes.data as RoomType[]) || []);
-    setRatePlans((ratePlansRes.data as RatePlan[]) || []);
-    setUsers(usersData || []);
-    setRoles((rolesRes.data as Role[]) || []);
-    setAmenities((amenitiesRes.data as Amenity[]) || []);
-    setStickyNotes((stickyNotesRes.data as StickyNote[]) || []);
-  }, []);
-
-  React.useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        const user = session?.user || null;
-        setAuthUser(user);
-        if (user) {
-          await fetchData(user);
-        } else {
-          setCurrentUser(null);
-          setUserRole(null);
-        }
-      } catch (error) {
-        console.error("Error during auth state change handling, signing out:", error);
-        setCurrentUser(null);
-        setUserRole(null);
-        await supabase.auth.signOut();
-      } finally {
-        setIsLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [fetchData]);
 
   const hasPermission = (permission: Permission): boolean => {
     if (!userRole) return false;
