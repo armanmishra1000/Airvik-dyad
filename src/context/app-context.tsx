@@ -142,9 +142,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .single();
 
     if (profileError) {
-      console.error("Error fetching profile, signing out:", profileError);
-      await supabase.auth.signOut();
-      return;
+      // Throw an error to be caught by the onAuthStateChange handler.
+      // This is crucial for handling cases where a user exists in auth
+      // but not in the profiles table (e.g., failed signup).
+      throw new Error(`Failed to fetch profile for user ${user.id}: ${profileError.message}`);
     }
     
     // @ts-ignore
@@ -208,9 +209,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setUserRole(null);
         }
       } catch (error) {
-        console.error("Error during auth state change handling:", error);
+        console.error("Error during auth state change handling, signing out:", error);
         setCurrentUser(null);
         setUserRole(null);
+        await supabase.auth.signOut();
       } finally {
         setIsLoading(false);
       }
