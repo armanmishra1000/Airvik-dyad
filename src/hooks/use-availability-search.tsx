@@ -72,8 +72,8 @@ export function useAvailabilitySearch() {
           });
 
           const searchInterval = eachDayOfInterval({
-            start: dateRange.from,
-            end: dateRange.to,
+            start: dateRange.from!,
+            end: dateRange.to!,
           });
           if (searchInterval.length > 0) searchInterval.pop(); // Don't count checkout day
 
