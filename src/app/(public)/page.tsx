@@ -21,7 +21,7 @@ export default function PublicHomePage() {
     React.useState<BookingSearchFormValues | null>(null);
 
   const handleSearch = (values: BookingSearchFormValues) => {
-    search(values.dateRange, values.guests);
+    search(values.dateRange, values.guests, values.children, values.rooms);
     setHasSearched(true);
     setSearchValues(values);
   };
@@ -40,6 +40,8 @@ export default function PublicHomePage() {
           from: format(searchValues.dateRange.from, "yyyy-MM-dd"),
           to: format(searchValues.dateRange.to, "yyyy-MM-dd"),
           guests: searchValues.guests.toString(),
+          children: searchValues.children.toString(),
+          rooms: searchValues.rooms.toString(),
         }
       : undefined;
 

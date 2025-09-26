@@ -5,8 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Users } from "lucide-react";
-import type { DateRange } from "react-day-picker";
+import { Calendar as CalendarIcon, Users, Bed, Minus, Plus, Building } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +16,6 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -25,13 +23,16 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 const searchSchema = z.object({
   dateRange: z.object({
     from: z.date({ required_error: "Check-in date is required." }),
     to: z.date({ required_error: "Check-out date is required." }),
   }),
-  guests: z.coerce.number().min(1, "At least one guest is required."),
+  guests: z.coerce.number().min(1, "At least one adult is required."),
+  children: z.coerce.number().min(0),
+  rooms: z.coerce.number().min(1, "At least one room is required."),
 });
 
 export type BookingSearchFormValues = z.infer<typeof searchSchema>;
@@ -44,9 +45,13 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
   const form = useForm<BookingSearchFormValues>({
     resolver: zodResolver(searchSchema),
     defaultValues: {
-      guests: 1,
+      guests: 2,
+      children: 0,
+      rooms: 1,
     },
   });
+
+  const { guests, children, rooms } = form.watch();
 
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-lg">
@@ -54,7 +59,7 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSearch)}
-            className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-[2fr_1fr_auto] gap-4 items-start"
+            className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-[2fr_1.5fr_auto] gap-4 items-start"
           >
             <FormField
               control={form.control}
@@ -106,27 +111,69 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="guests"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="relative">
-                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        className="h-14 pl-10 text-base"
-                        placeholder="Guests"
-                        {...field}
-                      />
-                    </FormControl>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className="w-full h-14 justify-start text-left font-normal text-base"
+                >
+                  <Users className="mr-2 h-5 w-5" />
+                  <div className="truncate">
+                    <span>{rooms} room{rooms > 1 && 's'}, </span>
+                    <span>{guests} adult{guests > 1 && 's'}</span>
+                    {children > 0 && <span>, {children} children</span>}
                   </div>
-                  <FormMessage className="pl-2" />
-                </FormItem>
-              )}
-            />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72">
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium leading-none">Select Occupancy</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Choose rooms, adults, and children.
+                    </p>
+                  </div>
+                  <Separator />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Building className="mr-2 h-4 w-4" />
+                        <span className="font-medium">Rooms</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("rooms", Math.max(1, rooms - 1))} type="button"><Minus className="h-4 w-4" /></Button>
+                        <span className="w-4 text-center">{rooms}</span>
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("rooms", rooms + 1)} type="button"><Plus className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Users className="mr-2 h-4 w-4" />
+                        <span className="font-medium">Adults</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("guests", Math.max(1, guests - 1))} type="button"><Minus className="h-4 w-4" /></Button>
+                        <span className="w-4 text-center">{guests}</span>
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("guests", guests + 1)} type="button"><Plus className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Bed className="mr-2 h-4 w-4" />
+                        <span className="font-medium">Children</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("children", Math.max(0, children - 1))} type="button"><Minus className="h-4 w-4" /></Button>
+                        <span className="w-4 text-center">{children}</span>
+                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("children", children + 1)} type="button"><Plus className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
             <Button type="submit" className="w-full h-14 text-lg">
               Search
             </Button>
