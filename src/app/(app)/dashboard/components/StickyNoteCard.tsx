@@ -43,10 +43,11 @@ const rotations = [
 
 export function StickyNoteCard({ note }: StickyNoteCardProps) {
   const { deleteStickyNote } = useAppContext();
-  const rotationClass = React.useMemo(
-    () => rotations[Math.floor(Math.random() * rotations.length)],
-    []
-  );
+  const rotationClass = React.useMemo(() => {
+    // Make rotation deterministic based on note ID to prevent hydration mismatch
+    const index = note.id.charCodeAt(note.id.length - 1) % rotations.length;
+    return rotations[index];
+  }, [note.id]);
 
   const handleDelete = () => {
     deleteStickyNote(note.id);
