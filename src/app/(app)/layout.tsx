@@ -6,7 +6,6 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/auth-context";
-import { useDataContext } from "@/context/data-context";
 import { AppSkeleton } from "@/components/layout/app-skeleton";
 
 export default function AppLayout({
@@ -16,7 +15,6 @@ export default function AppLayout({
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const { currentUser, isLoading: isAuthLoading } = useAuthContext();
-  const { isDataLoading } = useDataContext();
   const router = useRouter();
 
   React.useEffect(() => {
@@ -26,8 +24,8 @@ export default function AppLayout({
     }
   }, [currentUser, isAuthLoading, router]);
 
-  // Show skeleton if auth is loading OR if we have a user but are still loading their data.
-  if (isAuthLoading || (currentUser && isDataLoading)) {
+  // Show skeleton ONLY for auth loading.
+  if (isAuthLoading) {
     return <AppSkeleton />;
   }
 

@@ -50,9 +50,10 @@ import {
   import { AvailabilityCalendar } from "@/components/shared/availability-calendar";
   import { DashboardStickyNotes } from "./components/DashboardStickyNotes";
   import { DraggableCard } from "./components/DraggableCard";
+  import { DashboardSkeleton } from "./components/dashboard-skeleton";
   
   export default function DashboardPage() {
-    const { reservations, guests, dashboardLayout, updateDashboardLayout, rooms } = useDataContext();
+    const { reservations, guests, dashboardLayout, updateDashboardLayout, rooms, isDataLoading } = useDataContext();
     const [isEditing, setIsEditing] = React.useState(false);
     const [activeId, setActiveId] = React.useState<string | null>(null);
 
@@ -62,6 +63,10 @@ import {
           coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+
+    if (isDataLoading) {
+        return <DashboardSkeleton />;
+    }
 
     const todayArrivals = reservations.filter(r => isToday(new Date(r.checkInDate)) && r.status !== 'Cancelled');
     const todayDepartures = reservations.filter(r => isToday(new Date(r.checkOutDate)) && r.status !== 'Cancelled');

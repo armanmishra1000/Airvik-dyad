@@ -6,9 +6,10 @@ import { differenceInDays, parseISO } from "date-fns";
 import { columns, ReservationWithDetails } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { useDataContext } from "@/context/data-context";
+import { DataTableSkeleton } from "@/components/shared/data-table-skeleton";
 
 export default function ReservationsPage() {
-  const { reservations, guests, updateReservationStatus, rooms } = useDataContext();
+  const { reservations, guests, updateReservationStatus, rooms, isDataLoading } = useDataContext();
 
   const groupedReservations = React.useMemo(() => {
     const reservationsWithDetails = reservations.map((res) => {
@@ -52,6 +53,10 @@ export default function ReservationsPage() {
     }
     return tableData;
   }, [reservations, guests, rooms]);
+
+  if (isDataLoading) {
+    return <DataTableSkeleton columnCount={12} />;
+  }
 
   const handleCancelReservation = (reservationId: string) => {
     updateReservationStatus(reservationId, "Cancelled");
