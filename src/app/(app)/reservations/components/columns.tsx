@@ -74,10 +74,18 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     accessorKey: "id",
     header: "Booking ID",
     cell: ({ row }) => {
+        if (row.depth > 0) {
+            return null;
+        }
         const id = row.getValue("id") as string;
         const isGroup = row.getCanExpand();
         const displayId = isGroup ? id : row.original.bookingId;
         const linkId = isGroup ? row.original.subRows![0].id : id;
+
+        if (!displayId) {
+            return <span className="font-mono text-xs">N/A</span>;
+        }
+
         return (
             <Link href={`/reservations/${linkId}`} className="font-mono text-xs text-primary hover:underline">
                 {displayId.substring(displayId.startsWith('booking-') ? 8 : 4)}
