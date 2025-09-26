@@ -143,20 +143,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const [
         reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, 
-        usersRes, rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes
+        rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes
     ] = await Promise.all([
         supabase.from('reservations').select('*'),
         supabase.from('guests').select('*'),
         supabase.from('rooms').select('*'),
         supabase.from('room_types').select('*'),
         supabase.from('rate_plans').select('*'),
-        supabase.from('profiles').select('id, name, role_id'),
         supabase.from('roles').select('*'),
         supabase.from('amenities').select('*'),
         supabase.from('sticky_notes').select('*').eq('user_id', user.id),
         supabase.from('properties').select('*').limit(1).single(),
         supabase.from('folio_items').select('*'),
     ]);
+
+    const { data: usersData, error: usersError } = await supabase.functions.invoke('get-users');
+    if (usersError) {
+        console.error("Error fetching users:", usersError);
+    }
 
     if (propertyRes.data) {
         setProperty(propertyRes.data as Property);
@@ -175,7 +179,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setRooms((roomsRes.data as Room[]) || []);
     setRoomTypes((roomTypesRes.data as RoomType[]) || []);
     setRatePlans((ratePlansRes.data as RatePlan[]) || []);
-    setUsers((usersRes.data as User[]) || []);
+    setUsers(usersData || []);
     setRoles((rolesRes.data as Role[]) || []);
     setAmenities((amenitiesRes.data as Amenity[]) || []);
     setStickyNotes((stickyNotesRes.data as StickyNote[]) || []);
