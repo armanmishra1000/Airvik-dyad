@@ -124,7 +124,7 @@ import {
         tables: (
             <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
                 <Card>
-                    <CardHeader><CardTitle>Today's Arrivals</CardTitle><CardDescription>Guests scheduled to check-in today.</CardDescription></CardHeader>
+                    <CardHeader><CardTitle className="font-serif">Today's Arrivals</CardTitle><CardDescription>Guests scheduled to check-in today.</CardDescription></CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader><TableRow><TableHead>Guest</TableHead><TableHead>Room</TableHead><TableHead className="text-right">Status</TableHead></TableRow></TableHeader>
@@ -139,7 +139,7 @@ import {
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader><CardTitle>Today's Departures</CardTitle><CardDescription>Guests scheduled to check-out today.</CardDescription></CardHeader>
+                    <CardHeader><CardTitle className="font-serif">Today's Departures</CardTitle><CardDescription>Guests scheduled to check-out today.</CardDescription></CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader><TableRow><TableHead>Guest</TableHead><TableHead>Room</TableHead><TableHead className="text-right">Status</TableHead></TableRow></TableHeader>
