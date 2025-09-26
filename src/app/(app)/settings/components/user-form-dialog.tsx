@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { User } from "@/data";
+import type { User } from "@/data/types";
 import { useAppContext } from "@/context/app-context";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -41,6 +41,10 @@ const userSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(8, "Password must be at least 8 characters."),
   roleId: z.string({ required_error: "Please select a role." }),
+});
+
+const editUserSchema = userSchema.omit({ password: true }).extend({
+    password: z.string().optional(),
 });
 
 interface UserFormDialogProps {
@@ -57,7 +61,7 @@ export function UserFormDialog({
   const isEditing = !!user;
 
   const form = useForm<z.infer<typeof userSchema>>({
-    resolver: zodResolver(userSchema),
+    resolver: zodResolver(isEditing ? editUserSchema : userSchema),
     defaultValues: {
       name: user?.name || "",
       email: user?.email || "",

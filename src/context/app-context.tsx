@@ -19,8 +19,8 @@ import type {
   Amenity,
   StickyNote,
   DashboardComponentId,
-} from "@/data";
-import { mockProperty, mockDashboardLayout } from "@/data"; // Keep some UI mocks
+} from "@/data/types";
+import { mockProperty, mockDashboardLayout } from "@/data/mock-data-ui";
 
 type AddReservationPayload = Omit<Reservation, "id" | "roomId" | "bookingId" | "folio" | "totalAmount"> & { roomIds: string[] };
 
@@ -39,7 +39,6 @@ interface AppContextType {
   amenities: Amenity[];
   stickyNotes: StickyNote[];
   dashboardLayout: DashboardComponentId[];
-  setCurrentUser: (user: User | null) => void; // This will be deprecated
   hasPermission: (permission: Permission) => boolean;
   updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
   addReservation: (reservation: AddReservationPayload) => Promise<Reservation[]>;
@@ -75,14 +74,13 @@ interface AppContextType {
   addRole: (role: Omit<Role, "id">) => void;
   updateRole: (roleId: string, updatedData: Partial<Omit<Role, "id">>) => void;
   deleteRole: (roleId: string) => Promise<boolean>;
-  addUser: (user: Omit<User, "id">) => void; // Now handled by Edge Function
   updateUser: (userId: string, updatedData: Partial<Omit<User, "id">>) => void;
   deleteUser: (userId: string) => Promise<boolean>;
   addAmenity: (amenity: Omit<Amenity, "id">) => void;
   updateAmenity: (amenityId: string, updatedData: Partial<Omit<Amenity, "id">>) => void;
   deleteAmenity: (amenityId: string) => Promise<boolean>;
-  addStickyNote: (note: Omit<StickyNote, "id" | "createdAt">) => void;
-  updateStickyNote: (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt">>) => void;
+  addStickyNote: (note: Omit<StickyNote, "id" | "createdAt" | "userId">) => void;
+  updateStickyNote: (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt" | "userId">>) => void;
   deleteStickyNote: (noteId: string) => void;
   updateDashboardLayout: (layout: DashboardComponentId[]) => void;
 }
@@ -140,24 +138,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         supabase.from('sticky_notes').select('*').eq('user_id', user.id),
     ]);
 
-    // @ts-ignore
-    setReservations(reservationsRes.data || []);
-    // @ts-ignore
-    setGuests(guestsRes.data || []);
-    // @ts-ignore
-    setRooms(roomsRes.data || []);
-    // @ts-ignore
-    setRoomTypes(roomTypesRes.data || []);
-    // @ts-ignore
-    setRatePlans(ratePlansRes.data || []);
-    // @ts-ignore
-    setUsers(usersRes.data || []);
-    // @ts-ignore
-    setRoles(rolesRes.data || []);
-    // @ts-ignore
-    setAmenities(amenitiesRes.data || []);
-    // @ts-ignore
-    setStickyNotes(stickyNotesRes.data || []);
+    setReservations((reservationsRes.data as Reservation[]) || []);
+    setGuests((guestsRes.data as Guest[]) || []);
+    setRooms((roomsRes.data as Room[]) || []);
+    setRoomTypes((roomTypesRes.data as RoomType[]) || []);
+    setRatePlans((ratePlansRes.data as RatePlan[]) || []);
+    setUsers((usersRes.data as User[]) || []);
+    setRoles((rolesRes.data as Role[]) || []);
+    setAmenities((amenitiesRes.data as Amenity[]) || []);
+    setStickyNotes((stickyNotesRes.data as StickyNote[]) || []);
   }, []);
 
   React.useEffect(() => {
@@ -178,17 +167,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const hasPermission = (permission: Permission): boolean => {
     if (!userRole) return false;
-    // This is a placeholder. In a real app, you'd fetch permissions for the role.
-    // For now, we'll assume Hotel Owner has all permissions.
     if (userRole.name === 'Hotel Owner') return true;
-    if (userRole.name === 'Hotel Manager') return !permission.endsWith(':user');
+    if (userRole.name === 'Hotel Manager') {
+        const forbiddenForManager: Permission[] = ['create:user', 'update:user', 'delete:user'];
+        return !forbiddenForManager.includes(permission);
+    }
     if (userRole.name === 'Receptionist') {
-        return ['read:guest', 'create:guest', 'update:guest', 'read:reservation', 'create:reservation', 'update:reservation'].includes(permission);
+        const receptionistPermissions: Permission[] = [
+            'read:guest', 'create:guest', 'update:guest', 
+            'read:reservation', 'create:reservation', 'update:reservation',
+            'read:room', 'update:room'
+        ];
+        return receptionistPermissions.includes(permission);
     }
     return false;
   };
 
-  // Placeholder functions for mutations. These would be implemented with Supabase calls.
   const updateProperty = (updatedData: Partial<Omit<Property, "id">>) => setProperty(prev => ({ ...prev, ...updatedData }));
   const addGuest = async (guestData: Omit<Guest, "id">): Promise<Guest> => {
     const { data, error } = await supabase.from('guests').insert([guestData]).select().single();
@@ -207,7 +201,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
   
   const addReservation = async (reservationData: AddReservationPayload): Promise<Reservation[]> => {
-    // This is a simplified version. A real implementation would use a transaction.
     const { roomIds, ...rest } = reservationData;
     const newReservationsData = roomIds.map(roomId => ({ ...rest, room_id: roomId, guest_id: rest.guestId, rate_plan_id: rest.ratePlanId }));
     const { data, error } = await supabase.from('reservations').insert(newReservationsData).select();
@@ -273,9 +266,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Not implemented for brevity
     return true;
   };
-  const addUser = async (userData: Omit<User, "id">) => {
-    // This is now handled by an edge function
-  };
   const updateUser = async (userId: string, updatedData: Partial<Omit<User, "id">>) => {
     // Not implemented for brevity
   };
@@ -293,12 +283,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Not implemented for brevity
     return true;
   };
-  const addStickyNote = async (noteData: Omit<StickyNote, "id" | "createdAt">) => {
+  const addStickyNote = async (noteData: Omit<StickyNote, "id" | "createdAt" | "userId">) => {
     const { data, error } = await supabase.from('sticky_notes').insert([{ ...noteData, user_id: authUser?.id }]).select().single();
     if (error) throw error;
     setStickyNotes(prev => [...prev, data]);
   };
-  const updateStickyNote = async (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt">>) => {
+  const updateStickyNote = async (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt" | "userId">>) => {
     await supabase.from('sticky_notes').update(updatedData).eq('id', noteId);
     setStickyNotes(prev => prev.map(note => note.id === noteId ? { ...note, ...updatedData } : note));
   };
@@ -308,12 +298,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
   const updateDashboardLayout = (layout: DashboardComponentId[]) => setDashboardLayout(layout);
 
-  const value = {
+  const value: AppContextType = {
     property, reservations, guests, housekeepingAssignments, rooms, roomTypes, ratePlans, currentUser, authUser, users, roles, amenities, stickyNotes, dashboardLayout,
-    setCurrentUser, hasPermission, updateProperty, addReservation, updateReservation, updateReservationStatus, addGuest, updateGuest, deleteGuest,
+    hasPermission, updateProperty, addReservation, updateReservation, updateReservationStatus, addGuest, updateGuest, deleteGuest,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
-    deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, addUser, updateUser, deleteUser,
+    deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout,
+    // @ts-ignore
+    setCurrentUser: () => {}, // Deprecated, no-op
   };
 
   if (!isInitialized) {
