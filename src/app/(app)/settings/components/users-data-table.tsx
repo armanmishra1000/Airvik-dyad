@@ -38,9 +38,9 @@ export function UsersDataTable<TData extends User, TValue>({
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
   const { deleteUser, hasPermission } = useAppContext()
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (itemToDelete) {
-      const success = deleteUser(itemToDelete.id);
+      const success = await deleteUser(itemToDelete.id);
       if (success) {
         toast.success(`User "${itemToDelete.name}" has been deleted.`);
       } else {

@@ -38,9 +38,9 @@ export function RoomsDataTable<TData extends Room, TValue>({
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
   const { deleteRoom, hasPermission } = useAppContext()
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (itemToDelete) {
-      const success = deleteRoom(itemToDelete.id);
+      const success = await deleteRoom(itemToDelete.id);
       if (success) {
         toast.success(`Room "${itemToDelete.roomNumber}" has been deleted.`);
       } else {

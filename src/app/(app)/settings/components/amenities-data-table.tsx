@@ -38,9 +38,9 @@ export function AmenitiesDataTable<TData extends Amenity, TValue>({
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
   const { deleteAmenity } = useAppContext()
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (itemToDelete) {
-      const success = deleteAmenity(itemToDelete.id);
+      const success = await deleteAmenity(itemToDelete.id);
       if (success) {
         toast.success(`Amenity "${itemToDelete.name}" has been deleted.`);
       } else {

@@ -38,9 +38,9 @@ export function RatePlansDataTable<TData extends RatePlan, TValue>({
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
   const { deleteRatePlan, hasPermission } = useAppContext()
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (itemToDelete) {
-      const success = deleteRatePlan(itemToDelete.id);
+      const success = await deleteRatePlan(itemToDelete.id);
       if (success) {
         toast.success(`Rate plan "${itemToDelete.name}" has been deleted.`);
       } else {
