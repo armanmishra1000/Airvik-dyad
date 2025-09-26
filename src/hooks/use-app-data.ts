@@ -33,6 +33,7 @@ export function useAppData() {
   const [roles, setRoles] = React.useState<Role[]>([]);
   const [amenities, setAmenities] = React.useState<Amenity[]>([]);
   const [stickyNotes, setStickyNotes] = React.useState<StickyNote[]>([]);
+  const [housekeepingAssignments, setHousekeepingAssignments] = React.useState<HousekeepingAssignment[]>([]);
   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(['stats', 'tables', 'calendar', 'notes']);
 
   const fetchData = React.useCallback(async () => {
@@ -40,11 +41,11 @@ export function useAppData() {
     try {
       const [
         propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes,
-        rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes
+        rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes, housekeepingAssignmentsRes
       ] = await Promise.all([
         api.getProperty(), api.getReservations(), api.getGuests(), api.getRooms(),
         api.getRoomTypes(), api.getRatePlans(), api.getRoles(), api.getAmenities(),
-        api.getStickyNotes(authUser.id), api.getFolioItems(), api.getUsers()
+        api.getStickyNotes(authUser.id), api.getFolioItems(), api.getUsers(), api.getHousekeepingAssignments()
       ]);
 
       if (propertyRes.data) setProperty(propertyRes.data);
@@ -56,6 +57,7 @@ export function useAppData() {
       setAmenities(amenitiesRes.data || []);
       setStickyNotes(stickyNotesRes.data || []);
       setUsers(usersFuncRes.data || []);
+      setHousekeepingAssignments(housekeepingAssignmentsRes.data || []);
 
       const reservationsWithFolios = (reservationsRes.data || []).map(res => ({
         ...res,
@@ -115,7 +117,7 @@ export function useAppData() {
   }, []);
 
   return {
-    property, reservations, guests, rooms, roomTypes, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout,
+    property, reservations, guests, rooms, roomTypes, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
     updateProperty, addGuest, deleteGuest, addReservation, refetchUsers,
     // Stubs for other functions to avoid breaking components
     updateGuest: async () => {},

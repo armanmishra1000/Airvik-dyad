@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Property, Guest, Reservation, Room, RoomType, RatePlan, Role, Amenity, StickyNote, User } from "@/data/types";
+import type { Property, Guest, Reservation, Room, RoomType, RatePlan, Role, Amenity, StickyNote, User, HousekeepingAssignment } from "@/data/types";
 
 // Property
 export const getProperty = () => supabase.from('properties').select('*').limit(1).single();
@@ -63,3 +63,6 @@ export const getStickyNotes = (userId: string) => supabase.from('sticky_notes').
 export const addStickyNote = (noteData: any) => supabase.from('sticky_notes').insert([noteData]).select().single();
 export const updateStickyNote = (id: string, updatedData: Partial<StickyNote>) => supabase.from('sticky_notes').update(updatedData).eq('id', id).select().single();
 export const deleteStickyNote = (id: string) => supabase.from('sticky_notes').delete().eq('id', id);
+
+// Housekeeping
+export const getHousekeepingAssignments = () => supabase.from('housekeeping_assignments').select('*');

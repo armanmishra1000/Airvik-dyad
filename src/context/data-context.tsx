@@ -21,6 +21,7 @@ interface DataContextType {
   roles: Role[];
   amenities: Amenity[];
   stickyNotes: StickyNote[];
+  housekeepingAssignments: HousekeepingAssignment[];
   dashboardLayout: DashboardComponentId[];
   updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
   addReservation: (reservation: AddReservationPayload) => Promise<Reservation[]>;
