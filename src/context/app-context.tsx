@@ -247,6 +247,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout,
   };
 
+  if (!isInitialized) {
+    return null;
+  }
+
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
