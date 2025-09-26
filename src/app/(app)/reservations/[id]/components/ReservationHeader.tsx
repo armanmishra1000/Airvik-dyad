@@ -6,22 +6,17 @@ import {
   LogIn,
   LogOut,
   XCircle,
+  Edit,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useAppContext } from "@/context/app-context";
 import type { ReservationWithDetails } from "@/app/(app)/reservations/components/columns";
 import { CancelReservationDialog } from "@/app/(app)/reservations/components/cancel-reservation-dialog";
+import { EditReservationDialog } from "@/app/(app)/reservations/components/edit-reservation-dialog";
 import * as React from "react";
 
 interface ReservationHeaderProps {
@@ -40,6 +35,9 @@ export function ReservationHeader({ reservation }: ReservationHeaderProps) {
     }
   };
 
+  const canBeModified = !["Checked-in", "Checked-out", "Cancelled", "No-show"].includes(
+    reservation.status
+  );
   const canBeCancelled = !["Cancelled", "Checked-out", "No-show"].includes(
     reservation.status
   );
@@ -62,6 +60,12 @@ export function ReservationHeader({ reservation }: ReservationHeaderProps) {
           {reservation.status}
         </Badge>
         <div className="hidden items-center gap-2 md:ml-auto md:flex">
+          <EditReservationDialog reservation={reservation}>
+            <Button variant="outline" size="sm" disabled={!canBeModified}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </EditReservationDialog>
           <Button
             variant="outline"
             size="sm"

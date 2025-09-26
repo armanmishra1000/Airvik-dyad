@@ -66,6 +66,7 @@ interface AppContextType {
   hasPermission: (permission: Permission) => boolean;
   updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
   addReservation: (reservation: Omit<Reservation, "id">) => Reservation;
+  updateReservation: (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => void;
   updateReservationStatus: (
     reservationId: string,
     status: ReservationStatus
@@ -202,6 +203,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateGuest = (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => setGuests(prev => prev.map(g => g.id === guestId ? { ...g, ...updatedData } : g));
   const deleteGuest = (guestId: string): boolean => { const hasActive = reservations.some(res => res.guestId === guestId && ["Confirmed", "Checked-in"].includes(res.status)); if (hasActive) return false; setGuests(prev => prev.filter(g => g.id !== guestId)); return true; };
   const addReservation = (reservationData: Omit<Reservation, "id">): Reservation => { const newReservation: Reservation = { ...reservationData, id: `res-${Date.now()}` }; setReservations(prev => [...prev, newReservation]); return newReservation; };
+  const updateReservation = (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => { setReservations(prev => prev.map(res => res.id === reservationId ? { ...res, ...updatedData } : res)); };
   const updateReservationStatus = (reservationId: string, status: ReservationStatus) => setReservations(prev => prev.map(res => res.id === reservationId ? { ...res, status } : res));
   const addFolioItem = (reservationId: string, itemData: Omit<FolioItem, "id" | "timestamp">) => { setReservations(prev => prev.map(res => { if (res.id === reservationId) { const newItem: FolioItem = { ...itemData, id: `f-${Date.now()}`, timestamp: formatISO(new Date()) }; return { ...res, folio: [...res.folio, newItem], totalAmount: res.totalAmount + newItem.amount }; } return res; })); };
   const assignHousekeeper = ({ roomId, userId }: { roomId: string; userId: string; }) => { const today = formatISO(new Date(), { representation: "date" }); const newAssignment: HousekeepingAssignment = { roomId, assignedTo: userId, date: today, status: "Pending" }; setHousekeepingAssignments(prev => { const existingIndex = prev.findIndex(a => a.roomId === roomId && a.date === today); if (existingIndex > -1) { const updated = [...prev]; updated[existingIndex] = newAssignment; return updated; } return [...prev, newAssignment]; }); };
@@ -231,7 +233,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const value = {
     property, reservations, guests, housekeepingAssignments, rooms, roomTypes, ratePlans, currentUser, users, roles, amenities, stickyNotes, dashboardLayout,
-    setCurrentUser, hasPermission, updateProperty, addReservation, updateReservationStatus, addGuest, updateGuest, deleteGuest,
+    setCurrentUser, hasPermission, updateProperty, addReservation, updateReservation, updateReservationStatus, addGuest, updateGuest, deleteGuest,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, addUser, updateUser, deleteUser,
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout,
