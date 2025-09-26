@@ -24,7 +24,7 @@ export const columns: ColumnDef<Role>[] = [
     header: "Permissions",
     cell: ({ row }) => {
         const role = row.original;
-        return <span>{role.permissions.length} permissions</span>
+        return <span>{role.permissions?.length || 0} permissions</span>
     }
   },
   {

@@ -122,7 +122,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [amenities, setAmenities] = React.useState<Amenity[]>([]);
   const [stickyNotes, setStickyNotes] = React.useState<StickyNote[]>([]);
   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(defaultDashboardLayout);
-  const [isInitialized, setIsInitialized] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   const fetchData = React.useCallback(async (user: AuthUser) => {
     const { data: profile, error: profileError } = await supabase
@@ -186,16 +186,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   React.useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user || null;
       setAuthUser(user);
       if (user) {
-        fetchData(user);
+        await fetchData(user);
       } else {
         setCurrentUser(null);
         setUserRole(null);
       }
-      setIsInitialized(true);
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -203,20 +203,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const hasPermission = (permission: Permission): boolean => {
     if (!userRole) return false;
+    // Hotel Owner is a super admin and bypasses the permissions array check
     if (userRole.name === 'Hotel Owner') return true;
-    if (userRole.name === 'Hotel Manager') {
-        const forbiddenForManager: Permission[] = ['create:user', 'update:user', 'delete:user'];
-        return !forbiddenForManager.includes(permission);
-    }
-    if (userRole.name === 'Receptionist') {
-        const receptionistPermissions: Permission[] = [
-            'read:guest', 'create:guest', 'update:guest', 
-            'read:reservation', 'create:reservation', 'update:reservation',
-            'read:room', 'update:room'
-        ];
-        return receptionistPermissions.includes(permission);
-    }
-    return false;
+    // For all other roles, check if the permission exists in their permissions array
+    return userRole.permissions?.includes(permission) || false;
   };
 
   const updateProperty = async (updatedData: Partial<Omit<Property, "id">>) => {
@@ -432,7 +422,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout,
   };
 
-  if (!isInitialized) {
+  if (isLoading) {
     return <div className="flex h-screen items-center justify-center">Loading Application...</div>;
   }
 
