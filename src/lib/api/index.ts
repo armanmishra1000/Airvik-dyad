@@ -49,7 +49,7 @@ export const deleteRole = (id: string) => supabase.from('roles').delete().eq('id
 // Users & Profiles
 export const getUsers = () => supabase.functions.invoke('get-users');
 export const updateUserProfile = (id: string, updatedData: { name: string; roleId: string; }) => supabase.from('profiles').update({ name: updatedData.name, role_id: updatedData.roleId }).eq('id', id).select().single();
-export const deleteAuthUser = (id: string) => supabase.auth.admin.deleteUser(id);
+export const deleteAuthUser = (id: string) => supabase.functions.invoke('delete-user', { body: { userIdToDelete: id } });
 export const getUserProfile = (id: string) => supabase.from('profiles').select('*, roles(*)').eq('id', id).single();
 
 // Amenities
