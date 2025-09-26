@@ -232,13 +232,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      processSession(session);
+      // Only re-process if the user's existence has changed
+      if (session?.user?.id !== authUser?.id) {
+        processSession(session);
+      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [authUser]);
 
   const refetchUsers = React.useCallback(async () => {
     const { data: usersData, error: usersError } = await supabase.functions.invoke('get-users');
