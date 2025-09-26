@@ -15,12 +15,6 @@ import type { Amenity } from "@/data"
 import { AmenityFormDialog } from "./amenity-form-dialog"
 import { Icon } from "@/components/shared/icon"
 
-declare module '@tanstack/react-table' {
-    interface TableMeta<TData extends RowData> {
-      openDeleteDialog: (item: TData) => void
-    }
-}
-
 export const columns: ColumnDef<Amenity>[] = [
   {
     accessorKey: "icon",
