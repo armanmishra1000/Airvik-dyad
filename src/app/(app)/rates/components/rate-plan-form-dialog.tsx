@@ -59,7 +59,7 @@ export function RatePlanFormDialog({
     },
   });
 
-  function onSubmit(values: z.infer<typeof ratePlanSchema>) {
+  async function onSubmit(values: z.infer<typeof ratePlanSchema>) {
     const ratePlanData = {
       name: values.name,
       price: values.price,
@@ -69,17 +69,23 @@ export function RatePlanFormDialog({
       },
     };
 
-    if (isEditing && ratePlan) {
-      updateRatePlan(ratePlan.id, ratePlanData);
-    } else {
-      addRatePlan(ratePlanData);
-    }
+    try {
+      if (isEditing && ratePlan) {
+        await updateRatePlan(ratePlan.id, ratePlanData);
+      } else {
+        await addRatePlan(ratePlanData);
+      }
 
-    toast.success(
-      `Rate plan ${isEditing ? "updated" : "created"} successfully!`
-    );
-    form.reset();
-    setOpen(false);
+      toast.success(
+        `Rate plan ${isEditing ? "updated" : "created"} successfully!`
+      );
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error("Failed to save rate plan", {
+        description: (error as Error).message,
+      });
+    }
   }
 
   return (

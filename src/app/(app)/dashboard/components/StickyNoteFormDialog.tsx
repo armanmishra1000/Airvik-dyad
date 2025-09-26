@@ -66,18 +66,24 @@ export function StickyNoteFormDialog({
     },
   });
 
-  function onSubmit(values: z.infer<typeof noteSchema>) {
-    if (isEditing && note) {
-      updateStickyNote(note.id, values);
-    } else {
-      addStickyNote(values);
+  async function onSubmit(values: z.infer<typeof noteSchema>) {
+    try {
+      if (isEditing && note) {
+        await updateStickyNote(note.id, values);
+      } else {
+        await addStickyNote(values);
+      }
+      
+      toast.success(
+        `Note ${isEditing ? "updated" : "created"} successfully!`
+      );
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error("Failed to save note", {
+        description: (error as Error).message,
+      });
     }
-    
-    toast.success(
-      `Note ${isEditing ? "updated" : "created"} successfully!`
-    );
-    form.reset();
-    setOpen(false);
   }
 
   return (

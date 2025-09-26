@@ -58,18 +58,24 @@ export function GuestFormDialog({
     },
   });
 
-  function onSubmit(values: z.infer<typeof guestSchema>) {
-    if (isEditing && guest) {
-      updateGuest(guest.id, values);
-    } else {
-      addGuest(values);
+  async function onSubmit(values: z.infer<typeof guestSchema>) {
+    try {
+      if (isEditing && guest) {
+        await updateGuest(guest.id, values);
+      } else {
+        await addGuest(values);
+      }
+      
+      toast.success(
+        `Guest ${isEditing ? "updated" : "created"} successfully!`
+      );
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error("Failed to save guest", {
+        description: (error as Error).message,
+      });
     }
-    
-    toast.success(
-      `Guest ${isEditing ? "updated" : "created"} successfully!`
-    );
-    form.reset();
-    setOpen(false);
   }
 
   return (

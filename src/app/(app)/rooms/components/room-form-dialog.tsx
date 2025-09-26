@@ -68,19 +68,25 @@ export function RoomFormDialog({
     },
   });
 
-  function onSubmit(values: z.infer<typeof roomSchema>) {
+  async function onSubmit(values: z.infer<typeof roomSchema>) {
     const roomData = { ...values, status: values.status as RoomStatus, photos: values.photos || [] };
-    if (isEditing && room) {
-      updateRoom(room.id, roomData);
-    } else {
-      addRoom(roomData);
+    try {
+      if (isEditing && room) {
+        await updateRoom(room.id, roomData);
+      } else {
+        await addRoom(roomData);
+      }
+      
+      toast.success(
+        `Room ${isEditing ? "updated" : "created"} successfully!`
+      );
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error("Failed to save room", {
+        description: (error as Error).message,
+      });
     }
-    
-    toast.success(
-      `Room ${isEditing ? "updated" : "created"} successfully!`
-    );
-    form.reset();
-    setOpen(false);
   }
 
   return (

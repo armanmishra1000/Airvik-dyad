@@ -67,7 +67,7 @@ export function RoomTypeFormDialog({
     },
   });
 
-  function onSubmit(values: z.infer<typeof roomTypeSchema>) {
+  async function onSubmit(values: z.infer<typeof roomTypeSchema>) {
     const processedValues = {
       ...values,
       description: values.description || "",
@@ -77,17 +77,23 @@ export function RoomTypeFormDialog({
       mainPhotoUrl: values.mainPhotoUrl || values.photos?.[0] || "",
     };
 
-    if (isEditing && roomType) {
-      updateRoomType(roomType.id, processedValues);
-    } else {
-      addRoomType(processedValues);
-    }
+    try {
+      if (isEditing && roomType) {
+        await updateRoomType(roomType.id, processedValues);
+      } else {
+        await addRoomType(processedValues);
+      }
 
-    toast.success(
-      `Room type ${isEditing ? "updated" : "created"} successfully!`
-    );
-    form.reset();
-    setOpen(false);
+      toast.success(
+        `Room type ${isEditing ? "updated" : "created"} successfully!`
+      );
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error("Failed to save room type", {
+        description: (error as Error).message,
+      });
+    }
   }
 
   return (
