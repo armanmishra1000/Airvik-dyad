@@ -1,15 +1,45 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Property, Guest, Reservation, Room, RoomType, RatePlan, Role, Amenity, StickyNote, User, HousekeepingAssignment } from "@/data/types";
 
+// Helper to map guest data between app (camelCase) and DB (snake_case)
+const fromDbGuest = (dbGuest: any): Guest => ({
+    id: dbGuest.id,
+    firstName: dbGuest.first_name,
+    lastName: dbGuest.last_name,
+    email: dbGuest.email,
+    phone: dbGuest.phone,
+});
+
+const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>) => {
+    const dbData: { [key: string]: any } = {};
+    if (appGuest.firstName) dbData.first_name = appGuest.firstName;
+    if (appGuest.lastName) dbData.last_name = appGuest.lastName;
+    if (appGuest.email) dbData.email = appGuest.email;
+    if (appGuest.phone) dbData.phone = appGuest.phone;
+    return dbData;
+};
+
 // Property
 export const getProperty = () => supabase.from('properties').select('*').limit(1).single();
 export const updateProperty = (id: string, updatedData: Partial<Property>) => supabase.from('properties').update(updatedData).eq('id', id).select().single();
 export const createProperty = (propertyData: Partial<Property>) => supabase.from('properties').insert([propertyData]).select().single();
 
 // Guests
-export const getGuests = () => supabase.from('guests').select('*');
-export const addGuest = (guestData: Omit<Guest, "id">) => supabase.from('guests').insert([guestData]).select().single();
-export const updateGuest = (id: string, updatedData: Partial<Guest>) => supabase.from('guests').update(updatedData).eq('id', id).select().single();
+export const getGuests = async () => {
+    const { data, error, ...rest } = await supabase.from('guests').select('*');
+    if (error || !data) return { data, error, ...rest };
+    return { data: data.map(fromDbGuest), error, ...rest };
+};
+export const addGuest = async (guestData: Omit<Guest, "id">) => {
+    const { data, error, ...rest } = await supabase.from('guests').insert([toDbGuest(guestData)]).select().single();
+    if (error || !data) return { data, error, ...rest };
+    return { data: fromDbGuest(data), error, ...rest };
+};
+export const updateGuest = async (id: string, updatedData: Partial<Guest>) => {
+    const { data, error, ...rest } = await supabase.from('guests').update(toDbGuest(updatedData)).eq('id', id).select().single();
+    if (error || !data) return { data, error, ...rest };
+    return { data: fromDbGuest(data), error, ...rest };
+};
 export const deleteGuest = (id: string) => supabase.from('guests').delete().eq('id', id);
 
 // Reservations
