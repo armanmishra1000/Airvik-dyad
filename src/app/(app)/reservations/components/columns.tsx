@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User } from "lucide-react"
 import { format } from "date-fns"
+import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -56,7 +57,11 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     header: "Booking ID",
     cell: ({ row }) => {
         const id = row.getValue("id") as string;
-        return <div className="font-mono text-xs">{id.substring(4)}</div>
+        return (
+            <Link href={`/reservations/${id}`} className="font-mono text-xs text-primary hover:underline">
+                {id.substring(4)}
+            </Link>
+        )
     }
   },
   {
@@ -174,9 +179,11 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => table.options.meta?.viewReservation(reservation)}>
-                View Details
-            </DropdownMenuItem>
+            <Link href={`/reservations/${reservation.id}`}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    View Details
+                </DropdownMenuItem>
+            </Link>
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(reservation.id)}
             >
