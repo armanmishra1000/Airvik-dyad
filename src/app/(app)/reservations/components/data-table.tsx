@@ -4,11 +4,13 @@ import * as React from "react"
 import {
   ColumnDef,
   ColumnFiltersState,
+  ExpandedState,
   RowData,
   SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
@@ -31,10 +33,9 @@ import { CancelReservationDialog } from "./cancel-reservation-dialog"
 
 declare module '@tanstack/react-table' {
     interface TableMeta<TData extends RowData> {
-      cancelReservation: (reservationId: string) => void
-      checkInReservation: (reservationId: string) => void
-      checkOutReservation: (reservationId: string) => void
-      openCancelDialog: (reservationId: string) => void
+      checkInReservation: (reservation: TData) => void
+      checkOutReservation: (reservation: TData) => void
+      openCancelDialog: (reservation: TData) => void
     }
   }
 
@@ -59,19 +60,37 @@ export function DataTable<TData, TValue>({
   )
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
-  const [reservationToCancel, setReservationToCancel] = React.useState<string | null>(null);
+  const [expanded, setExpanded] = React.useState<ExpandedState>({})
+  const [reservationToCancel, setReservationToCancel] = React.useState<TData | null>(null);
 
-  const handleOpenCancelDialog = (reservationId: string) => {
-    setReservationToCancel(reservationId);
+  const handleOpenCancelDialog = (reservation: TData) => {
+    setReservationToCancel(reservation);
   };
 
   const handleConfirmCancellation = () => {
     if (reservationToCancel) {
-      onCancelReservation(reservationToCancel);
+      // @ts-ignore
+      if (reservationToCancel.subRows) {
+        // @ts-ignore
+        reservationToCancel.subRows.forEach(subRes => onCancelReservation(subRes.id));
+      } else {
+        // @ts-ignore
+        onCancelReservation(reservationToCancel.id);
+      }
     }
     setReservationToCancel(null);
   };
 
+  const handleGroupAction = (reservation: TData, action: (id: string) => void) => {
+    // @ts-ignore
+    if (reservation.subRows) {
+        // @ts-ignore
+        reservation.subRows.forEach(subRes => action(subRes.id));
+    } else {
+        // @ts-ignore
+        action(reservation.id);
+    }
+  };
 
   const table = useReactTable({
     data,
@@ -85,15 +104,17 @@ export function DataTable<TData, TValue>({
     onColumnVisibilityChange: setColumnVisibility,
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    onExpandedChange: setExpanded,
+    getExpandedRowModel: getExpandedRowModel(),
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      expanded,
     },
     meta: {
-        cancelReservation: onCancelReservation,
-        checkInReservation: onCheckInReservation,
-        checkOutReservation: onCheckOutReservation,
+        checkInReservation: (res: TData) => handleGroupAction(res, onCheckInReservation),
+        checkOutReservation: (res: TData) => handleGroupAction(res, onCheckOutReservation),
         openCancelDialog: handleOpenCancelDialog,
     }
   })

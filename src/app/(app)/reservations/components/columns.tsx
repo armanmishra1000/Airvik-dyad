@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User } from "lucide-react"
+import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User, ChevronDown, ChevronRight } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 
@@ -38,8 +38,10 @@ export type ReservationWithDetails = {
     guestName: string;
     roomNumber: string;
     bookingDate: string;
+    bookingId: string;
     source: 'reception' | 'website';
     nights: number;
+    subRows?: ReservationWithDetails[];
 }
 
 export const statuses = [
@@ -53,13 +55,32 @@ export const statuses = [
 
 export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
+    id: 'expander',
+    header: () => null,
+    cell: ({ row }) => {
+      return row.getCanExpand() ? (
+        <button
+          {...{
+            onClick: row.getToggleExpandedHandler(),
+            className: "p-1 rounded-full hover:bg-muted",
+          }}
+        >
+          {row.getIsExpanded() ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </button>
+      ) : <div className="w-8"></div> // Placeholder for alignment
+    },
+  },
+  {
     accessorKey: "id",
     header: "Booking ID",
     cell: ({ row }) => {
         const id = row.getValue("id") as string;
+        const isGroup = row.getCanExpand();
+        const displayId = isGroup ? id : row.original.bookingId;
+        const linkId = isGroup ? row.original.subRows![0].id : id;
         return (
-            <Link href={`/reservations/${id}`} className="font-mono text-xs text-primary hover:underline">
-                {id.substring(4)}
+            <Link href={`/reservations/${linkId}`} className="font-mono text-xs text-primary hover:underline">
+                {displayId.substring(displayId.startsWith('booking-') ? 8 : 4)}
             </Link>
         )
     }
@@ -68,6 +89,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     accessorKey: "bookingDate",
     header: "Booking Date",
     cell: ({ row }) => {
+        if (row.depth > 0) return null;
         const dateValue = row.getValue("bookingDate") as string;
         if (!dateValue) return null;
         return format(new Date(dateValue), "MMM d, yyyy");
@@ -76,19 +98,33 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     accessorKey: "guestName",
     header: "Customer Name",
+    cell: ({ row, getValue }) => {
+        if (row.depth > 0) return null;
+        return getValue();
+    }
   },
   {
     accessorKey: "roomNumber",
     header: "Room",
+    cell: ({ row, getValue }) => (
+        <div style={{ paddingLeft: `${row.depth * 1}rem` }}>
+            {getValue() as string}
+        </div>
+    )
   },
   {
     accessorKey: "numberOfGuests",
     header: "Guests",
+    cell: ({ row, getValue }) => {
+        if (row.depth > 0) return null;
+        return getValue();
+    }
   },
   {
     accessorKey: "checkInDate",
     header: "Check-in",
     cell: ({ row }) => {
+        if (row.depth > 0) return null;
         const dateValue = row.getValue("checkInDate") as string;
         if (!dateValue) return null;
         return format(new Date(dateValue), "MMM d, yyyy");
@@ -98,6 +134,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     accessorKey: "checkOutDate",
     header: "Check-out",
     cell: ({ row }) => {
+        if (row.depth > 0) return null;
         const dateValue = row.getValue("checkOutDate") as string;
         if (!dateValue) return null;
         return format(new Date(dateValue), "MMM d, yyyy");
@@ -106,6 +143,10 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     accessorKey: "nights",
     header: "Nights",
+    cell: ({ row, getValue }) => {
+        if (row.depth > 0) return null;
+        return getValue();
+    }
   },
   {
     accessorKey: "totalAmount",
@@ -128,7 +169,8 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     },
     cell: ({ row }) => {
         const status = statuses.find(s => s.value === row.getValue("status"))
-        if (!status) return null
+        if (!status) return null;
+        if (row.depth > 0) return null;
 
         const variant: "default" | "secondary" | "destructive" | "outline" = 
             status.value === "Checked-in" ? "default" :
@@ -141,6 +183,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     accessorKey: "source",
     header: "Source",
     cell: ({ row }) => {
+        if (row.depth > 0) return null;
         const source = row.getValue("source") as string;
         const Icon = source === 'website' ? Monitor : User;
         const label = source ? source.charAt(0).toUpperCase() + source.slice(1) : "Unknown";
@@ -162,6 +205,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     id: "actions",
     cell: ({ row, table }) => {
+      if (row.depth > 0) return null;
       const reservation = row.original;
       const status = reservation.status;
  
@@ -179,7 +223,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <Link href={`/reservations/${reservation.id}`}>
+            <Link href={`/reservations/${reservation.subRows ? reservation.subRows[0].id : reservation.id}`}>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     View Details
                 </DropdownMenuItem>
@@ -187,24 +231,24 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(reservation.id)}
             >
-              Copy reservation ID
+              Copy booking ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => table.options.meta?.checkInReservation(reservation.id)}
+              onClick={() => table.options.meta?.checkInReservation(reservation)}
               disabled={!canBeCheckedIn}
             >
               Check-in
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => table.options.meta?.checkOutReservation(reservation.id)}
+              onClick={() => table.options.meta?.checkOutReservation(reservation)}
               disabled={!canBeCheckedOut}
             >
               Check-out
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => table.options.meta?.openCancelDialog(reservation.id)}
+              onClick={() => table.options.meta?.openCancelDialog(reservation)}
               disabled={!canBeCancelled}
               className="text-destructive focus:text-destructive focus:bg-destructive/10"
             >
