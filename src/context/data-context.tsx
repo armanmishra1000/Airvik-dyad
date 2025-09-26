@@ -11,7 +11,6 @@ type AddReservationPayload = Omit<Reservation, "id" | "roomId" | "bookingId" | "
 
 // This mirrors the original AppContextType for component compatibility
 interface DataContextType {
-  isDataLoading: boolean;
   property: Property;
   reservations: Reservation[];
   guests: Guest[];

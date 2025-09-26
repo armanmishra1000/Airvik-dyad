@@ -3,14 +3,9 @@
 import { useDataContext } from "@/context/data-context";
 import { columns } from "./components/columns";
 import { RoomsDataTable } from "./components/data-table";
-import { DataTableSkeleton } from "@/components/shared/data-table-skeleton";
 
 export default function RoomsPage() {
-  const { rooms, isDataLoading } = useDataContext();
-
-  if (isDataLoading) {
-    return <DataTableSkeleton columnCount={5} />;
-  }
+  const { rooms } = useDataContext();
 
   return (
     <div className="space-y-4">

@@ -14,18 +14,18 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
-  const { currentUser, isLoading: isAuthLoading } = useAuthContext();
+  const { currentUser, isLoading } = useAuthContext();
   const router = useRouter();
 
   React.useEffect(() => {
     // Only check for redirection once the loading state is resolved
-    if (!isAuthLoading && !currentUser) {
+    if (!isLoading && !currentUser) {
       router.push("/login");
     }
-  }, [currentUser, isAuthLoading, router]);
+  }, [currentUser, isLoading, router]);
 
-  // Show skeleton ONLY for auth loading.
-  if (isAuthLoading) {
+  // Show a skeleton while the auth state is loading initially
+  if (isLoading && !currentUser) {
     return <AppSkeleton />;
   }
 
