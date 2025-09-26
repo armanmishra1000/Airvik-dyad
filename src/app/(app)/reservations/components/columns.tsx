@@ -62,7 +62,11 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     accessorKey: "bookingDate",
     header: "Booking Date",
-    cell: ({ row }) => format(new Date(row.getValue("bookingDate")), "MMM d, yyyy"),
+    cell: ({ row }) => {
+        const dateValue = row.getValue("bookingDate") as string;
+        if (!dateValue) return null;
+        return format(new Date(dateValue), "MMM d, yyyy");
+    }
   },
   {
     accessorKey: "guestName",
@@ -79,12 +83,20 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     accessorKey: "checkInDate",
     header: "Check-in",
-    cell: ({ row }) => format(new Date(row.getValue("checkInDate")), "MMM d, yyyy"),
+    cell: ({ row }) => {
+        const dateValue = row.getValue("checkInDate") as string;
+        if (!dateValue) return null;
+        return format(new Date(dateValue), "MMM d, yyyy");
+    }
   },
   {
     accessorKey: "checkOutDate",
     header: "Check-out",
-    cell: ({ row }) => format(new Date(row.getValue("checkOutDate")), "MMM d, yyyy"),
+    cell: ({ row }) => {
+        const dateValue = row.getValue("checkOutDate") as string;
+        if (!dateValue) return null;
+        return format(new Date(dateValue), "MMM d, yyyy");
+    }
   },
   {
     accessorKey: "nights",
@@ -126,7 +138,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     cell: ({ row }) => {
         const source = row.getValue("source") as string;
         const Icon = source === 'website' ? Monitor : User;
-        const label = source.charAt(0).toUpperCase() + source.slice(1);
+        const label = source ? source.charAt(0).toUpperCase() + source.slice(1) : "Unknown";
 
         return (
             <TooltipProvider>
