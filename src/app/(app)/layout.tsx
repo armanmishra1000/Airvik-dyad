@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/auth-context";
+import { useDataContext } from "@/context/data-context";
 import { AppSkeleton } from "@/components/layout/app-skeleton";
 
 export default function AppLayout({
@@ -14,18 +15,19 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
-  const { currentUser, isLoading } = useAuthContext();
+  const { currentUser, isLoading: isAuthLoading } = useAuthContext();
+  const { isDataLoading } = useDataContext();
   const router = useRouter();
 
   React.useEffect(() => {
     // Only check for redirection once the loading state is resolved
-    if (!isLoading && !currentUser) {
+    if (!isAuthLoading && !currentUser) {
       router.push("/login");
     }
-  }, [currentUser, isLoading, router]);
+  }, [currentUser, isAuthLoading, router]);
 
-  // Show a skeleton while the auth state is loading initially
-  if (isLoading && !currentUser) {
+  // Show skeleton if auth is loading OR if we have a user but are still loading their data.
+  if (isAuthLoading || (currentUser && isDataLoading)) {
     return <AppSkeleton />;
   }
 

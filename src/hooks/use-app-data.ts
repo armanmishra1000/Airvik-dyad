@@ -24,6 +24,7 @@ const defaultProperty: Property = {
 
 export function useAppData() {
   const { authUser } = useAuthContext();
+  const [isDataLoading, setIsDataLoading] = React.useState(true);
   const [property, setProperty] = React.useState<Property>(defaultProperty);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
   const [guests, setGuests] = React.useState<Guest[]>([]);
@@ -38,7 +39,11 @@ export function useAppData() {
   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(['stats', 'tables', 'calendar', 'notes']);
 
   const fetchData = React.useCallback(async () => {
-    if (!authUser) return;
+    if (!authUser) {
+      setIsDataLoading(false);
+      return;
+    }
+    setIsDataLoading(true);
     try {
       const [
         propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes,
@@ -77,6 +82,8 @@ export function useAppData() {
 
     } catch (error) {
       console.error("Failed to load app data:", error);
+    } finally {
+      setIsDataLoading(false);
     }
   }, [authUser]);
 
@@ -285,6 +292,7 @@ export function useAppData() {
   };
 
   return {
+    isDataLoading,
     property, reservations, guests, rooms, roomTypes, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
     updateProperty, addGuest, deleteGuest, addReservation, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
