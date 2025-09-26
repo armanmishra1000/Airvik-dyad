@@ -34,6 +34,7 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
