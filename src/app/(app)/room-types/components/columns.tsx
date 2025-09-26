@@ -16,12 +16,6 @@ import type { RoomType } from "@/data"
 import { RoomTypeFormDialog } from "./room-type-form-dialog"
 import { useAppContext } from "@/context/app-context"
 
-declare module '@tanstack/react-table' {
-    interface TableMeta<TData extends RowData> {
-      openDeleteDialog: (item: TData) => void
-    }
-}
-
 export const columns: ColumnDef<RoomType>[] = [
   {
     id: "image",

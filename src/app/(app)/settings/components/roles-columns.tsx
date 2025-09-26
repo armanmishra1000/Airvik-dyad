@@ -14,12 +14,6 @@ import {
 import type { Role } from "@/data"
 import { RoleFormDialog } from "./role-form-dialog"
 
-declare module '@tanstack/react-table' {
-    interface TableMeta<TData extends RowData> {
-      openDeleteDialog: (item: TData) => void
-    }
-}
-
 export const columns: ColumnDef<Role>[] = [
   {
     accessorKey: "name",

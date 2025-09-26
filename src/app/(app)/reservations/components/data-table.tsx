@@ -31,14 +31,6 @@ import { DataTableToolbar } from "./data-table-toolbar"
 import { DataTablePagination } from "./data-table-pagination"
 import { CancelReservationDialog } from "./cancel-reservation-dialog"
 
-declare module '@tanstack/react-table' {
-    interface TableMeta<TData extends RowData> {
-      checkInReservation: (reservation: TData) => void
-      checkOutReservation: (reservation: TData) => void
-      openCancelDialog: (reservation: TData) => void
-    }
-  }
-
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
