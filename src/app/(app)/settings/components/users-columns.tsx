@@ -15,12 +15,6 @@ import type { User } from "@/data"
 import { useAppContext } from "@/context/app-context"
 import { UserFormDialog } from "./user-form-dialog"
 
-declare module '@tanstack/react-table' {
-    interface TableMeta<TData extends RowData> {
-      openDeleteDialog: (item: TData) => void
-    }
-}
-
 export const columns: ColumnDef<User>[] = [
   {
     accessorKey: "name",

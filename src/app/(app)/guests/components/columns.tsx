@@ -16,12 +16,6 @@ import type { Guest } from "@/data"
 import { GuestFormDialog } from "./guest-form-dialog"
 import { useAppContext } from "@/context/app-context"
 
-declare module '@tanstack/react-table' {
-    interface TableMeta<TData extends RowData> {
-      openDeleteDialog: (guest: TData) => void
-    }
-}
-
 export const columns: ColumnDef<Guest>[] = [
   {
     id: "name",
