@@ -13,19 +13,18 @@ import type { RoomType } from "@/data";
 
 interface RoomTypeCardProps {
   roomType: RoomType;
-  searchParams?: {
-    from: string;
-    to: string;
-    guests: string;
-    children: string;
-    rooms: string;
-  };
+  onSelect: (roomType: RoomType) => void;
+  isSelectionComplete: boolean;
+  hasSearched: boolean;
 }
 
-export function RoomTypeCard({ roomType, searchParams }: RoomTypeCardProps) {
-  const href = `/rooms/${roomType.id}`;
-  const query = searchParams ? new URLSearchParams(searchParams).toString() : "";
-  const finalHref = query ? `${href}?${query}` : href;
+export function RoomTypeCard({
+  roomType,
+  onSelect,
+  isSelectionComplete,
+  hasSearched,
+}: RoomTypeCardProps) {
+  const detailsLink = `/rooms/${roomType.id}`;
 
   return (
     <Card className="flex flex-col">
@@ -58,9 +57,18 @@ export function RoomTypeCard({ roomType, searchParams }: RoomTypeCardProps) {
           </div>
         </div>
       </div>
-      <CardFooter>
-        <Button asChild className="w-full">
-          <Link href={finalHref}>View Details & Book</Link>
+      <CardFooter className="flex-col items-stretch gap-2">
+        {hasSearched ? (
+          <Button onClick={() => onSelect(roomType)} disabled={isSelectionComplete}>
+            Select Room
+          </Button>
+        ) : (
+          <Button asChild>
+            <Link href={detailsLink}>View Details & Book</Link>
+          </Button>
+        )}
+        <Button asChild variant="link" className="text-sm">
+          <Link href={detailsLink}>View Room Details</Link>
         </Button>
       </CardFooter>
     </Card>

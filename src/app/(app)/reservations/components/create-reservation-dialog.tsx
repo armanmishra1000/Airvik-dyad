@@ -7,7 +7,6 @@ import * as z from "zod";
 import {
   format,
   formatISO,
-  differenceInDays,
   parseISO,
   areIntervalsOverlapping,
 } from "date-fns";
@@ -103,8 +102,6 @@ export function CreateReservationDialog() {
   function onSubmit(values: z.infer<typeof reservationSchema>) {
     const ratePlan =
       mockRatePlans.find((rp) => rp.id === "rp-standard") || mockRatePlans[0];
-    const nights = differenceInDays(values.dateRange.to, values.dateRange.from);
-    const totalAmountPerRoom = nights * ratePlan.price;
 
     addReservation({
       guestId: values.guestId,
@@ -116,15 +113,6 @@ export function CreateReservationDialog() {
       checkOutDate: formatISO(values.dateRange.to, { representation: "date" }),
       numberOfGuests: values.numberOfGuests,
       status: "Confirmed",
-      folio: [
-        {
-          id: `f-${Date.now()}`,
-          description: "Room Charge",
-          amount: totalAmountPerRoom,
-          timestamp: formatISO(new Date()),
-        },
-      ],
-      totalAmount: totalAmountPerRoom,
       bookingDate: formatISO(new Date()),
       source: 'reception',
     });

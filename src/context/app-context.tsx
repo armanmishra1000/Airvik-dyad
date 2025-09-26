@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { formatISO } from "date-fns";
+import { formatISO, differenceInDays, parseISO } from "date-fns";
 import {
   mockReservations,
   mockGuests,
@@ -48,7 +48,7 @@ const AMENITIES_STORAGE_KEY = "hotel-pms-amenities";
 const STICKY_NOTES_STORAGE_KEY = "hotel-pms-sticky-notes";
 const DASHBOARD_LAYOUT_STORAGE_KEY = "hotel-pms-dashboard-layout";
 
-type AddReservationPayload = Omit<Reservation, "id" | "roomId" | "bookingId"> & { roomIds: string[] };
+type AddReservationPayload = Omit<Reservation, "id" | "roomId" | "bookingId" | "folio" | "totalAmount"> & { roomIds: string[] };
 
 interface AppContextType {
   property: Property;
@@ -206,13 +206,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deleteGuest = (guestId: string): boolean => { const hasActive = reservations.some(res => res.guestId === guestId && ["Confirmed", "Checked-in"].includes(res.status)); if (hasActive) return false; setGuests(prev => prev.filter(g => g.id !== guestId)); return true; };
   
   const addReservation = (reservationData: AddReservationPayload): Reservation[] => {
-    const { roomIds, ...rest } = reservationData;
+    const { roomIds, ratePlanId, ...rest } = reservationData;
     const bookingId = `booking-${Date.now()}`;
+
+    const ratePlan = ratePlans.find(rp => rp.id === ratePlanId) || ratePlans[0];
+    const nights = differenceInDays(parseISO(rest.checkOutDate), parseISO(rest.checkInDate));
+    const totalAmountPerRoom = nights * ratePlan.price;
+
     const newReservations: Reservation[] = roomIds.map((roomId, index) => ({
       ...rest,
       id: `res-${Date.now()}-${index}`,
       bookingId,
       roomId,
+      ratePlanId,
+      totalAmount: totalAmountPerRoom,
+      folio: [
+        {
+          id: `f-${Date.now()}-${index}`,
+          description: "Room Charge",
+          amount: totalAmountPerRoom,
+          timestamp: new Date().toISOString(),
+        },
+      ],
     }));
     setReservations(prev => [...prev, ...newReservations]);
     return newReservations;
