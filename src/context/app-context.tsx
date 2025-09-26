@@ -12,6 +12,7 @@ import {
   mockProperty,
   mockUsers,
   mockRoles,
+  mockAmenities,
   type Reservation,
   type Guest,
   type ReservationStatus,
@@ -25,6 +26,7 @@ import {
   type User,
   type Role,
   type Permission,
+  type Amenity,
 } from "@/data";
 
 // Define keys for local storage
@@ -38,6 +40,7 @@ const PROPERTY_STORAGE_KEY = "hotel-pms-property";
 const CURRENT_USER_STORAGE_KEY = "hotel-pms-current-user";
 const ROLES_STORAGE_KEY = "hotel-pms-roles";
 const USERS_STORAGE_KEY = "hotel-pms-users";
+const AMENITIES_STORAGE_KEY = "hotel-pms-amenities";
 
 interface AppContextType {
   property: Property;
@@ -50,6 +53,7 @@ interface AppContextType {
   currentUser: User | null;
   users: User[];
   roles: Role[];
+  amenities: Amenity[];
   setCurrentUser: (user: User | null) => void;
   hasPermission: (permission: Permission) => boolean;
   updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
@@ -88,6 +92,9 @@ interface AppContextType {
   addUser: (user: Omit<User, "id">) => void;
   updateUser: (userId: string, updatedData: Partial<Omit<User, "id">>) => void;
   deleteUser: (userId: string) => boolean;
+  addAmenity: (amenity: Omit<Amenity, "id">) => void;
+  updateAmenity: (amenityId: string, updatedData: Partial<Omit<Amenity, "id">>) => void;
+  deleteAmenity: (amenityId: string) => boolean;
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
@@ -105,6 +112,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = React.useState<User | null>(mockUsers[0]);
   const [users, setUsers] = React.useState<User[]>(mockUsers);
   const [roles, setRoles] = React.useState<Role[]>(mockRoles);
+  const [amenities, setAmenities] = React.useState<Amenity[]>(mockAmenities);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
   React.useEffect(() => {
@@ -139,6 +147,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const storedUsers = window.localStorage.getItem(USERS_STORAGE_KEY);
       if (storedUsers) setUsers(JSON.parse(storedUsers));
 
+      const storedAmenities = window.localStorage.getItem(AMENITIES_STORAGE_KEY);
+      if (storedAmenities) setAmenities(JSON.parse(storedAmenities));
+
     } catch (error) {
       console.error("Error reading from localStorage", error);
     }
@@ -155,6 +166,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(currentUser)); }, [currentUser, isInitialized]);
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(roles)); }, [roles, isInitialized]);
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users)); }, [users, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(AMENITIES_STORAGE_KEY, JSON.stringify(amenities)); }, [amenities, isInitialized]);
 
   const hasPermission = (permission: Permission): boolean => {
     if (!currentUser) return false;
@@ -187,12 +199,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addUser = (userData: Omit<User, "id">) => { const newUser: User = { ...userData, id: `user-${Date.now()}` }; setUsers(prev => [...prev, newUser]); };
   const updateUser = (userId: string, updatedData: Partial<Omit<User, "id">>) => setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updatedData } : u));
   const deleteUser = (userId: string): boolean => { if (userId === currentUser?.id) return false; const isAssigned = housekeepingAssignments.some(a => a.assignedTo === userId); if (isAssigned) return false; setUsers(prev => prev.filter(u => u.id !== userId)); return true; };
+  const addAmenity = (amenityData: Omit<Amenity, "id">) => { const newAmenity: Amenity = { ...amenityData, id: `amenity-${Date.now()}` }; setAmenities(prev => [...prev, newAmenity]); };
+  const updateAmenity = (amenityId: string, updatedData: Partial<Omit<Amenity, "id">>) => setAmenities(prev => prev.map(a => a.id === amenityId ? { ...a, ...updatedData } : a));
+  const deleteAmenity = (amenityId: string): boolean => { const isUsed = roomTypes.some(rt => rt.amenities.includes(amenityId)); if (isUsed) return false; setAmenities(prev => prev.filter(a => a.id !== amenityId)); return true; };
 
   const value = {
-    property, reservations, guests, housekeepingAssignments, rooms, roomTypes, ratePlans, currentUser, users, roles,
+    property, reservations, guests, housekeepingAssignments, rooms, roomTypes, ratePlans, currentUser, users, roles, amenities,
     setCurrentUser, hasPermission, updateProperty, addReservation, updateReservationStatus, addGuest, updateGuest, deleteGuest,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, addUser, updateUser, deleteUser,
+    addAmenity, updateAmenity, deleteAmenity,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

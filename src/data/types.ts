@@ -35,13 +35,19 @@ export interface Property {
   };
 }
 
+export interface Amenity {
+  id: string;
+  name: string;
+  icon: string; // lucide-react icon name
+}
+
 export interface RoomType {
   id: string;
   name: string;
   description: string;
   maxOccupancy: number;
   bedTypes: string[];
-  amenities: string[];
+  amenities: string[]; // Array of Amenity IDs
   photos: string[];
   mainPhotoUrl?: string;
 }
