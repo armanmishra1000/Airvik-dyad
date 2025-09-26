@@ -41,7 +41,7 @@ export default function AppLayout({
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
       />
-      <div className="flex flex-col overflow-hidden">
+      <div className="flex flex-col h-screen">
         <Header />
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40 overflow-auto">
           {children}
