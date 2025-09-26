@@ -127,41 +127,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const user = session?.user;
-
-      // Case 1: No user is logged in.
-      if (!user) {
-        setAuthUser(null);
-        setCurrentUser(null);
-        setUserRole(null);
-        setIsLoading(false);
-        return;
-      }
-
-      // Case 2: A user is logged in. Set the auth user and attempt to fetch all data.
-      setAuthUser(user);
+      setIsLoading(true);
       try {
-        // Step 2.1: Fetch the user's profile. This is the most critical step.
+        const user = session?.user;
+
+        if (!user) {
+          // No user session, clear all state.
+          setAuthUser(null);
+          setCurrentUser(null);
+          setUserRole(null);
+          return;
+        }
+
+        // User session exists. Set auth user immediately.
+        setAuthUser(user);
+
+        // Step 1: Fetch the critical user profile.
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*, roles(*)')
           .eq('id', user.id)
           .single();
 
-        // If the profile doesn't exist, it's a critical failure. Sign out.
         if (profileError) {
-          throw new Error(`Profile not found for user ${user.id}. Signing out.`);
+          // If profile fails, this is a critical error. Throw to be caught below.
+          throw new Error(`Profile fetch failed: ${profileError.message}`);
         }
 
-        // Step 2.2: Profile exists. Set user state and fetch the rest of the app data.
+        // Step 2: Profile is good. Set user state.
         // @ts-ignore
         setCurrentUser({ id: profile.id, name: profile.name, email: user.email, roleId: profile.role_id });
         // @ts-ignore
         setUserRole(profile.roles);
 
+        // Step 3: Fetch all other application data in parallel.
         const [
             reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, 
-            rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes
+            rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes, usersFuncRes
         ] = await Promise.all([
             supabase.from('reservations').select('*'),
             supabase.from('guests').select('*'),
@@ -173,10 +175,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             supabase.from('sticky_notes').select('*').eq('user_id', user.id),
             supabase.from('properties').select('*').limit(1).single(),
             supabase.from('folio_items').select('*'),
+            supabase.functions.invoke('get-users'),
         ]);
-        
-        const { data: usersData } = await supabase.functions.invoke('get-users');
 
+        // Check for errors in parallel fetches
+        const results = [reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes, usersFuncRes];
+        for (const res of results) {
+            if (res.error) {
+                throw new Error(`Failed to fetch data: ${res.error.message}`);
+            }
+        }
+
+        // Step 4: All data fetched successfully. Set state.
         if (propertyRes.data) setProperty(propertyRes.data as Property);
         const reservationsData = reservationsRes.data || [];
         const folioItemsData = folioItemsRes.data || [];
@@ -189,20 +199,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setRooms((roomsRes.data as Room[]) || []);
         setRoomTypes((roomTypesRes.data as RoomType[]) || []);
         setRatePlans((ratePlansRes.data as RatePlan[]) || []);
-        setUsers(usersData || []);
+        setUsers(usersFuncRes.data || []);
         setRoles((rolesRes.data as Role[]) || []);
         setAmenities((amenitiesRes.data as Amenity[]) || []);
         setStickyNotes((stickyNotesRes.data as StickyNote[]) || []);
 
-        // All data loaded successfully.
-        setIsLoading(false);
-
       } catch (error) {
-        // Case 3: Any part of the data fetch failed.
-        console.error("Error during data fetch, signing out:", error);
+        console.error("Critical error during app initialization:", error);
+        // Clear all state and sign out
+        setAuthUser(null);
+        setCurrentUser(null);
+        setUserRole(null);
         await supabase.auth.signOut();
-        // The signOut will trigger this listener again, and it will fall into Case 1.
-        // We don't set isLoading to false here, as the state is not yet stable.
+      } finally {
+        // This will ALWAYS run, ensuring the loading screen is removed.
+        setIsLoading(false);
       }
     });
 
