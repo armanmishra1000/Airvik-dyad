@@ -24,8 +24,8 @@ export default function AppLayout({
     }
   }, [currentUser, isLoading, router]);
 
-  // Show a skeleton while the auth state is loading
-  if (isLoading) {
+  // Show a skeleton while the auth state is loading initially
+  if (isLoading && !currentUser) {
     return <AppSkeleton />;
   }
 

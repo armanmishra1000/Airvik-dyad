@@ -19,10 +19,9 @@ const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
 
-  if (auth.isLoading) {
-    return <AppSkeleton />;
-  }
-
+  // By always rendering the provider and its children, we prevent the entire
+  // component tree from unmounting during authentication checks on tab focus.
+  // The loading state is passed down through the context for consumers to handle.
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 }
 
