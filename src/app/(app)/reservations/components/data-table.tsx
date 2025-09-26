@@ -27,13 +27,10 @@ import {
 } from "@/components/ui/table"
 import { DataTableToolbar } from "./data-table-toolbar"
 import { DataTablePagination } from "./data-table-pagination"
-import { ReservationDetailsDrawer } from "./reservation-details-drawer"
-import { ReservationWithDetails } from "./columns"
 import { CancelReservationDialog } from "./cancel-reservation-dialog"
 
 declare module '@tanstack/react-table' {
     interface TableMeta<TData extends RowData> {
-      viewReservation: (reservation: TData) => void
       cancelReservation: (reservationId: string) => void
       checkInReservation: (reservationId: string) => void
       checkOutReservation: (reservationId: string) => void
@@ -62,7 +59,6 @@ export function DataTable<TData, TValue>({
   )
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
-  const [selectedReservation, setSelectedReservation] = React.useState<ReservationWithDetails | null>(null);
   const [reservationToCancel, setReservationToCancel] = React.useState<string | null>(null);
 
   const handleOpenCancelDialog = (reservationId: string) => {
@@ -95,9 +91,6 @@ export function DataTable<TData, TValue>({
       columnVisibility,
     },
     meta: {
-        viewReservation: (reservation) => {
-            setSelectedReservation(reservation as ReservationWithDetails)
-        },
         cancelReservation: onCancelReservation,
         checkInReservation: onCheckInReservation,
         checkOutReservation: onCheckOutReservation,
@@ -153,15 +146,6 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       <DataTablePagination table={table} />
-      <ReservationDetailsDrawer 
-        isOpen={!!selectedReservation}
-        onClose={() => setSelectedReservation(null)}
-        reservation={selectedReservation}
-        onCancelReservation={table.options.meta?.cancelReservation}
-        onCheckInReservation={table.options.meta?.checkInReservation}
-        onCheckOutReservation={table.options.meta?.checkOutReservation}
-        onOpenCancelDialog={table.options.meta?.openCancelDialog}
-      />
       <CancelReservationDialog
         isOpen={!!reservationToCancel}
         onOpenChange={(isOpen) => !isOpen && setReservationToCancel(null)}
