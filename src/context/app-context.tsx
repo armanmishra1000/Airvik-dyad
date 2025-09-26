@@ -142,7 +142,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     setProperty(loadState(PROPERTY_STORAGE_KEY, mockProperty));
-    setReservations(loadState(RESERVATIONS_STORAGE_KEY, mockReservations));
+    
+    const loadedReservations = loadState<Reservation[]>(RESERVATIONS_STORAGE_KEY, mockReservations);
+    const sanitizedReservations = loadedReservations.map(res => ({
+      ...res,
+      bookingId: res.bookingId || res.id,
+    }));
+    setReservations(sanitizedReservations);
+
     setGuests(loadState(GUESTS_STORAGE_KEY, mockGuests));
     setHousekeepingAssignments(loadState(HOUSEKEEPING_STORAGE_KEY, mockHousekeeping));
     setRooms(loadState(ROOMS_STORAGE_KEY, mockRooms));
