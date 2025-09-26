@@ -126,41 +126,51 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const processSession = async (session: Session | null) => {
       setIsLoading(true);
       try {
         const user = session?.user;
 
         if (!user) {
-          // No user session, clear all state.
           setAuthUser(null);
           setCurrentUser(null);
           setUserRole(null);
           return;
         }
 
-        // User session exists. Set auth user immediately.
         setAuthUser(user);
 
-        // Step 1: Fetch the critical user profile.
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*, roles(*)')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) {
-          // If profile fails, this is a critical error. Throw to be caught below.
-          throw new Error(`Profile not found for user ${user.id}. Signing out.`);
+        // --- START: Critical Profile Fetch with Retry ---
+        let profile = null;
+        let profileError: any = null;
+        for (let i = 0; i < 3; i++) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*, roles(*)')
+            .eq('id', user.id)
+            .single();
+          
+          if (data) {
+            profile = data;
+            profileError = null;
+            break;
+          }
+          profileError = error;
+          if (i < 2) { // Don't wait after the last attempt
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
 
-        // Step 2: Profile is good. Set user state.
+        if (!profile) {
+          throw new Error(`Profile fetch failed after retries: ${profileError?.message}`);
+        }
+        // --- END: Critical Profile Fetch with Retry ---
+
         // @ts-ignore
         setCurrentUser({ id: profile.id, name: profile.name, email: user.email, roleId: profile.role_id });
         // @ts-ignore
         setUserRole(profile.roles);
 
-        // Step 3: Fetch all other application data in parallel.
         const [
             reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, 
             rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes, usersFuncRes
@@ -173,12 +183,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             supabase.from('roles').select('*'),
             supabase.from('amenities').select('*'),
             supabase.from('sticky_notes').select('*').eq('user_id', user.id),
-            supabase.from('properties').select('*').limit(1), // Use .limit(1) instead of .single()
+            supabase.from('properties').select('*').limit(1),
             supabase.from('folio_items').select('*'),
             supabase.functions.invoke('get-users'),
         ]);
 
-        // Check for errors in parallel fetches
         const results = [reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes, usersFuncRes];
         for (const res of results) {
             if (res.error) {
@@ -186,14 +195,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             }
         }
 
-        // Step 4: All data fetched successfully. Set state.
         if (propertyRes.data && propertyRes.data.length > 0) {
             setProperty(propertyRes.data[0] as Property);
         } else {
-            // Fallback to default if DB is empty, though the migration should prevent this.
             setProperty(defaultProperty);
         }
-        
         const reservationsData = reservationsRes.data || [];
         const folioItemsData = folioItemsRes.data || [];
         const reservationsWithFolios = reservationsData.map(res => ({
@@ -211,19 +217,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setStickyNotes((stickyNotesRes.data as StickyNote[]) || []);
 
       } catch (error) {
-        console.error("Critical error during app initialization:", error);
-        // Clear all state and sign out
+        console.error("Session processing failed, signing out:", error);
+        await supabase.auth.signOut();
         setAuthUser(null);
         setCurrentUser(null);
         setUserRole(null);
-        await supabase.auth.signOut();
       } finally {
-        // This will ALWAYS run, ensuring the loading screen is removed.
         setIsLoading(false);
       }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      processSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      processSession(session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const refetchUsers = React.useCallback(async () => {
@@ -237,9 +251,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const hasPermission = (permission: Permission): boolean => {
     if (!userRole) return false;
-    // Hotel Owner is a super admin and bypasses the permissions array check
     if (userRole.name === 'Hotel Owner') return true;
-    // For all other roles, check if the permission exists in their permissions array
     return userRole.permissions?.includes(permission) || false;
   };
 
