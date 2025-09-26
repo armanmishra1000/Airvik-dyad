@@ -60,7 +60,7 @@ export const columns: ColumnDef<User>[] = [
             {hasPermission("delete:user") && (
                 <DropdownMenuItem 
                     className="text-destructive"
-                    onSelect={() => table.options.meta?.openDeleteDialog(user)}
+                    onSelect={() => table.options.meta?.openDeleteDialog?.(user)}
                 >
                     Delete
                 </DropdownMenuItem>

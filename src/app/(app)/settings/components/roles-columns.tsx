@@ -49,7 +49,7 @@ export const columns: ColumnDef<Role>[] = [
             </RoleFormDialog>
             <DropdownMenuItem 
                 className="text-destructive"
-                onSelect={() => table.options.meta?.openDeleteDialog(role)}
+                onSelect={() => table.options.meta?.openDeleteDialog?.(role)}
             >
                 Delete
             </DropdownMenuItem>

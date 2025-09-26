@@ -245,20 +245,20 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => table.options.meta?.checkInReservation(reservation)}
+              onClick={() => table.options.meta?.checkInReservation?.(reservation)}
               disabled={!canBeCheckedIn}
             >
               Check-in
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => table.options.meta?.checkOutReservation(reservation)}
+              onClick={() => table.options.meta?.checkOutReservation?.(reservation)}
               disabled={!canBeCheckedOut}
             >
               Check-out
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => table.options.meta?.openCancelDialog(reservation)}
+              onClick={() => table.options.meta?.openCancelDialog?.(reservation)}
               disabled={!canBeCancelled}
               className="text-destructive focus:text-destructive focus:bg-destructive/10"
             >
