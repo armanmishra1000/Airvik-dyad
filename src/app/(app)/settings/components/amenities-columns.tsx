@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { Amenity } from "@/data"
+import type { Amenity } from "@/data/types"
 import { AmenityFormDialog } from "./amenity-form-dialog"
 import { Icon } from "@/components/shared/icon"
 
