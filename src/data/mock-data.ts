@@ -10,6 +10,7 @@ import type {
   HousekeepingAssignment,
   Role,
   Permission,
+  Amenity,
 } from "./types";
 
 const today = new Date();
@@ -89,6 +90,17 @@ export const mockUsers: User[] = [
   },
 ];
 
+export const mockAmenities: Amenity[] = [
+    { id: "amenity-wifi", name: "Wi-Fi", icon: "Wifi" },
+    { id: "amenity-ac", name: "Air Conditioning", icon: "AirVent" },
+    { id: "amenity-tv", name: "TV", icon: "Tv" },
+    { id: "amenity-fridge", name: "Mini-fridge", icon: "Refrigerator" },
+    { id: "amenity-view", name: "Ocean View", icon: "Waves" },
+    { id: "amenity-balcony", name: "Balcony", icon: "GalleryVertical" },
+    { id: "amenity-jacuzzi", name: "Jacuzzi Tub", icon: "Bath" },
+    { id: "amenity-minibar", name: "Mini-bar", icon: "GlassWater" },
+  ];
+
 export const mockRoomTypes: RoomType[] = [
   {
     id: "rt-single",
@@ -96,7 +108,7 @@ export const mockRoomTypes: RoomType[] = [
     description: "A cozy room perfect for the solo traveler.",
     maxOccupancy: 1,
     bedTypes: ["1 Twin"],
-    amenities: ["Wi-Fi", "Air Conditioning", "TV"],
+    amenities: ["amenity-wifi", "amenity-ac", "amenity-tv"],
     photos: ["/room-single-1.svg", "/room-single-2.svg"],
     mainPhotoUrl: "/room-single-1.svg",
   },
@@ -106,7 +118,7 @@ export const mockRoomTypes: RoomType[] = [
     description: "Spacious room with two double beds, ideal for families.",
     maxOccupancy: 4,
     bedTypes: ["2 Double"],
-    amenities: ["Wi-Fi", "Air Conditioning", "TV", "Mini-fridge"],
+    amenities: ["amenity-wifi", "amenity-ac", "amenity-tv", "amenity-fridge"],
     photos: ["/room-double-1.svg", "/room-double-2.svg"],
     mainPhotoUrl: "/room-double-1.svg",
   },
@@ -116,7 +128,7 @@ export const mockRoomTypes: RoomType[] = [
     description: "Luxurious suite with a king bed and a stunning ocean view.",
     maxOccupancy: 2,
     bedTypes: ["1 King"],
-    amenities: ["Wi-Fi", "Ocean View", "Balcony", "Jacuzzi Tub", "Mini-bar"],
+    amenities: ["amenity-wifi", "amenity-view", "amenity-balcony", "amenity-jacuzzi", "amenity-minibar"],
     photos: ["/room-suite-1.svg", "/room-suite-2.svg"],
     mainPhotoUrl: "/room-suite-1.svg",
   },

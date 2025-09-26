@@ -11,6 +11,7 @@ import { useAppContext } from "@/context/app-context";
 import { RolesPermissions } from "./components/roles-permissions";
 import { UsersManagement } from "./components/users-management";
 import { PropertySettingsForm } from "./components/property-settings-form";
+import { AmenitiesManagement } from "./components/amenities-management";
 
 export default function SettingsPage() {
   const { hasPermission } = useAppContext();
@@ -24,14 +25,18 @@ export default function SettingsPage() {
         </p>
       </div>
       <Tabs defaultValue="property" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="property">Property</TabsTrigger>
+          <TabsTrigger value="amenities">Amenities</TabsTrigger>
           <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
           <TabsTrigger value="users" disabled={!hasPermission("read:user")}>Users</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
         <TabsContent value="property">
           <PropertySettingsForm />
+        </TabsContent>
+        <TabsContent value="amenities">
+          <AmenitiesManagement />
         </TabsContent>
         <TabsContent value="roles">
             <RolesPermissions />
