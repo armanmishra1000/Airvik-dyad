@@ -125,123 +125,134 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(defaultDashboardLayout);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  const loadAppData = React.useCallback(async (user: AuthUser) => {
+    setIsLoading(true);
+    try {
+      // --- START: Critical Profile Fetch with Retry ---
+      let profile = null;
+      let profileError: any = null;
+      for (let i = 0; i < 3; i++) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*, roles(*)')
+          .eq('id', user.id)
+          .single();
+        
+        if (data) {
+          profile = data;
+          profileError = null;
+          break;
+        }
+        profileError = error;
+        if (i < 2) { // Don't wait after the last attempt
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+
+      if (!profile) {
+        throw new Error(`Profile fetch failed after retries: ${profileError?.message}`);
+      }
+      // --- END: Critical Profile Fetch with Retry ---
+
+      setAuthUser(user);
+      // @ts-ignore
+      setCurrentUser({ id: profile.id, name: profile.name, email: user.email, roleId: profile.role_id });
+      // @ts-ignore
+      setUserRole(profile.roles);
+
+      const [
+          reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, 
+          rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes, usersFuncRes
+      ] = await Promise.all([
+          supabase.from('reservations').select('*'),
+          supabase.from('guests').select('*'),
+          supabase.from('rooms').select('*'),
+          supabase.from('room_types').select('*'),
+          supabase.from('rate_plans').select('*'),
+          supabase.from('roles').select('*'),
+          supabase.from('amenities').select('*'),
+          supabase.from('sticky_notes').select('*').eq('user_id', user.id),
+          supabase.from('properties').select('*').limit(1),
+          supabase.from('folio_items').select('*'),
+          supabase.functions.invoke('get-users'),
+      ]);
+
+      const results = [reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes, usersFuncRes];
+      for (const res of results) {
+          if (res.error) {
+              throw new Error(`Failed to fetch data: ${res.error.message}`);
+          }
+      }
+
+      if (propertyRes.data && propertyRes.data.length > 0) {
+          setProperty(propertyRes.data[0] as Property);
+      } else {
+          setProperty(defaultProperty);
+      }
+      const reservationsData = reservationsRes.data || [];
+      const folioItemsData = folioItemsRes.data || [];
+      const reservationsWithFolios = reservationsData.map(res => ({
+          ...res,
+          folio: folioItemsData.filter(item => item.reservation_id === res.id)
+      }));
+      setReservations((reservationsWithFolios as unknown as Reservation[]) || []);
+      setGuests((guestsRes.data as Guest[]) || []);
+      setRooms((roomsRes.data as Room[]) || []);
+      setRoomTypes((roomTypesRes.data as RoomType[]) || []);
+      setRatePlans((ratePlansRes.data as RatePlan[]) || []);
+      setUsers(usersFuncRes.data || []);
+      setRoles((rolesRes.data as Role[]) || []);
+      setAmenities((amenitiesRes.data as Amenity[]) || []);
+      setStickyNotes((stickyNotesRes.data as StickyNote[]) || []);
+
+    } catch (error) {
+      console.error("Failed to load app data, signing out.", error);
+      await supabase.auth.signOut();
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const clearAppData = () => {
+    setAuthUser(null);
+    setCurrentUser(null);
+    setUserRole(null);
+    setProperty(defaultProperty);
+    setReservations([]);
+    setGuests([]);
+    setHousekeepingAssignments([]);
+    setRooms([]);
+    setRoomTypes([]);
+    setRatePlans([]);
+    setUsers([]);
+    setRoles([]);
+    setAmenities([]);
+    setStickyNotes([]);
+    setDashboardLayout(defaultDashboardLayout);
+    setIsLoading(false);
+  };
+
   React.useEffect(() => {
-    const processSession = async (session: Session | null) => {
-      setIsLoading(true);
-      try {
-        const user = session?.user;
-
-        if (!user) {
-          setAuthUser(null);
-          setCurrentUser(null);
-          setUserRole(null);
-          return;
-        }
-
-        setAuthUser(user);
-
-        // --- START: Critical Profile Fetch with Retry ---
-        let profile = null;
-        let profileError: any = null;
-        for (let i = 0; i < 3; i++) {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*, roles(*)')
-            .eq('id', user.id)
-            .single();
-          
-          if (data) {
-            profile = data;
-            profileError = null;
-            break;
-          }
-          profileError = error;
-          if (i < 2) { // Don't wait after the last attempt
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        }
-
-        if (!profile) {
-          throw new Error(`Profile fetch failed after retries: ${profileError?.message}`);
-        }
-        // --- END: Critical Profile Fetch with Retry ---
-
-        // @ts-ignore
-        setCurrentUser({ id: profile.id, name: profile.name, email: user.email, roleId: profile.role_id });
-        // @ts-ignore
-        setUserRole(profile.roles);
-
-        const [
-            reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, 
-            rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes, usersFuncRes
-        ] = await Promise.all([
-            supabase.from('reservations').select('*'),
-            supabase.from('guests').select('*'),
-            supabase.from('rooms').select('*'),
-            supabase.from('room_types').select('*'),
-            supabase.from('rate_plans').select('*'),
-            supabase.from('roles').select('*'),
-            supabase.from('amenities').select('*'),
-            supabase.from('sticky_notes').select('*').eq('user_id', user.id),
-            supabase.from('properties').select('*').limit(1),
-            supabase.from('folio_items').select('*'),
-            supabase.functions.invoke('get-users'),
-        ]);
-
-        const results = [reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes, usersFuncRes];
-        for (const res of results) {
-            if (res.error) {
-                throw new Error(`Failed to fetch data: ${res.error.message}`);
-            }
-        }
-
-        if (propertyRes.data && propertyRes.data.length > 0) {
-            setProperty(propertyRes.data[0] as Property);
-        } else {
-            setProperty(defaultProperty);
-        }
-        const reservationsData = reservationsRes.data || [];
-        const folioItemsData = folioItemsRes.data || [];
-        const reservationsWithFolios = reservationsData.map(res => ({
-            ...res,
-            folio: folioItemsData.filter(item => item.reservation_id === res.id)
-        }));
-        setReservations((reservationsWithFolios as unknown as Reservation[]) || []);
-        setGuests((guestsRes.data as Guest[]) || []);
-        setRooms((roomsRes.data as Room[]) || []);
-        setRoomTypes((roomTypesRes.data as RoomType[]) || []);
-        setRatePlans((ratePlansRes.data as RatePlan[]) || []);
-        setUsers(usersFuncRes.data || []);
-        setRoles((rolesRes.data as Role[]) || []);
-        setAmenities((amenitiesRes.data as Amenity[]) || []);
-        setStickyNotes((stickyNotesRes.data as StickyNote[]) || []);
-
-      } catch (error) {
-        console.error("Session processing failed, signing out:", error);
-        await supabase.auth.signOut();
-        setAuthUser(null);
-        setCurrentUser(null);
-        setUserRole(null);
-      } finally {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        loadAppData(session.user);
+      } else {
         setIsLoading(false);
       }
-    };
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      processSession(session);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Only re-process if the user's existence has changed
-      if (session?.user?.id !== authUser?.id) {
-        processSession(session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        loadAppData(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        clearAppData();
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [authUser]);
+  }, [loadAppData]);
 
   const refetchUsers = React.useCallback(async () => {
     const { data: usersData, error: usersError } = await supabase.functions.invoke('get-users');
