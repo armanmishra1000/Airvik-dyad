@@ -11,6 +11,7 @@ import type {
   Role,
   Permission,
   Amenity,
+  StickyNote,
 } from "./types";
 
 const today = new Date();
@@ -250,4 +251,19 @@ export const mockReservations: Reservation[] = [
 export const mockHousekeeping: HousekeepingAssignment[] = [
     { roomId: "room-102", assignedTo: "user-003", date: formatISO(today, { representation: 'date' }), status: "Pending" },
     { roomId: "room-201", assignedTo: "user-003", date: formatISO(today, { representation: 'date' }), status: "Pending" },
+];
+
+export const mockStickyNotes: StickyNote[] = [
+  {
+    id: 'note-1',
+    content: 'Remember to check the VIP arrivals for tomorrow.',
+    color: 'yellow',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'note-2',
+    content: 'Maintenance scheduled for the pool pump on Friday.',
+    color: 'blue',
+    createdAt: new Date().toISOString(),
+  },
 ];

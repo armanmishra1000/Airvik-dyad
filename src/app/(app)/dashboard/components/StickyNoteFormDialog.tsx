@@ -1,0 +1,143 @@
+"use client";
+
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import type { StickyNote } from "@/data";
+import { useAppContext } from "@/context/app-context";
+import { cn } from "@/lib/utils";
+
+const noteSchema = z.object({
+  content: z.string().min(1, "Note content cannot be empty."),
+  color: z.enum(["yellow", "pink", "blue", "green"]),
+});
+
+interface StickyNoteFormDialogProps {
+  note?: StickyNote;
+  children: React.ReactNode;
+}
+
+const colorOptions = [
+  { value: "yellow", className: "bg-yellow-200 hover:bg-yellow-300" },
+  { value: "pink", className: "bg-pink-200 hover:bg-pink-300" },
+  { value: "blue", className: "bg-blue-200 hover:bg-blue-300" },
+  { value: "green", className: "bg-green-200 hover:bg-green-300" },
+] as const;
+
+export function StickyNoteFormDialog({
+  note,
+  children,
+}: StickyNoteFormDialogProps) {
+  const [open, setOpen] = React.useState(false);
+  const { addStickyNote, updateStickyNote } = useAppContext();
+  const isEditing = !!note;
+
+  const form = useForm<z.infer<typeof noteSchema>>({
+    resolver: zodResolver(noteSchema),
+    defaultValues: {
+      content: note?.content || "",
+      color: note?.color || "yellow",
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof noteSchema>) {
+    if (isEditing && note) {
+      updateStickyNote(note.id, values);
+    } else {
+      addStickyNote(values);
+    }
+    
+    toast.success(
+      `Note ${isEditing ? "updated" : "created"} successfully!`
+    );
+    form.reset();
+    setOpen(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {isEditing ? "Edit Note" : "Add New Note"}
+          </DialogTitle>
+          <DialogDescription>
+            Write your note and choose a color.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Content</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Your note here..."
+                      className="min-h-[120px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Color</FormLabel>
+                  <FormControl>
+                    <ToggleGroup
+                      type="single"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="justify-start"
+                    >
+                      {colorOptions.map(opt => (
+                        <ToggleGroupItem key={opt.value} value={opt.value} className={cn("w-10 h-10", opt.className)} />
+                      ))}
+                    </ToggleGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter>
+              <Button type="submit">
+                {isEditing ? "Save Changes" : "Add Note"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
