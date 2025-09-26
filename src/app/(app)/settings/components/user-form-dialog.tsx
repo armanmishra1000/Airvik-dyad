@@ -47,6 +47,8 @@ const editUserSchema = userSchema.omit({ password: true }).extend({
     password: z.string().optional(),
 });
 
+type UserFormValues = z.infer<typeof editUserSchema>;
+
 interface UserFormDialogProps {
   user?: User;
   children: React.ReactNode;
@@ -60,7 +62,7 @@ export function UserFormDialog({
   const { roles, updateUser } = useAppContext();
   const isEditing = !!user;
 
-  const form = useForm<z.infer<typeof userSchema>>({
+  const form = useForm<UserFormValues>({
     resolver: zodResolver(isEditing ? editUserSchema : userSchema),
     defaultValues: {
       name: user?.name || "",
@@ -70,7 +72,7 @@ export function UserFormDialog({
     },
   });
 
-  async function onSubmit(values: z.infer<typeof userSchema>) {
+  async function onSubmit(values: UserFormValues) {
     if (isEditing && user) {
       // Update user logic (e.g., role change)
       updateUser(user.id, { name: values.name, roleId: values.roleId });
