@@ -48,7 +48,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import type { ReservationWithDetails } from "./columns";
 
 const editReservationSchema = z.object({
@@ -74,7 +74,7 @@ export function EditReservationDialog({
   children,
 }: EditReservationDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { reservations, updateReservation, guests, rooms, ratePlans } = useAppContext();
+  const { reservations, updateReservation, guests, rooms, ratePlans } = useDataContext();
   const form = useForm<z.infer<typeof editReservationSchema>>({
     resolver: zodResolver(editReservationSchema),
     defaultValues: {

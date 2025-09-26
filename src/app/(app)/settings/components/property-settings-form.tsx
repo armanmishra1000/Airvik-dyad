@@ -25,7 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { Label } from "@/components/ui/label";
 
@@ -40,7 +40,7 @@ const propertySchema = z.object({
 });
 
 export function PropertySettingsForm() {
-  const { property, updateProperty } = useAppContext();
+  const { property, updateProperty } = useDataContext();
 
   const form = useForm<z.infer<typeof propertySchema>>({
     resolver: zodResolver(propertySchema),

@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 import Image from "next/image";
 
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -49,7 +49,7 @@ function BookingReviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { roomTypes, rooms, reservations, addGuest, addReservation, ratePlans } =
-    useAppContext();
+    useDataContext();
 
   const [isProcessing, setIsProcessing] = React.useState(false);
 

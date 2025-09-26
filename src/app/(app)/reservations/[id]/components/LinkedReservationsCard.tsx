@@ -14,7 +14,7 @@ import {
   TableCell,
   TableRow,
 } from "@/components/ui/table";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import type { Reservation } from "@/data/types";
 
 interface LinkedReservationsCardProps {
@@ -22,7 +22,7 @@ interface LinkedReservationsCardProps {
 }
 
 export function LinkedReservationsCard({ reservation }: LinkedReservationsCardProps) {
-  const { reservations: allReservations, rooms, roomTypes } = useAppContext();
+  const { reservations: allReservations, rooms, roomTypes } = useDataContext();
 
   const linkedReservations = allReservations.filter(
     (r) => r.bookingId === reservation.bookingId && r.id !== reservation.id

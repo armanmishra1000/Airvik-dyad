@@ -8,12 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { AmenitiesDataTable } from "./amenities-data-table";
 import { columns } from "./amenities-columns";
 
 export function AmenitiesManagement() {
-  const { amenities } = useAppContext();
+  const { amenities } = useDataContext();
 
   return (
     <Card>

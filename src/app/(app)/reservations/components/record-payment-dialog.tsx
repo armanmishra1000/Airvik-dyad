@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 const paymentSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be greater than 0."),
@@ -49,7 +49,7 @@ export function RecordPaymentDialog({
   children,
 }: RecordPaymentDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addFolioItem } = useAppContext();
+  const { addFolioItem } = useDataContext();
 
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),

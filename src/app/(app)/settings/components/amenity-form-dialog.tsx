@@ -40,7 +40,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Amenity } from "@/data/types";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { iconList, type IconName } from "@/lib/icons";
 import { Icon } from "@/components/shared/icon";
 
@@ -60,7 +60,7 @@ export function AmenityFormDialog({
 }: AmenityFormDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [popoverOpen, setPopoverOpen] = React.useState(false);
-  const { addAmenity, updateAmenity } = useAppContext();
+  const { addAmenity, updateAmenity } = useDataContext();
   const isEditing = !!amenity;
 
   const form = useForm<z.infer<typeof amenitySchema>>({

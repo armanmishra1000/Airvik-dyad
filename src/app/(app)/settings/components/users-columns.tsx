@@ -12,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { User } from "@/data/types"
-import { useAppContext } from "@/context/app-context"
+import { useDataContext } from "@/context/data-context"
+import { useAuthContext } from "@/context/auth-context"
 import { UserFormDialog } from "./user-form-dialog"
 
 export const columns: ColumnDef<User>[] = [
@@ -28,7 +29,7 @@ export const columns: ColumnDef<User>[] = [
     accessorKey: "roleId",
     header: "Role",
     cell: ({ row }) => {
-        const { roles } = useAppContext();
+        const { roles } = useDataContext();
         const roleId = row.getValue("roleId") as string;
         const role = roles.find(r => r.id === roleId);
         return <span>{role?.name || "Unknown"}</span>
@@ -38,7 +39,7 @@ export const columns: ColumnDef<User>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const user = row.original
-      const { hasPermission } = useAppContext();
+      const { hasPermission } = useAuthContext();
  
       return (
         <DropdownMenu>

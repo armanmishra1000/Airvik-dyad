@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type { Guest } from "@/data/types";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 const guestSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
@@ -45,7 +45,7 @@ export function GuestFormDialog({
   children,
 }: GuestFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addGuest, updateGuest } = useAppContext();
+  const { addGuest, updateGuest } = useDataContext();
   const isEditing = !!guest;
 
   const form = useForm<z.infer<typeof guestSchema>>({

@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { User } from "@/data/types";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { supabase } from "@/integrations/supabase/client";
 
 const userSchema = z.object({
@@ -60,7 +60,7 @@ export function UserFormDialog({
 }: UserFormDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { roles, updateUser, refetchUsers } = useAppContext();
+  const { roles, updateUser, refetchUsers } = useDataContext();
   const isEditing = !!user;
 
   const form = useForm<UserFormValues>({

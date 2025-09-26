@@ -46,13 +46,13 @@ import {
   } from "@/components/ui/table"
   import type { DashboardComponentId } from "@/data/types"
   import { isToday } from "date-fns"
-  import { useAppContext } from "@/context/app-context";
+  import { useDataContext } from "@/context/data-context";
   import { AvailabilityCalendar } from "@/components/shared/availability-calendar";
   import { DashboardStickyNotes } from "./components/DashboardStickyNotes";
   import { DraggableCard } from "./components/DraggableCard";
   
   export default function DashboardPage() {
-    const { reservations, guests, dashboardLayout, updateDashboardLayout, rooms } = useAppContext();
+    const { reservations, guests, dashboardLayout, updateDashboardLayout, rooms } = useDataContext();
     const [isEditing, setIsEditing] = React.useState(false);
     const [activeId, setActiveId] = React.useState<string | null>(null);
 

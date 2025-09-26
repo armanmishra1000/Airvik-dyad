@@ -5,10 +5,10 @@ import { formatISO } from "date-fns";
 import type { RoomStatus } from "@/data/types";
 import { HousekeepingToolbar } from "./components/housekeeping-toolbar";
 import { RoomStatusCard } from "./components/room-status-card";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 export default function HousekeepingPage() {
-  const { housekeepingAssignments, updateAssignmentStatus, rooms: allRooms, roomTypes, users } = useAppContext();
+  const { housekeepingAssignments, updateAssignmentStatus, rooms: allRooms, roomTypes, users } = useDataContext();
   const [rooms, setRooms] = React.useState(() =>
     allRooms.map((room) => {
       const roomType = roomTypes.find((rt) => rt.id === room.roomTypeId);

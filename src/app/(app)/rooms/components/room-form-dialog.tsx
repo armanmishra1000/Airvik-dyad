@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { type Room, type RoomStatus } from "@/data/types";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { MultiImageUpload } from "@/components/shared/multi-image-upload";
 
 const roomSchema = z.object({
@@ -55,7 +55,7 @@ export function RoomFormDialog({
   children,
 }: RoomFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addRoom, updateRoom, roomTypes } = useAppContext();
+  const { addRoom, updateRoom, roomTypes } = useDataContext();
   const isEditing = !!room;
 
   const form = useForm<z.infer<typeof roomSchema>>({

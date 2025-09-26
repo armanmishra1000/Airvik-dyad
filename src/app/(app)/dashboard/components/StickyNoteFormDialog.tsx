@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { StickyNote } from "@/data/types";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 
 const noteSchema = z.object({
@@ -54,7 +54,7 @@ export function StickyNoteFormDialog({
   children,
 }: StickyNoteFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addStickyNote, updateStickyNote } = useAppContext();
+  const { addStickyNote, updateStickyNote } = useDataContext();
   const isEditing = !!note;
 
   const form = useForm<z.infer<typeof noteSchema>>({

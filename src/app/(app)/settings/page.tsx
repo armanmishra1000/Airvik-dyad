@@ -7,14 +7,14 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAppContext } from "@/context/app-context";
+import { useAuthContext } from "@/context/auth-context";
 import { RolesPermissions } from "./components/roles-permissions";
 import { UsersManagement } from "./components/users-management";
 import { PropertySettingsForm } from "./components/property-settings-form";
 import { AmenitiesManagement } from "./components/amenities-management";
 
 export default function SettingsPage() {
-  const { hasPermission } = useAppContext();
+  const { hasPermission } = useAuthContext();
 
   return (
     <div className="space-y-6">

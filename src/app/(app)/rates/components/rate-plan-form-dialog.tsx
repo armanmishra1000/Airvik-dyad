@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { RatePlan } from "@/data/types";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 const ratePlanSchema = z.object({
   name: z.string().min(1, "Rate plan name is required."),
@@ -46,7 +46,7 @@ export function RatePlanFormDialog({
   children,
 }: RatePlanFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addRatePlan, updateRatePlan } = useAppContext();
+  const { addRatePlan, updateRatePlan } = useDataContext();
   const isEditing = !!ratePlan;
 
   const form = useForm<z.infer<typeof ratePlanSchema>>({

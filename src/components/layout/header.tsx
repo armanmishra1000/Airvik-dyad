@@ -18,7 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
+import { useAuthContext } from "@/context/auth-context";
 import { ThemeToggle } from "../theme-toggle";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,7 +35,8 @@ const navItems = [
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { property, currentUser, roles } = useAppContext();
+  const { property, roles } = useDataContext();
+  const { currentUser } = useAuthContext();
   const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
   const userRole = roles.find(r => r.id === currentUser?.roleId);
 

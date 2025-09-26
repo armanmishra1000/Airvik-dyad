@@ -8,12 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { RolesDataTable } from "./roles-data-table";
 import { columns } from "./roles-columns";
 
 export function RolesPermissions() {
-  const { roles } = useAppContext();
+  const { roles } = useDataContext();
 
   return (
     <Card>

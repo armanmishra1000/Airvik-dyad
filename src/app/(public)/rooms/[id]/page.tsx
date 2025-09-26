@@ -46,7 +46,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/shared/icon";
 
@@ -65,7 +65,7 @@ export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { reservations, roomTypes, amenities: allAmenities, rooms, ratePlans } = useAppContext();
+  const { reservations, roomTypes, amenities: allAmenities, rooms, ratePlans } = useDataContext();
   const roomType = roomTypes.find((rt) => rt.id === params.id);
 
   const standardRatePlan =

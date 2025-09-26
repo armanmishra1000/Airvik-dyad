@@ -9,11 +9,11 @@ import {
 } from "date-fns";
 import type { DateRange } from "react-day-picker";
 
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import type { RoomType } from "@/data/types";
 
 export function useAvailabilitySearch() {
-  const { reservations, rooms, roomTypes } = useAppContext();
+  const { reservations, rooms, roomTypes } = useDataContext();
   const [isLoading, setIsLoading] = React.useState(false);
   const [availableRoomTypes, setAvailableRoomTypes] = React.useState<
     RoomType[] | null

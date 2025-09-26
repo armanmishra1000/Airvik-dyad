@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { RoomType } from "@/data/types";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { MultiImageUpload } from "@/components/shared/multi-image-upload";
 
 const roomTypeSchema = z.object({
@@ -51,7 +51,7 @@ export function RoomTypeFormDialog({
   children,
 }: RoomTypeFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { amenities: allAmenities, addRoomType, updateRoomType } = useAppContext();
+  const { amenities: allAmenities, addRoomType, updateRoomType } = useDataContext();
   const isEditing = !!roomType;
 
   const form = useForm<z.infer<typeof roomTypeSchema>>({

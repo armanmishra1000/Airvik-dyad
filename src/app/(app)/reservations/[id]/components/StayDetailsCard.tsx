@@ -11,14 +11,14 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { ReservationWithDetails } from "@/app/(app)/reservations/components/columns";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 interface StayDetailsCardProps {
   reservation: ReservationWithDetails;
 }
 
 export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
-  const { roomTypes, ratePlans, rooms } = useAppContext();
+  const { roomTypes, ratePlans, rooms } = useDataContext();
   const roomType = roomTypes.find(
     (rt) =>
       rt.id ===

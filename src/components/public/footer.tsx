@@ -1,9 +1,9 @@
 "use client";
 
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 export function PublicFooter() {
-  const { property } = useAppContext();
+  const { property } = useDataContext();
 
   return (
     <footer className="border-t bg-muted/40">

@@ -4,7 +4,7 @@ import { useParams, notFound } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { CheckCircle2, MapPin, Phone } from "lucide-react";
 
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 
 export default function BookingConfirmationPage() {
   const params = useParams<{ id: string }>();
-  const { property, reservations, guests, rooms, roomTypes } = useAppContext();
+  const { property, reservations, guests, rooms, roomTypes } = useDataContext();
 
   const reservation = reservations.find((r) => r.id === params.id);
 

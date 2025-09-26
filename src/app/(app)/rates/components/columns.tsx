@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { RatePlan } from "@/data/types"
 import { RatePlanFormDialog } from "./rate-plan-form-dialog"
-import { useAppContext } from "@/context/app-context"
+import { useAuthContext } from "@/context/auth-context"
 
 export const columns: ColumnDef<RatePlan>[] = [
   {
@@ -37,7 +37,7 @@ export const columns: ColumnDef<RatePlan>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const ratePlan = row.original
-      const { hasPermission } = useAppContext();
+      const { hasPermission } = useAuthContext();
  
       return (
         <DropdownMenu>

@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 interface AssignHousekeeperDialogProps {
   roomId: string;
@@ -38,7 +38,7 @@ export function AssignHousekeeperDialog({
   const [selectedUserId, setSelectedUserId] = React.useState<string | undefined>(
     currentAssigneeId
   );
-  const { assignHousekeeper, users, roles } = useAppContext();
+  const { assignHousekeeper, users, roles } = useDataContext();
 
   const housekeeperRole = roles.find((r) => r.name === "Housekeeper");
   const housekeepers = housekeeperRole

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { Guest } from "@/data/types"
 import { GuestFormDialog } from "./guest-form-dialog"
-import { useAppContext } from "@/context/app-context"
+import { useAuthContext } from "@/context/auth-context"
 
 export const columns: ColumnDef<Guest>[] = [
   {
@@ -44,7 +44,7 @@ export const columns: ColumnDef<Guest>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const guest = row.original
-      const { hasPermission } = useAppContext();
+      const { hasPermission } = useAuthContext();
  
       return (
         <DropdownMenu>

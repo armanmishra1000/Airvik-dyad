@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import type { ReservationWithDetails } from "@/app/(app)/reservations/components/columns";
 import { CancelReservationDialog } from "@/app/(app)/reservations/components/cancel-reservation-dialog";
 import { EditReservationDialog } from "@/app/(app)/reservations/components/edit-reservation-dialog";
@@ -24,7 +24,7 @@ interface ReservationHeaderProps {
 }
 
 export function ReservationHeader({ reservation }: ReservationHeaderProps) {
-  const { updateReservationStatus } = useAppContext();
+  const { updateReservationStatus } = useDataContext();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
 
   const handleStatusUpdate = (status: "Checked-in" | "Checked-out" | "Cancelled") => {

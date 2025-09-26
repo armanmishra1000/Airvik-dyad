@@ -14,7 +14,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import type { Room } from "@/data/types"
 import { RoomFormDialog } from "./room-form-dialog"
-import { useAppContext } from "@/context/app-context"
+import { useDataContext } from "@/context/data-context"
+import { useAuthContext } from "@/context/auth-context"
 
 export const columns: ColumnDef<Room>[] = [
     {
@@ -22,7 +23,7 @@ export const columns: ColumnDef<Room>[] = [
         header: "Image",
         cell: ({ row }) => {
           const room = row.original
-          const { roomTypes } = useAppContext()
+          const { roomTypes } = useDataContext()
           const roomType = roomTypes.find(rt => rt.id === room.roomTypeId)
           
           const imageUrl = room.photos?.[0] || roomType?.mainPhotoUrl || roomType?.photos?.[0] || "/room-placeholder.svg"
@@ -46,7 +47,7 @@ export const columns: ColumnDef<Room>[] = [
     accessorKey: "roomTypeId",
     header: "Room Type",
     cell: ({ row }) => {
-        const { roomTypes } = useAppContext()
+        const { roomTypes } = useDataContext()
         const roomTypeId = row.getValue("roomTypeId") as string;
         const roomType = roomTypes.find(rt => rt.id === roomTypeId);
         return <span>{roomType?.name || "Unknown"}</span>
@@ -64,7 +65,7 @@ export const columns: ColumnDef<Room>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const room = row.original
-      const { hasPermission } = useAppContext();
+      const { hasPermission } = useAuthContext();
  
       return (
         <DropdownMenu>

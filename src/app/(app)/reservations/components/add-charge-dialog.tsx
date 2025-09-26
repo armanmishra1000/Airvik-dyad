@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 const chargeSchema = z.object({
   description: z.string().min(1, "Description is required."),
@@ -42,7 +42,7 @@ export function AddChargeDialog({
   children,
 }: AddChargeDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addFolioItem } = useAppContext();
+  const { addFolioItem } = useDataContext();
 
   const form = useForm<z.infer<typeof chargeSchema>>({
     resolver: zodResolver(chargeSchema),

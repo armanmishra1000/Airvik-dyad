@@ -3,7 +3,7 @@
 import { useParams, notFound } from "next/navigation";
 import { differenceInDays, parseISO } from "date-fns";
 
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { ReservationHeader } from "./components/ReservationHeader";
 import { GuestDetailsCard } from "./components/GuestDetailsCard";
 import { StayDetailsCard } from "./components/StayDetailsCard";
@@ -12,7 +12,7 @@ import { LinkedReservationsCard } from "./components/LinkedReservationsCard";
 
 export default function ReservationDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { reservations, guests, rooms } = useAppContext();
+  const { reservations, guests, rooms } = useDataContext();
 
   const reservation = reservations.find((r) => r.id === params.id);
   const guest = guests.find((g) => g.id === reservation?.guestId);

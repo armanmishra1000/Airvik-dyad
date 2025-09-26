@@ -4,11 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import { Package2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { BookingDialog } from "./booking-dialog";
 
 export function PublicHeader() {
-  const { property } = useAppContext();
+  const { property } = useDataContext();
   const [isBookingDialogOpen, setIsBookingDialogOpen] = React.useState(false);
 
   return (

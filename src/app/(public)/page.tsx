@@ -7,14 +7,14 @@ import {
   type BookingSearchFormValues,
 } from "@/components/public/booking-widget";
 import { useAvailabilitySearch } from "@/hooks/use-availability-search";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BookingSummary } from "@/components/public/booking-summary";
 import type { RoomType } from "@/data/types";
 
 export default function PublicHomePage() {
-  const { roomTypes } = useAppContext();
+  const { roomTypes } = useDataContext();
   const { search, availableRoomTypes, isLoading, setAvailableRoomTypes } =
     useAvailabilitySearch();
   const [hasSearched, setHasSearched] = React.useState(false);

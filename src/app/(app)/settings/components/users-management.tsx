@@ -8,12 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { UsersDataTable } from "./users-data-table";
 import { columns } from "./users-columns";
 
 export function UsersManagement() {
-  const { users } = useAppContext();
+  const { users } = useDataContext();
 
   return (
     <Card>

@@ -48,7 +48,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 const reservationSchema = z.object({
   guestId: z.string({ required_error: "Please select a guest." }),
@@ -64,7 +64,7 @@ const reservationSchema = z.object({
 
 export function CreateReservationDialog() {
   const [open, setOpen] = React.useState(false);
-  const { reservations, addReservation, guests, rooms, ratePlans, roomTypes } = useAppContext();
+  const { reservations, addReservation, guests, rooms, ratePlans, roomTypes } = useDataContext();
   const form = useForm<z.infer<typeof reservationSchema>>({
     resolver: zodResolver(reservationSchema),
     defaultValues: {

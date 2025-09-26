@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { RoomType } from "@/data/types";
 import type { BookingSearchFormValues } from "./booking-widget";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 interface BookingSummaryProps {
   selection: RoomType[];
@@ -25,7 +25,7 @@ export function BookingSummary({
   onClear,
 }: BookingSummaryProps) {
   const router = useRouter();
-  const { ratePlans } = useAppContext();
+  const { ratePlans } = useDataContext();
   const { dateRange, rooms: requestedRooms } = searchValues;
 
   if (selection.length === 0 || !dateRange?.from || !dateRange?.to) {

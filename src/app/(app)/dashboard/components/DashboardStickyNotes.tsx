@@ -1,14 +1,14 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { Button } from "@/components/ui/button";
 import { StickyNoteCard } from "./StickyNoteCard";
 import { StickyNoteFormDialog } from "./StickyNoteFormDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function DashboardStickyNotes() {
-  const { stickyNotes } = useAppContext();
+  const { stickyNotes } = useDataContext();
 
   return (
     <Card>

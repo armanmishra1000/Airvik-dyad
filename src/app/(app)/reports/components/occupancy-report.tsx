@@ -25,11 +25,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 
 export function OccupancyReport() {
-  const { reservations, rooms } = useAppContext();
+  const { reservations, rooms } = useDataContext();
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
     to: new Date(),

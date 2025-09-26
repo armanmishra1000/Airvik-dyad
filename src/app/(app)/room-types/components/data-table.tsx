@@ -24,7 +24,8 @@ import { Button } from "@/components/ui/button"
 import { DataTablePagination } from "@/app/(app)/reservations/components/data-table-pagination"
 import { RoomTypeFormDialog } from "./room-type-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
-import { useAppContext } from "@/context/app-context"
+import { useDataContext } from "@/context/data-context"
+import { useAuthContext } from "@/context/auth-context"
 import type { RoomType } from "@/data/types"
 
 export function RoomTypesDataTable<TData extends RoomType, TValue>({
@@ -36,7 +37,8 @@ export function RoomTypesDataTable<TData extends RoomType, TValue>({
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
-  const { deleteRoomType, hasPermission } = useAppContext()
+  const { deleteRoomType } = useDataContext()
+  const { hasPermission } = useAuthContext()
 
   const handleDeleteConfirm = async () => {
     if (itemToDelete) {

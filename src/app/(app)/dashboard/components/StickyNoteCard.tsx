@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import type { StickyNote } from "@/data/types";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 import { StickyNoteFormDialog } from "./StickyNoteFormDialog";
 
@@ -42,7 +42,7 @@ const rotations = [
 ];
 
 export function StickyNoteCard({ note }: StickyNoteCardProps) {
-  const { deleteStickyNote } = useAppContext();
+  const { deleteStickyNote } = useDataContext();
   const [hasMounted, setHasMounted] = React.useState(false);
 
   React.useEffect(() => {

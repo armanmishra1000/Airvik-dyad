@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { DataTablePagination } from "@/app/(app)/reservations/components/data-table-pagination"
 import { RoleFormDialog } from "./role-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
-import { useAppContext } from "@/context/app-context"
+import { useDataContext } from "@/context/data-context"
 import type { Role } from "@/data/types"
 
 export function RolesDataTable<TData extends Role, TValue>({
@@ -36,7 +36,7 @@ export function RolesDataTable<TData extends Role, TValue>({
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
-  const { deleteRole } = useAppContext()
+  const { deleteRole } = useDataContext()
 
   const handleDeleteConfirm = async () => {
     if (itemToDelete) {

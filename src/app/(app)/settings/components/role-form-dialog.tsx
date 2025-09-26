@@ -33,7 +33,7 @@ import {
   type Permission,
   type PermissionResource,
 } from "@/data/types";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 const roleSchema = z.object({
   name: z.string().min(1, "Role name is required."),
@@ -59,7 +59,7 @@ export function RoleFormDialog({
   children,
 }: RoleFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addRole, updateRole } = useAppContext();
+  const { addRole, updateRole } = useDataContext();
   const isEditing = !!role;
 
   const form = useForm<z.infer<typeof roleSchema>>({

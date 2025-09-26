@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, notFound } from "next/navigation";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 import {
   Card,
   CardContent,
@@ -14,7 +14,7 @@ import { ReservationsHistoryTable } from "./components/reservations-history-tabl
 
 export default function GuestDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { guests, reservations, rooms } = useAppContext();
+  const { guests, reservations, rooms } = useDataContext();
 
   const guest = guests.find((g) => g.id === params.id);
 

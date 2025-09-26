@@ -14,7 +14,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import type { RoomType } from "@/data/types"
 import { RoomTypeFormDialog } from "./room-type-form-dialog"
-import { useAppContext } from "@/context/app-context"
+import { useDataContext } from "@/context/data-context"
+import { useAuthContext } from "@/context/auth-context"
 
 export const columns: ColumnDef<RoomType>[] = [
   {
@@ -54,7 +55,7 @@ export const columns: ColumnDef<RoomType>[] = [
     accessorKey: "amenities",
     header: "Amenities",
     cell: ({ row }) => {
-        const { amenities: allAmenities } = useAppContext();
+        const { amenities: allAmenities } = useDataContext();
         const amenityIds = row.getValue("amenities") as string[];
         if (!amenityIds || amenityIds.length === 0) {
             return <span className="text-muted-foreground">N/A</span>
@@ -75,7 +76,7 @@ export const columns: ColumnDef<RoomType>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const roomType = row.original
-      const { hasPermission } = useAppContext();
+      const { hasPermission } = useAuthContext();
  
       return (
         <DropdownMenu>
