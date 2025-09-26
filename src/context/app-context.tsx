@@ -133,7 +133,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     if (profileError) {
       console.error("Error fetching profile:", profileError);
-      return;
+      throw profileError;
     }
     
     // @ts-ignore
@@ -187,15 +187,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const user = session?.user || null;
-      setAuthUser(user);
-      if (user) {
-        await fetchData(user);
-      } else {
+      try {
+        const user = session?.user || null;
+        setAuthUser(user);
+        if (user) {
+          await fetchData(user);
+        } else {
+          setCurrentUser(null);
+          setUserRole(null);
+        }
+      } catch (error) {
+        console.error("Error during auth state change handling:", error);
         setCurrentUser(null);
         setUserRole(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
