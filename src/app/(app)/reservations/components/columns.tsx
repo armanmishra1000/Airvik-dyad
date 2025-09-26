@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User, ChevronDown, ChevronRight } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -77,10 +78,11 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
         if (row.depth > 0) {
             return null;
         }
-        const id = row.getValue("id") as string;
-        const isGroup = row.getCanExpand();
-        const displayId = isGroup ? id : row.original.bookingId;
-        const linkId = isGroup ? row.original.subRows![0].id : id;
+        const reservation = row.original;
+        const isGroup = !!reservation.subRows;
+        
+        const displayId = isGroup ? reservation.id : reservation.bookingId;
+        const linkId = isGroup ? reservation.subRows![0].id : reservation.id;
 
         if (!displayId) {
             return <span className="font-mono text-xs">N/A</span>;
@@ -216,10 +218,12 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
       if (row.depth > 0) return null;
       const reservation = row.original;
       const status = reservation.status;
+      const router = useRouter();
  
       const canBeCancelled = !["Cancelled", "Checked-out", "No-show"].includes(status);
       const canBeCheckedIn = status === "Confirmed";
       const canBeCheckedOut = status === "Checked-in";
+      const detailsId = reservation.subRows ? reservation.subRows[0].id : reservation.id;
  
       return (
         <DropdownMenu>
@@ -231,11 +235,9 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <Link href={`/reservations/${reservation.subRows ? reservation.subRows[0].id : reservation.id}`}>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    View Details
-                </DropdownMenuItem>
-            </Link>
+            <DropdownMenuItem onSelect={() => router.push(`/reservations/${detailsId}`)}>
+                View Details
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(reservation.id)}
             >
