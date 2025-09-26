@@ -4,6 +4,8 @@ export type PermissionAction = "create" | "read" | "update" | "delete";
 export type PermissionResource = "guest" | "reservation" | "room" | "room_type" | "rate_plan" | "report" | "setting" | "user";
 export type Permission = `${PermissionAction}:${PermissionResource}`;
 
+export type DashboardComponentId = 'stats' | 'tables' | 'notes' | 'calendar';
+
 export interface Role {
   id: string;
   name: string;
