@@ -11,7 +11,7 @@ import { useAppContext } from "@/context/app-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BookingSummary } from "@/components/public/booking-summary";
-import type { RoomType } from "@/data";
+import type { RoomType } from "@/data/types";
 
 export default function PublicHomePage() {
   const { roomTypes } = useAppContext();
