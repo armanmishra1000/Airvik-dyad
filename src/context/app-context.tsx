@@ -129,76 +129,80 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const user = session?.user;
 
-      if (user) {
-        // We have a user, now try to get their data.
+      // Case 1: No user is logged in.
+      if (!user) {
+        setAuthUser(null);
+        setCurrentUser(null);
+        setUserRole(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // Case 2: A user is logged in. Set the auth user and attempt to fetch all data.
+      setAuthUser(user);
+      try {
+        // Step 2.1: Fetch the user's profile. This is the most critical step.
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*, roles(*)')
           .eq('id', user.id)
           .single();
 
+        // If the profile doesn't exist, it's a critical failure. Sign out.
         if (profileError) {
-          // Profile is missing or there was an error. This is a failed login.
-          console.error("Profile fetch failed, signing out.", profileError);
-          await supabase.auth.signOut();
-          // After sign out, this listener will fire again with a null session.
-          // The 'else' block below will handle the final state.
-        } else {
-          // Profile found, now fetch everything else.
-          try {
-            setAuthUser(user);
-            // @ts-ignore
-            setCurrentUser({ id: profile.id, name: profile.name, email: user.email, roleId: profile.role_id });
-            // @ts-ignore
-            setUserRole(profile.roles);
-
-            const [
-                reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, 
-                rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes
-            ] = await Promise.all([
-                supabase.from('reservations').select('*'),
-                supabase.from('guests').select('*'),
-                supabase.from('rooms').select('*'),
-                supabase.from('room_types').select('*'),
-                supabase.from('rate_plans').select('*'),
-                supabase.from('roles').select('*'),
-                supabase.from('amenities').select('*'),
-                supabase.from('sticky_notes').select('*').eq('user_id', user.id),
-                supabase.from('properties').select('*').limit(1).single(),
-                supabase.from('folio_items').select('*'),
-            ]);
-            
-            const { data: usersData } = await supabase.functions.invoke('get-users');
-
-            if (propertyRes.data) setProperty(propertyRes.data as Property);
-            const reservationsData = reservationsRes.data || [];
-            const folioItemsData = folioItemsRes.data || [];
-            const reservationsWithFolios = reservationsData.map(res => ({
-                ...res,
-                folio: folioItemsData.filter(item => item.reservation_id === res.id)
-            }));
-            setReservations((reservationsWithFolios as unknown as Reservation[]) || []);
-            setGuests((guestsRes.data as Guest[]) || []);
-            setRooms((roomsRes.data as Room[]) || []);
-            setRoomTypes((roomTypesRes.data as RoomType[]) || []);
-            setRatePlans((ratePlansRes.data as RatePlan[]) || []);
-            setUsers(usersData || []);
-            setRoles((rolesRes.data as Role[]) || []);
-            setAmenities((amenitiesRes.data as Amenity[]) || []);
-            setStickyNotes((stickyNotesRes.data as StickyNote[]) || []);
-
-            setIsLoading(false); // Success, we are done loading.
-          } catch (error) {
-              console.error("Error fetching app data after profile success, signing out.", error);
-              await supabase.auth.signOut();
-          }
+          throw new Error(`Profile not found for user ${user.id}. Signing out.`);
         }
-      } else {
-        // No user session.
-        setAuthUser(null);
-        setCurrentUser(null);
-        setUserRole(null);
-        setIsLoading(false); // No user, we are done loading.
+
+        // Step 2.2: Profile exists. Set user state and fetch the rest of the app data.
+        // @ts-ignore
+        setCurrentUser({ id: profile.id, name: profile.name, email: user.email, roleId: profile.role_id });
+        // @ts-ignore
+        setUserRole(profile.roles);
+
+        const [
+            reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, 
+            rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes
+        ] = await Promise.all([
+            supabase.from('reservations').select('*'),
+            supabase.from('guests').select('*'),
+            supabase.from('rooms').select('*'),
+            supabase.from('room_types').select('*'),
+            supabase.from('rate_plans').select('*'),
+            supabase.from('roles').select('*'),
+            supabase.from('amenities').select('*'),
+            supabase.from('sticky_notes').select('*').eq('user_id', user.id),
+            supabase.from('properties').select('*').limit(1).single(),
+            supabase.from('folio_items').select('*'),
+        ]);
+        
+        const { data: usersData } = await supabase.functions.invoke('get-users');
+
+        if (propertyRes.data) setProperty(propertyRes.data as Property);
+        const reservationsData = reservationsRes.data || [];
+        const folioItemsData = folioItemsRes.data || [];
+        const reservationsWithFolios = reservationsData.map(res => ({
+            ...res,
+            folio: folioItemsData.filter(item => item.reservation_id === res.id)
+        }));
+        setReservations((reservationsWithFolios as unknown as Reservation[]) || []);
+        setGuests((guestsRes.data as Guest[]) || []);
+        setRooms((roomsRes.data as Room[]) || []);
+        setRoomTypes((roomTypesRes.data as RoomType[]) || []);
+        setRatePlans((ratePlansRes.data as RatePlan[]) || []);
+        setUsers(usersData || []);
+        setRoles((rolesRes.data as Role[]) || []);
+        setAmenities((amenitiesRes.data as Amenity[]) || []);
+        setStickyNotes((stickyNotesRes.data as StickyNote[]) || []);
+
+        // All data loaded successfully.
+        setIsLoading(false);
+
+      } catch (error) {
+        // Case 3: Any part of the data fetch failed.
+        console.error("Error during data fetch, signing out:", error);
+        await supabase.auth.signOut();
+        // The signOut will trigger this listener again, and it will fall into Case 1.
+        // We don't set isLoading to false here, as the state is not yet stable.
       }
     });
 
