@@ -20,7 +20,25 @@ import type {
   StickyNote,
   DashboardComponentId,
 } from "@/data/types";
-import { mockProperty, mockDashboardLayout } from "@/data/mock-data-ui";
+
+const defaultProperty: Property = {
+  id: "default-property-id",
+  name: "Airvik",
+  address: "123 Main Street, Anytown, USA",
+  phone: "555-123-4567",
+  email: "contact@airvik.com",
+  logoUrl: "/logo-placeholder.svg",
+  photos: [],
+  googleMapsUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.617023443543!2d-73.98784668459395!3d40.74844097932803!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1620312953789!5m2!1sen!2sus",
+  timezone: "America/New_York",
+  currency: "USD",
+  brandColors: {
+    primary: "#F5A623",
+    secondary: "#4A90E2",
+  },
+};
+
+const defaultDashboardLayout: DashboardComponentId[] = ['stats', 'tables', 'calendar', 'notes'];
 
 type AddReservationPayload = Omit<Reservation, "id" | "roomId" | "bookingId" | "folio" | "totalAmount"> & { roomIds: string[] };
 
@@ -92,7 +110,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [userRole, setUserRole] = React.useState<Role | null>(null);
   
-  const [property, setProperty] = React.useState<Property>(mockProperty);
+  const [property, setProperty] = React.useState<Property>(defaultProperty);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
   const [guests, setGuests] = React.useState<Guest[]>([]);
   const [housekeepingAssignments, setHousekeepingAssignments] = React.useState<HousekeepingAssignment[]>([]);
@@ -103,7 +121,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [roles, setRoles] = React.useState<Role[]>([]);
   const [amenities, setAmenities] = React.useState<Amenity[]>([]);
   const [stickyNotes, setStickyNotes] = React.useState<StickyNote[]>([]);
-  const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(mockDashboardLayout);
+  const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(defaultDashboardLayout);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
   const fetchData = React.useCallback(async (user: AuthUser) => {
@@ -125,7 +143,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     const [
         reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes, 
-        usersRes, rolesRes, amenitiesRes, stickyNotesRes
+        usersRes, rolesRes, amenitiesRes, stickyNotesRes, propertyRes, folioItemsRes
     ] = await Promise.all([
         supabase.from('reservations').select('*'),
         supabase.from('guests').select('*'),
@@ -136,9 +154,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         supabase.from('roles').select('*'),
         supabase.from('amenities').select('*'),
         supabase.from('sticky_notes').select('*').eq('user_id', user.id),
+        supabase.from('properties').select('*').limit(1).single(),
+        supabase.from('folio_items').select('*'),
     ]);
 
-    setReservations((reservationsRes.data as Reservation[]) || []);
+    if (propertyRes.data) {
+        setProperty(propertyRes.data as Property);
+    }
+
+    const reservationsData = reservationsRes.data || [];
+    const folioItemsData = folioItemsRes.data || [];
+
+    const reservationsWithFolios = reservationsData.map(res => ({
+        ...res,
+        folio: folioItemsData.filter(item => item.reservation_id === res.id)
+    }));
+
+    setReservations((reservationsWithFolios as unknown as Reservation[]) || []);
     setGuests((guestsRes.data as Guest[]) || []);
     setRooms((roomsRes.data as Room[]) || []);
     setRoomTypes((roomTypesRes.data as RoomType[]) || []);
@@ -205,12 +237,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newReservationsData = roomIds.map(roomId => ({ ...rest, room_id: roomId, guest_id: rest.guestId, rate_plan_id: rest.ratePlanId }));
     const { data, error } = await supabase.from('reservations').insert(newReservationsData).select();
     if (error) throw error;
-    setReservations(prev => [...prev, ...data]);
-    return data;
+    const reservationsWithEmptyFolio = data.map(r => ({ ...r, folio: [] }));
+    setReservations(prev => [...prev, ...reservationsWithEmptyFolio]);
+    return reservationsWithEmptyFolio;
   };
 
   const updateReservation = async (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => {
-    await supabase.from('reservations').update(updatedData).eq('id', reservationId);
+    const { folio, ...restOfData } = updatedData;
+    await supabase.from('reservations').update(restOfData).eq('id', reservationId);
     setReservations(prev => prev.map(res => res.id === reservationId ? { ...res, ...updatedData } : res));
   };
   const updateReservationStatus = async (reservationId: string, status: ReservationStatus) => {
@@ -218,7 +252,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setReservations(prev => prev.map(res => res.id === reservationId ? { ...res, status } : res));
   };
   const addFolioItem = async (reservationId: string, itemData: Omit<FolioItem, "id" | "timestamp">) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('folio_items').insert([{ ...itemData, reservation_id: reservationId }]).select().single();
+    if (error) throw error;
+
+    setReservations(prev => prev.map(res => {
+      if (res.id === reservationId) {
+        const newFolio = [...res.folio, data];
+        const newTotal = newFolio.reduce((sum, i) => sum + i.amount, 0);
+        return { ...res, folio: newFolio, totalAmount: newTotal };
+      }
+      return res;
+    }));
   };
   const assignHousekeeper = async (assignment: { roomId: string; userId: string; }) => {
     // Not implemented for brevity
@@ -304,8 +348,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout,
-    // @ts-ignore
-    setCurrentUser: () => {}, // Deprecated, no-op
   };
 
   if (!isInitialized) {
