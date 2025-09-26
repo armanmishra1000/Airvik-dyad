@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { cn } from "@/lib/utils";
-import { useAppContext } from "@/context/app-context";
+import { useAuthContext } from "@/context/auth-context";
 
 export default function AppLayout({
   children,
@@ -13,7 +13,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
-  const { currentUser } = useAppContext();
+  const { currentUser } = useAuthContext();
   const router = useRouter();
 
   React.useEffect(() => {

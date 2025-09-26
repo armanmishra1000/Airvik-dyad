@@ -17,7 +17,8 @@ import {
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import { useAppContext } from "@/context/app-context";
+import { useAuthContext } from "@/context/auth-context";
+import { useDataContext } from "@/context/data-context";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -45,7 +46,8 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
-  const { property, hasPermission } = useAppContext();
+  const { hasPermission } = useAuthContext();
+  const { property } = useDataContext();
 
   const accessibleNavItems = navItems.filter(item => hasPermission(item.requiredPermission as any));
 

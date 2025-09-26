@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { AppProvider } from "@/context/app-context";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/context/auth-context";
+import { DataProvider } from "@/context/data-context";
 
 const fontSans = Inter({
   subsets: ["latin"],
@@ -41,10 +42,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AppProvider>
-            {children}
-            <Toaster />
-          </AppProvider>
+          <AuthProvider>
+            <DataProvider>
+              {children}
+              <Toaster />
+            </DataProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

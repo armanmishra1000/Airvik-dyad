@@ -5,10 +5,10 @@ import { toast } from "sonner";
 import { differenceInDays, parseISO } from "date-fns";
 import { columns, ReservationWithDetails } from "./components/columns";
 import { DataTable } from "./components/data-table";
-import { useAppContext } from "@/context/app-context";
+import { useDataContext } from "@/context/data-context";
 
 export default function ReservationsPage() {
-  const { reservations, guests, updateReservationStatus, rooms } = useAppContext();
+  const { reservations, guests, updateReservationStatus, rooms } = useDataContext();
 
   const groupedReservations = React.useMemo(() => {
     const reservationsWithDetails = reservations.map((res) => {
