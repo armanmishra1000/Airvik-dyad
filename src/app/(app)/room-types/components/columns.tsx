@@ -60,15 +60,19 @@ export const columns: ColumnDef<RoomType>[] = [
     accessorKey: "amenities",
     header: "Amenities",
     cell: ({ row }) => {
-        const amenities = row.getValue("amenities") as string[];
-        if (!amenities || amenities.length === 0) {
+        const { amenities: allAmenities } = useAppContext();
+        const amenityIds = row.getValue("amenities") as string[];
+        if (!amenityIds || amenityIds.length === 0) {
             return <span className="text-muted-foreground">N/A</span>
         }
         return (
             <div className="flex flex-wrap gap-1">
-                {amenities.map(amenity => (
-                    <Badge key={amenity} variant="secondary">{amenity}</Badge>
-                ))}
+                {amenityIds.map(id => {
+                    const amenity = allAmenities.find(a => a.id === id);
+                    return (
+                        <Badge key={id} variant="secondary">{amenity?.name || id}</Badge>
+                    )
+                })}
             </div>
         )
     }
