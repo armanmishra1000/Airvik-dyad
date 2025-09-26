@@ -10,7 +10,7 @@ import {
 import type { DateRange } from "react-day-picker";
 
 import { useAppContext } from "@/context/app-context";
-import type { RoomType } from "@/data";
+import type { RoomType } from "@/data/types";
 
 export function useAvailabilitySearch() {
   const { reservations, rooms, roomTypes } = useAppContext();
