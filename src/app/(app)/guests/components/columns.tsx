@@ -66,7 +66,7 @@ export const columns: ColumnDef<Guest>[] = [
             {hasPermission("delete:guest") && (
                 <DropdownMenuItem 
                     className="text-destructive"
-                    onSelect={() => table.options.meta?.openDeleteDialog(guest)}
+                    onSelect={() => table.options.meta?.openDeleteDialog?.(guest)}
                 >
                     Delete
                 </DropdownMenuItem>

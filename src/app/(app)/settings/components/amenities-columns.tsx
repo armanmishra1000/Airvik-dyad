@@ -56,7 +56,7 @@ export const columns: ColumnDef<Amenity>[] = [
             </AmenityFormDialog>
             <DropdownMenuItem 
                 className="text-destructive"
-                onSelect={() => table.options.meta?.openDeleteDialog(amenity)}
+                onSelect={() => table.options.meta?.openDeleteDialog?.(amenity)}
             >
                 Delete
             </DropdownMenuItem>

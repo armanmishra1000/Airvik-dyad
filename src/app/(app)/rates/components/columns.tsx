@@ -59,7 +59,7 @@ export const columns: ColumnDef<RatePlan>[] = [
             {hasPermission("delete:rate_plan") && (
                 <DropdownMenuItem 
                     className="text-destructive"
-                    onSelect={() => table.options.meta?.openDeleteDialog(ratePlan)}
+                    onSelect={() => table.options.meta?.openDeleteDialog?.(ratePlan)}
                 >
                     Delete
                 </DropdownMenuItem>
