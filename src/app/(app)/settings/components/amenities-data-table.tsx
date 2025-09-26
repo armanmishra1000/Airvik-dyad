@@ -25,7 +25,7 @@ import { DataTablePagination } from "@/app/(app)/reservations/components/data-ta
 import { AmenityFormDialog } from "./amenity-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
 import { useAppContext } from "@/context/app-context"
-import type { Amenity } from "@/data"
+import type { Amenity } from "@/data/types"
 
 export function AmenitiesDataTable<TData extends Amenity, TValue>({
   columns,

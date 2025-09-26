@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Amenity } from "@/data";
+import type { Amenity } from "@/data/types";
 import { useAppContext } from "@/context/app-context";
 import { iconList, type IconName } from "@/lib/icons";
 import { Icon } from "@/components/shared/icon";

@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAppContext } from "@/context/app-context";
-import type { Reservation } from "@/data";
+import type { Reservation } from "@/data/types";
 
 interface LinkedReservationsCardProps {
   reservation: Reservation;

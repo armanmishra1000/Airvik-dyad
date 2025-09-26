@@ -1,7 +1,7 @@
 "use client";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { RoomStatus } from "@/data";
+import type { RoomStatus } from "@/data/types";
 
 interface HousekeepingToolbarProps {
   statusFilter: RoomStatus | "all";

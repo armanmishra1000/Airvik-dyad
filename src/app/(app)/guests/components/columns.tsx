@@ -12,7 +12,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { Guest } from "@/data"
+import type { Guest } from "@/data/types"
 import { GuestFormDialog } from "./guest-form-dialog"
 import { useAppContext } from "@/context/app-context"
 

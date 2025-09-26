@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { RoomType } from "@/data";
+import type { RoomType } from "@/data/types";
 
 interface RoomTypeCardProps {
   roomType: RoomType;

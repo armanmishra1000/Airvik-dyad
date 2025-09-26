@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { User } from "@/data"
+import type { User } from "@/data/types"
 import { useAppContext } from "@/context/app-context"
 import { UserFormDialog } from "./user-form-dialog"
 

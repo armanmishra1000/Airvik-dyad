@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { RoomType } from "@/data";
+import type { RoomType } from "@/data/types";
 import { useAppContext } from "@/context/app-context";
 import { MultiImageUpload } from "@/components/shared/multi-image-upload";
 

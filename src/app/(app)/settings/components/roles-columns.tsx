@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { Role } from "@/data"
+import type { Role } from "@/data/types"
 import { RoleFormDialog } from "./role-form-dialog"
 
 export const columns: ColumnDef<Role>[] = [

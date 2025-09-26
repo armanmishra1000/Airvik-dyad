@@ -11,7 +11,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { RatePlan } from "@/data"
+import type { RatePlan } from "@/data/types"
 import { RatePlanFormDialog } from "./rate-plan-form-dialog"
 import { useAppContext } from "@/context/app-context"
 

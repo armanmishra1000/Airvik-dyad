@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { StickyNote } from "@/data";
+import type { StickyNote } from "@/data/types";
 import { useAppContext } from "@/context/app-context";
 import { cn } from "@/lib/utils";
 

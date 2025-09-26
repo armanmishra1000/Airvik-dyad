@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import type { RoomType } from "@/data"
+import type { RoomType } from "@/data/types"
 import { RoomTypeFormDialog } from "./room-type-form-dialog"
 import { useAppContext } from "@/context/app-context"
 
