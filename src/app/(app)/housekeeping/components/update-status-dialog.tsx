@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import type { Room, RoomStatus } from "@/data";
+import type { Room, RoomStatus } from "@/data/types";
 
 interface UpdateStatusDialogProps {
   room: Room;

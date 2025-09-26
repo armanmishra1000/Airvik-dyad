@@ -28,7 +28,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { mockRatePlans, type RoomType } from "@/data";
+import type { RoomType } from "@/data/types";
 
 const paymentSchema = z.object({
   cardName: z.string().min(1, "Name on card is required."),
@@ -48,7 +48,7 @@ const paymentSchema = z.object({
 function BookingReviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { roomTypes, rooms, reservations, addGuest, addReservation } =
+  const { roomTypes, rooms, reservations, addGuest, addReservation, ratePlans } =
     useAppContext();
 
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -71,7 +71,7 @@ function BookingReviewContent() {
   }, [bookingDetails.roomTypeIds, roomTypes]);
 
   const ratePlan =
-    mockRatePlans.find((rp) => rp.id === "rp-standard") || mockRatePlans[0];
+    ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
 
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
@@ -103,7 +103,7 @@ function BookingReviewContent() {
   const fromDate = parse(bookingDetails.from, "yyyy-MM-dd", new Date());
   const toDate = parse(bookingDetails.to, "yyyy-MM-dd", new Date());
   const nights = differenceInDays(toDate, fromDate);
-  const totalCost = selectedRoomTypes.length * nights * ratePlan.price;
+  const totalCost = selectedRoomTypes.length * nights * (ratePlan?.price || 0);
 
   function onSubmit(values: z.infer<typeof paymentSchema>) {
     setIsProcessing(true);

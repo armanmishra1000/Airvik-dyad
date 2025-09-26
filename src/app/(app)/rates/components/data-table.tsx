@@ -25,7 +25,7 @@ import { DataTablePagination } from "@/app/(app)/reservations/components/data-ta
 import { RatePlanFormDialog } from "./rate-plan-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
 import { useAppContext } from "@/context/app-context"
-import type { RatePlan } from "@/data"
+import type { RatePlan } from "@/data/types"
 
 export function RatePlansDataTable<TData extends RatePlan, TValue>({
   columns,

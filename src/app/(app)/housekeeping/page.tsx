@@ -2,17 +2,16 @@
 
 import * as React from "react";
 import { formatISO } from "date-fns";
-import { mockRooms, mockRoomTypes, mockUsers } from "@/data";
-import type { RoomStatus } from "@/data";
+import type { RoomStatus } from "@/data/types";
 import { HousekeepingToolbar } from "./components/housekeeping-toolbar";
 import { RoomStatusCard } from "./components/room-status-card";
 import { useAppContext } from "@/context/app-context";
 
 export default function HousekeepingPage() {
-  const { housekeepingAssignments, updateAssignmentStatus } = useAppContext();
+  const { housekeepingAssignments, updateAssignmentStatus, rooms: allRooms, roomTypes, users } = useAppContext();
   const [rooms, setRooms] = React.useState(() =>
-    mockRooms.map((room) => {
-      const roomType = mockRoomTypes.find((rt) => rt.id === room.roomTypeId);
+    allRooms.map((room) => {
+      const roomType = roomTypes.find((rt) => rt.id === room.roomTypeId);
       return {
         ...room,
         roomTypeName: roomType?.name || "Unknown",
@@ -22,6 +21,16 @@ export default function HousekeepingPage() {
   const [statusFilter, setStatusFilter] = React.useState<RoomStatus | "all">(
     "all"
   );
+
+  React.useEffect(() => {
+    setRooms(allRooms.map((room) => {
+        const roomType = roomTypes.find((rt) => rt.id === room.roomTypeId);
+        return {
+          ...room,
+          roomTypeName: roomType?.name || "Unknown",
+        };
+      }))
+  }, [allRooms, roomTypes]);
 
   const handleStatusUpdate = (roomId: string, newStatus: RoomStatus) => {
     setRooms((prevRooms) =>
@@ -42,7 +51,7 @@ export default function HousekeepingPage() {
         (a) => a.roomId === room.id && a.date === today
       );
       const housekeeper = assignment
-        ? mockUsers.find((u) => u.id === assignment.assignedTo)
+        ? users.find((u) => u.id === assignment.assignedTo)
         : undefined;
       return {
         ...room,
@@ -50,7 +59,7 @@ export default function HousekeepingPage() {
         housekeeperName: housekeeper?.name,
       };
     });
-  }, [rooms, housekeepingAssignments]);
+  }, [rooms, housekeepingAssignments, users]);
 
   const filteredRooms = React.useMemo(() => {
     if (statusFilter === "all") {

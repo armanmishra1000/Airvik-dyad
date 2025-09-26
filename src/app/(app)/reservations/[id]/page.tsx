@@ -4,7 +4,6 @@ import { useParams, notFound } from "next/navigation";
 import { differenceInDays, parseISO } from "date-fns";
 
 import { useAppContext } from "@/context/app-context";
-import { mockRooms } from "@/data";
 import { ReservationHeader } from "./components/ReservationHeader";
 import { GuestDetailsCard } from "./components/GuestDetailsCard";
 import { StayDetailsCard } from "./components/StayDetailsCard";
@@ -13,7 +12,7 @@ import { LinkedReservationsCard } from "./components/LinkedReservationsCard";
 
 export default function ReservationDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { reservations, guests } = useAppContext();
+  const { reservations, guests, rooms } = useAppContext();
 
   const reservation = reservations.find((r) => r.id === params.id);
   const guest = guests.find((g) => g.id === reservation?.guestId);
@@ -26,7 +25,7 @@ export default function ReservationDetailsPage() {
     ...reservation,
     guestName: guest ? `${guest.firstName} ${guest.lastName}` : "N/A",
     roomNumber:
-      mockRooms.find((r) => r.id === reservation.roomId)?.roomNumber || "N/A",
+      rooms.find((r) => r.id === reservation.roomId)?.roomNumber || "N/A",
     nights: differenceInDays(
       parseISO(reservation.checkOutDate),
       parseISO(reservation.checkInDate)

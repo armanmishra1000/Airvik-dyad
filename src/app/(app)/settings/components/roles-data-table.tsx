@@ -25,7 +25,7 @@ import { DataTablePagination } from "@/app/(app)/reservations/components/data-ta
 import { RoleFormDialog } from "./role-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
 import { useAppContext } from "@/context/app-context"
-import type { Role } from "@/data"
+import type { Role } from "@/data/types"
 
 export function RolesDataTable<TData extends Role, TValue>({
   columns,

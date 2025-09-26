@@ -48,7 +48,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { mockGuests, mockRooms, mockRatePlans, mockRoomTypes } from "@/data";
 import { useAppContext } from "@/context/app-context";
 
 const reservationSchema = z.object({
@@ -65,7 +64,7 @@ const reservationSchema = z.object({
 
 export function CreateReservationDialog() {
   const [open, setOpen] = React.useState(false);
-  const { reservations, addReservation } = useAppContext();
+  const { reservations, addReservation, guests, rooms, ratePlans, roomTypes } = useAppContext();
   const form = useForm<z.infer<typeof reservationSchema>>({
     resolver: zodResolver(reservationSchema),
     defaultValues: {
@@ -81,7 +80,7 @@ export function CreateReservationDialog() {
       return [];
     }
 
-    return mockRooms.filter((room) => {
+    return rooms.filter((room) => {
       const isBooked = reservations.some(
         (res) =>
           res.roomId === room.id &&
@@ -93,7 +92,7 @@ export function CreateReservationDialog() {
       );
       return !isBooked;
     });
-  }, [selectedDateRange, reservations]);
+  }, [selectedDateRange, reservations, rooms]);
 
   React.useEffect(() => {
     form.resetField("roomIds");
@@ -101,7 +100,7 @@ export function CreateReservationDialog() {
 
   function onSubmit(values: z.infer<typeof reservationSchema>) {
     const ratePlan =
-      mockRatePlans.find((rp) => rp.id === "rp-standard") || mockRatePlans[0];
+      ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
 
     addReservation({
       guestId: values.guestId,
@@ -152,7 +151,7 @@ export function CreateReservationDialog() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mockGuests.map((guest) => (
+                      {guests.map((guest) => (
                         <SelectItem key={guest.id} value={guest.id}>
                           {guest.firstName} {guest.lastName}
                         </SelectItem>
@@ -223,7 +222,7 @@ export function CreateReservationDialog() {
                     <div className="p-4">
                       {availableRooms.length > 0 ? (
                         availableRooms.map((room) => {
-                          const roomType = mockRoomTypes.find(rt => rt.id === room.roomTypeId);
+                          const roomType = roomTypes.find(rt => rt.id === room.roomTypeId);
                           return (
                             <FormField
                               key={room.id}

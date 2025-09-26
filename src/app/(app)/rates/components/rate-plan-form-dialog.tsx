@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { RatePlan } from "@/data";
+import type { RatePlan } from "@/data/types";
 import { useAppContext } from "@/context/app-context";
 
 const ratePlanSchema = z.object({

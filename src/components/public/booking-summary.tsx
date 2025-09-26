@@ -7,9 +7,9 @@ import { differenceInDays, format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import type { RoomType } from "@/data";
+import type { RoomType } from "@/data/types";
 import type { BookingSearchFormValues } from "./booking-widget";
-import { mockRatePlans } from "@/data";
+import { useAppContext } from "@/context/app-context";
 
 interface BookingSummaryProps {
   selection: RoomType[];
@@ -25,6 +25,7 @@ export function BookingSummary({
   onClear,
 }: BookingSummaryProps) {
   const router = useRouter();
+  const { ratePlans } = useAppContext();
   const { dateRange, rooms: requestedRooms } = searchValues;
 
   if (selection.length === 0 || !dateRange?.from || !dateRange?.to) {
@@ -33,8 +34,8 @@ export function BookingSummary({
 
   const nights = differenceInDays(dateRange.to, dateRange.from);
   const ratePlan =
-    mockRatePlans.find((rp) => rp.id === "rp-standard") || mockRatePlans[0];
-  const totalCost = selection.length * nights * ratePlan.price;
+    ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
+  const totalCost = selection.length * nights * (ratePlan?.price || 0);
 
   const handleProceed = () => {
     const query = new URLSearchParams();
@@ -70,7 +71,7 @@ export function BookingSummary({
               >
                 <span>{roomType.name}</span>
                 <div className="flex items-center gap-2">
-                  <span>${(nights * ratePlan.price).toFixed(2)}</span>
+                  <span>${(nights * (ratePlan?.price || 0)).toFixed(2)}</span>
                   <Button
                     variant="ghost"
                     size="icon"

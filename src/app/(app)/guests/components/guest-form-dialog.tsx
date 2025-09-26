@@ -25,7 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { Guest } from "@/data";
+import type { Guest } from "@/data/types";
 import { useAppContext } from "@/context/app-context";
 
 const guestSchema = z.object({

@@ -4,6 +4,17 @@ export type PermissionAction = "create" | "read" | "update" | "delete";
 export type PermissionResource = "guest" | "reservation" | "room" | "room_type" | "rate_plan" | "report" | "setting" | "user";
 export type Permission = `${PermissionAction}:${PermissionResource}`;
 
+export const allPermissions: readonly Permission[] = [
+  "create:guest", "read:guest", "update:guest", "delete:guest",
+  "create:reservation", "read:reservation", "update:reservation", "delete:reservation",
+  "create:room", "read:room", "update:room", "delete:room",
+  "create:room_type", "read:room_type", "update:room_type", "delete:room_type",
+  "create:rate_plan", "read:rate_plan", "update:rate_plan", "delete:rate_plan",
+  "read:report",
+  "update:setting",
+  "create:user", "read:user", "update:user", "delete:user",
+] as const;
+
 export type DashboardComponentId = 'stats' | 'tables' | 'notes' | 'calendar';
 
 export interface Role {

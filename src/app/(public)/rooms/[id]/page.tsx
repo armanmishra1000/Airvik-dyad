@@ -16,7 +16,6 @@ import {
 } from "date-fns";
 import type { DateRange } from "react-day-picker";
 
-import { mockRatePlans, mockRooms } from "@/data";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -62,15 +61,15 @@ const bookingSchema = z.object({
   guests: z.coerce.number().min(1, "At least one guest is required."),
 });
 
-const standardRatePlan =
-  mockRatePlans.find((rp) => rp.id === "rp-standard") || mockRatePlans[0];
-
 export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { reservations, roomTypes, amenities: allAmenities } = useAppContext();
+  const { reservations, roomTypes, amenities: allAmenities, rooms, ratePlans } = useAppContext();
   const roomType = roomTypes.find((rt) => rt.id === params.id);
+
+  const standardRatePlan =
+    ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
 
   const form = useForm<z.infer<typeof bookingSchema>>({
     resolver: zodResolver(bookingSchema),
@@ -100,7 +99,7 @@ export default function RoomDetailsPage() {
     dateRange?.from && dateRange?.to
       ? differenceInDays(dateRange.to, dateRange.from)
       : 0;
-  const totalCost = nights * standardRatePlan.price;
+  const totalCost = standardRatePlan ? nights * standardRatePlan.price : 0;
 
   const photosToShow = React.useMemo(() => {
     if (!roomType || !roomType.photos || roomType.photos.length === 0) {
@@ -120,7 +119,7 @@ export default function RoomDetailsPage() {
   const disabledDates = React.useMemo(() => {
     if (!roomType) return [];
 
-    const roomsOfType = mockRooms.filter((r) => r.roomTypeId === roomType.id);
+    const roomsOfType = rooms.filter((r) => r.roomTypeId === roomType.id);
     const numberOfRooms = roomsOfType.length;
     if (numberOfRooms === 0) return [];
 
@@ -157,7 +156,7 @@ export default function RoomDetailsPage() {
     }
 
     return fullyBookedDates;
-  }, [roomType, reservations]);
+  }, [roomType, reservations, rooms]);
 
   if (!roomType) {
     notFound();

@@ -11,19 +11,20 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { ReservationWithDetails } from "@/app/(app)/reservations/components/columns";
-import { mockRoomTypes, mockRatePlans, mockRooms } from "@/data";
+import { useAppContext } from "@/context/app-context";
 
 interface StayDetailsCardProps {
   reservation: ReservationWithDetails;
 }
 
 export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
-  const roomType = mockRoomTypes.find(
+  const { roomTypes, ratePlans, rooms } = useAppContext();
+  const roomType = roomTypes.find(
     (rt) =>
       rt.id ===
-      mockRooms.find((r) => r.id === reservation.roomId)?.roomTypeId
+      rooms.find((r) => r.id === reservation.roomId)?.roomTypeId
   );
-  const ratePlan = mockRatePlans.find((rp) => rp.id === reservation.ratePlanId);
+  const ratePlan = ratePlans.find((rp) => rp.id === reservation.ratePlanId);
 
   return (
     <Card>

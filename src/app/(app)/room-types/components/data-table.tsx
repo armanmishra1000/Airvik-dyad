@@ -25,7 +25,7 @@ import { DataTablePagination } from "@/app/(app)/reservations/components/data-ta
 import { RoomTypeFormDialog } from "./room-type-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
 import { useAppContext } from "@/context/app-context"
-import type { RoomType } from "@/data"
+import type { RoomType } from "@/data/types"
 
 export function RoomTypesDataTable<TData extends RoomType, TValue>({
   columns,

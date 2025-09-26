@@ -25,7 +25,7 @@ import { DataTablePagination } from "@/app/(app)/reservations/components/data-ta
 import { UserFormDialog } from "./user-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
 import { useAppContext } from "@/context/app-context"
-import type { User } from "@/data"
+import type { User } from "@/data/types"
 
 export function UsersDataTable<TData extends User, TValue>({
   columns,

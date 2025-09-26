@@ -11,11 +11,10 @@ import {
 } from "@/components/ui/card";
 import { columns } from "./components/columns";
 import { ReservationsHistoryTable } from "./components/reservations-history-table";
-import { mockRooms } from "@/data";
 
 export default function GuestDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { guests, reservations } = useAppContext();
+  const { guests, reservations, rooms } = useAppContext();
 
   const guest = guests.find((g) => g.id === params.id);
 
@@ -26,7 +25,7 @@ export default function GuestDetailsPage() {
   const guestReservations = reservations
     .filter((res) => res.guestId === guest.id)
     .map(res => {
-        const room = mockRooms.find(r => r.id === res.roomId);
+        const room = rooms.find(r => r.id === res.roomId);
         return {
             ...res,
             roomNumber: room?.roomNumber || "N/A"

@@ -44,7 +44,7 @@ import {
     TableHeader,
     TableRow,
   } from "@/components/ui/table"
-  import { mockRooms, type DashboardComponentId } from "@/data"
+  import type { DashboardComponentId } from "@/data/types"
   import { isToday } from "date-fns"
   import { useAppContext } from "@/context/app-context";
   import { AvailabilityCalendar } from "@/components/shared/availability-calendar";
@@ -52,7 +52,7 @@ import {
   import { DraggableCard } from "./components/DraggableCard";
   
   export default function DashboardPage() {
-    const { reservations, guests, dashboardLayout, updateDashboardLayout } = useAppContext();
+    const { reservations, guests, dashboardLayout, updateDashboardLayout, rooms } = useAppContext();
     const [isEditing, setIsEditing] = React.useState(false);
     const [activeId, setActiveId] = React.useState<string | null>(null);
 
@@ -73,8 +73,8 @@ import {
         return r.status === 'Checked-in' || (today >= checkIn && today < checkOut && r.status === 'Confirmed');
     }).length;
 
-    const availableRooms = mockRooms.length - occupiedRoomsCount;
-    const occupancy = (occupiedRoomsCount / mockRooms.length) * 100;
+    const availableRooms = rooms.length - occupiedRoomsCount;
+    const occupancy = rooms.length > 0 ? (occupiedRoomsCount / rooms.length) * 100 : 0;
 
     const components: Record<DashboardComponentId, React.ReactNode> = {
         stats: (
@@ -86,7 +86,7 @@ import {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{occupancy.toFixed(0)}%</div>
-                        <p className="text-xs text-muted-foreground">{occupiedRoomsCount} of {mockRooms.length} rooms occupied</p>
+                        <p className="text-xs text-muted-foreground">{occupiedRoomsCount} of {rooms.length} rooms occupied</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -131,7 +131,7 @@ import {
                             <TableBody>
                                 {todayArrivals.length > 0 ? todayArrivals.map(res => {
                                     const guest = guests.find(g => g.id === res.guestId);
-                                    const room = mockRooms.find(r => r.id === res.roomId);
+                                    const room = rooms.find(r => r.id === res.roomId);
                                     return (<TableRow key={res.id}><TableCell><div className="font-medium">{guest?.firstName} {guest?.lastName}</div><div className="text-sm text-muted-foreground">{guest?.email}</div></TableCell><TableCell>{room?.roomNumber}</TableCell><TableCell className="text-right"><Badge>{res.status}</Badge></TableCell></TableRow>)
                                 }) : (<TableRow><TableCell colSpan={3} className="h-24 text-center">No arrivals today.</TableCell></TableRow>)}
                             </TableBody>
@@ -146,7 +146,7 @@ import {
                             <TableBody>
                                 {todayDepartures.length > 0 ? todayDepartures.map(res => {
                                     const guest = guests.find(g => g.id === res.guestId);
-                                    const room = mockRooms.find(r => r.id === res.roomId);
+                                    const room = rooms.find(r => r.id === res.roomId);
                                     return (<TableRow key={res.id}><TableCell><div className="font-medium">{guest?.firstName} {guest?.lastName}</div><div className="text-sm text-muted-foreground">{guest?.email}</div></TableCell><TableCell>{room?.roomNumber}</TableCell><TableCell className="text-right"><Badge>{res.status}</Badge></TableCell></TableRow>)
                                 }) : (<TableRow><TableCell colSpan={3} className="h-24 text-center">No departures today.</TableCell></TableRow>)}
                             </TableBody>

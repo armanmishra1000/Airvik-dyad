@@ -32,7 +32,7 @@ import {
   type Role,
   type Permission,
   type PermissionResource,
-} from "@/data";
+} from "@/data/types";
 import { useAppContext } from "@/context/app-context";
 
 const roleSchema = z.object({
@@ -45,7 +45,7 @@ interface RoleFormDialogProps {
   children: React.ReactNode;
 }
 
-const permissionGroups = allPermissions.reduce((acc, permission) => {
+const permissionGroups = (allPermissions as readonly Permission[]).reduce((acc, permission) => {
   const [action, resource] = permission.split(":") as [string, PermissionResource];
   if (!acc[resource]) {
     acc[resource] = [];

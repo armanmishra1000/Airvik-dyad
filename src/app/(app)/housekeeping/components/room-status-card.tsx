@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { Room, RoomStatus, HousekeepingAssignment } from "@/data";
+import type { Room, RoomStatus, HousekeepingAssignment } from "@/data/types";
 import { User, Wrench } from "lucide-react";
 import { UpdateStatusDialog } from "./update-status-dialog";
 import { AssignHousekeeperDialog } from "./assign-housekeeper-dialog";

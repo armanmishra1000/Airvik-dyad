@@ -22,7 +22,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ReservationStatus } from "@/data"
+import { ReservationStatus } from "@/data/types"
 
 export type ReservationWithDetails = {
     id: string;

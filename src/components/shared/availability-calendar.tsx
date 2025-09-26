@@ -36,7 +36,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { mockRooms, ReservationStatus } from "@/data";
+import { ReservationStatus } from "@/data/types";
 import { useAppContext } from "@/context/app-context";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +54,7 @@ const getStatusColor = (status: ReservationStatus) => {
 };
 
 export function AvailabilityCalendar() {
-  const { reservations, guests } = useAppContext();
+  const { reservations, guests, rooms } = useAppContext();
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
 
   const daysInMonth = React.useMemo(() => {
@@ -129,7 +129,7 @@ export function AvailabilityCalendar() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockRooms.map((room) => {
+                {rooms.map((room) => {
                   const dayCells = [];
                   for (let i = 0; i < daysInMonth.length; i++) {
                     const day = daysInMonth[i];

@@ -48,7 +48,6 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { mockGuests, mockRooms, mockRatePlans } from "@/data";
 import { useAppContext } from "@/context/app-context";
 import type { ReservationWithDetails } from "./columns";
 
@@ -75,7 +74,7 @@ export function EditReservationDialog({
   children,
 }: EditReservationDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { reservations, updateReservation } = useAppContext();
+  const { reservations, updateReservation, guests, rooms, ratePlans } = useAppContext();
   const form = useForm<z.infer<typeof editReservationSchema>>({
     resolver: zodResolver(editReservationSchema),
     defaultValues: {
@@ -100,7 +99,7 @@ export function EditReservationDialog({
     // Filter out reservations for other rooms, but keep the current one
     const otherReservations = reservations.filter(r => r.id !== reservation.id);
 
-    return mockRooms.filter((room) => {
+    return rooms.filter((room) => {
       const isBooked = otherReservations.some(
         (res) =>
           res.roomId === room.id &&
@@ -112,7 +111,7 @@ export function EditReservationDialog({
       );
       return !isBooked;
     });
-  }, [selectedDateRange, reservations, reservation.id]);
+  }, [selectedDateRange, reservations, reservation.id, rooms]);
 
   React.useEffect(() => {
     const selectedRoomId = form.getValues("roomId");
@@ -128,7 +127,7 @@ export function EditReservationDialog({
 
   function onSubmit(values: z.infer<typeof editReservationSchema>) {
     const ratePlan =
-      mockRatePlans.find((rp) => rp.id === reservation.ratePlanId) || mockRatePlans[0];
+      ratePlans.find((rp) => rp.id === reservation.ratePlanId) || ratePlans[0];
     const nights = differenceInDays(values.dateRange.to, values.dateRange.from);
     const totalAmount = nights * ratePlan.price;
 
@@ -173,7 +172,7 @@ export function EditReservationDialog({
                       <SelectTrigger><SelectValue placeholder="Select a guest" /></SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mockGuests.map((guest) => (
+                      {guests.map((guest) => (
                         <SelectItem key={guest.id} value={guest.id}>
                           {guest.firstName} {guest.lastName}
                         </SelectItem>

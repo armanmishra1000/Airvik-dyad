@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
-import type { Reservation } from "@/data"
+import type { Reservation } from "@/data/types"
 
 // A simplified reservation type for this context
 export type ReservationWithRoom = Reservation & { roomNumber: string }

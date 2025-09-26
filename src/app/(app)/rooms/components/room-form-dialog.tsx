@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { mockRoomTypes, type Room, type RoomStatus } from "@/data";
+import { type Room, type RoomStatus } from "@/data/types";
 import { useAppContext } from "@/context/app-context";
 import { MultiImageUpload } from "@/components/shared/multi-image-upload";
 
@@ -55,7 +55,7 @@ export function RoomFormDialog({
   children,
 }: RoomFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addRoom, updateRoom } = useAppContext();
+  const { addRoom, updateRoom, roomTypes } = useAppContext();
   const isEditing = !!room;
 
   const form = useForm<z.infer<typeof roomSchema>>({
@@ -126,7 +126,7 @@ export function RoomFormDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {mockRoomTypes.map((type) => (
+                      {roomTypes.map((type) => (
                         <SelectItem key={type.id} value={type.id}>
                           {type.name}
                         </SelectItem>

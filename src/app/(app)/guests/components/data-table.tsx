@@ -25,7 +25,7 @@ import { DataTablePagination } from "@/app/(app)/reservations/components/data-ta
 import { GuestFormDialog } from "./guest-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
 import { useAppContext } from "@/context/app-context"
-import type { Guest } from "@/data"
+import type { Guest } from "@/data/types"
 
 export function GuestsDataTable<TData extends Guest, TValue>({
   columns,

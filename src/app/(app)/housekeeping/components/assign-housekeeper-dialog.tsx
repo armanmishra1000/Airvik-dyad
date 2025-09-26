@@ -21,7 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { mockUsers, mockRoles } from "@/data";
 import { useAppContext } from "@/context/app-context";
 
 interface AssignHousekeeperDialogProps {
@@ -29,11 +28,6 @@ interface AssignHousekeeperDialogProps {
   currentAssigneeId?: string;
   children: React.ReactNode;
 }
-
-const housekeeperRole = mockRoles.find((r) => r.name === "Housekeeper");
-const housekeepers = housekeeperRole
-  ? mockUsers.filter((u) => u.roleId === housekeeperRole.id)
-  : [];
 
 export function AssignHousekeeperDialog({
   roomId,
@@ -44,7 +38,12 @@ export function AssignHousekeeperDialog({
   const [selectedUserId, setSelectedUserId] = React.useState<string | undefined>(
     currentAssigneeId
   );
-  const { assignHousekeeper } = useAppContext();
+  const { assignHousekeeper, users, roles } = useAppContext();
+
+  const housekeeperRole = roles.find((r) => r.name === "Housekeeper");
+  const housekeepers = housekeeperRole
+    ? users.filter((u) => u.roleId === housekeeperRole.id)
+    : [];
 
   const handleSave = () => {
     if (!selectedUserId) {
