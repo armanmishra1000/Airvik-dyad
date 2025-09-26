@@ -3,31 +3,39 @@ import type { Property, Guest, Reservation, Room, RoomType, RatePlan, Role, Amen
 
 // --- Data Transformation Helpers ---
 
-const fromDb = <T>(dbObj: any, mapping: { [K in keyof T]: string }): T => {
-    const appObj: any = {};
-    for (const key in mapping) {
-        appObj[key] = dbObj[mapping[key as keyof T]];
-    }
-    return appObj as T;
+const fromDbGuest = (dbGuest: any): Guest => ({
+    id: dbGuest.id,
+    firstName: dbGuest.first_name,
+    lastName: dbGuest.last_name,
+    email: dbGuest.email,
+    phone: dbGuest.phone,
+});
+
+const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>) => {
+    const dbData: { [key: string]: any } = {};
+    if (appGuest.firstName) dbData.first_name = appGuest.firstName;
+    if (appGuest.lastName) dbData.last_name = appGuest.lastName;
+    if (appGuest.email) dbData.email = appGuest.email;
+    if (appGuest.phone) dbData.phone = appGuest.phone;
+    return dbData;
 };
 
-const toDb = <T>(appObj: Partial<T>, mapping: { [K in keyof T]: string }): any => {
-    const dbObj: any = {};
-    for (const key in appObj) {
-        if (mapping[key as keyof T]) {
-            dbObj[mapping[key as keyof T]] = appObj[key as keyof T];
-        }
-    }
-    return dbObj;
+const fromDbRoom = (dbRoom: any): Room => ({
+    id: dbRoom.id,
+    roomNumber: dbRoom.room_number,
+    roomTypeId: dbRoom.room_type_id,
+    status: dbRoom.status,
+    photos: dbRoom.photos,
+});
+
+const toDbRoom = (appRoom: Partial<Omit<Room, "id">>) => {
+    const dbData: { [key: string]: any } = {};
+    if (appRoom.roomNumber) dbData.room_number = appRoom.roomNumber;
+    if (appRoom.roomTypeId) dbData.room_type_id = appRoom.roomTypeId;
+    if (appRoom.status) dbData.status = appRoom.status;
+    if (appRoom.photos) dbData.photos = appRoom.photos;
+    return dbData;
 };
-
-const guestMap = { id: 'id', firstName: 'first_name', lastName: 'last_name', email: 'email', phone: 'phone' };
-const fromDbGuest = (dbGuest: any): Guest => fromDb(dbGuest, guestMap);
-const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>) => toDb(appGuest, guestMap);
-
-const roomMap = { id: 'id', roomNumber: 'room_number', roomTypeId: 'room_type_id', status: 'status', photos: 'photos' };
-const fromDbRoom = (dbRoom: any): Room => fromDb(dbRoom, roomMap);
-const toDbRoom = (appRoom: Partial<Omit<Room, "id">>) => toDb(appRoom, roomMap);
 
 export const fromDbRoomType = (dbRoomType: any): RoomType => ({
     id: dbRoomType.id,
