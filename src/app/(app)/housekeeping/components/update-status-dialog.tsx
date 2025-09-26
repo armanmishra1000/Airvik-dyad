@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +36,6 @@ export function UpdateStatusDialog({
 
   const handleSave = () => {
     onUpdate(selectedStatus);
-    toast.success(`Room ${room.roomNumber} status updated to ${selectedStatus}.`);
     setOpen(false);
   };
 
