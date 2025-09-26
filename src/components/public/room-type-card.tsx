@@ -17,6 +17,8 @@ interface RoomTypeCardProps {
     from: string;
     to: string;
     guests: string;
+    children: string;
+    rooms: string;
   };
 }
 

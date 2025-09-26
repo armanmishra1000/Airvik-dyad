@@ -20,7 +20,7 @@ export function useAvailabilitySearch() {
   >(null);
 
   const search = React.useCallback(
-    (dateRange: DateRange, guests: number) => {
+    (dateRange: DateRange, guests: number, children: number, requestedRooms: number) => {
       setIsLoading(true);
       setAvailableRoomTypes(null);
 
@@ -31,14 +31,17 @@ export function useAvailabilitySearch() {
           return;
         }
 
+        const totalOccupants = guests + children;
+
         const available = roomTypes.filter((rt) => {
-          if (rt.maxOccupancy < guests) {
+          // Check if the room type can accommodate the guests per room
+          if (rt.maxOccupancy < Math.ceil(totalOccupants / requestedRooms)) {
             return false;
           }
 
           const roomsOfType = rooms.filter((r) => r.roomTypeId === rt.id);
-          const totalRooms = roomsOfType.length;
-          if (totalRooms === 0) return false;
+          const totalRoomsOfType = roomsOfType.length;
+          if (totalRoomsOfType < requestedRooms) return false;
 
           const bookingsCountByDate: { [key: string]: number } = {};
           const relevantReservations = reservations.filter(
@@ -77,7 +80,8 @@ export function useAvailabilitySearch() {
           const isAvailable = searchInterval.every((day) => {
             const dayString = format(day, "yyyy-MM-dd");
             const bookedCount = bookingsCountByDate[dayString] || 0;
-            return bookedCount < totalRooms;
+            const availableRoomsCount = totalRoomsOfType - bookedCount;
+            return availableRoomsCount >= requestedRooms;
           });
 
           return isAvailable;

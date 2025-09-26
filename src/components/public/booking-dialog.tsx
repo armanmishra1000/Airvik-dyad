@@ -42,7 +42,9 @@ const searchSchema = z.object({
     from: z.date({ required_error: "Check-in date is required." }),
     to: z.date({ required_error: "Check-out date is required." }),
   }),
-  guests: z.coerce.number().min(1, "At least one guest is required."),
+  guests: z.coerce.number().min(1, "At least one adult is required."),
+  children: z.coerce.number().min(0),
+  rooms: z.coerce.number().min(1, "At least one room is required."),
 });
 
 interface BookingDialogProps {
@@ -63,13 +65,15 @@ export function BookingDialog({
   const form = useForm<z.infer<typeof searchSchema>>({
     resolver: zodResolver(searchSchema),
     defaultValues: initialSearchValues || {
-      guests: 1,
+      guests: 2,
+      children: 0,
+      rooms: 1,
     },
   });
 
   const runSearch = React.useCallback(
     (values: BookingSearchFormValues) => {
-      search(values.dateRange, values.guests);
+      search(values.dateRange, values.guests, values.children, values.rooms);
     },
     [search]
   );
@@ -81,7 +85,7 @@ export function BookingDialog({
     }
     if (!isOpen) {
       setAvailableRoomTypes(null);
-      form.reset({ guests: 1, dateRange: undefined });
+      form.reset({ guests: 2, children: 0, rooms: 1, dateRange: undefined });
     }
   }, [isOpen, initialSearchValues, runSearch, form, setAvailableRoomTypes]);
 
@@ -90,13 +94,15 @@ export function BookingDialog({
   };
 
   const handleBookNow = (roomTypeId: string) => {
-    const { dateRange, guests } = form.getValues();
+    const { dateRange, guests, children, rooms } = form.getValues();
     if (!dateRange?.from || !dateRange?.to) return;
 
     const query = new URLSearchParams({
       from: format(dateRange.from, "yyyy-MM-dd"),
       to: format(dateRange.to, "yyyy-MM-dd"),
       guests: guests.toString(),
+      children: children.toString(),
+      rooms: rooms.toString(),
     });
     router.push(`/rooms/${roomTypeId}?${query.toString()}`);
     onOpenChange(false);
@@ -171,12 +177,38 @@ export function BookingDialog({
                 />
                 <FormField
                   control={form.control}
+                  name="rooms"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Number of Rooms</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={1} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="guests"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Number of Guests</FormLabel>
+                      <FormLabel>Number of Adults</FormLabel>
                       <FormControl>
                         <Input type="number" min={1} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="children"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Number of Children</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={0} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
