@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle } from "lucide-react"
+import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User } from "lucide-react"
 import { format } from "date-fns"
 
 import { Badge } from "@/components/ui/badge"
@@ -14,6 +14,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { ReservationStatus } from "@/data"
 
 export type ReservationWithDetails = {
@@ -30,6 +36,9 @@ export type ReservationWithDetails = {
     totalAmount: number;
     guestName: string;
     roomNumber: string;
+    bookingDate: string;
+    source: 'reception' | 'website';
+    nights: number;
 }
 
 export const statuses = [
@@ -43,12 +52,29 @@ export const statuses = [
 
 export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
+    accessorKey: "id",
+    header: "Booking ID",
+    cell: ({ row }) => {
+        const id = row.getValue("id") as string;
+        return <div className="font-mono text-xs">{id.substring(4)}</div>
+    }
+  },
+  {
+    accessorKey: "bookingDate",
+    header: "Booking Date",
+    cell: ({ row }) => format(new Date(row.getValue("bookingDate")), "MMM d, yyyy"),
+  },
+  {
     accessorKey: "guestName",
-    header: "Guest",
+    header: "Customer Name",
   },
   {
     accessorKey: "roomNumber",
     header: "Room",
+  },
+  {
+    accessorKey: "numberOfGuests",
+    header: "Guests",
   },
   {
     accessorKey: "checkInDate",
@@ -59,6 +85,23 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     accessorKey: "checkOutDate",
     header: "Check-out",
     cell: ({ row }) => format(new Date(row.getValue("checkOutDate")), "MMM d, yyyy"),
+  },
+  {
+    accessorKey: "nights",
+    header: "Nights",
+  },
+  {
+    accessorKey: "totalAmount",
+    header: () => <div className="text-right">Amount</div>,
+    cell: ({ row }) => {
+      const amount = parseFloat(row.getValue("totalAmount"))
+      const formatted = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      }).format(amount)
+ 
+      return <div className="text-right font-medium">{formatted}</div>
+    },
   },
   {
     accessorKey: "status",
@@ -78,17 +121,26 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     }
   },
   {
-    accessorKey: "totalAmount",
-    header: () => <div className="text-right">Amount</div>,
+    accessorKey: "source",
+    header: "Source",
     cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("totalAmount"))
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount)
- 
-      return <div className="text-right font-medium">{formatted}</div>
-    },
+        const source = row.getValue("source") as string;
+        const Icon = source === 'website' ? Monitor : User;
+        const label = source.charAt(0).toUpperCase() + source.slice(1);
+
+        return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger>
+                        <Icon className="h-5 w-5" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{label}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        )
+    }
   },
   {
     id: "actions",
