@@ -19,7 +19,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
+        <h2 className="text-2xl font-bold tracking-tight font-serif">Settings</h2>
         <p className="text-muted-foreground">
           Manage your property settings, team members, and billing information.
         </p>
@@ -47,7 +47,7 @@ export default function SettingsPage() {
         <TabsContent value="billing">
           <Card>
             <CardHeader>
-              <CardTitle>Billing</CardTitle>
+              <CardTitle className="font-serif">Billing</CardTitle>
               <CardDescription>
                 Manage your subscription and payment methods.
               </CardDescription>
