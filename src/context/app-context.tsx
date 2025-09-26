@@ -114,68 +114,46 @@ interface AppContextType {
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
 
+const loadState = <T,>(key: string, fallback: T): T => {
+    try {
+        const stored = window.localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : fallback;
+    } catch (error) {
+        console.error(`Error loading ${key} from localStorage`, error);
+        return fallback;
+    }
+};
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [property, setProperty] = React.useState<Property>(mockProperty);
-  const [reservations, setReservations] =
-    React.useState<Reservation[]>(mockReservations);
-  const [guests, setGuests] = React.useState<Guest[]>(mockGuests);
-  const [housekeepingAssignments, setHousekeepingAssignments] =
-    React.useState<HousekeepingAssignment[]>(mockHousekeeping);
-  const [rooms, setRooms] = React.useState<Room[]>(mockRooms);
-  const [roomTypes, setRoomTypes] = React.useState<RoomType[]>(mockRoomTypes);
-  const [ratePlans, setRatePlans] = React.useState<RatePlan[]>(mockRatePlans);
-  const [currentUser, setCurrentUser] = React.useState<User | null>(mockUsers[0]);
-  const [users, setUsers] = React.useState<User[]>(mockUsers);
-  const [roles, setRoles] = React.useState<Role[]>(mockRoles);
-  const [amenities, setAmenities] = React.useState<Amenity[]>(mockAmenities);
-  const [stickyNotes, setStickyNotes] = React.useState<StickyNote[]>(mockStickyNotes);
-  const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(mockDashboardLayout);
+  const [reservations, setReservations] = React.useState<Reservation[]>([]);
+  const [guests, setGuests] = React.useState<Guest[]>([]);
+  const [housekeepingAssignments, setHousekeepingAssignments] = React.useState<HousekeepingAssignment[]>([]);
+  const [rooms, setRooms] = React.useState<Room[]>([]);
+  const [roomTypes, setRoomTypes] = React.useState<RoomType[]>([]);
+  const [ratePlans, setRatePlans] = React.useState<RatePlan[]>([]);
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+  const [users, setUsers] = React.useState<User[]>([]);
+  const [roles, setRoles] = React.useState<Role[]>([]);
+  const [amenities, setAmenities] = React.useState<Amenity[]>([]);
+  const [stickyNotes, setStickyNotes] = React.useState<StickyNote[]>([]);
+  const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>([]);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
   React.useEffect(() => {
-    try {
-      const storedProperty = window.localStorage.getItem(PROPERTY_STORAGE_KEY);
-      if (storedProperty) setProperty(JSON.parse(storedProperty));
-
-      const storedReservations = window.localStorage.getItem(RESERVATIONS_STORAGE_KEY);
-      if (storedReservations) setReservations(JSON.parse(storedReservations));
-
-      const storedGuests = window.localStorage.getItem(GUESTS_STORAGE_KEY);
-      if (storedGuests) setGuests(JSON.parse(storedGuests));
-
-      const storedHousekeeping = window.localStorage.getItem(HOUSEKEEPING_STORAGE_KEY);
-      if (storedHousekeeping) setHousekeepingAssignments(JSON.parse(storedHousekeeping));
-      
-      const storedRooms = window.localStorage.getItem(ROOMS_STORAGE_KEY);
-      if (storedRooms) setRooms(JSON.parse(storedRooms));
-
-      const storedRoomTypes = window.localStorage.getItem(ROOM_TYPES_STORAGE_KEY);
-      if (storedRoomTypes) setRoomTypes(JSON.parse(storedRoomTypes));
-
-      const storedRatePlans = window.localStorage.getItem(RATE_PLANS_STORAGE_KEY);
-      if (storedRatePlans) setRatePlans(JSON.parse(storedRatePlans));
-
-      const storedUser = window.localStorage.getItem(CURRENT_USER_STORAGE_KEY);
-      if (storedUser) setCurrentUser(JSON.parse(storedUser));
-
-      const storedRoles = window.localStorage.getItem(ROLES_STORAGE_KEY);
-      if (storedRoles) setRoles(JSON.parse(storedRoles));
-
-      const storedUsers = window.localStorage.getItem(USERS_STORAGE_KEY);
-      if (storedUsers) setUsers(JSON.parse(storedUsers));
-
-      const storedAmenities = window.localStorage.getItem(AMENITIES_STORAGE_KEY);
-      if (storedAmenities) setAmenities(JSON.parse(storedAmenities));
-
-      const storedStickyNotes = window.localStorage.getItem(STICKY_NOTES_STORAGE_KEY);
-      if (storedStickyNotes) setStickyNotes(JSON.parse(storedStickyNotes));
-
-      const storedDashboardLayout = window.localStorage.getItem(DASHBOARD_LAYOUT_STORAGE_KEY);
-      if (storedDashboardLayout) setDashboardLayout(JSON.parse(storedDashboardLayout));
-
-    } catch (error) {
-      console.error("Error reading from localStorage", error);
-    }
+    setProperty(loadState(PROPERTY_STORAGE_KEY, mockProperty));
+    setReservations(loadState(RESERVATIONS_STORAGE_KEY, mockReservations));
+    setGuests(loadState(GUESTS_STORAGE_KEY, mockGuests));
+    setHousekeepingAssignments(loadState(HOUSEKEEPING_STORAGE_KEY, mockHousekeeping));
+    setRooms(loadState(ROOMS_STORAGE_KEY, mockRooms));
+    setRoomTypes(loadState(ROOM_TYPES_STORAGE_KEY, mockRoomTypes));
+    setRatePlans(loadState(RATE_PLANS_STORAGE_KEY, mockRatePlans));
+    setCurrentUser(loadState(CURRENT_USER_STORAGE_KEY, mockUsers[0]));
+    setUsers(loadState(USERS_STORAGE_KEY, mockUsers));
+    setRoles(loadState(ROLES_STORAGE_KEY, mockRoles));
+    setAmenities(loadState(AMENITIES_STORAGE_KEY, mockAmenities));
+    setStickyNotes(loadState(STICKY_NOTES_STORAGE_KEY, mockStickyNotes));
+    setDashboardLayout(loadState(DASHBOARD_LAYOUT_STORAGE_KEY, mockDashboardLayout));
     setIsInitialized(true);
   }, []);
 
