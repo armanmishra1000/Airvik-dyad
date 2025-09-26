@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { mockUsers } from "@/data";
+import { mockUsers, mockRoles } from "@/data";
 import { useAppContext } from "@/context/app-context";
 
 interface AssignHousekeeperDialogProps {
@@ -30,7 +30,10 @@ interface AssignHousekeeperDialogProps {
   children: React.ReactNode;
 }
 
-const housekeepers = mockUsers.filter((u) => u.role === "housekeeper");
+const housekeeperRole = mockRoles.find((r) => r.name === "Housekeeper");
+const housekeepers = housekeeperRole
+  ? mockUsers.filter((u) => u.roleId === housekeeperRole.id)
+  : [];
 
 export function AssignHousekeeperDialog({
   roomId,
