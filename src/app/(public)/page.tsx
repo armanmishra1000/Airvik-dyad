@@ -40,7 +40,7 @@ export default function PublicHomePage() {
           from: format(searchValues.dateRange.from, "yyyy-MM-dd"),
           to: format(searchValues.dateRange.to, "yyyy-MM-dd"),
           guests: searchValues.guests.toString(),
-          children: searchValues.children.toString(),
+          children: (searchValues.children || 0).toString(),
           rooms: searchValues.rooms.toString(),
         }
       : undefined;
