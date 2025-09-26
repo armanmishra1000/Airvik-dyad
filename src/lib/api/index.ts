@@ -1,25 +1,34 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Property, Guest, Reservation, Room, RoomType, RatePlan, Role, Amenity, StickyNote, User, HousekeepingAssignment } from "@/data/types";
+import type { Property, Guest, Reservation, Room, RoomType, RatePlan, Role, Amenity, StickyNote, User, HousekeepingAssignment, FolioItem } from "@/data/types";
 
-// Helper to map guest data between app (camelCase) and DB (snake_case)
-const fromDbGuest = (dbGuest: any): Guest => ({
-    id: dbGuest.id,
-    firstName: dbGuest.first_name,
-    lastName: dbGuest.last_name,
-    email: dbGuest.email,
-    phone: dbGuest.phone,
-});
+// --- Data Transformation Helpers ---
 
-const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>) => {
-    const dbData: { [key: string]: any } = {};
-    if (appGuest.firstName) dbData.first_name = appGuest.firstName;
-    if (appGuest.lastName) dbData.last_name = appGuest.lastName;
-    if (appGuest.email) dbData.email = appGuest.email;
-    if (appGuest.phone) dbData.phone = appGuest.phone;
-    return dbData;
+const fromDb = <T>(dbObj: any, mapping: { [K in keyof T]: string }): T => {
+    const appObj: any = {};
+    for (const key in mapping) {
+        appObj[key] = dbObj[mapping[key as keyof T]];
+    }
+    return appObj as T;
 };
 
-// Helper for room types
+const toDb = <T>(appObj: Partial<T>, mapping: { [K in keyof T]: string }): any => {
+    const dbObj: any = {};
+    for (const key in appObj) {
+        if (mapping[key as keyof T]) {
+            dbObj[mapping[key as keyof T]] = appObj[key as keyof T];
+        }
+    }
+    return dbObj;
+};
+
+const guestMap = { id: 'id', firstName: 'first_name', lastName: 'last_name', email: 'email', phone: 'phone' };
+const fromDbGuest = (dbGuest: any): Guest => fromDb(dbGuest, guestMap);
+const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>) => toDb(appGuest, guestMap);
+
+const roomMap = { id: 'id', roomNumber: 'room_number', roomTypeId: 'room_type_id', status: 'status', photos: 'photos' };
+const fromDbRoom = (dbRoom: any): Room => fromDb(dbRoom, roomMap);
+const toDbRoom = (appRoom: Partial<Omit<Room, "id">>) => toDb(appRoom, roomMap);
+
 export const fromDbRoomType = (dbRoomType: any): RoomType => ({
     id: dbRoomType.id,
     name: dbRoomType.name,
@@ -30,6 +39,8 @@ export const fromDbRoomType = (dbRoomType: any): RoomType => ({
     photos: dbRoomType.photos || [],
     mainPhotoUrl: dbRoomType.main_photo_url,
 });
+
+// --- API Functions ---
 
 // Property
 export const getProperty = () => supabase.from('properties').select('*').limit(1).single();
@@ -65,9 +76,21 @@ export const getFolioItems = () => supabase.from('folio_items').select('*');
 export const addFolioItem = (itemData: any) => supabase.from('folio_items').insert([itemData]).select().single();
 
 // Rooms
-export const getRooms = () => supabase.from('rooms').select('*');
-export const addRoom = (roomData: Omit<Room, "id">) => supabase.from('rooms').insert([roomData]).select().single();
-export const updateRoom = (id: string, updatedData: Partial<Room>) => supabase.from('rooms').update(updatedData).eq('id', id).select().single();
+export const getRooms = async () => {
+    const { data, error, ...rest } = await supabase.from('rooms').select('*');
+    if (error || !data) return { data, error, ...rest };
+    return { data: data.map(fromDbRoom), error, ...rest };
+};
+export const addRoom = async (roomData: Omit<Room, "id">) => {
+    const { data, error, ...rest } = await supabase.from('rooms').insert([toDbRoom(roomData)]).select().single();
+    if (error || !data) return { data, error, ...rest };
+    return { data: fromDbRoom(data), error, ...rest };
+};
+export const updateRoom = async (id: string, updatedData: Partial<Room>) => {
+    const { data, error, ...rest } = await supabase.from('rooms').update(toDbRoom(updatedData)).eq('id', id).select().single();
+    if (error || !data) return { data, error, ...rest };
+    return { data: fromDbRoom(data), error, ...rest };
+};
 export const deleteRoom = (id: string) => supabase.from('rooms').delete().eq('id', id);
 
 // Room Types
