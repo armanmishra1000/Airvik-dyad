@@ -219,7 +219,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
-  const updateProperty = (updatedData: Partial<Omit<Property, "id">>) => setProperty(prev => ({ ...prev, ...updatedData }));
+  const updateProperty = async (updatedData: Partial<Omit<Property, "id">>) => {
+    const { data, error } = await supabase.from('properties').update(updatedData).eq('id', property.id).select().single();
+    if (error) throw error;
+    setProperty(data);
+  };
   const addGuest = async (guestData: Omit<Guest, "id">): Promise<Guest> => {
     const { data, error } = await supabase.from('guests').insert([guestData]).select().single();
     if (error) throw error;
@@ -227,13 +231,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return data;
   };
   const updateGuest = async (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => {
-    await supabase.from('guests').update(updatedData).eq('id', guestId);
-    setGuests(prev => prev.map(g => g.id === guestId ? { ...g, ...updatedData } : g));
+    const { data, error } = await supabase.from('guests').update(updatedData).eq('id', guestId).select().single();
+    if (error) throw error;
+    setGuests(prev => prev.map(g => g.id === guestId ? data : g));
   };
   const deleteGuest = async (guestId: string): Promise<boolean> => {
-    await supabase.from('guests').delete().eq('id', guestId);
-    setGuests(prev => prev.filter(g => g.id !== guestId));
-    return true;
+    try {
+      const { error } = await supabase.from('guests').delete().eq('id', guestId);
+      if (error) throw error;
+      setGuests(prev => prev.filter(g => g.id !== guestId));
+      return true;
+    } catch (error) {
+      console.error("Error deleting guest:", error);
+      return false;
+    }
   };
   
   const addReservation = async (reservationData: AddReservationPayload): Promise<Reservation[]> => {
@@ -248,8 +259,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateReservation = async (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => {
     const { folio, ...restOfData } = updatedData;
-    await supabase.from('reservations').update(restOfData).eq('id', reservationId);
-    setReservations(prev => prev.map(res => res.id === reservationId ? { ...res, ...updatedData } : res));
+    const { data, error } = await supabase.from('reservations').update(restOfData).eq('id', reservationId).select().single();
+    if (error) throw error;
+    setReservations(prev => prev.map(res => res.id === reservationId ? { ...data, folio: res.folio } : res));
   };
   const updateReservationStatus = async (reservationId: string, status: ReservationStatus) => {
     await supabase.from('reservations').update({ status }).eq('id', reservationId);
@@ -275,61 +287,126 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Not implemented for brevity
   };
   const addRoom = async (roomData: Omit<Room, "id">) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('rooms').insert([roomData]).select().single();
+    if (error) throw error;
+    setRooms(prev => [...prev, data]);
   };
   const updateRoom = async (roomId: string, updatedData: Partial<Omit<Room, "id">>) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('rooms').update(updatedData).eq('id', roomId).select().single();
+    if (error) throw error;
+    setRooms(prev => prev.map(r => r.id === roomId ? data : r));
   };
   const deleteRoom = async (roomId: string): Promise<boolean> => {
-    // Not implemented for brevity
-    return true;
+    try {
+      const { error } = await supabase.from('rooms').delete().eq('id', roomId);
+      if (error) throw error;
+      setRooms(prev => prev.filter(r => r.id !== roomId));
+      return true;
+    } catch (error) {
+      console.error("Error deleting room:", error);
+      return false;
+    }
   };
   const addRoomType = async (roomTypeData: Omit<RoomType, "id">) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('room_types').insert([roomTypeData]).select().single();
+    if (error) throw error;
+    setRoomTypes(prev => [...prev, data]);
   };
   const updateRoomType = async (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id">>) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('room_types').update(updatedData).eq('id', roomTypeId).select().single();
+    if (error) throw error;
+    setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? data : rt));
   };
   const deleteRoomType = async (roomTypeId: string): Promise<boolean> => {
-    // Not implemented for brevity
-    return true;
+    try {
+      const { error } = await supabase.from('room_types').delete().eq('id', roomTypeId);
+      if (error) throw error;
+      setRoomTypes(prev => prev.filter(rt => rt.id !== roomTypeId));
+      return true;
+    } catch (error) {
+      console.error("Error deleting room type:", error);
+      return false;
+    }
   };
   const addRatePlan = async (ratePlanData: Omit<RatePlan, "id">) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('rate_plans').insert([ratePlanData]).select().single();
+    if (error) throw error;
+    setRatePlans(prev => [...prev, data]);
   };
   const updateRatePlan = async (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('rate_plans').update(updatedData).eq('id', ratePlanId).select().single();
+    if (error) throw error;
+    setRatePlans(prev => prev.map(rp => rp.id === ratePlanId ? data : rp));
   };
   const deleteRatePlan = async (ratePlanId: string): Promise<boolean> => {
-    // Not implemented for brevity
-    return true;
+    try {
+      const { error } = await supabase.from('rate_plans').delete().eq('id', ratePlanId);
+      if (error) throw error;
+      setRatePlans(prev => prev.filter(rp => rp.id !== ratePlanId));
+      return true;
+    } catch (error) {
+      console.error("Error deleting rate plan:", error);
+      return false;
+    }
   };
   const addRole = async (roleData: Omit<Role, "id">) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('roles').insert([roleData]).select().single();
+    if (error) throw error;
+    setRoles(prev => [...prev, data]);
   };
   const updateRole = async (roleId: string, updatedData: Partial<Omit<Role, "id">>) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('roles').update(updatedData).eq('id', roleId).select().single();
+    if (error) throw error;
+    setRoles(prev => prev.map(r => r.id === roleId ? data : r));
   };
   const deleteRole = async (roleId: string): Promise<boolean> => {
-    // Not implemented for brevity
-    return true;
+    try {
+      const { error } = await supabase.from('roles').delete().eq('id', roleId);
+      if (error) throw error;
+      setRoles(prev => prev.filter(r => r.id !== roleId));
+      return true;
+    } catch (error) {
+      console.error("Error deleting role:", error);
+      return false;
+    }
   };
   const updateUser = async (userId: string, updatedData: Partial<Omit<User, "id">>) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('profiles').update({ name: updatedData.name, role_id: updatedData.roleId }).eq('id', userId).select().single();
+    if (error) throw error;
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updatedData } : u));
   };
   const deleteUser = async (userId: string): Promise<boolean> => {
-    // Not implemented for brevity
-    return true;
+    try {
+      if (userId === authUser?.id) return false; // Prevent self-deletion
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      if (error) throw error;
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      return true;
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      return false;
+    }
   };
   const addAmenity = async (amenityData: Omit<Amenity, "id">) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('amenities').insert([amenityData]).select().single();
+    if (error) throw error;
+    setAmenities(prev => [...prev, data]);
   };
   const updateAmenity = async (amenityId: string, updatedData: Partial<Omit<Amenity, "id">>) => {
-    // Not implemented for brevity
+    const { data, error } = await supabase.from('amenities').update(updatedData).eq('id', amenityId).select().single();
+    if (error) throw error;
+    setAmenities(prev => prev.map(a => a.id === amenityId ? data : a));
   };
   const deleteAmenity = async (amenityId: string): Promise<boolean> => {
-    // Not implemented for brevity
-    return true;
+    try {
+      const { error } = await supabase.from('amenities').delete().eq('id', amenityId);
+      if (error) throw error;
+      setAmenities(prev => prev.filter(a => a.id !== amenityId));
+      return true;
+    } catch (error) {
+      console.error("Error deleting amenity:", error);
+      return false;
+    }
   };
   const addStickyNote = async (noteData: Omit<StickyNote, "id" | "createdAt" | "userId">) => {
     const { data, error } = await supabase.from('sticky_notes').insert([{ ...noteData, user_id: authUser?.id }]).select().single();
@@ -337,8 +414,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setStickyNotes(prev => [...prev, data]);
   };
   const updateStickyNote = async (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt" | "userId">>) => {
-    await supabase.from('sticky_notes').update(updatedData).eq('id', noteId);
-    setStickyNotes(prev => prev.map(note => note.id === noteId ? { ...note, ...updatedData } : note));
+    const { data, error } = await supabase.from('sticky_notes').update(updatedData).eq('id', noteId).select().single();
+    if (error) throw error;
+    setStickyNotes(prev => prev.map(note => note.id === noteId ? data : note));
   };
   const deleteStickyNote = async (noteId: string) => {
     await supabase.from('sticky_notes').delete().eq('id', noteId);
