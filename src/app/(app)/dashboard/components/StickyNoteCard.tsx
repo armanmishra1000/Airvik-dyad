@@ -43,6 +43,12 @@ const rotations = [
 
 export function StickyNoteCard({ note }: StickyNoteCardProps) {
   const { deleteStickyNote } = useAppContext();
+  const [hasMounted, setHasMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   const rotationClass = React.useMemo(() => {
     // Make rotation deterministic based on note ID to prevent hydration mismatch
     const index = note.id.charCodeAt(note.id.length - 1) % rotations.length;
@@ -58,7 +64,7 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
     <Card className={cn("shadow-md hover:shadow-lg transition-shadow", colorClasses[note.color], rotationClass)}>
       <CardHeader className="flex-row items-start justify-between p-3">
         <p className="text-xs text-muted-foreground">
-          {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
+          {hasMounted ? formatDistanceToNow(new Date(note.createdAt), { addSuffix: true }) : null}
         </p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
