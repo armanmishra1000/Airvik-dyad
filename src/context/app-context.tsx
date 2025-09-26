@@ -13,6 +13,7 @@ import {
   mockUsers,
   mockRoles,
   mockAmenities,
+  mockStickyNotes,
   type Reservation,
   type Guest,
   type ReservationStatus,
@@ -27,6 +28,7 @@ import {
   type Role,
   type Permission,
   type Amenity,
+  type StickyNote,
 } from "@/data";
 
 // Define keys for local storage
@@ -41,6 +43,7 @@ const CURRENT_USER_STORAGE_KEY = "hotel-pms-current-user";
 const ROLES_STORAGE_KEY = "hotel-pms-roles";
 const USERS_STORAGE_KEY = "hotel-pms-users";
 const AMENITIES_STORAGE_KEY = "hotel-pms-amenities";
+const STICKY_NOTES_STORAGE_KEY = "hotel-pms-sticky-notes";
 
 interface AppContextType {
   property: Property;
@@ -54,6 +57,7 @@ interface AppContextType {
   users: User[];
   roles: Role[];
   amenities: Amenity[];
+  stickyNotes: StickyNote[];
   setCurrentUser: (user: User | null) => void;
   hasPermission: (permission: Permission) => boolean;
   updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
@@ -95,6 +99,9 @@ interface AppContextType {
   addAmenity: (amenity: Omit<Amenity, "id">) => void;
   updateAmenity: (amenityId: string, updatedData: Partial<Omit<Amenity, "id">>) => void;
   deleteAmenity: (amenityId: string) => boolean;
+  addStickyNote: (note: Omit<StickyNote, "id" | "createdAt">) => void;
+  updateStickyNote: (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt">>) => void;
+  deleteStickyNote: (noteId: string) => void;
 }
 
 const AppContext = React.createContext<AppContextType | undefined>(undefined);
@@ -113,6 +120,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [users, setUsers] = React.useState<User[]>(mockUsers);
   const [roles, setRoles] = React.useState<Role[]>(mockRoles);
   const [amenities, setAmenities] = React.useState<Amenity[]>(mockAmenities);
+  const [stickyNotes, setStickyNotes] = React.useState<StickyNote[]>(mockStickyNotes);
   const [isInitialized, setIsInitialized] = React.useState(false);
 
   React.useEffect(() => {
@@ -150,6 +158,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const storedAmenities = window.localStorage.getItem(AMENITIES_STORAGE_KEY);
       if (storedAmenities) setAmenities(JSON.parse(storedAmenities));
 
+      const storedStickyNotes = window.localStorage.getItem(STICKY_NOTES_STORAGE_KEY);
+      if (storedStickyNotes) setStickyNotes(JSON.parse(storedStickyNotes));
+
     } catch (error) {
       console.error("Error reading from localStorage", error);
     }
@@ -167,6 +178,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(ROLES_STORAGE_KEY, JSON.stringify(roles)); }, [roles, isInitialized]);
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users)); }, [users, isInitialized]);
   React.useEffect(() => { if (isInitialized) window.localStorage.setItem(AMENITIES_STORAGE_KEY, JSON.stringify(amenities)); }, [amenities, isInitialized]);
+  React.useEffect(() => { if (isInitialized) window.localStorage.setItem(STICKY_NOTES_STORAGE_KEY, JSON.stringify(stickyNotes)); }, [stickyNotes, isInitialized]);
 
   const hasPermission = (permission: Permission): boolean => {
     if (!currentUser) return false;
@@ -202,13 +214,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addAmenity = (amenityData: Omit<Amenity, "id">) => { const newAmenity: Amenity = { ...amenityData, id: `amenity-${Date.now()}` }; setAmenities(prev => [...prev, newAmenity]); };
   const updateAmenity = (amenityId: string, updatedData: Partial<Omit<Amenity, "id">>) => setAmenities(prev => prev.map(a => a.id === amenityId ? { ...a, ...updatedData } : a));
   const deleteAmenity = (amenityId: string): boolean => { const isUsed = roomTypes.some(rt => rt.amenities.includes(amenityId)); if (isUsed) return false; setAmenities(prev => prev.filter(a => a.id !== amenityId)); return true; };
+  const addStickyNote = (noteData: Omit<StickyNote, "id" | "createdAt">) => { const newNote: StickyNote = { ...noteData, id: `note-${Date.now()}`, createdAt: new Date().toISOString() }; setStickyNotes(prev => [...prev, newNote]); };
+  const updateStickyNote = (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt">>) => { setStickyNotes(prev => prev.map(note => note.id === noteId ? { ...note, ...updatedData } : note)); };
+  const deleteStickyNote = (noteId: string) => { setStickyNotes(prev => prev.filter(note => note.id !== noteId)); };
 
   const value = {
-    property, reservations, guests, housekeepingAssignments, rooms, roomTypes, ratePlans, currentUser, users, roles, amenities,
+    property, reservations, guests, housekeepingAssignments, rooms, roomTypes, ratePlans, currentUser, users, roles, amenities, stickyNotes,
     setCurrentUser, hasPermission, updateProperty, addReservation, updateReservationStatus, addGuest, updateGuest, deleteGuest,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, addUser, updateUser, deleteUser,
-    addAmenity, updateAmenity, deleteAmenity,
+    addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

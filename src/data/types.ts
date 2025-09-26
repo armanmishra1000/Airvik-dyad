@@ -116,3 +116,10 @@ export interface HousekeepingAssignment {
   date: string;
   status: "Pending" | "Completed";
 }
+
+export interface StickyNote {
+  id: string;
+  content: string;
+  color: 'yellow' | 'pink' | 'blue' | 'green';
+  createdAt: string;
+}

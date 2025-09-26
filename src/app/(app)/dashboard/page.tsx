@@ -28,6 +28,7 @@ import {
   import { isToday } from "date-fns"
   import { useAppContext } from "@/context/app-context";
   import { AvailabilityCalendar } from "@/components/shared/availability-calendar";
+  import { DashboardStickyNotes } from "./components/DashboardStickyNotes";
   
   export default function DashboardPage() {
     const { reservations, guests } = useAppContext();
@@ -188,6 +189,9 @@ import {
                 </Table>
               </CardContent>
             </Card>
+          </div>
+          <div>
+            <DashboardStickyNotes />
           </div>
           <div>
             <AvailabilityCalendar />
