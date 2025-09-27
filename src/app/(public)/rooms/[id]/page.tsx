@@ -38,7 +38,12 @@ import {
 import type { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -91,11 +96,11 @@ const amenityIcons: Record<string, IconName> = {
   "Room Service": "ConciergeBell",
   "Lounge chairs": "Armchair",
   "Washing Machine": "WashingMachine",
-  Refrigerator: "Refrigerator",
-  Bedroom: "Bed",
-  Oven: "CookingPot",
-  Wifi: "Wifi",
-  Bathroom: "Bath",
+  "Refrigerator": "Refrigerator",
+  "Bedroom": "Bed",
+  "Oven": "CookingPot",
+  "Wifi": "Wifi",
+  "Bathroom": "Bath",
   "Air Conditioner": "AirVent",
   "Swimming Pool": "Waves",
 };
@@ -115,6 +120,8 @@ export default function RoomDetailsPage() {
   const roomType = roomTypes.find((rt) => rt.id === params.id);
   const [isDescriptionExpanded, setIsDescriptionExpanded] =
     React.useState(false);
+  const [isDatesPopoverOpen, setIsDatesPopoverOpen] = React.useState(false);
+  const [isGuestsPopoverOpen, setIsGuestsPopoverOpen] = React.useState(false);
 
   const standardRatePlan =
     ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
@@ -218,7 +225,7 @@ export default function RoomDetailsPage() {
 
   return (
     <div className="bg-gray-50 dark:bg-black">
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-1 text-sm font-medium">
             <Button
@@ -229,6 +236,16 @@ export default function RoomDetailsPage() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <Button
+              variant="link"
+              className="px-2 text-muted-foreground"
+              onClick={() => router.push("/")}
+            >
+              Search
+            </Button>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <span className="text-primary">{property.name}</span>
           </div>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -243,7 +260,7 @@ export default function RoomDetailsPage() {
         {/* Image Gallery */}
         <div className="mb-8">
           {/* Desktop Grid Gallery */}
-          <div className="hidden md:grid md:grid-cols-4 md:grid-rows-2 gap-2 h-[100vh] max-h-[500px] rounded-xl overflow-hidden">
+          <div className="hidden md:grid md:grid-cols-4 md:grid-rows-2 gap-2 h-[50vh] max-h-[450px] rounded-xl overflow-hidden">
             <div className="md:col-span-2 md:row-span-2 relative">
               <img
                 src={photosToShow[0]}
@@ -270,11 +287,11 @@ export default function RoomDetailsPage() {
           {/* Mobile Carousel */}
           <div className="md:hidden">
             <div className="relative group">
-              <Carousel className="w-full]">
+              <Carousel className="w-full">
                 <CarouselContent>
                   {photosToShow.map((photo, index) => (
                     <CarouselItem key={index}>
-                      <div className="aspect-video relative rounded-xl overflow-hidden">
+                      <div className="aspect-video relative rounded-lg overflow-hidden">
                         <img
                           src={photo}
                           alt={`${roomType.name} photo ${index + 1}`}
@@ -284,6 +301,8 @@ export default function RoomDetailsPage() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
+                <CarouselPrevious className="absolute left-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <CarouselNext className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Carousel>
             </div>
           </div>
@@ -292,26 +311,27 @@ export default function RoomDetailsPage() {
         <div className="grid lg:grid-cols-5 gap-x-12">
           <div className="lg:col-span-3 space-y-8">
             <div>
-              <h1 className="sm:text-3xl text-2xl lg:text-4xl font-bold">
+              <h1 className="text-3xl lg:text-4xl font-bold">
                 {roomType.name}
               </h1>
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
                 <div className="flex items-center gap-1.5">
                   <MapPin className="h-4 w-4" />
                   <span>
-                   Rushikesh, Uttarakhand
+                    {property.address.split(",")[1]?.trim()},{" "}
+                    {property.address.split(",")[2]?.trim()}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                  <span className="font-bold text-foreground">4.5</span>
+                  <span className="font-bold text-foreground">5</span>
                 </div>
               </div>
             </div>
 
             <p className="text-muted-foreground leading-relaxed">
               {isDescriptionExpanded ? description : truncatedDescription}
-              {description.length > 50 && (
+              {description.length > 200 && (
                 <Button
                   variant="link"
                   className="p-0 h-auto ml-2"
@@ -324,8 +344,8 @@ export default function RoomDetailsPage() {
               )}
             </p>
 
-            <div className="border rounded-xl lg:p-6 p-4">
-              <h2 className="lg:text-xl text-lg font-bold mb-6">Amenities</h2> 
+            <div className="border rounded-xl p-6">
+              <h2 className="text-xl font-bold mb-6">Amenities</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6">
                 {roomType.amenities.map((amenityId) => {
                   const amenity = allAmenities.find((a) => a.id === amenityId);
@@ -346,23 +366,23 @@ export default function RoomDetailsPage() {
               </div>
             </div>
 
-            <div className="border rounded-xl lg:p-6 p-4">
-              <h2 className="lg:text-xl text-lg font-bold mb-6">Hotel Information</h2>
+            <div className="border rounded-xl p-6">
+              <h2 className="text-xl font-bold mb-6">Hotel Information</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <Clock className="h-5 w-5 text-muted-foreground" />
                   <span>Check In: 3:00 pm</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <ParkingCircle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                  <span>Parking Area: 5</span>
+                  <ParkingCircle className="h-5 w-5 text-muted-foreground" />
+                  <span>Parking Area: 2</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <Clock className="h-5 w-5 text-muted-foreground" />
                   <span>Check Out: 12:00 pm</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Info className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                  <Info className="h-5 w-5 text-muted-foreground" />
                   <span>Minimum Age to Check In: 17</span>
                 </div>
               </div>
@@ -374,7 +394,7 @@ export default function RoomDetailsPage() {
               <CardHeader>
                 <CardTitle>Details</CardTitle>
               </CardHeader>
-              <CardContent className="lg:p-6 p-4">
+              <CardContent className="p-6">
                 <Form {...form}>
                   <form
                     onSubmit={form.handleSubmit(onSubmit)}
@@ -386,7 +406,10 @@ export default function RoomDetailsPage() {
                         name="dateRange"
                         render={({ field }) => (
                           <FormItem>
-                            <Popover>
+                            <Popover
+                              open={isDatesPopoverOpen}
+                              onOpenChange={setIsDatesPopoverOpen}
+                            >
                               <PopoverTrigger asChild>
                                 <button
                                   type="button"
@@ -417,7 +440,12 @@ export default function RoomDetailsPage() {
                                       </div>
                                     </div>
                                   </div>
-                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                  <ChevronDown
+                                    className={cn(
+                                      "h-4 w-4 text-muted-foreground transition-transform",
+                                      isDatesPopoverOpen && "rotate-180"
+                                    )}
+                                  />
                                 </button>
                               </PopoverTrigger>
                               <PopoverContent
@@ -444,7 +472,10 @@ export default function RoomDetailsPage() {
                         name="guests"
                         render={({ field }) => (
                           <FormItem>
-                            <Popover>
+                            <Popover
+                              open={isGuestsPopoverOpen}
+                              onOpenChange={setIsGuestsPopoverOpen}
+                            >
                               <PopoverTrigger asChild>
                                 <button
                                   type="button"
@@ -462,16 +493,21 @@ export default function RoomDetailsPage() {
                                       </div>
                                     </div>
                                   </div>
-                                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                  <ChevronDown
+                                    className={cn(
+                                      "h-4 w-4 text-muted-foreground transition-transform",
+                                      isGuestsPopoverOpen && "rotate-180"
+                                    )}
+                                  />
                                 </button>
                               </PopoverTrigger>
                               <PopoverContent
                                 className="w-auto p-4"
                                 align="end"
                               >
-                                <div className="flex items-center justify-between space-x-3">
-                                  <span className="font-medium">Adults: </span>
-                                  <div className="flex items-center">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">Adults</span>
+                                  <div className="flex items-center gap-2">
                                     <Button
                                       type="button"
                                       variant="outline"
@@ -540,7 +576,7 @@ export default function RoomDetailsPage() {
                     </div>
 
                     <Button
-                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 w-full"
+                      className="w-full h-12 text-base bg-gray-900 hover:bg-gray-800 dark:bg-gray-50 dark:text-gray-900 dark:hover:bg-gray-200"
                       type="submit"
                       disabled={!dateRange?.from || !dateRange?.to}
                     >
