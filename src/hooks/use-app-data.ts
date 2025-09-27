@@ -140,25 +140,6 @@ export function useAppData() {
     setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, folio: [...r.folio, data], totalAmount: r.totalAmount + data.amount } : r));
   };
 
-  const addRoom = async (roomData: Omit<Room, "id">) => {
-    const { data, error } = await api.addRoom(roomData);
-    if (error) throw error;
-    setRooms(prev => [...prev, data]);
-  };
-
-  const updateRoom = async (roomId: string, updatedData: Partial<Omit<Room, "id">>) => {
-    const { data, error } = await api.updateRoom(roomId, updatedData);
-    if (error) throw error;
-    setRooms(prev => prev.map(r => r.id === roomId ? data : r));
-  };
-
-  const deleteRoom = async (roomId: string) => {
-    const { error } = await api.deleteRoom(roomId);
-    if (error) { console.error(error); return false; }
-    setRooms(prev => prev.filter(r => r.id !== roomId));
-    return true;
-  };
-
   const addRoomType = async (roomTypeData: Omit<RoomType, "id">) => {
     const { data, error } = await api.upsertRoomType(roomTypeData);
     if (error) throw error;
@@ -171,6 +152,45 @@ export function useAppData() {
     if (error) throw error;
     const updatedRoomType = api.fromDbRoomType(data);
     setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? updatedRoomType : rt));
+  };
+
+  const addRoom = async (roomData: Omit<Room, "id">) => {
+    const { data: newRoom, error } = await api.addRoom(roomData);
+    if (error) throw error;
+    setRooms(prev => [...prev, newRoom]);
+
+    if (newRoom.photos && newRoom.photos.length > 0) {
+        const roomType = roomTypes.find(rt => rt.id === newRoom.roomTypeId);
+        if (roomType) {
+            const newPhotos = [...new Set([...(roomType.photos || []), ...newRoom.photos])];
+            if (newPhotos.length > (roomType.photos?.length || 0)) {
+                updateRoomType(roomType.id, { photos: newPhotos });
+            }
+        }
+    }
+  };
+
+  const updateRoom = async (roomId: string, updatedData: Partial<Omit<Room, "id">>) => {
+    const { data: updatedRoom, error } = await api.updateRoom(roomId, updatedData);
+    if (error) throw error;
+    setRooms(prev => prev.map(r => r.id === roomId ? updatedRoom : r));
+    
+    if (updatedRoom.photos && updatedRoom.photos.length > 0) {
+        const roomType = roomTypes.find(rt => rt.id === updatedRoom.roomTypeId);
+        if (roomType) {
+            const newPhotos = [...new Set([...(roomType.photos || []), ...updatedRoom.photos])];
+            if (newPhotos.length > (roomType.photos?.length || 0)) {
+                 updateRoomType(roomType.id, { photos: newPhotos });
+            }
+        }
+    }
+  };
+
+  const deleteRoom = async (roomId: string) => {
+    const { error } = await api.deleteRoom(roomId);
+    if (error) { console.error(error); return false; }
+    setRooms(prev => prev.filter(r => r.id !== roomId));
+    return true;
   };
 
   const deleteRoomType = async (roomTypeId: string) => {
