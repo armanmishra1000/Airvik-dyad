@@ -158,32 +158,12 @@ export function useAppData() {
     const { data: newRoom, error } = await api.addRoom(roomData);
     if (error) throw error;
     setRooms(prev => [...prev, newRoom]);
-
-    if (newRoom.photos && newRoom.photos.length > 0) {
-        const roomType = roomTypes.find(rt => rt.id === newRoom.roomTypeId);
-        if (roomType) {
-            const newPhotos = [...new Set([...(roomType.photos || []), ...newRoom.photos])];
-            if (newPhotos.length > (roomType.photos?.length || 0)) {
-                await updateRoomType(roomType.id, { photos: newPhotos });
-            }
-        }
-    }
   };
 
   const updateRoom = async (roomId: string, updatedData: Partial<Omit<Room, "id">>) => {
     const { data: updatedRoom, error } = await api.updateRoom(roomId, updatedData);
     if (error) throw error;
     setRooms(prev => prev.map(r => r.id === roomId ? updatedRoom : r));
-    
-    if (updatedRoom.photos && updatedRoom.photos.length > 0) {
-        const roomType = roomTypes.find(rt => rt.id === updatedRoom.roomTypeId);
-        if (roomType) {
-            const newPhotos = [...new Set([...(roomType.photos || []), ...updatedRoom.photos])];
-            if (newPhotos.length > (roomType.photos?.length || 0)) {
-                 await updateRoomType(roomType.id, { photos: newPhotos });
-            }
-        }
-    }
   };
 
   const deleteRoom = async (roomId: string) => {
