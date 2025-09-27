@@ -39,8 +39,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-__tests__
-MODAL_TESTING_AGENT_INSTRUCTIONS.md
-SENIOR_TESTING_LEAD_CONTEXT.md
-TEST_VERIFICATION_RoleFormDialog.md
-TESTING_STRATEGY.md
