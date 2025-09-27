@@ -164,7 +164,7 @@ export function useAppData() {
         if (roomType) {
             const newPhotos = [...new Set([...(roomType.photos || []), ...newRoom.photos])];
             if (newPhotos.length > (roomType.photos?.length || 0)) {
-                updateRoomType(roomType.id, { photos: newPhotos });
+                await updateRoomType(roomType.id, { photos: newPhotos });
             }
         }
     }
@@ -180,7 +180,7 @@ export function useAppData() {
         if (roomType) {
             const newPhotos = [...new Set([...(roomType.photos || []), ...updatedRoom.photos])];
             if (newPhotos.length > (roomType.photos?.length || 0)) {
-                 updateRoomType(roomType.id, { photos: newPhotos });
+                 await updateRoomType(roomType.id, { photos: newPhotos });
             }
         }
     }
