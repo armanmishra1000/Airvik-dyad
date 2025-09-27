@@ -10,7 +10,7 @@ import { RoomDetailsClientPage } from "./components/RoomDetailsClientPage";
 
 interface PageProps {
   params: any; // Using 'any' to bypass Next.js type generation bug
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: any; // Using 'any' to bypass Next.js type generation bug
 }
 
 export default async function RoomDetailsPage({
