@@ -59,6 +59,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/shared/icon";
@@ -248,28 +255,52 @@ export default function RoomDetailsPage() {
           </div>
         </div>
 
-        {/* image gallery */}
-        <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-2 h-[40vh] md:h-[50vh] max-h-[300px] md:max-h-[450px] rounded-xl overflow-hidden mb-8">
-          <div className="col-span-1 md:col-span-2 md:row-span-2 relative">
-            <img
-              src={photosToShow[0]}
-              alt={`${roomType.name} photo 1`}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+        {/* Image Gallery */}
+        <div className="mb-8">
+          {/* Desktop Grid Gallery */}
+          <div className="hidden md:grid md:grid-cols-4 md:grid-rows-2 gap-2 h-[50vh] max-h-[450px] rounded-xl overflow-hidden">
+            <div className="md:col-span-2 md:row-span-2 relative">
+              <img
+                src={photosToShow[0]}
+                alt={`${roomType.name} photo 1`}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+            <div className="md:col-span-2 relative">
+              <img
+                src={photosToShow[1]}
+                alt={`${roomType.name} photo 2`}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
+            <div className="md:col-span-2 relative">
+              <img
+                src={photosToShow[2]}
+                alt={`${roomType.name} photo 3`}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            </div>
           </div>
-          <div className="hidden md:block md:col-span-2 relative">
-            <img
-              src={photosToShow[1]}
-              alt={`${roomType.name} photo 2`}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          </div>
-          <div className="hidden md:block md:col-span-2 relative">
-            <img
-              src={photosToShow[2]}
-              alt={`${roomType.name} photo 3`}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+
+          {/* Mobile Carousel */}
+          <div className="md:hidden">
+            <Carousel className="w-full group">
+              <CarouselContent>
+                {photosToShow.map((photo, index) => (
+                  <CarouselItem key={index}>
+                    <div className="aspect-video relative rounded-lg overflow-hidden">
+                      <img
+                        src={photo}
+                        alt={`${roomType.name} photo ${index + 1}`}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="absolute left-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CarouselNext className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </Carousel>
           </div>
         </div>
 
