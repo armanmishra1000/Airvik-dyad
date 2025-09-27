@@ -12,13 +12,9 @@ export default async function RoomDetailsPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  // Await params and searchParams since Next.js 15 requires it
-  const { id } = await params;
-  const resolvedSearchParams = await searchParams;
-
   // Fetch all necessary data in parallel on the server
   const [
     roomTypeResult,
@@ -27,7 +23,7 @@ export default async function RoomDetailsPage({
     reservationsResult,
     ratePlansResult,
   ] = await Promise.all([
-    getRoomTypeWithAmenities(id),
+    getRoomTypeWithAmenities(params.id),
     getAmenities(),
     getRooms(),
     getReservations(),
@@ -63,7 +59,7 @@ export default async function RoomDetailsPage({
       rooms={rooms || []}
       reservations={reservations || []}
       ratePlans={ratePlans || []}
-      initialSearchParams={resolvedSearchParams}
+      initialSearchParams={searchParams}
     />
   );
 }
