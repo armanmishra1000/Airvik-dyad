@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Upload, X, Star } from "lucide-react";
+import { Upload, X, Star, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { uploadFile } from "@/lib/api";
 
 interface MultiImageUploadProps {
   value: string[];
@@ -22,21 +23,33 @@ export function MultiImageUpload({
 }: MultiImageUploadProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [isUploading, setIsUploading] = React.useState(false);
 
-  const handleFiles = (files: FileList) => {
-    const newImageUrls: string[] = [];
+  const handleFiles = async (files: FileList) => {
+    setIsUploading(true);
+    const uploadPromises: Promise<string>[] = [];
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file && file.type.startsWith("image/")) {
-        const previewUrl = URL.createObjectURL(file);
-        newImageUrls.push(previewUrl);
+        uploadPromises.push(uploadFile(file));
       } else {
         toast.error("Invalid file type", {
           description: `File "${file.name}" is not an image.`,
         });
       }
     }
-    onChange([...value, ...newImageUrls]);
+
+    try {
+      const newImageUrls = await Promise.all(uploadPromises);
+      onChange([...value, ...newImageUrls]);
+    } catch (error) {
+      toast.error("Some uploads failed", {
+        description: (error as Error).message,
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
@@ -67,9 +80,6 @@ export function MultiImageUpload({
 
   const handleRemove = (urlToRemove: string) => {
     const newValue = value.filter((url) => url !== urlToRemove);
-    if (urlToRemove.startsWith("blob:")) {
-      URL.revokeObjectURL(urlToRemove);
-    }
     onChange(newValue);
     if (mainPhotoUrl === urlToRemove) {
       onSetMain?.(newValue[0] || "");
@@ -96,12 +106,22 @@ export function MultiImageUpload({
           accept="image/*"
           multiple
           onChange={(e) => e.target.files && handleFiles(e.target.files)}
+          disabled={isUploading}
         />
         <div className="text-center text-muted-foreground">
-          <Upload className="mx-auto h-8 w-8" />
-          <p className="text-sm mt-2">
-            Drag & drop images here, or click to select files
-          </p>
+          {isUploading ? (
+            <>
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm mt-2">Uploading...</p>
+            </>
+          ) : (
+            <>
+              <Upload className="mx-auto h-8 w-8" />
+              <p className="text-sm mt-2">
+                Drag & drop images here, or click to select files
+              </p>
+            </>
+          )}
         </div>
       </div>
       {value.length > 0 && (
@@ -151,4 +171,3 @@ export function MultiImageUpload({
       )}
     </div>
   );
-}

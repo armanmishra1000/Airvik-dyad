@@ -48,6 +48,29 @@ export const fromDbRoomType = (dbRoomType: any): RoomType => ({
     mainPhotoUrl: dbRoomType.main_photo_url,
 });
 
+// --- File Upload Helper ---
+
+export const uploadFile = async (file: File) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(filePath, file);
+
+    if (uploadError) {
+        throw uploadError;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath);
+
+    return publicUrl;
+};
+
+
 // --- API Functions ---
 
 // Property
