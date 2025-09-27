@@ -284,23 +284,25 @@ export default function RoomDetailsPage() {
 
           {/* Mobile Carousel */}
           <div className="md:hidden">
-            <Carousel className="w-full group">
-              <CarouselContent>
-                {photosToShow.map((photo, index) => (
-                  <CarouselItem key={index}>
-                    <div className="aspect-video relative rounded-lg overflow-hidden">
-                      <img
-                        src={photo}
-                        alt={`${roomType.name} photo ${index + 1}`}
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="absolute left-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <CarouselNext className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </Carousel>
+            <div className="relative group">
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {photosToShow.map((photo, index) => (
+                    <CarouselItem key={index}>
+                      <div className="aspect-video relative rounded-lg overflow-hidden">
+                        <img
+                          src={photo}
+                          alt={`${roomType.name} photo ${index + 1}`}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="absolute left-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <CarouselNext className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Carousel>
+            </div>
           </div>
         </div>
 
