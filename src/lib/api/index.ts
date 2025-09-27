@@ -119,6 +119,34 @@ export const upsertRoomType = (roomTypeData: any) => {
 };
 export const deleteRoomType = (id: string) => supabase.from('room_types').delete().eq('id', id);
 
+// New function for Room Details Page
+export const getRoomTypeWithAmenities = async (id: string) => {
+    const { data, error } = await supabase
+        .from('room_types')
+        .select(`*, room_type_amenities (amenity_id)`)
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error("Error fetching room type with amenities:", error);
+        return { data: null, error };
+    }
+    if (!data) {
+        return { data: null, error: null };
+    }
+
+    const roomTypeData = {
+        ...data,
+        // @ts-ignore
+        amenities: data.room_type_amenities.map((rta: any) => rta.amenity_id),
+    };
+    // @ts-ignore
+    delete roomTypeData.room_type_amenities;
+
+    return { data: fromDbRoomType(roomTypeData), error: null };
+};
+
+
 // Rate Plans
 export const getRatePlans = () => supabase.from('rate_plans').select('*');
 export const addRatePlan = (ratePlanData: Omit<RatePlan, "id">) => supabase.from('rate_plans').insert([ratePlanData]).select().single();
