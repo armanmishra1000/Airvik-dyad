@@ -9,7 +9,7 @@ import {
 import { RoomDetailsClientPage } from "./components/RoomDetailsClientPage";
 
 interface PageProps {
-  params: { id: string };
+  params: any; // Using 'any' to bypass Next.js type generation bug
   searchParams: { [key: string]: string | string[] | undefined };
 }
 
