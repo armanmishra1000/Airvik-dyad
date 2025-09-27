@@ -7,7 +7,12 @@
 
 // Import required testing utilities
 import { fireEvent, within, act, waitFor, screen } from '@testing-library/react'
-import { vi } from 'vitest'
+import { vi, expect } from 'vitest'
+
+// Declare global types
+declare global {
+  var memoryTracker: MemoryTracker | undefined
+}
 
 /**
  * Simulates browser tab switching behavior
@@ -273,7 +278,7 @@ const RadixTestHelpers = {
    * Selects an option from a Radix Select/Dropdown component
    * Handles portal rendering and async state updates
    */
-  async selectRadixOption(triggerSelector: string, optionText: string): Promise<void> {
+  async selectRadixOption(triggerSelector: string | (() => Element), optionText: string): Promise<void> {
     // Find all combobox elements
     const comboboxes = Array.from(document.querySelectorAll('[role="combobox"]'))
 
@@ -285,11 +290,12 @@ const RadixTestHelpers = {
       trigger = comboboxes[0]
     } else {
       // Multiple dropdowns - try to find the right one
-      trigger = document.querySelector(triggerSelector) ||
-               comboboxes.find(el =>
-                 el.getAttribute('aria-label')?.includes(triggerSelector) ||
-                 el.textContent?.includes(triggerSelector)
-               )
+      const querySelectorResult = document.querySelector(triggerSelector)
+      const findResult = comboboxes.find(el =>
+        el.getAttribute('aria-label')?.includes(triggerSelector) ||
+        el.textContent?.includes(triggerSelector)
+      )
+      trigger = querySelectorResult || findResult || null
     }
 
     if (!trigger) {
@@ -380,12 +386,19 @@ const RadixTestHelpers = {
   /**
    * Gets selected value from Radix Select component
    */
-  getRadixSelectedValue(triggerSelector: string): string {
-    const trigger = document.querySelector(triggerSelector) ||
-                   Array.from(document.querySelectorAll('[role="combobox"]')).find(el =>
-                     el.getAttribute('aria-label')?.includes(triggerSelector) ||
-                     el.textContent?.includes(triggerSelector)
-                   )
+  getRadixSelectedValue(triggerSelector: string | (() => Element)): string {
+    let trigger: Element | null = null
+
+    if (typeof triggerSelector === 'function') {
+      trigger = triggerSelector()
+    } else {
+      const querySelectorResult = document.querySelector(triggerSelector)
+      const findResult = Array.from(document.querySelectorAll('[role="combobox"]')).find(el =>
+        el.getAttribute('aria-label')?.includes(triggerSelector) ||
+        el.textContent?.includes(triggerSelector)
+      )
+      trigger = querySelectorResult || findResult || null
+    }
 
     return trigger?.getAttribute('data-value') || trigger?.textContent || ''
   },
