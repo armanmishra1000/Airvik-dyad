@@ -8,13 +8,15 @@ import {
 } from "@/lib/api";
 import { RoomDetailsClientPage } from "./components/RoomDetailsClientPage";
 
+interface PageProps {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
 export default async function RoomDetailsPage({
   params,
   searchParams,
-}: {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+}: PageProps) {
   // Fetch all necessary data in parallel on the server
   const [
     roomTypeResult,
