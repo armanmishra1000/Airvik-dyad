@@ -63,11 +63,11 @@ export function RoomTypeCard({
             Select Room
           </Button>
         ) : (
-          <Button asChild>
+          <Button asChild className="h-10">
             <Link href={detailsLink}>View Details & Book</Link>
           </Button>
         )}
-        <Button asChild variant="link" className="text-sm">
+        <Button asChild variant="link" className="text-sm rounded-lg">
           <Link href={detailsLink}>View Room Details</Link>
         </Button>
       </CardFooter>
