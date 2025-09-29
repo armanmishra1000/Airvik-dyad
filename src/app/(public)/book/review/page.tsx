@@ -107,74 +107,82 @@ function BookingReviewContent() {
 
   async function onSubmit(values: z.infer<typeof paymentSchema>) {
     setIsProcessing(true);
+    try {
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+      // Find available physical rooms for the selection
+      const assignedRoomIds: string[] = [];
+      let allRoomsFound = true;
 
-    // Find available physical rooms for the selection
-    const assignedRoomIds: string[] = [];
-    let allRoomsFound = true;
+      for (const roomType of selectedRoomTypes) {
+        const roomsOfType = rooms.filter((r) => r.roomTypeId === roomType.id);
+        const availableRoom = roomsOfType.find((room) => {
+          // Check if this physical room is already assigned in this booking
+          if (assignedRoomIds.includes(room.id)) return false;
 
-    for (const roomType of selectedRoomTypes) {
-      const roomsOfType = rooms.filter((r) => r.roomTypeId === roomType.id);
-      const availableRoom = roomsOfType.find((room) => {
-        // Check if this physical room is already assigned in this booking
-        if (assignedRoomIds.includes(room.id)) return false;
+          // Check if this physical room has conflicting reservations
+          return !reservations.some(
+            (res) =>
+              res.roomId === room.id &&
+              res.status !== "Cancelled" &&
+              areIntervalsOverlapping(
+                { start: fromDate, end: toDate },
+                {
+                  start: parseISO(res.checkInDate),
+                  end: parseISO(res.checkOutDate),
+                }
+              )
+          );
+        });
 
-        // Check if this physical room has conflicting reservations
-        return !reservations.some(
-          (res) =>
-            res.roomId === room.id &&
-            res.status !== "Cancelled" &&
-            areIntervalsOverlapping(
-              { start: fromDate, end: toDate },
-              {
-                start: parseISO(res.checkInDate),
-                end: parseISO(res.checkOutDate),
-              }
-            )
-        );
+        if (availableRoom) {
+          assignedRoomIds.push(availableRoom.id);
+        } else {
+          allRoomsFound = false;
+          break;
+        }
+      }
+
+      if (!allRoomsFound) {
+        toast.error("One or more rooms are no longer available", {
+          description:
+            "Sorry, some rooms sold out for your selected dates while you were booking.",
+        });
+        setIsProcessing(false);
+        return;
+      }
+
+      const newGuest = await addGuest({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        phone: "",
       });
 
-      if (availableRoom) {
-        assignedRoomIds.push(availableRoom.id);
-      } else {
-        allRoomsFound = false;
-        break;
-      }
-    }
+      const newReservations = await addReservation({
+        guestId: newGuest.id,
+        roomIds: assignedRoomIds,
+        ratePlanId: ratePlan.id,
+        checkInDate: bookingDetails.from!,
+        checkOutDate: bookingDetails.to!,
+        numberOfGuests: Number(bookingDetails.guests),
+        status: "Confirmed",
+        notes: "Booked via public website.",
+        bookingDate: new Date().toISOString(),
+        source: "website",
+      });
 
-    if (!allRoomsFound) {
-      toast.error("One or more rooms are no longer available", {
+      // Redirect to the confirmation page of the first reservation in the group
+      router.push(`/book/confirmation/${newReservations[0].id}`);
+    } catch (error: any) {
+      console.error("Booking failed:", error);
+      toast.error("Booking Failed", {
         description:
-          "Sorry, some rooms sold out for your selected dates while you were booking.",
+          error.message || "An unexpected error occurred. Please try again or contact support.",
       });
       setIsProcessing(false);
-      return;
     }
-
-    const newGuest = await addGuest({
-      firstName: values.firstName,
-      lastName: values.lastName,
-      email: values.email,
-      phone: "",
-    });
-
-    const newReservations = await addReservation({
-      guestId: newGuest.id,
-      roomIds: assignedRoomIds,
-      ratePlanId: ratePlan.id,
-      checkInDate: bookingDetails.from!,
-      checkOutDate: bookingDetails.to!,
-      numberOfGuests: Number(bookingDetails.guests),
-      status: "Confirmed",
-      notes: "Booked via public website.",
-      bookingDate: new Date().toISOString(),
-      source: "website",
-    });
-
-    // Redirect to the confirmation page of the first reservation in the group
-    router.push(`/book/confirmation/${newReservations[0].id}`);
   }
 
   return (

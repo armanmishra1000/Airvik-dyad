@@ -7,7 +7,8 @@ import type {
   Reservation, Guest, ReservationStatus, FolioItem, HousekeepingAssignment, Room, RoomType,
   RatePlan, Property, User, Role, Amenity, StickyNote, DashboardComponentId
 } from "@/data/types";
-import { formatISO } from "date-fns";
+import { differenceInDays, formatISO, parseISO } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 const defaultProperty: Property = {
   id: "default-property-id",
@@ -114,12 +115,53 @@ export function useAppData() {
 
   const addReservation = async (payload: any) => {
     const { roomIds, ...rest } = payload;
-    const newReservationsData = roomIds.map((roomId: string) => ({ ...rest, room_id: roomId, guest_id: rest.guestId, rate_plan_id: rest.ratePlanId }));
+
+    const ratePlan = ratePlans.find(rp => rp.id === rest.ratePlanId);
+    if (!ratePlan) {
+      throw new Error(`Rate plan with ID ${rest.ratePlanId} not found.`);
+    }
+
+    const nights = differenceInDays(parseISO(rest.checkOutDate), parseISO(rest.checkInDate));
+    const totalAmount = nights * ratePlan.price;
+
+    const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+    const newReservationsData = roomIds.map((roomId: string) => ({
+      booking_id: bookingId,
+      guest_id: rest.guestId,
+      room_id: roomId,
+      rate_plan_id: rest.ratePlanId,
+      check_in_date: rest.checkInDate,
+      check_out_date: rest.checkOutDate,
+      number_of_guests: rest.numberOfGuests,
+      status: rest.status,
+      notes: rest.notes,
+      total_amount: totalAmount,
+      booking_date: rest.bookingDate,
+      source: rest.source,
+    }));
+
     const { data, error } = await api.addReservation(newReservationsData);
     if (error) throw error;
-    const reservationsWithEmptyFolio = data.map(r => ({ ...r, folio: [] }));
-    setReservations(prev => [...prev, ...reservationsWithEmptyFolio]);
-    return reservationsWithEmptyFolio;
+
+    const folioItemsToInsert = data.map((res: any) => ({
+      reservation_id: res.id,
+      description: `Room Charge - ${nights} night(s)`,
+      amount: res.total_amount,
+    }));
+
+    const { data: folioData, error: folioError } = await supabase.from('folio_items').insert(folioItemsToInsert).select();
+    if (folioError) {
+      console.error("Failed to create initial folio items:", folioError);
+    }
+
+    const reservationsWithFolios = data.map((res: any) => ({
+      ...res,
+      folio: folioData?.filter(item => item.reservation_id === res.id) || [],
+    }));
+
+    setReservations(prev => [...prev, ...reservationsWithFolios]);
+    return reservationsWithFolios;
   };
 
   const updateReservation = async (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => {
