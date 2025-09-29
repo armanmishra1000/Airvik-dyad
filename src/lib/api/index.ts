@@ -48,6 +48,40 @@ export const fromDbRoomType = (dbRoomType: any): RoomType => ({
     mainPhotoUrl: dbRoomType.main_photo_url,
 });
 
+const fromDbReservation = (dbReservation: any): Reservation => ({
+    id: dbReservation.id,
+    bookingId: dbReservation.booking_id,
+    guestId: dbReservation.guest_id,
+    roomId: dbReservation.room_id,
+    ratePlanId: dbReservation.rate_plan_id,
+    checkInDate: dbReservation.check_in_date,
+    checkOutDate: dbReservation.check_out_date,
+    numberOfGuests: dbReservation.number_of_guests,
+    status: dbReservation.status,
+    notes: dbReservation.notes,
+    folio: dbReservation.folio || [],
+    totalAmount: dbReservation.total_amount,
+    bookingDate: dbReservation.booking_date,
+    source: dbReservation.source,
+});
+
+const toDbReservation = (appReservation: Partial<Reservation>) => {
+    const dbData: { [key: string]: any } = {};
+    if (appReservation.bookingId) dbData.booking_id = appReservation.bookingId;
+    if (appReservation.guestId) dbData.guest_id = appReservation.guestId;
+    if (appReservation.roomId) dbData.room_id = appReservation.roomId;
+    if (appReservation.ratePlanId) dbData.rate_plan_id = appReservation.ratePlanId;
+    if (appReservation.checkInDate) dbData.check_in_date = appReservation.checkInDate;
+    if (appReservation.checkOutDate) dbData.check_out_date = appReservation.checkOutDate;
+    if (appReservation.numberOfGuests) dbData.number_of_guests = appReservation.numberOfGuests;
+    if (appReservation.status) dbData.status = appReservation.status;
+    if (appReservation.notes) dbData.notes = appReservation.notes;
+    if (appReservation.totalAmount) dbData.total_amount = appReservation.totalAmount;
+    if (appReservation.bookingDate) dbData.booking_date = appReservation.bookingDate;
+    if (appReservation.source) dbData.source = appReservation.source;
+    return dbData;
+};
+
 // --- File Upload Helper ---
 
 export const uploadFile = async (file: File) => {
@@ -97,9 +131,21 @@ export const updateGuest = async (id: string, updatedData: Partial<Guest>) => {
 export const deleteGuest = (id: string) => supabase.from('guests').delete().eq('id', id);
 
 // Reservations
-export const getReservations = () => supabase.from('reservations').select('*');
-export const addReservation = (reservationsData: any[]) => supabase.from('reservations').insert(reservationsData).select();
-export const updateReservation = (id: string, updatedData: Partial<Reservation>) => supabase.from('reservations').update(updatedData).eq('id', id).select().single();
+export const getReservations = async () => {
+    const { data, error, ...rest } = await supabase.from('reservations').select('*');
+    if (error || !data) return { data, error, ...rest };
+    return { data: data.map(fromDbReservation), error, ...rest };
+};
+export const addReservation = async (reservationsData: any[]) => {
+    const { data, error, ...rest } = await supabase.from('reservations').insert(reservationsData).select();
+    if (error || !data) return { data, error, ...rest };
+    return { data: data.map(fromDbReservation), error, ...rest };
+};
+export const updateReservation = async (id: string, updatedData: Partial<Reservation>) => {
+    const { data, error, ...rest } = await supabase.from('reservations').update(toDbReservation(updatedData)).eq('id', id).select().single();
+    if (error || !data) return { data, error, ...rest };
+    return { data: fromDbReservation(data), error, ...rest };
+};
 export const updateReservationStatus = (id: string, status: string) => supabase.from('reservations').update({ status }).eq('id', id);
 
 // Folio Items

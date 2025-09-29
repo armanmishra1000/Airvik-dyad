@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+
+AGENT_QUALITY_VERIFICATION_CHECKLIST.md
+MODAL_TESTING_AGENT_INSTRUCTIONS.md
+SENIOR_TESTING_LEAD_CONTEXT.md
+TEST_VERIFICATION_AmenityFormDialog.md
+TEST_VERIFICATION_AssignHousekeeperDialog.md
+TEST_VERIFICATION_RatePlanFormDialog.md
+TEST_VERIFICATION_RecordPaymentDialog.md
+TEST_VERIFICATION_UpdateStatusDialog.md
+TEST_VERIFICATION_UserFormDialog.md
+TESTING_STRATEGY.md
+__tests__
