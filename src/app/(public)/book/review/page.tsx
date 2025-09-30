@@ -136,6 +136,7 @@
 //   const toDate = parse(bookingDetails.to, "yyyy-MM-dd", new Date());
 //   const nights = differenceInDays(toDate, fromDate);
 //   const totalCost = selectedRoomTypes.length * nights * (ratePlan?.price || 0);
+//   const firstRoomType = selectedRoomTypes[0];
 
 //   async function onSubmit(values: z.infer<typeof paymentSchema>) {
 //     setIsProcessing(true);
@@ -229,13 +230,13 @@
 //           <Card>
 //             <CardContent className="p-0">
 //               <div className="relative h-56 w-full">
-//                 {/* room image */}
 //                 <Image
 //                   src={
-//                     property.photos?.[0] ||
-//                     "/shri-swaminarayan-aashram-rishikesh-ho-rishikesh-dharamshalas-wye22iy.webp"
+//                     firstRoomType?.mainPhotoUrl ||
+//                     firstRoomType?.photos?.[0] ||
+//                     "/room-placeholder.svg"
 //                   }
-//                   alt={property.name}
+//                   alt={firstRoomType?.name || property.name}
 //                   fill
 //                   className="object-cover rounded-t-lg"
 //                 />
@@ -638,8 +639,9 @@ function BookingReviewContent() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-[70vh] gap-2">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="text-primary text-xl">Loading...</p>
       </div>
     );
   }
@@ -754,12 +756,13 @@ function BookingReviewContent() {
       <h1 className="lg:text-3xl sm:text-2xl text-lg font-bold font-serif mb-6 text-center">
         Review Your Booking
       </h1>
-      <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {/* Booking Summary - Right Side */}
         <div className="space-y-6">
           <Card>
             <CardContent className="p-0">
-              <div className="relative h-56 w-full">
+              <div className="relative h-52 w-full">
+                {/* room image */}
                 <Image
                   src={
                     firstRoomType?.mainPhotoUrl ||
@@ -773,7 +776,7 @@ function BookingReviewContent() {
               </div>
               <div className="p-4 space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="bg-yellow-400 p-1 rounded-sm">
+                  <div className="bg-primary p-1 rounded-md">
                     <ThumbsUp className="h-4 w-4 text-white" />
                   </div>
                   <h3 className="text-lg font-bold">SAHAJANAND WELLNESS</h3>
@@ -1057,4 +1060,5 @@ export default function BookingReviewPage() {
     </React.Suspense>
   );
 }
+
 

@@ -176,12 +176,12 @@
 //                     <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
 //                     <span>
 //                       Street No.12, Shisham Jhadi, Muni Ki Reti, Near Ganga
-//                       Kinare, Rishikesh U.K . Pin Code: 249201
+//                       Kinare, Rishikesh U.K Pin Code: 249201
 //                     </span>
 //                   </div>
 //                   <div className="flex items-center gap-3 text-muted-foreground">
 //                     <Phone className="h-4 w-4" />
-//                     <span>{property.phone}</span>
+//                     <span>+91 8511151708</span>
 //                   </div>
 //                   <div className="aspect-video w-full overflow-hidden rounded-lg border mt-4">
 //                     <iframe
@@ -296,9 +296,9 @@ export default function BookingConfirmationPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             {/* Left column: Reservation Details */}
-            <div className="md:col-span-2">
+            <div>
               <Card className="h-full">
                 <CardHeader>
                   <CardTitle>Your Reservation</CardTitle>
@@ -396,7 +396,7 @@ export default function BookingConfirmationPage() {
             </div>
 
             {/* Right column: Hotel Info & What's Next */}
-            <div className="md:col-span-1">
+            <div>
               <Card className="h-full">
                 <CardHeader>
                   <CardTitle>Hotel Information</CardTitle>
@@ -412,7 +412,7 @@ export default function BookingConfirmationPage() {
                   </div>
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <Phone className="h-4 w-4" />
-                    <span>+91 8511151708</span>
+                    <span>{property.phone}</span>
                   </div>
                   <div className="aspect-video w-full overflow-hidden rounded-lg border mt-4">
                     <iframe
