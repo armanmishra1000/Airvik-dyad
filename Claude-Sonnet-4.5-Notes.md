@@ -262,5 +262,5 @@ The model is positioned as a powerful tool for developers, businesses, and resea
 
 ---
 
-*Last Updated: September 2025*
+*Last Updated:30,September 2025*
 *Source: Anthropic Official Announcement*
