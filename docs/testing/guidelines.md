@@ -20,8 +20,8 @@
   - `pnpm test:details <file>` — shows uncovered functions/lines for a specific file.
 
 ## Preparing a Claude Prompt
-1. Run `pnpm test:backlog` to identify low-coverage files.
-2. For a target file, run `pnpm test:details <relative path>` and copy the summary.
+1. Run `pnpm test:backlog` to identify low-coverage files and update `docs/testing/backlog.md` with the refreshed snapshot.
+2. For the chosen file from the backlog, run `pnpm test:details <relative path>` and copy the summary.
 3. Open the relevant template in `prompts.md` and fill in:
    - File path + responsibilities.
    - Critical behaviours / edge cases (hospitality domain specifics encouraged).
@@ -45,6 +45,13 @@
 ## Verification Checklist
 - [ ] `pnpm test` — fast sanity check for the touched suites.
 - [ ] `pnpm test:coverage` — ensure thresholds (≥85%) hold.
-- [ ] `pnpm test:backlog` — confirm backlog shrinks or remains stable.
+- [ ] `pnpm test:backlog` — confirm backlog shrinks or remains stable, then refresh `docs/testing/backlog.md`.
 - [ ] `pnpm test:details <file>` — validate function/line gaps closed before finalising prompts.
 - [ ] Update `context.md` with noteworthy learnings or adjustments.
+
+## Human + AI Collaboration Loop
+1. Droid curates one prompt at a time in `docs/testing/prompts.md` (no multitargeting).
+2. Human partner sends that prompt to Claude, applies the returned suite, and runs `pnpm test` / `pnpm test:coverage` (and any requested scripts).
+3. Human posts the raw command output back to Droid.
+4. Droid performs failure analysis, updates documentation/prompts to close gaps, and only then prepares the next prompt.
+5. Once a suite passes locally, refresh `docs/testing/backlog.md` and rotate to the next highest priority file.

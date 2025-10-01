@@ -29,6 +29,7 @@
 ## Companion Documents
 - `guidelines.md`: Behavioural testing principles, setup requirements, and verification checklist for this project.
 - `prompts.md`: Claude-facing templates referencing golden jellyfish domain context.
+- `backlog.md`: Snapshot of uncovered files, prioritised queue, and maintenance cadence tied to `pnpm test:backlog`.
 - This `context.md`: evolving record of decisions, rationale, and outstanding actions.
 
 ## Working Agreement & Workflow
@@ -37,7 +38,14 @@
 3. Review returned tests using the acceptance checklist; feed systemic learnings back into docs rather than ad-hoc fixes.
 4. Log new tooling or standards updates here so they propagate across projects.
 
+### Human-in-the-loop Authoring Loop
+1. Droid prepares a single-file testing prompt (in `prompts.md`) informed by `pnpm test:details` and the backlog.
+2. Human partner copies that prompt to the Claude agent, runs the generated suite locally, and shares terminal output.
+3. Droid reviews results, diagnoses failures, patches gaps (docs, prompts, or code fixes), and only then advances to the next file.
+4. Repeat until backlog is exhausted, ensuring each iteration updates `context.md`, `guidelines.md`, and `backlog.md` with new learnings and priorities.
+
 ## Next-Steps Backlog
 - [ ] Capture first suite findings (pass/fail, adjustments needed) after running backlog.
 - [ ] Extend MSW handlers as APIs evolve.
 - [ ] Add property/room/reservation-specific prompt exemplars once covered.
+- [ ] Keep `backlog.md` refreshed after each suite merge (update date, priority table, target file).
