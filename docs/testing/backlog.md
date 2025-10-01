@@ -26,12 +26,15 @@ Focus on high-signal hospitality workflows first. The table below captures the h
 > Tip: When two files tie on counts, prioritise hospitality-critical guest flows before admin utilities.
 
 ## Target in Progress
-- **File:** `src/app/(app)/dashboard/components/StickyNoteFormDialog.tsx`
-- **Reasoning:** Enables end-to-end validation of the sticky note workflow (create/edit) with manageable surface area, while still touching hospitality-specific behaviours (context providers, toast feedback, zod validation).
+- **File:** `src/app/(app)/reservations/components/columns.tsx`
+- **Reasoning:** Pure table-shaping logic that drives reservation list behaviours; covering it unlocks confident regression detection for admin workflows.
 - **Next Steps:**
-  1. Run `pnpm test:details src/app/(app)/dashboard/components/StickyNoteFormDialog.tsx` to capture uncovered functions/lines before prompting.
-  2. Fill the dedicated template block in `docs/testing/prompts.md` and hand it to the Claude agent for suite generation.
-  3. After tests land, update this backlog entry with coverage deltas and promote the next highest priority target (e.g., `use-app-data`).
+  1. Run `pnpm test:details "src/app/(app)/reservations/components/columns.tsx"` (captured 2025-10-01) and feed summary into the prompt template.
+  2. Prompt Claude using the standard template (update file path + function list only), apply the suite, and verify via `pnpm test`.
+  3. Once coverage lands, move this entry to Recently Closed and promote the next priority target (e.g., `use-app-data`).
+
+## Recently Closed
+- ✅ `src/app/(app)/dashboard/components/StickyNoteFormDialog.tsx` — 13-test suite merged locally on 2025-10-01 covering create/edit flows, validation, and toast feedback.
 
 ## Maintenance Guidelines
 - **Cadence:** Refresh backlog weekly or after any significant feature merge (per AIMultiple & BugBug guidance on proactive maintenance).

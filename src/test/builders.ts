@@ -7,6 +7,7 @@ import type {
   Room,
   RoomStatus,
   RoomType,
+  StickyNote,
   User,
 } from "@/data/types";
 import { allPermissions } from "@/data/types";
@@ -19,6 +20,7 @@ let roomSequence = 1;
 let reservationSequence = 1;
 let guestSequence = 1;
 let folioSequence = 1;
+let stickyNoteSequence = 1;
 
 export const resetBuilderSequences = () => {
   roleSequence = 1;
@@ -29,6 +31,7 @@ export const resetBuilderSequences = () => {
   reservationSequence = 1;
   guestSequence = 1;
   folioSequence = 1;
+  stickyNoteSequence = 1;
 };
 
 export const buildRole = (overrides: Partial<Role> = {}): Role => {
@@ -182,6 +185,23 @@ export const buildReservation = (
   };
 
   reservationSequence += 1;
+
+  return { ...base, ...overrides };
+};
+
+export const buildStickyNote = (overrides: Partial<StickyNote> = {}): StickyNote => {
+  const colors: Array<'yellow' | 'pink' | 'blue' | 'green'> = ['yellow', 'pink', 'blue', 'green'];
+  const color = colors[(stickyNoteSequence - 1) % colors.length];
+
+  const base: StickyNote = {
+    id: overrides.id ?? `sticky-note-${stickyNoteSequence}`,
+    title: overrides.title ?? `Note ${stickyNoteSequence}`,
+    description: overrides.description,
+    color: overrides.color ?? color,
+    createdAt: overrides.createdAt ?? new Date().toISOString(),
+  };
+
+  stickyNoteSequence += 1;
 
   return { ...base, ...overrides };
 };

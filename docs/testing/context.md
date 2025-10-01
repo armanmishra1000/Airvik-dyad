@@ -42,7 +42,26 @@
 1. Droid prepares a single-file testing prompt (in `prompts.md`) informed by `pnpm test:details` and the backlog.
 2. Human partner copies that prompt to the Claude agent, runs the generated suite locally, and shares terminal output.
 3. Droid reviews results, diagnoses failures, patches gaps (docs, prompts, or code fixes), and only then advances to the next file.
-4. Repeat until backlog is exhausted, ensuring each iteration updates `context.md`, `guidelines.md`, and `backlog.md` with new learnings and priorities.
+4. After each review cycle, mark the completed file in `backlog.md` (move to Recently Closed) and rerun `pnpm test:backlog` before selecting the next target.
+5. Repeat until backlog is exhausted, ensuring each iteration updates `context.md`, `guidelines.md`, and `backlog.md` with new learnings and priorities.
+
+### Prompt Construction Checklist (for Droid)
+1. Run `pnpm test:details <file>` to copy the uncovered function list.
+2. Open `prompts.md` and:
+   - Leave the global instructions untouched.
+   - Replace the **File under test** line with the relative path.
+   - Replace the bullet list under **Functions to cover** with the exact behaviours/line spans from `test:details` (convert anonymous entries into readable descriptions).
+   - If the module requires additional stubs (router, context, toasts), add a one-line note under the function bullets.
+3. Do **not** add bespoke scenario text—keep the template reusable.
+4. Save the prompt, then notify the human partner to copy/paste into Claude.
+
+### Current Status Snapshot (2025-10-01)
+- ✅ `StickyNoteFormDialog` suite authored and passing (13 tests).
+- ⏭️ Next focus: `src/app/(app)/reservations/components/columns.tsx` per backlog priority.
+
+### Latest Review Learnings
+- Clipboard side-effects must be exercised—menu items such as "Copy booking ID" require explicit `navigator.clipboard.writeText` assertions.
+- Avoid class-name scraping for icons/tooltip checks; rely on semantic queries (role, label, text) per Testing Library guidance.
 
 ## Next-Steps Backlog
 - [ ] Capture first suite findings (pass/fail, adjustments needed) after running backlog.

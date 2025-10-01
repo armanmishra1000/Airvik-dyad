@@ -22,10 +22,7 @@
 ## Preparing a Claude Prompt
 1. Run `pnpm test:backlog` to identify low-coverage files and update `docs/testing/backlog.md` with the refreshed snapshot.
 2. For the chosen file from the backlog, run `pnpm test:details <relative path>` and copy the summary.
-3. Open the relevant template in `prompts.md` and fill in:
-   - File path + responsibilities.
-   - Critical behaviours / edge cases (hospitality domain specifics encouraged).
-   - Function details section with the coverage summary.
+3. Open the template in `prompts.md`, update the file path and function coverage bullets only, and append any mock notes if absolutely required.
 4. Submit to Claude, then verify returned tests via checklist below.
 
 ## AAA Flow Checklist
@@ -38,9 +35,11 @@
 - [ ] Builders or realistic objects used (no unexplained magic constants).
 - [ ] Minimal mocking (only external services); MSW overrides scoped per test.
 - [ ] Semantic assertions; `getByTestId` only if unavoidable.
+- [ ] No reliance on class names / querySelector hacks—prefer role, label, text, or tooltip content per Testing Library docs.
 - [ ] Edge/negative case included.
 - [ ] `pnpm test:backlog` reflects improved coverage for touched files.
 - [ ] No trivial assertions; coverage gains are meaningful.
+- [ ] All callbacks surfaced by the component (e.g., router pushes, clipboard writes, table meta handlers) are triggered and asserted.
 
 ## Verification Checklist
 - [ ] `pnpm test` — fast sanity check for the touched suites.
