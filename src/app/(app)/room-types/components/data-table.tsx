@@ -28,6 +28,11 @@ import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
 import type { RoomType } from "@/data/types"
 
+/**
+ * Renders a sortable, paginated table of room types with controls to add new types and confirm deletions.
+ *
+ * @returns The rendered table UI including header, rows, pagination, an add button (when permitted), and the delete confirmation dialog.
+ */
 export function RoomTypesDataTable<TData extends RoomType, TValue>({
   columns,
   data,

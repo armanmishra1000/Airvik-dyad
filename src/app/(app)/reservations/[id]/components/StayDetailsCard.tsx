@@ -17,6 +17,15 @@ interface StayDetailsCardProps {
   reservation: ReservationWithDetails;
 }
 
+/**
+ * Renders a card showing key information about a guest's stay.
+ *
+ * Displays check-in and check-out dates, number of nights, guest count, room number and type,
+ * rate plan name, and — when present — reservation notes.
+ *
+ * @param reservation - Reservation details to display in the card
+ * @returns A JSX element containing the stay details card
+ */
 export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
   const { roomTypes, ratePlans, rooms } = useDataContext();
   const roomType = roomTypes.find(

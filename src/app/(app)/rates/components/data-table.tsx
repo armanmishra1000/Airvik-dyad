@@ -28,6 +28,16 @@ import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
 import type { RatePlan } from "@/data/types"
 
+/**
+ * Render a data table for rate plans with sorting, pagination, add button, and delete confirmation.
+ *
+ * Renders headers and rows based on the provided column definitions and data, manages local sorting state,
+ * opens a form dialog for creating a rate plan when permitted, and handles deletion with a confirmation dialog and toast feedback.
+ *
+ * @param columns - Column definitions used to render table headers and cells
+ * @param data - Array of rate plans to display in the table
+ * @returns The React element containing the rate plans data table and associated dialogs
+ */
 export function RatePlansDataTable<TData extends RatePlan, TValue>({
   columns,
   data,

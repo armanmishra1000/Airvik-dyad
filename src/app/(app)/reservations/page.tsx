@@ -7,6 +7,13 @@ import { columns, ReservationWithDetails } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { useDataContext } from "@/context/data-context";
 
+/**
+ * Renders the reservations page containing a table of reservations grouped by booking.
+ *
+ * The component augments reservations with guest name, room number, and night count; groups reservations sharing a bookingId into parent rows with aggregated totals; and supplies handlers to cancel, check in, and check out reservations which update status and show success toasts.
+ *
+ * @returns The React element for the reservations page displaying the grouped reservations table.
+ */
 export default function ReservationsPage() {
   const { reservations, guests, updateReservationStatus, rooms } = useDataContext();
 

@@ -39,6 +39,16 @@ interface DataTableProps<TData, TValue> {
   onCheckOutReservation: (reservationId: string) => void
 }
 
+/**
+ * Render a configurable data table for reservations with sorting, filtering, pagination, column visibility, row expansion, and grouped reservation actions.
+ *
+ * @param columns - Column definitions used to render table headers and cells
+ * @param data - Array of data rows to display in the table
+ * @param onCancelReservation - Callback invoked with a reservation id when a reservation (or each sub-reservation) should be cancelled
+ * @param onCheckInReservation - Callback invoked with a reservation id when a reservation (or each sub-reservation) should be checked in
+ * @param onCheckOutReservation - Callback invoked with a reservation id when a reservation (or each sub-reservation) should be checked out
+ * @returns The DataTable React element
+ */
 export function DataTable<TData, TValue>({
   columns,
   data,

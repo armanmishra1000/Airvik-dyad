@@ -44,6 +44,13 @@ interface RecordPaymentDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Renders a dialog that collects an amount and payment method, then records the payment to a reservation folio.
+ *
+ * @param reservationId - The ID of the reservation to which the payment will be added
+ * @param children - Trigger element(s) that open the "Record Payment" dialog when clicked
+ * @returns The dialog UI that manages form state and submits a folio payment item
+ */
 export function RecordPaymentDialog({
   reservationId,
   children,

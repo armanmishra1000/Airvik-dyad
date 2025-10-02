@@ -7,6 +7,15 @@ import { StickyNoteCard } from "./StickyNoteCard";
 import { StickyNoteFormDialog } from "./StickyNoteFormDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+/**
+ * Render a "Sticky Notes" card with an add-note control and the current list of sticky notes.
+ *
+ * The card header includes a title and a button that opens the note creation dialog. The card
+ * content displays a responsive grid of StickyNoteCard components when notes exist, or a
+ * centered empty-state message when there are no notes.
+ *
+ * @returns A React element for the sticky notes card: a responsive grid of notes when `stickyNotes` contains items, otherwise a centered prompt to add a note.
+ */
 export function DashboardStickyNotes() {
   const { stickyNotes } = useDataContext();
 

@@ -7,6 +7,14 @@ import {
 import { OccupancyReport } from "./components/occupancy-report";
 import { RevenueReport } from "./components/revenue-report";
 
+/**
+ * Render the Reports page UI with a header and tabbed views for available reports.
+ *
+ * The component displays a "Reports" heading, a subtitle, and a tabbed interface
+ * with an Occupancy Report and Revenue Report. A "Guests" tab is shown but disabled.
+ *
+ * @returns The React element for the reports page containing the header and tabs.
+ */
 export default function ReportsPage() {
   return (
     <div className="space-y-6">

@@ -41,6 +41,14 @@ const rotations = [
   "transform rotate-3",
 ];
 
+/**
+ * Renders a sticky note card for the given note, including header controls to edit or delete the note.
+ *
+ * The card shows the note's title and optional description, displays the relative creation time only after the component has mounted, and provides an edit dialog and a delete action that removes the note and shows a success toast.
+ *
+ * @param note - The sticky note data used to populate the card (title, description, color, id, createdAt).
+ * @returns The rendered sticky note card element.
+ */
 export function StickyNoteCard({ note }: StickyNoteCardProps) {
   const { deleteStickyNote } = useDataContext();
   const [hasMounted, setHasMounted] = React.useState(false);

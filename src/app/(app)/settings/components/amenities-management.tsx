@@ -12,6 +12,13 @@ import { useDataContext } from "@/context/data-context";
 import { AmenitiesDataTable } from "./amenities-data-table";
 import { columns } from "./amenities-columns";
 
+/**
+ * Renders a management card for amenities.
+ *
+ * Displays a Card with a title, description, and a data table populated with amenities from the data context.
+ *
+ * @returns A JSX element containing the amenities management Card and its contents.
+ */
 export function AmenitiesManagement() {
   const { amenities } = useDataContext();
 

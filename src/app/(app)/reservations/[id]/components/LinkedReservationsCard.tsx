@@ -21,6 +21,12 @@ interface LinkedReservationsCardProps {
   reservation: Reservation;
 }
 
+/**
+ * Display a card listing other reservations that share the same booking as the given reservation.
+ *
+ * @param reservation - The reservation whose booking group will be used to find linked reservations
+ * @returns A Card containing a table of other reservations with the same `bookingId`, or `null` if none exist
+ */
 export function LinkedReservationsCard({ reservation }: LinkedReservationsCardProps) {
   const { reservations: allReservations, rooms, roomTypes } = useDataContext();
 

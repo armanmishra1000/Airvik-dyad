@@ -51,6 +51,11 @@ import {
   import { DashboardStickyNotes } from "./components/DashboardStickyNotes";
   import { DraggableCard } from "./components/DraggableCard";
   
+  /**
+   * Render the dashboard page with configurable, draggable widgets and an edit/save layout control.
+   *
+   * @returns The React element for the dashboard page containing occupancy stats, arrivals/departures tables, sticky notes, calendar, and drag-and-drop layout controls.
+   */
   export default function DashboardPage() {
     const { reservations, guests, dashboardLayout, updateDashboardLayout, rooms } = useDataContext();
     const [isEditing, setIsEditing] = React.useState(false);

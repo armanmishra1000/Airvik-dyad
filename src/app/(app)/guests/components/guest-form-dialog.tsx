@@ -40,6 +40,15 @@ interface GuestFormDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Renders a modal dialog containing a guest form that can create a new guest or edit an existing one.
+ *
+ * The form initializes with `guest` values when provided; submitting the form will call the data context to add or update the guest, show a success or error toast, reset the form, and close the dialog on success.
+ *
+ * @param guest - Optional guest object; when provided the dialog operates in edit mode and pre-fills the form fields.
+ * @param children - Trigger element rendered as the dialog trigger.
+ * @returns The GuestFormDialog React element that presents the add/edit guest form inside a modal dialog.
+ */
 export function GuestFormDialog({
   guest,
   children,

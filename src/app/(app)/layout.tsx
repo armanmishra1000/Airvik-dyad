@@ -8,6 +8,12 @@ import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/auth-context";
 import { AppSkeleton } from "@/components/layout/app-skeleton";
 
+/**
+ * Renders the application layout for authenticated users, including the sidebar, header, and main content area.
+ *
+ * @param children - Content to be displayed inside the layout's main area.
+ * @returns The layout JSX that wraps authenticated pages. Renders AppSkeleton while authentication is loading and returns `null` when unauthenticated (a redirect is initiated).
+ */
 export default function AppLayout({
   children,
 }: {

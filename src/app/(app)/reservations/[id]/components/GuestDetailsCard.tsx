@@ -16,6 +16,15 @@ interface GuestDetailsCardProps {
   guest?: Guest;
 }
 
+/**
+ * Render a card displaying the primary guest's details and a link to their profile.
+ *
+ * Shows the guest's full name, email, and phone number (or "Not provided" when phone is missing).
+ * When `guest` is not supplied, renders a fallback card with a "Guest details not found." message.
+ *
+ * @param guest - The guest to display; if omitted, a fallback view is rendered.
+ * @returns A Card element containing guest information or a fallback message.
+ */
 export function GuestDetailsCard({ guest }: GuestDetailsCardProps) {
   if (!guest) {
     return (

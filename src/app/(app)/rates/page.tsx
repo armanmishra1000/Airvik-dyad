@@ -4,6 +4,11 @@ import { useDataContext } from "@/context/data-context";
 import { columns } from "./components/columns";
 import { RatePlansDataTable } from "./components/data-table";
 
+/**
+ * Renders the Rates page containing a data table of rate plans.
+ *
+ * @returns A React element with a vertically spaced container that renders the rate plans data table.
+ */
 export default function RatesPage() {
   const { ratePlans } = useDataContext();
 

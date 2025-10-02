@@ -38,6 +38,13 @@ const statusStyles: {
   Maintenance: { variant: "outline", label: "Maintenance" },
 };
 
+/**
+ * Render a card showing a room's status, current assignment (when applicable), and available actions.
+ *
+ * @param room - The room data to display, including derived fields (`roomTypeName`, optional `assignment`, and optional `housekeeperName`)
+ * @param onStatusUpdate - Callback invoked with the room's id and the newly selected status when the status is changed
+ * @returns The card element representing the room's status, assignment information, and action controls
+ */
 export function RoomStatusCard({ room, onStatusUpdate }: RoomStatusCardProps) {
   const { variant, label } = statusStyles[room.status];
 

@@ -11,6 +11,14 @@ interface DataTableToolbarProps<TData> {
   table: Table<TData>
 }
 
+/**
+ * Renders a toolbar with filtering and action controls for the given table.
+ *
+ * The toolbar binds an input to the table's "guestName" column filter, conditionally renders a faceted "status" filter if that column exists, and provides view options and a create-reservation dialog.
+ *
+ * @param table - Table instance whose columns and filter state are used by the toolbar controls.
+ * @returns A JSX element containing the toolbar controls for the provided table.
+ */
 export function DataTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {

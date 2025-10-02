@@ -41,6 +41,21 @@ interface RatePlanFormDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Renders a dialog containing a form to create or edit a rate plan.
+ *
+ * The dialog is controlled internally and opened by rendering `children` as the trigger.
+ * When `ratePlan` is provided the form is populated for editing and submission updates
+ * the existing rate plan; otherwise submission creates a new rate plan.
+ *
+ * The form collects: name, price (per night), minimum stay (nights), and cancellation policy.
+ * Validation: name is required and non-empty, price must be greater than or equal to 0,
+ * and minimum stay must be greater than or equal to 1.
+ *
+ * @param ratePlan - Optional existing rate plan to edit; when omitted the form creates a new rate plan.
+ * @param children - Trigger element(s) that open the dialog when interacted with.
+ * @returns The dialog element containing the rate plan form and trigger. 
+ */
 export function RatePlanFormDialog({
   ratePlan,
   children,

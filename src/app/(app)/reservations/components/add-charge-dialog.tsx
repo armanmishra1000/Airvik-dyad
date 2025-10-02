@@ -37,6 +37,16 @@ interface AddChargeDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Dialog component that collects and submits a new folio charge for a reservation.
+ *
+ * Validates input against the charge schema, calls `addFolioItem` with the reservation ID and form values,
+ * shows a success toast on completion, resets the form, and closes the dialog.
+ *
+ * @param reservationId - The reservation identifier to which the new charge will be posted.
+ * @param children - Element(s) used as the dialog trigger.
+ * @returns The rendered dialog element.
+ */
 export function AddChargeDialog({
   reservationId,
   children,

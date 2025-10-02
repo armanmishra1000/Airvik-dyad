@@ -50,6 +50,16 @@ interface RoomFormDialogProps {
 
 const statuses: RoomStatus[] = ["Clean", "Dirty", "Inspected", "Maintenance"];
 
+/**
+ * Renders a dialog containing a form to create a new room or edit an existing one.
+ *
+ * The form is prefilled when `room` is provided. On submit it calls the data context to add or
+ * update the room, shows a success or error toast, resets the form, and closes the dialog.
+ *
+ * @param room - Optional existing room to edit; when omitted the dialog creates a new room.
+ * @param children - Trigger element(s) that open the dialog when interacted with.
+ * @returns A React element that displays the add/edit room dialog and its form.
+ */
 export function RoomFormDialog({
   room,
   children,
