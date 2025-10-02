@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
   webpack: (config) => {
     if (process.env.NODE_ENV === "development") {
       config.module.rules.push({

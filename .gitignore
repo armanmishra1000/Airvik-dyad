@@ -53,3 +53,12 @@ TEST_VERIFICATION_UpdateStatusDialog.md
 TEST_VERIFICATION_UserFormDialog.md
 TESTING_STRATEGY.md
 __tests__
+
+
+.mcp.json
+setup-searxng-docker.ps1
+Claude-Sonnet-4.5-Notes.md
+
+
+.claude/
+.claude/settings.local.json
