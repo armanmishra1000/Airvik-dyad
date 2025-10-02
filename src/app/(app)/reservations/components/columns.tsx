@@ -1,6 +1,6 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, Table } from "@tanstack/react-table"
 import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User, ChevronDown, ChevronRight } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
@@ -54,7 +54,7 @@ export const statuses = [
     { value: "No-show", label: "No-show", icon: AlertCircle },
   ]
 
-function ReservationActions({ reservation, table }: { reservation: ReservationWithDetails; table: any }) {
+function ReservationActions({ reservation, table }: { reservation: ReservationWithDetails; table: Table<ReservationWithDetails> }) {
   const router = useRouter();
   const status = reservation.status;
 

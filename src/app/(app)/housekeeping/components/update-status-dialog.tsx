@@ -57,7 +57,7 @@ export function UpdateStatusDialog({
         </DialogHeader>
         <div className="py-4">
           <RadioGroup
-            defaultValue={room.status}
+            value={selectedStatus}
             onValueChange={(value: RoomStatus) => setSelectedStatus(value)}
           >
             {availableStatuses.map((status) => (
