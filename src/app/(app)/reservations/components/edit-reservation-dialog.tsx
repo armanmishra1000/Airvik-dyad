@@ -69,6 +69,17 @@ interface EditReservationDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Render a modal dialog for editing an existing reservation.
+ *
+ * Presents a form populated with the reservation's current values (guest, date range,
+ * room, number of guests, notes) and allows updating them. On successful submission
+ * the reservation is updated via the data context and the dialog is closed.
+ *
+ * @param reservation - The reservation object to edit (pre-populates the form).
+ * @param children - React node used as the trigger for opening the dialog.
+ * @returns The Edit Reservation dialog element.
+ */
 export function EditReservationDialog({
   reservation,
   children,

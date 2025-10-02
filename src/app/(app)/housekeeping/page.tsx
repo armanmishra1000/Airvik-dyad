@@ -8,6 +8,15 @@ import { HousekeepingToolbar } from "./components/housekeeping-toolbar";
 import { RoomStatusCard } from "./components/room-status-card";
 import { useDataContext } from "@/context/data-context";
 
+/**
+ * Render the housekeeping dashboard with a status filter and room status cards.
+ *
+ * The component computes per-room details (room type name, today's assignment, and housekeeper name),
+ * supports filtering by room status, and updates room status—marking today's assignment completed when a room
+ * becomes `Clean`. It also displays an empty-state message when no rooms match the selected filter.
+ *
+ * @returns The component's JSX element containing the toolbar, a responsive grid of room status cards, and an empty-state message when applicable.
+ */
 export default function HousekeepingPage() {
   const {
     housekeepingAssignments,

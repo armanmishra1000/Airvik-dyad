@@ -17,6 +17,16 @@ interface DataTableViewOptionsProps<TData> {
   table: Table<TData>
 }
 
+/**
+ * Renders a "View" dropdown UI that lets users toggle visibility of table columns.
+ *
+ * Renders a button which opens a dropdown containing a checkbox for each column
+ * that has an accessor function and can be hidden; checking a box shows the
+ * column and unchecking hides it.
+ *
+ * @param table - Table instance whose columns will be listed and toggled
+ * @returns A React element containing the dropdown menu for column visibility controls
+ */
 export function DataTableViewOptions<TData>({
   table,
 }: DataTableViewOptionsProps<TData>) {

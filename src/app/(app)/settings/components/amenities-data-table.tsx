@@ -27,6 +27,13 @@ import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmatio
 import { useDataContext } from "@/context/data-context"
 import type { Amenity } from "@/data/types"
 
+/**
+ * Renders a sortable, paginated table of amenities with controls to add new amenities and confirm deletions.
+ *
+ * @param columns - Column definitions for the table.
+ * @param data - Array of amenity records to display.
+ * @returns The rendered component containing the amenities table, pagination controls, an "Add Amenity" dialog trigger, and a delete confirmation dialog.
+ */
 export function AmenitiesDataTable<TData extends Amenity, TValue>({
   columns,
   data,

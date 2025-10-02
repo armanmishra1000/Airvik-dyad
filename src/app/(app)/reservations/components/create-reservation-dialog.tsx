@@ -62,6 +62,16 @@ const reservationSchema = z.object({
     .min(1, "At least one guest is required."),
 });
 
+/**
+ * Render a dialog UI for creating a new reservation.
+ *
+ * The component provides a validated form to select a guest, pick a check-in/check-out date range,
+ * choose available rooms for that range, and set the number of guests. It computes room availability
+ * from current reservations, submits a new reservation to the data context on save, shows a success
+ * toast, resets the form, and closes the dialog.
+ *
+ * @returns A JSX element containing the Create Reservation dialog and its form.
+ */
 export function CreateReservationDialog() {
   const [open, setOpen] = React.useState(false);
   const { reservations, addReservation, guests, rooms, ratePlans, roomTypes } = useDataContext();

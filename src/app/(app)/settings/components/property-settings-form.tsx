@@ -39,6 +39,13 @@ const propertySchema = z.object({
   google_maps_url: z.string().url("Please enter a valid Google Maps embed URL."),
 });
 
+/**
+ * Renders a property details form with validation, live Google Maps preview, and immediate-save behavior.
+ *
+ * The form is initialized from the current property context and resets when the context changes. Submitting the form updates the property (converting the comma-separated `photos` string into an array and defaulting `logo_url` to an empty string when absent) and shows a success toast.
+ *
+ * @returns A JSX element containing the Property Details form UI.
+ */
 export function PropertySettingsForm() {
   const { property, updateProperty } = useDataContext();
 

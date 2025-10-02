@@ -46,6 +46,18 @@ interface RoomTypeFormDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Renders a dialog-based form for creating or editing a room type.
+ *
+ * The dialog contains fields for name, description, max occupancy, bed types,
+ * selectable amenities, and a multi-image uploader with a main-photo selector.
+ * Submitting the form will create a new room type or update the provided one,
+ * and displays success or error toasts accordingly.
+ *
+ * @param roomType - Optional existing room type to populate the form for editing.
+ * @param children - Element(s) rendered as the dialog trigger.
+ * @returns A React element that manages and displays the room type form dialog.
+ */
 export function RoomTypeFormDialog({
   roomType,
   children,

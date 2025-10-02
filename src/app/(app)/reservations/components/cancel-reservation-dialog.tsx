@@ -17,6 +17,14 @@ interface CancelReservationDialogProps {
   onConfirm: () => void;
 }
 
+/**
+ * Renders a confirmation dialog to cancel a reservation.
+ *
+ * @param isOpen - Whether the dialog is open
+ * @param onOpenChange - Called when the dialog open state should change
+ * @param onConfirm - Called when the user confirms the cancellation
+ * @returns A React element for the cancel-reservation confirmation dialog
+ */
 export function CancelReservationDialog({
   isOpen,
   onOpenChange,

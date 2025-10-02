@@ -14,6 +14,14 @@ interface DraggableCardProps {
   isEditing: boolean;
 }
 
+/**
+ * A card wrapper that integrates with the sortable context and optionally shows a drag handle when editing.
+ *
+ * @param id - Unique identifier for this sortable item used by the drag-and-drop system
+ * @param children - Content rendered inside the card
+ * @param isEditing - When `true`, shows an editing ring and a draggable handle for reordering
+ * @returns The rendered card element with sortable behavior and optional drag handle
+ */
 export function DraggableCard({ id, children, isEditing }: DraggableCardProps) {
   const {
     attributes,

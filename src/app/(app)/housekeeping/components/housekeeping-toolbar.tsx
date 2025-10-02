@@ -10,6 +10,13 @@ interface HousekeepingToolbarProps {
 
 const statuses: (RoomStatus | "all")[] = ["all", "Clean", "Dirty", "Inspected", "Maintenance"];
 
+/**
+ * Render a toolbar with a single-select toggle group for filtering rooms by housekeeping status.
+ *
+ * @param statusFilter - The currently selected status filter (`RoomStatus` or `"all"`).
+ * @param onStatusChange - Callback invoked with the new status (`RoomStatus` or `"all"`) when the selection changes.
+ * @returns The toolbar element containing the status toggle group.
+ */
 export function HousekeepingToolbar({
   statusFilter,
   onStatusChange,

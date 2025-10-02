@@ -28,6 +28,15 @@ import { Calendar } from "@/components/ui/calendar";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 
+/**
+ * Render a revenue report card with a date-range selector and bar chart showing daily revenue.
+ *
+ * The chart displays total revenue for reservations with status "Checked-out" on each day
+ * within the selected date range. A popover calendar allows selecting the range (defaulting
+ * to the last 30 days), and revenue values are formatted as compact USD currency.
+ *
+ * @returns A JSX element containing the revenue report UI: card header with date picker and a bar chart of daily revenue.
+ */
 export function RevenueReport() {
   const { reservations } = useDataContext();
   const [date, setDate] = React.useState<DateRange | undefined>({

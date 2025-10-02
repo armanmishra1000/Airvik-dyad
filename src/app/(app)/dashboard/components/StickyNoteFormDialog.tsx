@@ -49,6 +49,13 @@ const colorOptions = [
   { value: "green", className: "bg-green-200 hover:bg-green-300" },
 ] as const;
 
+/**
+ * Renders a dialog containing a form for creating a new sticky note or editing an existing one.
+ *
+ * @param note - Optional existing sticky note to populate the form for editing.
+ * @param children - Trigger element(s) that open the dialog when interacted with.
+ * @returns A Dialog component with a validated form to add or update a sticky note, including title, description, and color selection.
+ */
 export function StickyNoteFormDialog({
   note,
   children,

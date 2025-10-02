@@ -12,6 +12,11 @@ import {
 import { columns } from "./components/columns";
 import { ReservationsHistoryTable } from "./components/reservations-history-table";
 
+/**
+ * Render the guest details page that shows a guest's profile and their reservation history based on the route `id`.
+ *
+ * @returns The page JSX element displaying the guest's profile and a reservations table; triggers a 404 page if no guest matches the route `id`.
+ */
 export default function GuestDetailsPage() {
   const params = useParams<{ id: string }>();
   const { guests, reservations, rooms } = useDataContext();

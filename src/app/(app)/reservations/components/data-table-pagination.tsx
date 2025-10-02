@@ -21,6 +21,15 @@ interface DataTablePaginationProps<TData> {
   table: Table<TData>
 }
 
+/**
+ * Render pagination controls and a selection summary for the provided table.
+ *
+ * Displays the number of selected rows versus filtered rows, a rows-per-page selector (10, 20, 30, 40, 50),
+ * the current page and total page count, and navigation buttons for first/previous/next/last page.
+ *
+ * @param table - The table instance used to read pagination and selection state and to perform pagination actions.
+ * @returns A React element containing pagination UI and the selected-rows summary.
+ */
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {

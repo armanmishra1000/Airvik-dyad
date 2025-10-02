@@ -26,6 +26,15 @@ interface BillingCardProps {
   reservation: ReservationWithDetails;
 }
 
+/**
+ * Render a billing folio UI that lists charges and payments for a reservation and shows the balance due.
+ *
+ * Displays each folio entry with date, description, and amount (negative amounts styled in green),
+ * provides actions to record a payment or add a charge, and shows an empty-state message when no entries exist.
+ *
+ * @param reservation - Reservation data including `folio` entries and `totalAmount` used to populate the table and balance row
+ * @returns The Card element containing the billing header, action buttons, folio table, and balance row
+ */
 export function BillingCard({ reservation }: BillingCardProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {

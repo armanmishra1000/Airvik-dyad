@@ -54,6 +54,16 @@ interface AmenityFormDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Renders a dialog containing a form to create a new amenity or edit an existing one.
+ *
+ * The dialog lets the user enter an amenity name and pick an icon; submitting the form
+ * will create a new amenity or update the provided one and shows success or error notifications.
+ *
+ * @param amenity - Optional amenity to prefill the form; when provided the dialog operates in edit mode.
+ * @param children - Trigger element(s) that open the dialog when activated.
+ * @returns The rendered dialog element with the amenity form (create or edit).
+ */
 export function AmenityFormDialog({
   amenity,
   children,

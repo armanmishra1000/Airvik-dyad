@@ -24,6 +24,18 @@ interface UpdateStatusDialogProps {
 
 const availableStatuses: RoomStatus[] = ["Clean", "Dirty", "Inspected", "Maintenance"];
 
+/**
+ * Render a dialog that lets the user change a room's status.
+ *
+ * Displays a trigger (provided via `children`) that opens a dialog containing a radio
+ * group of available statuses. When the user saves, the selected status is passed to
+ * `onUpdate` and the dialog closes.
+ *
+ * @param room - The room whose status is being updated
+ * @param onUpdate - Callback invoked with the newly selected `RoomStatus` when saving
+ * @param children - Element rendered as the dialog trigger
+ * @returns The dialog element for updating the room's status
+ */
 export function UpdateStatusDialog({
   room,
   onUpdate,

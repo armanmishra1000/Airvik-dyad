@@ -27,6 +27,13 @@ import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmatio
 import { useDataContext } from "@/context/data-context"
 import type { Role } from "@/data/types"
 
+/**
+ * Render a roles data table with controls for adding, sorting, pagination, and deletion.
+ *
+ * @param columns - Column definitions used to build the table layout and cell rendering.
+ * @param data - Array of role records displayed in the table.
+ * @returns The table component UI for viewing and managing roles, including add, sort, paginate, and delete flows.
+ */
 export function RolesDataTable<TData extends Role, TValue>({
   columns,
   data,
