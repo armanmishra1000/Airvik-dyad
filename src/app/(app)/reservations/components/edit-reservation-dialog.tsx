@@ -131,6 +131,13 @@ export function EditReservationDialog({
     const nights = differenceInDays(values.dateRange.to, values.dateRange.from);
     const totalAmount = nights * ratePlan.price;
 
+    const folio = (reservation.folio ?? []).map((e, i) =>
+      i === 0 ? { ...e, amount: totalAmount } : e
+    );
+    if (folio.length === 0) {
+      folio.push({ amount: totalAmount, description: "Room charge", date: new Date().toISOString() });
+    }
+
     const updatedReservationData = {
         ...reservation,
         guestId: values.guestId,
@@ -140,7 +147,7 @@ export function EditReservationDialog({
         numberOfGuests: values.numberOfGuests,
         notes: values.notes,
         totalAmount,
-        folio: [{ ...reservation.folio[0], amount: totalAmount }],
+        folio,
     };
 
     updateReservation(reservation.id, updatedReservationData);

@@ -68,6 +68,7 @@ export function RoomsDataTable<TData extends Room, TValue>({
       openDeleteDialog: (item: TData) => {
         setItemToDelete(item)
       },
+      hasPermission,
     },
   })
 

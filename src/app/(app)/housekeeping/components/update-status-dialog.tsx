@@ -22,7 +22,7 @@ interface UpdateStatusDialogProps {
   children: React.ReactNode;
 }
 
-const availableStatuses: RoomStatus[] = ["Clean", "Dirty", "Inspected"];
+const availableStatuses: RoomStatus[] = ["Clean", "Dirty", "Inspected", "Maintenance"];
 
 export function UpdateStatusDialog({
   room,
@@ -33,6 +33,12 @@ export function UpdateStatusDialog({
   const [selectedStatus, setSelectedStatus] = React.useState<RoomStatus>(
     room.status
   );
+
+  React.useEffect(() => {
+    if (open) {
+      setSelectedStatus(room.status);
+    }
+  }, [open, room.status]);
 
   const handleSave = () => {
     onUpdate(selectedStatus);

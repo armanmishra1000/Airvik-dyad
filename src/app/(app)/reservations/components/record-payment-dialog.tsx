@@ -58,14 +58,21 @@ export function RecordPaymentDialog({
     },
   });
 
-  function onSubmit(values: z.infer<typeof paymentSchema>) {
-    addFolioItem(reservationId, {
-      description: `Payment - ${values.method}`,
-      amount: -Math.abs(values.amount), // Payments are negative values
-    });
-    toast.success("Payment recorded successfully!");
-    form.reset();
-    setOpen(false);
+  async function onSubmit(values: z.infer<typeof paymentSchema>) {
+    try {
+      await addFolioItem(reservationId, {
+        description: `Payment - ${values.method}`,
+        amount: -Math.abs(values.amount), // Payments are negative values
+      });
+      toast.success("Payment recorded successfully!");
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      console.error("Failed to record payment:", error);
+      toast.error("Failed to record payment", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
+    }
   }
 
   return (
