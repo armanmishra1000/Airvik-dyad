@@ -68,6 +68,7 @@ export function GuestsDataTable<TData extends Guest, TValue>({
       openDeleteDialog: (guest: TData) => {
         setGuestToDelete(guest)
       },
+      hasPermission,
     },
   })
 

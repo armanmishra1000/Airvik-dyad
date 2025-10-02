@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge"
 import type { Room } from "@/data/types"
 import { RoomFormDialog } from "./room-form-dialog"
 import { useDataContext } from "@/context/data-context"
-import { useAuthContext } from "@/context/auth-context"
 
 export const columns: ColumnDef<Room>[] = [
     {
@@ -65,8 +64,8 @@ export const columns: ColumnDef<Room>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const room = row.original
-      const { hasPermission } = useAuthContext();
- 
+      const hasPermission = table.options.meta?.hasPermission;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -77,15 +76,15 @@ export const columns: ColumnDef<Room>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            {hasPermission("update:room") && (
+            {hasPermission?.("update:room") && (
                 <RoomFormDialog room={room}>
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                         Edit
                     </DropdownMenuItem>
                 </RoomFormDialog>
             )}
-            {hasPermission("delete:room") && (
-                <DropdownMenuItem 
+            {hasPermission?.("delete:room") && (
+                <DropdownMenuItem
                     className="text-destructive"
                     onSelect={() => table.options.meta?.openDeleteDialog?.(room)}
                 >

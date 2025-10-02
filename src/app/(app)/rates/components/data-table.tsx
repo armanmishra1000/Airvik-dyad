@@ -68,6 +68,7 @@ export function RatePlansDataTable<TData extends RatePlan, TValue>({
       openDeleteDialog: (item: TData) => {
         setItemToDelete(item)
       },
+      hasPermission,
     },
   })
 

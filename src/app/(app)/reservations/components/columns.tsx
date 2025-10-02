@@ -1,6 +1,6 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, Table } from "@tanstack/react-table"
 import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User, ChevronDown, ChevronRight } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
@@ -53,6 +53,59 @@ export const statuses = [
     { value: "Cancelled", label: "Cancelled", icon: XCircle },
     { value: "No-show", label: "No-show", icon: AlertCircle },
   ]
+
+function ReservationActions({ reservation, table }: { reservation: ReservationWithDetails; table: Table<ReservationWithDetails> }) {
+  const router = useRouter();
+  const status = reservation.status;
+
+  const canBeCancelled = !["Cancelled", "Checked-out", "No-show"].includes(status);
+  const canBeCheckedIn = status === "Confirmed";
+  const canBeCheckedOut = status === "Checked-in";
+  const detailsId = reservation.subRows ? reservation.subRows[0].id : reservation.id;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuItem onSelect={() => router.push(`/reservations/${detailsId}`)}>
+            View Details
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => navigator.clipboard.writeText(reservation.id)}
+        >
+          Copy booking ID
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => table.options.meta?.checkInReservation?.(reservation)}
+          disabled={!canBeCheckedIn}
+        >
+          Check-in
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => table.options.meta?.checkOutReservation?.(reservation)}
+          disabled={!canBeCheckedOut}
+        >
+          Check-out
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => table.options.meta?.openCancelDialog?.(reservation)}
+          disabled={!canBeCancelled}
+          className="text-destructive focus:text-destructive focus:bg-destructive/10"
+        >
+          Cancel Reservation
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
@@ -216,57 +269,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       if (row.depth > 0) return null;
-      const reservation = row.original;
-      const status = reservation.status;
-      const router = useRouter();
- 
-      const canBeCancelled = !["Cancelled", "Checked-out", "No-show"].includes(status);
-      const canBeCheckedIn = status === "Confirmed";
-      const canBeCheckedOut = status === "Checked-in";
-      const detailsId = reservation.subRows ? reservation.subRows[0].id : reservation.id;
- 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onSelect={() => router.push(`/reservations/${detailsId}`)}>
-                View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(reservation.id)}
-            >
-              Copy booking ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => table.options.meta?.checkInReservation?.(reservation)}
-              disabled={!canBeCheckedIn}
-            >
-              Check-in
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => table.options.meta?.checkOutReservation?.(reservation)}
-              disabled={!canBeCheckedOut}
-            >
-              Check-out
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => table.options.meta?.openCancelDialog?.(reservation)}
-              disabled={!canBeCancelled}
-              className="text-destructive focus:text-destructive focus:bg-destructive/10"
-            >
-              Cancel Reservation
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
+      return <ReservationActions reservation={row.original} table={table} />;
     },
   },
 ]
