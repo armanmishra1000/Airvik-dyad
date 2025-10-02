@@ -41,7 +41,7 @@ export function RoomTypeCard({
           />
         </div>
       </CardHeader>
-      <div className="flex flex-col flex-1 p-6">
+      <div className="flex flex-col flex-1 p-4">
         <CardTitle>{roomType.name}</CardTitle>
         <CardDescription className="mt-2 flex-1">
           {roomType.description}
@@ -63,7 +63,7 @@ export function RoomTypeCard({
             Select Room
           </Button>
         ) : (
-          <Button asChild className="h-10">
+          <Button asChild className="h-12 rounded-lg">
             <Link href={detailsLink}>View Details & Book</Link>
           </Button>
         )}

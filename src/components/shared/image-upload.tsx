@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { uploadFile } from "@/lib/api";
 
 interface ImageUploadProps {
   value: string;
@@ -15,11 +16,21 @@ interface ImageUploadProps {
 export function ImageUpload({ value, onChange }: ImageUploadProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     if (file && file.type.startsWith("image/")) {
-      const previewUrl = URL.createObjectURL(file);
-      onChange(previewUrl);
+      setIsLoading(true);
+      try {
+        const permanentUrl = await uploadFile(file);
+        onChange(permanentUrl);
+      } catch (error) {
+        toast.error("Upload failed", {
+          description: (error as Error).message,
+        });
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       toast.error("Invalid file type", {
         description: "Please upload an image file.",
@@ -54,9 +65,6 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
   };
 
   const handleRemove = () => {
-    if (value.startsWith("blob:")) {
-      URL.revokeObjectURL(value);
-    }
     onChange("");
   };
 
@@ -79,6 +87,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
           className="hidden"
           accept="image/*"
           onChange={(e) => e.target.files && handleFile(e.target.files[0])}
+          disabled={isLoading}
         />
         {value ? (
           <>
@@ -96,6 +105,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
                 e.stopPropagation();
                 handleRemove();
               }}
+              disabled={isLoading}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -106,6 +116,11 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
             <p className="text-xs mt-2">
               Drag & drop or click to upload
             </p>
+          </div>
+        )}
+        {isLoading && (
+          <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
       </div>

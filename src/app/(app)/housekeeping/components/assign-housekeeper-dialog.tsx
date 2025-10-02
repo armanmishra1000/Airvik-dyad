@@ -35,8 +35,8 @@ export function AssignHousekeeperDialog({
   children,
 }: AssignHousekeeperDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const [selectedUserId, setSelectedUserId] = React.useState<string | undefined>(
-    currentAssigneeId
+  const [selectedUserId, setSelectedUserId] = React.useState<string>(
+    currentAssigneeId || ''
   );
   const { assignHousekeeper, users, roles } = useDataContext();
 
@@ -46,7 +46,7 @@ export function AssignHousekeeperDialog({
     : [];
 
   const handleSave = () => {
-    if (!selectedUserId) {
+    if (!selectedUserId || selectedUserId === '') {
       toast.error("Please select a housekeeper.");
       return;
     }

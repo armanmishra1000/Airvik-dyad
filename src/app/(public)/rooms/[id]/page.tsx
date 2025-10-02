@@ -329,7 +329,7 @@ export default function RoomDetailsPage() {
               )}
             </p>
 
-            <div className="border rounded-xl lg:p-6 p-4">
+            <div className="border rounded-xl p-4">
               <h2 className="text-xl font-bold mb-6">Amenities</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6">
                 {roomType.amenities.map((amenityId) => {
@@ -351,7 +351,7 @@ export default function RoomDetailsPage() {
               </div>
             </div>
 
-            <div className="border rounded-xl lg:p-6 p-4">
+            <div className="border rounded-xl p-4">
               <h2 className="text-xl font-bold mb-6">Ashram Rules</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-3">
@@ -379,7 +379,7 @@ export default function RoomDetailsPage() {
               <CardHeader>
                 <CardTitle>Details</CardTitle>
               </CardHeader>
-              <CardContent className="lg:p-6 p-4">
+              <CardContent className="p-4">
                 <Form {...form}>
                   <form
                     onSubmit={form.handleSubmit(onSubmit)}
@@ -565,14 +565,12 @@ export default function RoomDetailsPage() {
                         Pricing
                       </span>
                       <span className="text-sm font-medium">
-                        {standardRatePlan
-                          ? `$${standardRatePlan.price.toFixed(2)} /night`
-                          : "N/A"}
+                        ${standardRatePlan?.price.toFixed(2)} /night
                       </span>
                     </div>
 
                     <Button
-                      className="w-full"
+                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-12 px-4 py-2 w-full"
                       type="submit"
                       disabled={!dateRange?.from || !dateRange?.to}
                     >
@@ -588,7 +586,7 @@ export default function RoomDetailsPage() {
         {relatedRoomTypes.length > 0 && (
           <div className="mt-16">
             <h2 className="text-3xl font-bold mb-8">Related Rooms</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedRoomTypes.slice(0, 3).map((relatedRoomType) => (
                 <RoomTypeCard
                   key={relatedRoomType.id}

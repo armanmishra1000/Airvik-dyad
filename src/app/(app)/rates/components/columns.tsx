@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { RatePlan } from "@/data/types"
 import { RatePlanFormDialog } from "./rate-plan-form-dialog"
-import { useAuthContext } from "@/context/auth-context"
 
 export const columns: ColumnDef<RatePlan>[] = [
   {
@@ -37,8 +36,8 @@ export const columns: ColumnDef<RatePlan>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const ratePlan = row.original
-      const { hasPermission } = useAuthContext();
- 
+      const hasPermission = table.options.meta?.hasPermission;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -49,15 +48,15 @@ export const columns: ColumnDef<RatePlan>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            {hasPermission("update:rate_plan") && (
+            {hasPermission?.("update:rate_plan") && (
                 <RatePlanFormDialog ratePlan={ratePlan}>
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                         Edit
                     </DropdownMenuItem>
                 </RatePlanFormDialog>
             )}
-            {hasPermission("delete:rate_plan") && (
-                <DropdownMenuItem 
+            {hasPermission?.("delete:rate_plan") && (
+                <DropdownMenuItem
                     className="text-destructive"
                     onSelect={() => table.options.meta?.openDeleteDialog?.(ratePlan)}
                 >

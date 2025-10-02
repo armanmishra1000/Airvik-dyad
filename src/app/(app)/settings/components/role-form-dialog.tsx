@@ -70,6 +70,15 @@ export function RoleFormDialog({
     },
   });
 
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        name: role?.name ?? "",
+        permissions: role?.permissions ?? [],
+      });
+    }
+  }, [open, role, form]);
+
   function onSubmit(values: z.infer<typeof roleSchema>) {
     const roleData = {
         name: values.name,

@@ -1,0 +1,1 @@
+CREATE POLICY "Allow public read access to room types" ON public.room_types FOR SELECT USING (true);

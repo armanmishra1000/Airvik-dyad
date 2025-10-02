@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { Guest } from "@/data/types"
 import { GuestFormDialog } from "./guest-form-dialog"
-import { useAuthContext } from "@/context/auth-context"
 
 export const columns: ColumnDef<Guest>[] = [
   {
@@ -44,8 +43,8 @@ export const columns: ColumnDef<Guest>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const guest = row.original
-      const { hasPermission } = useAuthContext();
- 
+      const hasPermission = table.options.meta?.hasPermission;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -56,15 +55,15 @@ export const columns: ColumnDef<Guest>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            {hasPermission("update:guest") && (
+            {hasPermission?.("update:guest") && (
                 <GuestFormDialog guest={guest}>
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                         Edit
                     </DropdownMenuItem>
                 </GuestFormDialog>
             )}
-            {hasPermission("delete:guest") && (
-                <DropdownMenuItem 
+            {hasPermission?.("delete:guest") && (
+                <DropdownMenuItem
                     className="text-destructive"
                     onSelect={() => table.options.meta?.openDeleteDialog?.(guest)}
                 >
