@@ -101,6 +101,13 @@ const amenityIcons: Record<string, IconName> = {
   "Swimming Pool": "Waves",
 };
 
+/**
+ * Render the room details page for the selected room type and expose booking controls (date range, guests) that navigate to the booking review.
+ *
+ * Displays gallery photos, description with toggle, amenities, rules, availability-constrained calendar, guest selector, pricing, and related rooms. Submitting the booking form navigates to the booking review route with the selected parameters.
+ *
+ * @returns The room details page as a React element.
+ */
 export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();

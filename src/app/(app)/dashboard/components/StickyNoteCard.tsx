@@ -41,6 +41,12 @@ const rotations = [
   "transform rotate-3",
 ];
 
+/**
+ * Renders a sticky note card showing relative creation time, actions (edit/delete), title, and optional description.
+ *
+ * @param note - The sticky note data to display (id, title, description, color, createdAt, etc.).
+ * @returns The rendered card element for the provided sticky note.
+ */
 export function StickyNoteCard({ note }: StickyNoteCardProps) {
   const { deleteStickyNote } = useDataContext();
   const [hasMounted, setHasMounted] = React.useState(false);
