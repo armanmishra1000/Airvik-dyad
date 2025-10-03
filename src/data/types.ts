@@ -1,7 +1,7 @@
 export type UserRole = "manager" | "receptionist" | "housekeeper";
 
 export type PermissionAction = "create" | "read" | "update" | "delete";
-export type PermissionResource = "guest" | "reservation" | "room" | "room_type" | "rate_plan" | "report" | "setting" | "user";
+export type PermissionResource = "guest" | "reservation" | "room" | "room_type" | "room_category" | "rate_plan" | "report" | "setting" | "user";
 export type Permission = `${PermissionAction}:${PermissionResource}`;
 
 export const allPermissions: readonly Permission[] = [
@@ -9,6 +9,7 @@ export const allPermissions: readonly Permission[] = [
   "create:reservation", "read:reservation", "update:reservation", "delete:reservation",
   "create:room", "read:room", "update:room", "delete:room",
   "create:room_type", "read:room_type", "update:room_type", "delete:room_type",
+  "create:room_category", "read:room_category", "update:room_category", "delete:room_category",
   "create:rate_plan", "read:rate_plan", "update:rate_plan", "delete:rate_plan",
   "read:report",
   "update:setting",
@@ -59,6 +60,12 @@ export interface RoomType {
   amenities: string[]; // Array of Amenity IDs
   photos: string[];
   mainPhotoUrl?: string;
+}
+
+export interface RoomCategory {
+  id: string;
+  name: string;
+  description: string;
 }
 
 export type RoomStatus = "Clean" | "Dirty" | "Inspected" | "Maintenance";

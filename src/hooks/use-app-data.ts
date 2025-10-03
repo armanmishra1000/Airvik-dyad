@@ -323,7 +323,7 @@ import * as React from "react";
 import { useAuthContext } from "@/context/auth-context";
 import * as api from "@/lib/api";
 import type {
-  Reservation, Guest, ReservationStatus, FolioItem, HousekeepingAssignment, Room, RoomType,
+  Reservation, Guest, ReservationStatus, FolioItem, HousekeepingAssignment, Room, RoomType, RoomCategory,
   RatePlan, Property, User, Role, Amenity, StickyNote, DashboardComponentId
 } from "@/data/types";
 import { formatISO, differenceInDays } from "date-fns";
@@ -349,6 +349,7 @@ export function useAppData() {
   const [guests, setGuests] = React.useState<Guest[]>([]);
   const [rooms, setRooms] = React.useState<Room[]>([]);
   const [roomTypes, setRoomTypes] = React.useState<RoomType[]>([]);
+  const [roomCategories, setRoomCategories] = React.useState<RoomCategory[]>([]);
   const [ratePlans, setRatePlans] = React.useState<RatePlan[]>([]);
   const [users, setUsers] = React.useState<User[]>([]);
   const [roles, setRoles] = React.useState<Role[]>([]);
@@ -361,7 +362,7 @@ export function useAppData() {
     setIsLoading(true);
     try {
       const [
-        propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes,
+        propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
         rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes, housekeepingAssignmentsRes,
         roomTypeAmenitiesRes
       ] = await Promise.all([
@@ -370,6 +371,7 @@ export function useAppData() {
         authUser ? api.getGuests() : Promise.resolve({ data: [] }),
         api.getRooms(),
         api.getRoomTypes(),
+        api.getRoomCategories(),
         api.getRatePlans(),
         authUser ? api.getRoles() : Promise.resolve({ data: [] }),
         api.getAmenities(),
@@ -403,6 +405,7 @@ export function useAppData() {
         return api.fromDbRoomType({ ...rt, amenities: amenitiesForRoomType });
       });
       setRoomTypes(roomTypesData);
+      setRoomCategories(roomCategoriesRes.data || []);
 
     } catch (error) {
       console.error("Failed to load app data:", error);
@@ -535,6 +538,25 @@ export function useAppData() {
     return true;
   };
 
+  const addRoomCategory = async (roomCategoryData: Omit<RoomCategory, "id">) => {
+    const { data, error } = await api.addRoomCategory(roomCategoryData);
+    if (error) throw error;
+    setRoomCategories(prev => [...prev, data]);
+  };
+
+  const updateRoomCategory = async (roomCategoryId: string, updatedData: Partial<Omit<RoomCategory, "id">>) => {
+    const { data, error } = await api.updateRoomCategory(roomCategoryId, updatedData);
+    if (error) throw error;
+    setRoomCategories(prev => prev.map(rc => rc.id === roomCategoryId ? data : rc));
+  };
+
+  const deleteRoomCategory = async (roomCategoryId: string) => {
+    const { error } = await api.deleteRoomCategory(roomCategoryId);
+    if (error) { console.error(error); return false; }
+    setRoomCategories(prev => prev.filter(rc => rc.id !== roomCategoryId));
+    return true;
+  };
+
   const addRatePlan = async (ratePlanData: Omit<RatePlan, "id">) => {
     const { data, error } = await api.addRatePlan(ratePlanData);
     if (error) throw error;
@@ -641,10 +663,10 @@ export function useAppData() {
 
   return {
     isLoading,
-    property, reservations, guests, rooms, roomTypes, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
+    property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
     updateProperty, addGuest, deleteGuest, addReservation, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
-    deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
+    deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout: setDashboardLayout,
   };
 }
