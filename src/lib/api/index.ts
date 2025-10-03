@@ -48,6 +48,22 @@ export const fromDbRoomType = (dbRoomType: any): RoomType => ({
     mainPhotoUrl: dbRoomType.main_photo_url,
 });
 
+const fromDbStickyNote = (dbNote: any): StickyNote => ({
+    id: dbNote.id,
+    title: dbNote.title,
+    description: dbNote.description,
+    color: dbNote.color,
+    createdAt: dbNote.created_at,
+});
+
+const toDbStickyNote = (appNote: Partial<Omit<StickyNote, "id" | "createdAt">>) => {
+    const dbData: { [key: string]: any } = {};
+    if (appNote.title) dbData.title = appNote.title;
+    if (appNote.description) dbData.description = appNote.description;
+    if (appNote.color) dbData.color = appNote.color;
+    return dbData;
+};
+
 // --- API Functions ---
 
 // Property
@@ -149,9 +165,21 @@ export const updateAmenity = (id: string, updatedData: Partial<Amenity>) => supa
 export const deleteAmenity = (id: string) => supabase.from('amenities').delete().eq('id', id);
 
 // Sticky Notes
-export const getStickyNotes = (userId: string) => supabase.from('sticky_notes').select('*').eq('user_id', userId);
-export const addStickyNote = (noteData: any) => supabase.from('sticky_notes').insert([noteData]).select().single();
-export const updateStickyNote = (id: string, updatedData: Partial<StickyNote>) => supabase.from('sticky_notes').update(updatedData).eq('id', id).select().single();
+export const getStickyNotes = async (userId: string) => {
+    const { data, error, ...rest } = await supabase.from('sticky_notes').select('*').eq('user_id', userId);
+    if (error || !data) return { data, error, ...rest };
+    return { data: data.map(fromDbStickyNote), error, ...rest };
+};
+export const addStickyNote = async (noteData: any) => {
+    const { data, error, ...rest } = await supabase.from('sticky_notes').insert([noteData]).select().single();
+    if (error || !data) return { data, error, ...rest };
+    return { data: fromDbStickyNote(data), error, ...rest };
+};
+export const updateStickyNote = async (id: string, updatedData: Partial<StickyNote>) => {
+    const { data, error, ...rest } = await supabase.from('sticky_notes').update(toDbStickyNote(updatedData)).eq('id', id).select().single();
+    if (error || !data) return { data, error, ...rest };
+    return { data: fromDbStickyNote(data), error, ...rest };
+};
 export const deleteStickyNote = (id: string) => supabase.from('sticky_notes').delete().eq('id', id);
 
 // Housekeeping
