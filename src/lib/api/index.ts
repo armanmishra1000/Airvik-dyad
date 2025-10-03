@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Property, Guest, Reservation, Room, RoomType, RatePlan, Role, Amenity, StickyNote, User, HousekeepingAssignment, FolioItem } from "@/data/types";
+import type { Property, Guest, Reservation, Room, RoomType, RatePlan, Role, Amenity, StickyNote, User, HousekeepingAssignment, FolioItem, RoomCategory } from "@/data/types";
 
 // --- Data Transformation Helpers ---
 
@@ -118,6 +118,11 @@ export const upsertRoomType = (roomTypeData: any) => {
     return supabase.rpc('upsert_room_type_with_amenities', params).single();
 };
 export const deleteRoomType = (id: string) => supabase.from('room_types').delete().eq('id', id);
+
+// Room Categories
+export const getRoomCategories = () => supabase.from('room_categories').select('*');
+export const upsertRoomCategory = (category: Partial<RoomCategory>) => supabase.from('room_categories').upsert(category).select().single();
+export const deleteRoomCategory = (id: string) => supabase.from('room_categories').delete().eq('id', id);
 
 // Rate Plans
 export const getRatePlans = () => supabase.from('rate_plans').select('*');

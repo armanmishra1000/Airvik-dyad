@@ -1,7 +1,7 @@
 export type UserRole = "manager" | "receptionist" | "housekeeper";
 
 export type PermissionAction = "create" | "read" | "update" | "delete";
-export type PermissionResource = "guest" | "reservation" | "room" | "room_type" | "rate_plan" | "report" | "setting" | "user";
+export type PermissionResource = "guest" | "reservation" | "room" | "room_type" | "rate_plan" | "report" | "setting" | "user" | "room_category";
 export type Permission = `${PermissionAction}:${PermissionResource}`;
 
 export const allPermissions: readonly Permission[] = [
@@ -13,6 +13,7 @@ export const allPermissions: readonly Permission[] = [
   "read:report",
   "update:setting",
   "create:user", "read:user", "update:user", "delete:user",
+  "create:room_category", "read:room_category", "update:room_category", "delete:room_category",
 ] as const;
 
 export type DashboardComponentId = 'stats' | 'tables' | 'notes' | 'calendar';
@@ -48,6 +49,12 @@ export interface Amenity {
   id: string;
   name: string;
   icon: string; // lucide-react icon name
+}
+
+export interface RoomCategory {
+  id: string;
+  name: string;
+  description?: string;
 }
 
 export interface RoomType {

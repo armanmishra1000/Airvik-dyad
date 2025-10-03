@@ -4,7 +4,7 @@ import * as React from "react";
 import { useAppData } from "@/hooks/use-app-data";
 import type {
   Reservation, Guest, ReservationStatus, FolioItem, HousekeepingAssignment, Room, RoomType,
-  RatePlan, Property, User, Role, Amenity, StickyNote, DashboardComponentId
+  RatePlan, Property, User, Role, Amenity, StickyNote, DashboardComponentId, RoomCategory
 } from "@/data/types";
 
 type AddReservationPayload = Omit<Reservation, "id" | "roomId" | "bookingId" | "folio" | "totalAmount"> & { roomIds: string[] };
@@ -16,6 +16,7 @@ interface DataContextType {
   guests: Guest[];
   rooms: Room[];
   roomTypes: RoomType[];
+  roomCategories: RoomCategory[];
   ratePlans: RatePlan[];
   users: User[];
   roles: Role[];
@@ -55,6 +56,9 @@ interface DataContextType {
   updateStickyNote: (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt" | "userId">>) => void;
   deleteStickyNote: (noteId: string) => void;
   updateDashboardLayout: (layout: DashboardComponentId[]) => void;
+  addRoomCategory: (category: Omit<RoomCategory, "id">) => void;
+  updateRoomCategory: (categoryId: string, updatedData: Partial<Omit<RoomCategory, "id">>) => void;
+  deleteRoomCategory: (categoryId: string) => Promise<boolean>;
 }
 
 const DataContext = React.createContext<DataContextType | undefined>(undefined);

@@ -5,7 +5,7 @@ import { useAuthContext } from "@/context/auth-context";
 import * as api from "@/lib/api";
 import type {
   Reservation, Guest, ReservationStatus, FolioItem, HousekeepingAssignment, Room, RoomType,
-  RatePlan, Property, User, Role, Amenity, StickyNote, DashboardComponentId
+  RatePlan, Property, User, Role, Amenity, StickyNote, DashboardComponentId, RoomCategory
 } from "@/data/types";
 import { differenceInDays, formatISO, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ export function useAppData() {
   const [guests, setGuests] = React.useState<Guest[]>([]);
   const [rooms, setRooms] = React.useState<Room[]>([]);
   const [roomTypes, setRoomTypes] = React.useState<RoomType[]>([]);
+  const [roomCategories, setRoomCategories] = React.useState<RoomCategory[]>([]);
   const [ratePlans, setRatePlans] = React.useState<RatePlan[]>([]);
   const [users, setUsers] = React.useState<User[]>([]);
   const [roles, setRoles] = React.useState<Role[]>([]);
@@ -44,12 +45,12 @@ export function useAppData() {
       const [
         propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes,
         rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes, housekeepingAssignmentsRes,
-        roomTypeAmenitiesRes
+        roomTypeAmenitiesRes, roomCategoriesRes
       ] = await Promise.all([
         api.getProperty(), api.getReservations(), api.getGuests(), api.getRooms(),
         api.getRoomTypes(), api.getRatePlans(), api.getRoles(), api.getAmenities(),
         api.getStickyNotes(authUser.id), api.getFolioItems(), api.getUsers(), api.getHousekeepingAssignments(),
-        api.getRoomTypeAmenities()
+        api.getRoomTypeAmenities(), api.getRoomCategories()
       ]);
 
       if (propertyRes.data) setProperty(propertyRes.data);
@@ -61,6 +62,7 @@ export function useAppData() {
       setStickyNotes(stickyNotesRes.data || []);
       setUsers(usersFuncRes.data || []);
       setHousekeepingAssignments(housekeepingAssignmentsRes.data || []);
+      setRoomCategories(roomCategoriesRes.data || []);
 
       const reservationsWithFolios = (reservationsRes.data || []).map(res => ({
         ...res,
@@ -326,11 +328,31 @@ export function useAppData() {
     console.log("Updating assignment status:", roomId, status);
   };
 
+  const addRoomCategory = async (categoryData: Omit<RoomCategory, "id">) => {
+    const { data, error } = await api.upsertRoomCategory(categoryData);
+    if (error) throw error;
+    setRoomCategories(prev => [...prev, data]);
+  };
+
+  const updateRoomCategory = async (categoryId: string, updatedData: Partial<Omit<RoomCategory, "id">>) => {
+    const { data, error } = await api.upsertRoomCategory({ ...updatedData, id: categoryId });
+    if (error) throw error;
+    setRoomCategories(prev => prev.map(rc => rc.id === categoryId ? data : rc));
+  };
+
+  const deleteRoomCategory = async (categoryId: string) => {
+    const { error } = await api.deleteRoomCategory(categoryId);
+    if (error) { console.error(error); return false; }
+    setRoomCategories(prev => prev.filter(rc => rc.id !== categoryId));
+    return true;
+  };
+
   return {
-    property, reservations, guests, rooms, roomTypes, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
+    property, reservations, guests, rooms, roomTypes, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments, roomCategories,
     updateProperty, addGuest, deleteGuest, addReservation, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout: setDashboardLayout,
+    addRoomCategory, updateRoomCategory, deleteRoomCategory,
   };
 }
