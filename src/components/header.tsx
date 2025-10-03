@@ -1,0 +1,256 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Menu,
+  ChevronDown,
+  Facebook,
+  Twitter,
+  Youtube,
+  Instagram,
+} from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import { cn } from "@/lib/utils";
+
+const navLinks = [
+  { href: "/", label: "Home" },
+  { href: "#", label: "Rooms" },
+  {
+    label: "About Us",
+    subLinks: [
+      { href: "/about-us", label: "About Ashram" },
+      { href: "/sunil-bhagat", label: "About Sunil Bhagat" },
+      { href: "/about-rishikesh", label: "About Rishikesh" },
+      { href: "/gallery", label: "Gallery" },
+    ],
+  },
+  { href: "#", label: "Amenities" },
+  { href: "#", label: "Contact Us" },
+  { href: "#", label: "Booking List" },
+];
+
+const socialLinks = [
+  { href: "#", icon: Facebook },
+  { href: "#", icon: Twitter },
+  { href: "#", icon: Instagram },
+  { href: "#", icon: Youtube },
+];
+
+export function Header() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  return (
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-[1001] transition-all duration-300 bg-muted/50",
+        isScrolled ? "bg-background/90 backdrop-blur-sm shadow-md border-b" : ""
+      )}
+    >
+      {/* Top Bar */}
+      <div
+        className={cn(
+          "bg-primary-hover backdrop-blur-sm transition-all duration-300 ease-in-out border-b",
+          isScrolled
+            ? "max-h-0 py-0 opacity-0 border-transparent"
+            : "max-h-12 py-2 opacity-100"
+        )}
+        style={{ overflow: "hidden" }}
+      >
+        <div className="container mx-auto flex h-full items-center justify-between px-4">
+          <p className="hidden text-sm font-medium text-primary-foreground/80 md:block">
+            Welcome to Sahajanand Ashram (Estd: 1987)
+          </p>
+          <p className="text-sm font-medium text-primary-foreground/80 md:hidden">
+            Welcome to Sahajanand Ashram
+          </p>
+          <div className="flex items-center space-x-4">
+            {socialLinks.map((link, index) => (
+              <a
+                key={index}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-foreground/60 hover:text-primary-foreground transition-colors"
+              >
+                <link.icon className="h-4 w-4" />
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Header */}
+      <div
+        className={cn(
+          "container mx-auto flex items-center justify-between p-2 transition-colors duration-300",
+          isScrolled ? "text-foreground" : "text-white"
+        )}
+      >
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logo.png"
+            alt="SahajAnand Wellness Logo"
+            width={360}
+            height={160}
+            quality={100}
+            priority
+            className="h-12 w-auto xl:h-24"
+          />
+        </Link>
+        <nav className="hidden xl:flex space-x-1 self-stretch">
+          <NavigationMenu>
+            <NavigationMenuList>
+              {navLinks.map((link) => (
+                <NavigationMenuItem key={link.label}>
+                  {link.subLinks ? (
+                    <>
+                      <NavigationMenuTrigger className="text-sm font-medium text-primary-hover hover:text-primary transition-colors bg-transparent hover:bg-accent/50 focus:bg-accent/50 data-[state=open]:bg-accent/50">
+                        {link.label}
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <ul className="grid w-[240px] gap-1 p-2">
+                          {link.subLinks.map((subLink) => (
+                            <ListItem
+                              key={subLink.label}
+                              href={subLink.href}
+                              title={subLink.label}
+                            />
+                          ))}
+                        </ul>
+                      </NavigationMenuContent>
+                    </>
+                  ) : (
+                    <Link href={link.href || "#"} legacyBehavior passHref>
+                      <NavigationMenuLink
+                        className={cn(
+                          navigationMenuTriggerStyle(),
+                          "text-sm font-medium hover:text-primary transition-colors bg-transparent hover:bg-accent/50 focus:bg-accent/50"
+                        )}
+                      >
+                        {link.label}
+                      </NavigationMenuLink>
+                    </Link>
+                  )}
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
+        </nav>
+        <Button
+          asChild
+          className="hidden xl:block bg-primary hover:bg-primary-hover text-primary-foreground"
+        >
+          <Link href="/booking">SEND INQUIRY</Link>
+        </Button>
+        <div className="xl:hidden">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="bg-background text-foreground z-[1002]"
+            >
+              <nav className="flex flex-col space-y-2 mt-8">
+                {navLinks.map((link) =>
+                  link.subLinks ? (
+                    <Collapsible key={link.label} className="w-full">
+                      <CollapsibleTrigger className="flex justify-between items-center w-full text-lg font-medium hover:text-primary transition-colors py-2">
+                        {link.label}
+                        <ChevronDown className="h-5 w-5 transition-transform duration-200 [&[data-state=open]]:rotate-180" />
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="pl-4 mt-2 space-y-3 border-l-2 border-border ml-2">
+                          {link.subLinks.map((subLink) => (
+                            <Link
+                              key={subLink.label}
+                              href={subLink.href}
+                              className="block text-base text-muted-foreground hover:text-primary transition-colors"
+                            >
+                              {subLink.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      className="text-lg font-medium hover:text-primary transition-colors py-2"
+                    >
+                      {link.label}
+                    </Link>
+                  )
+                )}
+                <Button
+                  asChild
+                  className="bg-primary hover:bg-primary-hover text-primary-foreground mt-4"
+                >
+                  <Link href="/booking">SEND INQUIRY</Link>
+                </Button>
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+const ListItem = React.forwardRef<
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a">
+>(({ className, title, ...props }, ref) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <Link href={props.href!} legacyBehavior passHref>
+          <a
+            ref={ref}
+            className={cn(
+              "block select-none rounded-md px-4 py-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+              className
+            )}
+            {...props}
+          >
+            <div className="text-base leading-none text-primary-hover hover:text-primary">
+              {title}
+            </div>
+          </a>
+        </Link>
+      </NavigationMenuLink>
+    </li>
+  );
+});
+ListItem.displayName = "ListItem";

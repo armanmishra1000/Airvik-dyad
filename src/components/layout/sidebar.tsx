@@ -34,7 +34,7 @@ const navItems = [
   { href: "/housekeeping", icon: ClipboardList, label: "Housekeeping", requiredPermission: "read:room" },
   { href: "/guests", icon: Users, label: "Guests", requiredPermission: "read:guest" },
   { href: "/room-types", icon: Layers, label: "Room Types", requiredPermission: "read:room_type" },
-  { href: "/rooms", icon: BedDouble, label: "Rooms", requiredPermission: "read:room" },
+  { href: "/admin-rooms", icon: BedDouble, label: "Room Management", requiredPermission: "read:room" },
   { href: "/rates", icon: DollarSign, label: "Rate Plans", requiredPermission: "read:rate_plan" },
   { href: "/reports", icon: BarChart3, label: "Reports", requiredPermission: "read:report" },
 ];

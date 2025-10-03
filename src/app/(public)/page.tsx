@@ -1,299 +1,167 @@
-// "use client";
-
-// import * as React from "react";
-// import { RoomTypeCard } from "@/components/public/room-type-card";
-// import {
-//   BookingWidget,
-//   type BookingSearchFormValues,
-// } from "@/components/public/booking-widget";
-// import { useAvailabilitySearch } from "@/hooks/use-availability-search";
-// import { useDataContext } from "@/context/data-context";
-// import { Skeleton } from "@/components/ui/skeleton";
-// import { Button } from "@/components/ui/button";
-// import { BookingSummary } from "@/components/public/booking-summary";
-// import type { RoomType } from "@/data/types";
-
-// export default function PublicHomePage() {
-//   const { roomTypes } = useDataContext();
-//   const { search, availableRoomTypes, isLoading, setAvailableRoomTypes } =
-//     useAvailabilitySearch();
-//   const [hasSearched, setHasSearched] = React.useState(false);
-//   const [searchValues, setSearchValues] =
-//     React.useState<BookingSearchFormValues | null>(null);
-//   const [selection, setSelection] = React.useState<RoomType[]>([]);
-
-//   const handleSearch = (values: BookingSearchFormValues) => {
-//     search(values.dateRange, values.guests, values.children, values.rooms);
-//     setHasSearched(true);
-//     setSearchValues(values);
-//     setSelection([]); // Clear previous selection on new search
-//   };
-
-//   const handleClearSearch = () => {
-//     setHasSearched(false);
-//     setAvailableRoomTypes(null);
-//     setSearchValues(null);
-//     setSelection([]);
-//   };
-
-//   const handleSelectRoom = (roomType: RoomType) => {
-//     if (searchValues && selection.length < searchValues.rooms) {
-//       setSelection((prev) => [...prev, roomType]);
-//     }
-//   };
-
-//   const handleRemoveRoom = (index: number) => {
-//     setSelection((prev) => prev.filter((_, i) => i !== index));
-//   };
-
-//   const handleClearSelection = () => {
-//     setSelection([]);
-//   };
-
-//   const roomsToDisplay = hasSearched ? availableRoomTypes : roomTypes;
-//   const isSelectionComplete = searchValues
-//     ? selection.length >= searchValues.rooms
-//     : false;
-
-//   return (
-//     /* Main Content */
-//     <div>
-//       <section className="py-12 md:py-20 bg-muted/20">
-//         <div className="container mx-auto px-4 text-center">
-//           <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-serif">
-//             Experience Unmatched Comfort
-//           </h1>
-//           <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-//             Explore our collection of beautifully designed rooms and suites,
-//             each offering a unique blend of luxury and tranquility.
-//           </p>
-//         </div>
-//         <div className="container mx-auto px-4 mt-8">
-//           <BookingWidget onSearch={handleSearch} />
-//         </div>
-//       </section>
-
-//       {/* Room Types */}
-//       <section className="py-12 md:py-20">
-//         <div className="container mx-auto px-4">
-//           <div className="flex justify-between items-center mb-10">
-//             <h2 className="text-3xl font-bold">
-//               {hasSearched ? "Available Rooms" : "Our Rooms"}
-//             </h2>
-//             {hasSearched && (
-//               <Button variant="link" onClick={handleClearSearch}>
-//                 Clear Search & View All
-//               </Button>
-//             )}
-//           </div>
-
-//           {isLoading ? (
-//             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-//               {[...Array(3)].map((_, i) => (
-//                 <div key={i} className="space-y-4">
-//                   <Skeleton className="h-48 w-full rounded-lg" />
-//                   <Skeleton className="h-6 w-3/4" />
-//                   <Skeleton className="h-4 w-full" />
-//                   <Skeleton className="h-4 w-5/6" />
-//                 </div>
-//               ))}
-//             </div>
-//           ) : (
-//             <>
-//               {roomsToDisplay && roomsToDisplay.length > 0 ? (
-//                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-//                   {roomsToDisplay.map((roomType) => (
-//                     <RoomTypeCard
-//                       key={roomType.id}
-//                       roomType={roomType}
-//                       onSelect={handleSelectRoom}
-//                       isSelectionComplete={isSelectionComplete}
-//                       hasSearched={hasSearched}
-//                     />
-//                   ))}
-//                 </div>
-//               ) : (
-//                 /* No Rooms Found */
-//                 <div className="text-center py-12 border rounded-lg bg-muted/50">
-//                   <h3 className="text-xl font-semibold">No Rooms Found</h3>
-//                   <p className="text-muted-foreground mt-2">
-//                     {hasSearched
-//                       ? "Sorry, no rooms are available for your selected dates. Please try different dates."
-//                       : "There are no room types configured for this property."}
-//                   </p>
-//                 </div>
-//               )}
-//             </>
-//           )}
-//         </div>
-//       </section>
-//       {hasSearched && searchValues && selection.length > 0 && (
-//         <BookingSummary
-//           selection={selection}
-//           searchValues={searchValues}
-//           onRemove={handleRemoveRoom}
-//           onClear={handleClearSelection}
-//         />
-//       )}
-//     </div>
-//   );
-// }
-
 "use client";
 
-import * as React from "react";
-import { RoomTypeCard } from "@/components/public/room-type-card";
-import {
-  BookingWidget,
-  type BookingSearchFormValues,
-} from "@/components/public/booking-widget";
-import { useAvailabilitySearch } from "@/hooks/use-availability-search";
-import { useDataContext } from "@/context/data-context";
-import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
+import { PublicHeader } from "@/components/public/header";
+import { FeatureCard } from "@/components/feature-card";
+import { WelcomeSection } from "@/components/welcome-section";
+import { VideoSection } from "@/components/video-section";
+import { StaySection } from "@/components/stay-section";
+import { PublicFooter } from "@/components/public/footer";
+import { TestimonialSection } from "@/components/testimonial-section";
+import { GallerySection } from "@/components/gallery-section";
+import { Marquee } from "@/components/marquee";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { BookingSummary } from "@/components/public/booking-summary";
-import type { RoomType } from "@/data/types";
-import { TriangleAlert } from "lucide-react";
+import Link from "next/link";
 
-export default function PublicHomePage() {
-  const { roomTypes, isLoading: isInitialLoading } = useDataContext();
-  const {
-    search,
-    availableRoomTypes,
-    isLoading: isSearching,
-    setAvailableRoomTypes,
-  } = useAvailabilitySearch();
-  const [hasSearched, setHasSearched] = React.useState(false);
-  const [searchValues, setSearchValues] =
-    React.useState<BookingSearchFormValues | null>(null);
-  const [selection, setSelection] = React.useState<RoomType[]>([]);
+export default function Home() {
+  const features = [
+    {
+      title: "Annakshetra",
+      description:
+        "Serving humanity through daily, wholesome meals for all visitors and the local community.",
+      imageUrl: "/annakshetra.png",
+      highlighted: false,
+    },
+    {
+      title: "Ashram Stay",
+      description:
+        "Experience tranquility and spiritual rejuvenation by booking a stay in our serene ashram rooms.",
+      imageUrl: "/sahaj-home.png",
+      highlighted: true,
+      href: "/rooms",
+    },
+    {
+      title: "Yoga & Meditation",
+      description:
+        "Harmonize your mind, body, and soul with our daily yoga and guided meditation sessions.",
+      imageUrl: "/yoga.png",
+      highlighted: false,
+    },
+  ];
 
-  const handleSearch = (values: BookingSearchFormValues) => {
-    search(values.dateRange, values.guests, values.children, values.rooms);
-    setHasSearched(true);
-    setSearchValues(values);
-    setSelection([]); // Clear previous selection on new search
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+      },
+    },
   };
 
-  const handleClearSearch = () => {
-    setHasSearched(false);
-    setAvailableRoomTypes(null);
-    setSearchValues(null);
-    setSelection([]);
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut",
+      },
+    },
   };
-
-  const handleSelectRoom = (roomType: RoomType) => {
-    if (searchValues && selection.length < searchValues.rooms) {
-      setSelection((prev) => [...prev, roomType]);
-    }
-  };
-
-  const handleRemoveRoom = (index: number) => {
-    setSelection((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleClearSelection = () => {
-    setSelection([]);
-  };
-
-  const roomsToDisplay = hasSearched ? availableRoomTypes : roomTypes;
-  const isSelectionComplete = searchValues
-    ? selection.length >= searchValues.rooms
-    : false;
-
-  const showLoading = isInitialLoading || isSearching;
 
   return (
-    /* Main Content */
-    <div>
-      <section className="py-12 md:py-20 bg-muted/20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-serif">
-            Experience Unmatched Comfort
-          </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-            Explore our collection of beautifully designed rooms and suites,
-            each offering a unique blend of luxury and tranquility.
-          </p>
-        </div>
-        <div className="container mx-auto px-4 mt-8">
-          <BookingWidget onSearch={handleSearch} />
-        </div>
-      </section>
-
-      {/* Room Types */}
-      <section className="py-12 md:py-20">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-10">
-            <h2 className="text-3xl font-bold">
-              {hasSearched ? "Available Rooms" : "Our Rooms"}
-            </h2>
-            {hasSearched && (
-              <Button variant="link" onClick={handleClearSearch}>
-                Clear Search & View All
-              </Button>
-            )}
+    <div className="bg-background text-foreground">
+      <PublicHeader />
+      <main>
+        {/* Hero Section */}
+        <section className="relative w-full h-[70vh] min-h-[500px]">
+          <Image
+            src="/hero-background.png"
+            alt="Rishikesh temple by the Ganges"
+            fill
+            style={{ objectFit: "cover" }}
+            quality={100}
+            priority
+          />
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
+            <motion.div
+              className="max-w-4xl"
+              initial="hidden"
+              animate="visible"
+              variants={containerVariants}
+            >
+              <motion.div
+                variants={itemVariants}
+                className="flex justify-center mb-2"
+              >
+                <Image
+                  src="/Swami-narayan.png"
+                  alt="Sahajanand Wellness"
+                  width={128}
+                  height={128}
+                  quality={100}
+                  className="w-24 h-24 sm:w-32 sm:h-32 mt-4 sm:mt-10 object-contain"
+                ></Image>
+              </motion.div>
+              <motion.p
+                variants={itemVariants}
+                className="text-sm sm:text-md font-semibold tracking-widest text-primary-foreground/80 mb-2 sm:mb-4 uppercase"
+              >
+                YOUR SANCTUARY AWAITS
+              </motion.p>
+              <motion.h1
+                variants={itemVariants}
+                className="text-4xl sm:text-5xl md:text-7xl font-bold font-serif leading-tight"
+              >
+                Sahajanand Wellness
+              </motion.h1>
+              <motion.p
+                variants={itemVariants}
+                className="mt-4 text-base sm:text-lg font-medium tracking-wider text-primary-foreground/90 uppercase"
+              >
+                WELLNESS - THE BEST GIFT TO YOURSELF
+              </motion.p>
+              
+            </motion.div>
           </div>
+        </section>
 
-          {showLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className=" border rounded-lg">
-                  <Skeleton className="h-60 w-full rounded-lg" />
-                  <div className="p-4 space-y-2">
-                    <Skeleton className="h-6 w-1/2" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                  </div>
-                </div>
+        {/* Features Section */}
+        <section className="relative lg:-mt-24 pb-20">
+          <div className="container mx-auto px-4 pt-20 lg:pt-12">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-3 gap-8"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={containerVariants}
+            >
+              {features.map((feature: any) => (
+                <motion.div key={feature.title} variants={itemVariants}>
+                  <FeatureCard
+                    title={feature.title}
+                    description={feature.description}
+                    imageUrl={feature.imageUrl}
+                    highlighted={feature.highlighted}
+                    href={feature.href}
+                    className="h-full"
+                  />
+                </motion.div>
               ))}
-            </div>
-          ) : (
-            <>
-              {roomsToDisplay && roomsToDisplay.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {roomsToDisplay.map((roomType) => (
-                    <RoomTypeCard
-                      key={roomType.id}
-                      roomType={roomType}
-                      onSelect={handleSelectRoom}
-                      isSelectionComplete={isSelectionComplete}
-                      hasSearched={hasSearched}
-                    />
-                  ))}
-                </div>
-              ) : (
-                /* No Rooms Found */
-                <div className="py-16 border rounded-lg bg-muted/40">
-                  <div className="flex flex-col items-center justify-center space-y-4">
-                    <div className="bg-primary md:size-14 size-12 rounded-full flex items-center justify-center">
-                      <TriangleAlert className="text-primary-foreground sm:size-8 size-6" />
-                    </div>
-                    <h3 className="text-xl font-semibold">No Rooms Found</h3>
-                    <p className="text-muted-foreground">
-                      {hasSearched
-                        ? "Sorry, no rooms are available for your selected dates. Please try different dates."
-                        : "There are no room types configured for this property."}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </section>
-      {hasSearched && searchValues && selection.length > 0 && (
-        <BookingSummary
-          selection={selection}
-          searchValues={searchValues}
-          onRemove={handleRemoveRoom}
-          onClear={handleClearSelection}
-        />
-      )}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Welcome Section */}
+        <WelcomeSection />
+
+        {/* Gallery Section */}
+        <GallerySection />
+
+        {/* Video Section */}
+        <VideoSection />
+
+        {/* Stay Section */}
+        <StaySection />
+
+        {/* Testimonial Section */}
+        <TestimonialSection />
+        <Marquee />
+      </main>
     </div>
   );
 }
