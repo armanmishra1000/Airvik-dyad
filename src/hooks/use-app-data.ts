@@ -341,6 +341,17 @@ const defaultProperty: Property = {
   currency: "USD",
 };
 
+/**
+ * Provides application state and CRUD operations for the property-management domain.
+ *
+ * Exposes loaded application data (property, reservations, guests, rooms, room types, room categories,
+ * rate plans, users, roles, amenities, sticky notes, housekeeping assignments, and dashboard layout)
+ * along with functions to create, update, delete, and refetch those entities.
+ *
+ * @returns An object containing state values (e.g., `isLoading`, `property`, collections) and
+ * action functions for managing reservations, guests, rooms, room types, room categories, rate plans,
+ * users, roles, amenities, sticky notes, folio items, housekeeping assignments, and the dashboard layout.
+ */
 export function useAppData() {
   const { authUser } = useAuthContext();
   const [isLoading, setIsLoading] = React.useState(true);
