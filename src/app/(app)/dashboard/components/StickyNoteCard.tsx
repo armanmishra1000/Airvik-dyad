@@ -55,6 +55,17 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
     return rotations[index];
   }, [note.id]);
 
+  const formattedDate = React.useMemo(() => {
+    if (!hasMounted) return null;
+
+    try {
+      const date = new Date(note.createdAt);
+      return isNaN(date.getTime()) ? "Invalid date" : formatDistanceToNow(date, { addSuffix: true });
+    } catch {
+      return "Invalid date";
+    }
+  }, [hasMounted, note.createdAt]);
+
   const handleDelete = () => {
     deleteStickyNote(note.id);
     toast.success("Note deleted.");
@@ -64,7 +75,7 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
     <Card className={cn("shadow-md hover:shadow-lg transition-shadow", colorClasses[note.color], rotationClass)}>
       <CardHeader className="flex-row items-start justify-between p-3">
         <p className="text-xs text-muted-foreground">
-          {hasMounted ? formatDistanceToNow(new Date(note.createdAt), { addSuffix: true }) : null}
+          {formattedDate}
         </p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
