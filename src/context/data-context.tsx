@@ -84,6 +84,7 @@ import type {
   HousekeepingAssignment,
   Room,
   RoomType,
+  RoomCategory,
   RatePlan,
   Property,
   User,
@@ -106,6 +107,7 @@ interface DataContextType {
   guests: Guest[];
   rooms: Room[];
   roomTypes: RoomType[];
+  roomCategories: RoomCategory[];
   ratePlans: RatePlan[];
   users: User[];
   roles: Role[];
@@ -149,6 +151,9 @@ interface DataContextType {
     updatedData: Partial<Omit<RoomType, "id">>
   ) => void;
   deleteRoomType: (roomTypeId: string) => Promise<boolean>;
+  addRoomCategory: (roomCategory: Omit<RoomCategory, "id">) => Promise<void>;
+  updateRoomCategory: (roomCategoryId: string, updatedData: Partial<Omit<RoomCategory, "id">>) => Promise<void>;
+  deleteRoomCategory: (roomCategoryId: string) => Promise<boolean>;
   addRatePlan: (ratePlan: Omit<RatePlan, "id">) => void;
   updateRatePlan: (
     ratePlanId: string,
@@ -181,9 +186,9 @@ interface DataContextType {
 const DataContext = React.createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
-  const data = useAppData();
+  const data = useAppData() as DataContextType;
   return (
-    <DataContext.Provider value={data as any}>{children}</DataContext.Provider>
+    <DataContext.Provider value={data}>{children}</DataContext.Provider>
   );
 }
 
