@@ -538,19 +538,19 @@ export function useAppData() {
     return true;
   };
 
-  const addRoomCategory = async (roomCategoryData: Omit<RoomCategory, "id">) => {
+  const addRoomCategory = async (roomCategoryData: Omit<RoomCategory, "id">): Promise<void> => {
     const { data, error } = await api.addRoomCategory(roomCategoryData);
     if (error) throw error;
     setRoomCategories(prev => [...prev, data]);
   };
 
-  const updateRoomCategory = async (roomCategoryId: string, updatedData: Partial<Omit<RoomCategory, "id">>) => {
+  const updateRoomCategory = async (roomCategoryId: string, updatedData: Partial<Omit<RoomCategory, "id">>): Promise<void> => {
     const { data, error } = await api.updateRoomCategory(roomCategoryId, updatedData);
     if (error) throw error;
     setRoomCategories(prev => prev.map(rc => rc.id === roomCategoryId ? data : rc));
   };
 
-  const deleteRoomCategory = async (roomCategoryId: string) => {
+  const deleteRoomCategory = async (roomCategoryId: string): Promise<boolean> => {
     const { error } = await api.deleteRoomCategory(roomCategoryId);
     if (error) { console.error(error); return false; }
     setRoomCategories(prev => prev.filter(rc => rc.id !== roomCategoryId));
