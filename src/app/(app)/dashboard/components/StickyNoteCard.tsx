@@ -64,7 +64,18 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
     <Card className={cn("shadow-md hover:shadow-lg transition-shadow", colorClasses[note.color], rotationClass)}>
       <CardHeader className="flex-row items-start justify-between p-3">
         <p className="text-xs text-muted-foreground">
-          {hasMounted ? formatDistanceToNow(new Date(note.createdAt), { addSuffix: true }) : null}
+          {hasMounted ? (() => {
+            try {
+              const date = new Date(note.createdAt);
+              if (isNaN(date.getTime())) {
+                return "Invalid date";
+              }
+              return formatDistanceToNow(date, { addSuffix: true });
+            } catch (error) {
+              console.error("Error formatting date:", error);
+              return "Invalid date";
+            }
+          })() : null}
         </p>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
