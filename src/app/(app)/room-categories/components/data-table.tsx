@@ -28,6 +28,17 @@ import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
 import type { RoomCategory } from "@/data/types"
 
+/**
+ * Render a table UI for viewing, sorting, paginating, creating, and deleting room categories.
+ *
+ * Renders a data table backed by the provided columns and data, with client-side sorting and pagination.
+ * Includes an "Add Room Category" control (shown only when the current user has the "create:room_category" permission)
+ * and a deletion flow that presents a confirmation dialog before attempting to remove an item.
+ *
+ * @param columns - Column definitions used to render table headers and cells.
+ * @param data - Array of room category entries to display in the table.
+ * @returns The rendered React element containing the table, pagination, add control, and delete confirmation dialog.
+ */
 export function RoomCategoriesDataTable<TData extends RoomCategory, TValue>({
   columns,
   data,
