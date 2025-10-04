@@ -59,6 +59,8 @@ export interface RoomType {
   amenities: string[]; // Array of Amenity IDs
   photos: string[];
   mainPhotoUrl?: string;
+  baseRate?: number;
+  size?: number;
 }
 
 export type RoomStatus = "Clean" | "Dirty" | "Inspected" | "Maintenance";

@@ -10,7 +10,7 @@ import { PublicFooter } from "@/components/public/footer";
 import { TestimonialSection } from "@/components/testimonial-section";
 import { GallerySection } from "@/components/gallery-section";
 import { Marquee } from "@/components/marquee";
-import { motion } from "framer-motion";
+import { motion, easeOut } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -57,7 +57,7 @@ export default function Home() {
       opacity: 1,
       transition: {
         duration: 0.6,
-        ease: "easeOut",
+        ease: easeOut,
       },
     },
   };

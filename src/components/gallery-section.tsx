@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, easeOut } from "framer-motion";
 
 const galleryImages = [
   {
@@ -47,7 +47,7 @@ export function GallerySection() {
       opacity: 1,
       transition: {
         duration: 0.5,
-        ease: "easeOut" as const,
+        ease: easeOut,
       },
     },
   };
@@ -60,7 +60,7 @@ export function GallerySection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: easeOut }}
         >
           <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight mb-4">
             Glimpses of Serenity

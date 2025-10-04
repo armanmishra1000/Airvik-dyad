@@ -6,7 +6,7 @@ import { RishikeshHeroSection } from "@/components/rishikesh-hero-section";
 import Image from "next/image";
 import { RishikeshExperienceSection } from "@/components/rishikesh-experience-section";
 import { KeyAttractionsSection } from "@/components/key-attractions-section";
-import { motion } from "framer-motion";
+import { motion, easeOut } from "framer-motion";
 import { MapSection } from "@/components/map-section";
 
 export default function AboutRishikeshPage() {
@@ -27,7 +27,7 @@ export default function AboutRishikeshPage() {
       x: 0,
       transition: {
         duration: 0.8,
-        ease: "easeOut",
+        ease: easeOut,
       },
     },
   });
@@ -44,7 +44,7 @@ export default function AboutRishikeshPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={{ duration: 0.6, ease: easeOut }}
             >
               <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight">
                 A Land of Sages and Seekers

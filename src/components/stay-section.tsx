@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/carousel";
 import { AccommodationCard } from "./accommodation-card";
 import { Leaf, BrainCircuit, HandHeart } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, easeOut } from "framer-motion";
 
 const accommodations = [
   {
@@ -66,7 +66,7 @@ export function StaySection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          transition={{ duration: 0.6, ease: easeOut }}
         >
           
           
@@ -85,7 +85,7 @@ export function StaySection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.8, ease: easeOut }}
         >
           <Carousel
             opts={{
@@ -121,7 +121,7 @@ export function StaySection() {
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.5, ease: easeOut }}
         >
           <Button
             asChild

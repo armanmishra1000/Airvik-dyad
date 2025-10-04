@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { ActivityCard } from "@/components/activity-card";
-import { motion } from "framer-motion";
+import { motion, easeOut } from "framer-motion";
 
 const activities = [
   {
@@ -52,7 +52,7 @@ export function WelcomeSection() {
       opacity: 1,
       transition: {
         duration: 0.6,
-        ease: "easeOut",
+        ease: easeOut,
       },
     },
   };
@@ -64,7 +64,7 @@ export function WelcomeSection() {
       opacity: 1,
       transition: {
         duration: 0.8,
-        ease: "easeOut",
+        ease: easeOut,
       },
     },
   };
@@ -76,7 +76,7 @@ export function WelcomeSection() {
       opacity: 1,
       transition: {
         duration: 0.8,
-        ease: "easeOut",
+        ease: easeOut,
       },
     },
   };
@@ -156,7 +156,7 @@ export function WelcomeSection() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            transition={{ duration: 0.6, ease: easeOut }}
           >
             <div className="flex justify-center mb-2">
               <Image

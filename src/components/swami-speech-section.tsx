@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, easeOut } from "framer-motion";
 import Image from "next/image";
 
 const mainVideoId = "rSnrtdSB8RA";
@@ -61,7 +61,7 @@ export function SwamiSpeechSection() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            transition={{ duration: 0.6, ease: easeOut }}
           >
             <h2 className="text-4xl md:text-5xl font-bold font-serif text-white leading-tight md:mb-3 lg:mb-4">
               Swami's Speech
@@ -78,7 +78,7 @@ export function SwamiSpeechSection() {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.8, ease: easeOut }}
           >
             <div className="p-2 bg-card rounded-[2.5rem] shadow-2xl">
               <YouTubeEmbed
@@ -104,7 +104,7 @@ export function SwamiSpeechSection() {
                   visible: {
                     y: 0,
                     opacity: 1,
-                    transition: { duration: 0.6, ease: "easeOut" },
+                    transition: { duration: 0.6, ease: easeOut },
                   },
                 }}
               >
