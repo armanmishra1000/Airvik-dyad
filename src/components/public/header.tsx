@@ -145,23 +145,22 @@ export function PublicHeader() {
                             <ListItem
                               key={subLink.label}
                               href={subLink.href}
-                              title={subLink.label}
+                              label={subLink.label}
                             />
                           ))}
                         </ul>
                       </NavigationMenuContent>
                     </>
                   ) : (
-                    <Link href={link.href || "#"} legacyBehavior passHref>
-                      <NavigationMenuLink
-                        className={cn(
-                          navigationMenuTriggerStyle(),
-                          "text-sm font-medium hover:text-primary transition-colors bg-transparent hover:bg-accent/50 focus:bg-accent/50"
-                        )}
-                      >
-                        {link.label}
-                      </NavigationMenuLink>
-                    </Link>
+                    <NavigationMenuLink
+                      asChild
+                      className={cn(
+                        navigationMenuTriggerStyle(),
+                        "text-sm font-medium hover:text-primary transition-colors bg-transparent hover:bg-accent/50 focus:bg-accent/50"
+                      )}
+                    >
+                      <Link href={link.href || "#"}>{link.label}</Link>
+                    </NavigationMenuLink>
                   )}
                 </NavigationMenuItem>
               ))}
@@ -233,26 +232,28 @@ export function PublicHeader() {
   );
 }
 
+type ListItemProps = React.ComponentPropsWithoutRef<typeof Link> & {
+  label: string;
+};
+
 const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a">
->(({ className, title, ...props }, ref) => {
+  React.ElementRef<typeof Link>,
+  ListItemProps
+>(({ className, label, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
-        <Link href={props.href!} legacyBehavior passHref>
-          <a
-            ref={ref}
-            className={cn(
-              "block select-none rounded-md px-4 py-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-              className
-            )}
-            {...props}
-          >
-            <div className="text-base leading-none text-primary-hover hover:text-primary">
-              {title}
-            </div>
-          </a>
+        <Link
+          ref={ref}
+          className={cn(
+            "block select-none rounded-md px-4 py-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            className
+          )}
+          {...props}
+        >
+          <div className="text-base leading-none text-primary-hover hover:text-primary">
+            {label}
+          </div>
         </Link>
       </NavigationMenuLink>
     </li>
