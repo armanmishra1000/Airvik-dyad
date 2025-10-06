@@ -57,6 +57,13 @@ const accommodations = [
   },
 ];
 
+/**
+ * Render the "Stay" section with a header, an animated carousel of accommodation cards, and a reservation call-to-action.
+ *
+ * The section includes entrance animations, responsive layout, carousel navigation controls, and a primary button linking to the booking review page.
+ *
+ * @returns A JSX element representing the stay section containing the title/description, the accommodations carousel, and the reserve button.
+ */
 export function StaySection() {
   return (
     <section className="bg-background py-10 sm:py-12">

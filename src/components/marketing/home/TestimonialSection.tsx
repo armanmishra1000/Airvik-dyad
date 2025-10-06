@@ -33,6 +33,11 @@ const testimonials = [
   },
 ];
 
+/**
+ * Renders a testimonial carousel section titled "Echoes of Peace" with animated header and autoplaying testimonial slides.
+ *
+ * @returns A JSX element containing the animated heading and an autoplay-enabled carousel of testimonial cards.
+ */
 export function TestimonialSection() {
   const plugin = React.useRef(
     Autoplay({ delay: 4000, stopOnInteraction: true })

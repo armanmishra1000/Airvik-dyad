@@ -16,6 +16,16 @@ interface FeatureCardProps {
   href?: string;
 }
 
+/**
+ * Render a stylized feature card with image, title, description, and an optional "Learn More" action.
+ *
+ * Renders an image, a title, and a description inside a Card. When `highlighted` is true the card is visually emphasized and includes a full-width "Learn More" button that navigates to `href`.
+ *
+ * @param highlighted - When true, apply visual emphasis and show the "Learn More" call-to-action.
+ * @param className - Additional CSS classes to merge into the card container.
+ * @param href - Destination URL for the "Learn More" link; defaults to `"#"` when not provided.
+ * @returns A JSX element representing the feature card.
+ */
 export function FeatureCard({
   title,
   description,

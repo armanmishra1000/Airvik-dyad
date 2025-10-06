@@ -15,6 +15,14 @@ const videos = [
   },
 ];
 
+/**
+ * Renders a responsive section titled "Visual Journey" containing animated video cards.
+ *
+ * Each card contains a muted, autoplaying YouTube iframe with a title overlay; the cards
+ * animate into view with a staggered entrance.
+ *
+ * @returns A React element containing a responsive, animated grid of video cards with autoplaying, muted YouTube iframes and visible titles for accessibility.
+ */
 export function VideoSection() {
   const containerVariants = {
     hidden: { opacity: 0 },

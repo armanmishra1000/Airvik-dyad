@@ -32,6 +32,14 @@ const formSchema = z.object({
   password: z.string().min(1, { message: "Password is required." }),
 });
 
+/**
+ * Render a login form for authenticating users and redirecting to the dashboard on success.
+ *
+ * On submit, attempts sign-in with Supabase using the provided email and password, displays
+ * a success or error toast based on the outcome, and navigates to "/dashboard" when authentication succeeds.
+ *
+ * @returns A React element containing the login form UI.
+ */
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);

@@ -43,6 +43,11 @@ const features: Feature[] = [
   },
 ];
 
+/**
+ * Render the Sahajanand Wellness homepage with an animated hero, a staggered features grid, and the composed site sections (Welcome, Gallery, Video, Stay, Testimonial, Marquee).
+ *
+ * @returns The homepage's JSX element containing the hero, features list, and subsequent content sections.
+ */
 export default function HomePage() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },

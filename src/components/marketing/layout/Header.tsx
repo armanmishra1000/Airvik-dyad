@@ -51,6 +51,15 @@ const socialLinks = [
   { href: "#", icon: Youtube },
 ];
 
+/**
+ * Render the site header with a responsive navigation, social links, logo, and a booking call-to-action.
+ *
+ * The header is sticky and updates its visual style when the page is scrolled. On wide screens it shows a
+ * horizontal navigation with dropdowns for items that have sub-links; on small screens it provides a right-side
+ * sheet with collapsible sections. A top bar displays a welcome message and social icons that hide when scrolled.
+ *
+ * @returns A React element representing the sticky, scroll-aware header containing the top social strip, main navigation (desktop dropdowns and mobile sheet with collapsibles), logo link, and "BOOK NOW" CTA.
+ */
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -253,5 +262,4 @@ const ListItem = React.forwardRef<
   );
 });
 ListItem.displayName = "ListItem";
-
 
