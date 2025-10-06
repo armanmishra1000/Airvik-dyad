@@ -22,7 +22,12 @@ interface UpdateStatusDialogProps {
   children: React.ReactNode;
 }
 
-const availableStatuses: RoomStatus[] = ["Clean", "Dirty", "Inspected", "Maintenance"];
+const availableStatuses: RoomStatus[] = [
+  "Clean",
+  "Dirty",
+  "Inspected",
+  "Maintenance",
+];
 
 export function UpdateStatusDialog({
   room,
@@ -48,27 +53,35 @@ export function UpdateStatusDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-xs">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Update Room {room.roomNumber} Status</DialogTitle>
+          <DialogTitle className="font-serif text-lg font-semibold">
+            Update Room {room.roomNumber} Status
+          </DialogTitle>
           <DialogDescription>
             Select the new status for this room.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
+        <div className="py-2">
           <RadioGroup
             value={selectedStatus}
             onValueChange={(value: RoomStatus) => setSelectedStatus(value)}
+            className="space-y-3"
           >
             {availableStatuses.map((status) => (
-              <div key={status} className="flex items-center space-x-2">
+              <div
+                key={status}
+                className="flex items-center gap-3 rounded-xl border border-border/40 bg-card/80 px-4 py-3"
+              >
                 <RadioGroupItem value={status} id={`status-${status}`} />
-                <Label htmlFor={`status-${status}`}>{status}</Label>
+                <Label htmlFor={`status-${status}`} className="text-sm font-medium">
+                  {status}
+                </Label>
               </div>
             ))}
           </RadioGroup>
         </div>
-        <DialogFooter>
+        <DialogFooter className="pt-2">
           <Button type="button" onClick={handleSave}>
             Save Changes
           </Button>

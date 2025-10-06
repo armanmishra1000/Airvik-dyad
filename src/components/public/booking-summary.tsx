@@ -53,9 +53,9 @@ export function BookingSummary({
 
   return (
     <div className="fixed bottom-4 right-4 w-full max-w-sm z-50">
-      <Card className="shadow-2xl">
+      <Card className="shadow-2xl bg-card border-border/50">
         <CardHeader>
-          <CardTitle className="flex justify-between items-center">
+          <CardTitle className="flex justify-between items-center text-foreground font-serif">
             <span>Your Booking</span>
             <Button variant="ghost" size="icon" onClick={onClear}>
               <Trash2 className="h-4 w-4" />

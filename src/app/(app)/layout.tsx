@@ -38,20 +38,24 @@ export default function AppLayout({
   return (
     <div
       className={cn(
-        "grid min-h-screen w-full",
+        "grid min-h-screen w-full bg-background transition-colors",
         isSidebarCollapsed
-          ? "md:grid-cols-[56px_1fr]"
-          : "md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]"
+          ? "md:grid-cols-[72px_1fr]"
+          : "md:grid-cols-[240px_1fr] lg:grid-cols-[288px_1fr]"
       )}
     >
       <Sidebar
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
       />
-      <div className="flex flex-col h-screen">
+      <div className="flex h-screen flex-col bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Header />
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-muted/40 overflow-auto">
-          {children}
+        <main className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto bg-muted/40 px-6 py-4 lg:px-8 lg:py-6">
+            <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6">
+              {children}
+            </div>
+          </div>
         </main>
       </div>
     </div>

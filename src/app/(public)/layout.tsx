@@ -1,6 +1,7 @@
 import * as React from "react";
-import { PublicHeader } from "@/components/public/header";
-import { PublicFooter } from "@/components/public/footer";
+import { Header } from "@/components/marketing/layout/Header";
+import { Footer } from "@/components/marketing/layout/Footer";
+import { ScrollToTopButton } from "@/components/marketing/layout/ScrollToTopButton";
 
 export default function PublicLayout({
   children,
@@ -9,9 +10,10 @@ export default function PublicLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen">
-      <PublicHeader />
+      <Header />
       <main className="flex-1">{children}</main>
-      <PublicFooter />
+      <Footer />
+      <ScrollToTopButton />
     </div>
   );
 }

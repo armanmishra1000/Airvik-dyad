@@ -74,15 +74,15 @@ export function RoomsDataTable<TData extends Room, TValue>({
 
   return (
     <>
-      <div className="space-y-4">
-          <div className="flex items-center justify-end">
-              {hasPermission("create:room") && (
-                <RoomFormDialog>
-                    <Button>Add Room</Button>
-                </RoomFormDialog>
-              )}
-          </div>
-        <div className="rounded-md border">
+      <div className="space-y-6">
+        <div className="flex items-center justify-end gap-3">
+          {hasPermission("create:room") && (
+            <RoomFormDialog>
+              <Button>Add Room</Button>
+            </RoomFormDialog>
+          )}
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -118,7 +118,10 @@ export function RoomsDataTable<TData extends Room, TValue>({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center text-muted-foreground"
+                  >
                     No results.
                   </TableCell>
                 </TableRow>

@@ -83,7 +83,7 @@ export function RoomCategoryFormDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Room Category" : "Add New Room Category"}
@@ -93,7 +93,7 @@ export function RoomCategoryFormDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -123,7 +123,7 @@ export function RoomCategoryFormDialog({
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="border-t border-border/40 pt-4 sm:justify-end">
               <Button type="submit">
                 {isEditing ? "Save Changes" : "Create Room Category"}
               </Button>

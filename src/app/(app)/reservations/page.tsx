@@ -34,7 +34,7 @@ export default function ReservationsPage() {
       bookingGroups.get(res.bookingId)!.push(res);
     });
 
-    const tableData: (ReservationWithDetails & { subRows?: ReservationWithDetails[] })[] = [];
+    const tableData: ReservationWithDetails[] = [];
     for (const group of bookingGroups.values()) {
       if (group.length > 1) {
         const firstRes = group[0];
@@ -69,7 +69,7 @@ export default function ReservationsPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <DataTable
         columns={columns}
         data={groupedReservations}

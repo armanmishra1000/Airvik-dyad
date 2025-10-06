@@ -70,7 +70,7 @@
 //             <div className="md:col-span-2">
 //               <Card className="h-full">
 //                 <CardHeader>
-//                   <CardTitle>Your Reservation</CardTitle>
+//                   <CardTitle className="text-foreground font-serif">Your Reservation</CardTitle>
 //                   <CardDescription className="flex items-center gap-2 pt-1">
 //                     <span>Reservation ID: {reservation.id}</span>
 //                     <Button
@@ -168,7 +168,7 @@
 //             <div className="md:col-span-1">
 //               <Card className="h-full">
 //                 <CardHeader>
-//                   <CardTitle>Hotel Information</CardTitle>
+//                   <CardTitle className="text-foreground font-serif">Hotel Information</CardTitle>
 //                 </CardHeader>
 //                 <CardContent className="space-y-3 text-sm">
 //                   <p className="font-bold text-base">SAHAJANAND WELLNESS</p>
@@ -287,7 +287,7 @@ export default function BookingConfirmationPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />
-            <h1 className="text-4xl font-bold font-serif mt-4">
+            <h1 className="text-4xl font-bold font-serif text-foreground mt-4">
               Booking Confirmed!
             </h1>
             <p className="text-muted-foreground mt-2 text-lg">
@@ -301,7 +301,7 @@ export default function BookingConfirmationPage() {
             <div>
               <Card className="h-full">
                 <CardHeader>
-                  <CardTitle>Your Reservation</CardTitle>
+                  <CardTitle className="text-foreground font-serif">Your Reservation</CardTitle>
                   <CardDescription className="flex items-center gap-2 pt-1">
                     <span>Reservation ID: {reservation.id}</span>
                     <Button
@@ -399,7 +399,7 @@ export default function BookingConfirmationPage() {
             <div>
               <Card className="h-full">
                 <CardHeader>
-                  <CardTitle>Hotel Information</CardTitle>
+                  <CardTitle className="text-foreground font-serif">Hotel Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   <p className="font-bold text-base">SAHAJANAND WELLNESS</p>
@@ -428,7 +428,7 @@ export default function BookingConfirmationPage() {
                 </CardContent>
                 <Separator className="my-4" />
                 <CardHeader className="pt-0">
-                  <CardTitle>What's Next?</CardTitle>
+                  <CardTitle className="text-foreground font-serif">What&apos;s Next?</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground pt-0">
                   <div className="flex items-start gap-3">

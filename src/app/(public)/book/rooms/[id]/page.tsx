@@ -8,15 +8,12 @@ import {
   useRouter,
 } from "next/navigation";
 import {
-  Users,
-  Bed,
   Calendar as CalendarIcon,
   MapPin,
   Star,
   Share2,
   MoreHorizontal,
   ArrowLeft,
-  ChevronRight,
   Clock,
   ParkingCircle,
   Info,
@@ -27,44 +24,21 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  format,
-  differenceInDays,
-  formatISO,
-  eachDayOfInterval,
-  parseISO,
-  parse,
-} from "date-fns";
-import type { DateRange } from "react-day-picker";
+import { format, formatISO, eachDayOfInterval, parseISO, parse } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/shared/icon";
-import { Separator } from "@/components/ui/separator";
 import type { IconName } from "@/lib/icons";
 import { RoomTypeCard } from "@/components/public/room-type-card";
 
@@ -106,7 +80,6 @@ export default function RoomDetailsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const {
-    property,
     reservations,
     roomTypes,
     amenities: allAmenities,
@@ -222,7 +195,7 @@ export default function RoomDetailsPage() {
       : description;
 
   return (
-    <div className="bg-gray-50 dark:bg-black">
+    <div className="bg-background">
       <div className="container mx-auto p-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-1 text-sm font-medium">
@@ -289,8 +262,6 @@ export default function RoomDetailsPage() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                {/* <CarouselPrevious className="absolute left-2 opacity-0 group-hover:opacity-100 transition-opacity" /> */}
-                {/* <CarouselNext className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity" /> */}
               </Carousel>
             </div>
           </div>
@@ -299,7 +270,7 @@ export default function RoomDetailsPage() {
         <div className="grid lg:grid-cols-5 gap-x-12">
           <div className="lg:col-span-3 space-y-8">
             <div>
-              <h1 className="sm:text-3xl text-2xl lg:text-4xl font-bold">
+              <h1 className="sm:text-3xl text-2xl lg:text-4xl font-bold font-serif text-foreground">
                 {roomType.name}
               </h1>
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
@@ -329,8 +300,8 @@ export default function RoomDetailsPage() {
               )}
             </p>
 
-            <div className="border rounded-xl p-4">
-              <h2 className="text-xl font-bold mb-6">Amenities</h2>
+            <div className="border border-border/50 rounded-xl p-4 bg-card">
+              <h2 className="text-xl font-bold font-serif text-foreground mb-6">Amenities</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6">
                 {roomType.amenities.map((amenityId) => {
                   const amenity = allAmenities.find((a) => a.id === amenityId);
@@ -351,8 +322,8 @@ export default function RoomDetailsPage() {
               </div>
             </div>
 
-            <div className="border rounded-xl p-4">
-              <h2 className="text-xl font-bold mb-6">Ashram Rules</h2>
+            <div className="border border-border/50 rounded-xl p-4 bg-card">
+              <h2 className="text-xl font-bold font-serif text-foreground mb-6">Ashram Rules</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
@@ -447,7 +418,7 @@ export default function RoomDetailsPage() {
                                   }}
                                   onSelect={field.onChange}
                                   numberOfMonths={2}
-                                  disabled={{ before: new Date() }}
+                                  disabled={disabledDates}
                                 />
                               </PopoverContent>
                             </Popover>
@@ -585,7 +556,7 @@ export default function RoomDetailsPage() {
 
         {relatedRoomTypes.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-3xl font-bold mb-8">Related Rooms</h2>
+            <h2 className="text-3xl font-bold font-serif text-foreground mb-8">Related Rooms</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedRoomTypes.slice(0, 3).map((relatedRoomType) => (
                 <RoomTypeCard

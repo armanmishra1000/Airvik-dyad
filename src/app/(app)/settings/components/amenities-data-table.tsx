@@ -71,13 +71,13 @@ export function AmenitiesDataTable<TData extends Amenity, TValue>({
 
   return (
     <>
-      <div className="space-y-4">
-          <div className="flex items-center justify-end">
-              <AmenityFormDialog>
-                  <Button>Add Amenity</Button>
-              </AmenityFormDialog>
-          </div>
-        <div className="rounded-md border">
+      <div className="space-y-6">
+        <div className="flex items-center justify-end gap-3">
+          <AmenityFormDialog>
+            <Button>Add Amenity</Button>
+          </AmenityFormDialog>
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -113,7 +113,10 @@ export function AmenitiesDataTable<TData extends Amenity, TValue>({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center text-muted-foreground"
+                  >
                     No amenities found.
                   </TableCell>
                 </TableRow>

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { addDays, format, eachDayOfInterval, isWithinInterval, parseISO, isSameDay, subDays } from "date-fns";
+import { format, eachDayOfInterval, isWithinInterval, parseISO, isSameDay, subDays } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { Calendar as CalendarIcon } from "lucide-react";
 
@@ -64,9 +64,9 @@ export function OccupancyReport() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <CardTitle>Occupancy Rate</CardTitle>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <CardTitle className="font-serif text-lg font-semibold">Occupancy Rate</CardTitle>
             <CardDescription>
               Percentage of occupied rooms for the selected period.
             </CardDescription>
@@ -74,19 +74,18 @@ export function OccupancyReport() {
           <Popover>
             <PopoverTrigger asChild>
               <Button
-                variant={"outline"}
+                variant="outline"
                 className={cn(
-                  "w-[300px] justify-start text-left font-normal",
+                  "h-11 w-full justify-start gap-3 rounded-xl border-border/40 bg-card/80 text-left font-medium shadow-sm sm:w-[320px]",
                   !date && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="h-4 w-4" />
                 {date?.from ? (
                   date.to ? (
-                    <>
-                      {format(date.from, "LLL dd, y")} -{" "}
-                      {format(date.to, "LLL dd, y")}
-                    </>
+                    <span className="truncate">
+                      {format(date.from, "LLL dd, y")} – {format(date.to, "LLL dd, y")}
+                    </span>
                   ) : (
                     format(date.from, "LLL dd, y")
                   )
@@ -95,7 +94,7 @@ export function OccupancyReport() {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
+            <PopoverContent className="w-auto rounded-2xl border border-border/50 bg-card/95 p-4 shadow-lg backdrop-blur" align="end">
               <Calendar
                 initialFocus
                 mode="range"
@@ -108,8 +107,8 @@ export function OccupancyReport() {
           </Popover>
         </div>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={{}} className="h-[350px] w-full">
+      <CardContent className="space-y-6">
+        <ChartContainer config={{}} className="h-[350px] w-full rounded-2xl border border-border/40 bg-card/80 p-4">
           <BarChart data={chartData}>
             <CartesianGrid vertical={false} />
             <XAxis
@@ -124,9 +123,9 @@ export function OccupancyReport() {
             />
             <ChartTooltip
               content={<ChartTooltipContent />}
-              cursor={{ fill: "hsl(var(--muted))" }}
+              cursor={{ fill: "hsl(var(--accent))" }}
             />
-            <Bar dataKey="occupancy" fill="hsl(var(--primary))" radius={4} />
+            <Bar dataKey="occupancy" fill="hsl(var(--primary))" radius={6} />
           </BarChart>
         </ChartContainer>
       </CardContent>
