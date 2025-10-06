@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { ActivityCard } from "./ActivityCard";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 
 const activities = [
   {
@@ -34,7 +34,7 @@ const activities = [
 ];
 
 export function WelcomeSection() {
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -45,7 +45,7 @@ export function WelcomeSection() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
@@ -57,7 +57,7 @@ export function WelcomeSection() {
     },
   };
 
-  const imageVariants = {
+  const imageVariants: Variants = {
     hidden: { x: -20, opacity: 0 },
     visible: {
       x: 0,
@@ -69,7 +69,7 @@ export function WelcomeSection() {
     },
   };
 
-  const textVariants = {
+  const textVariants: Variants = {
     hidden: { x: 20, opacity: 0 },
     visible: {
       x: 0,
