@@ -9,7 +9,7 @@ type LucideIconComponent = React.ForwardRefExoticComponent<
   Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
 >;
 
-const lucideIcons = icons as Record<string, LucideIconComponent>;
+const lucideIcons = icons as unknown as Record<string, LucideIconComponent>;
 
 interface IconProps extends LucideProps {
   name: IconName | string;

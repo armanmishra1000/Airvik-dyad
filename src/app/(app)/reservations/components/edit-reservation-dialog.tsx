@@ -135,7 +135,12 @@ export function EditReservationDialog({
       i === 0 ? { ...e, amount: totalAmount } : e
     );
     if (folio.length === 0) {
-      folio.push({ amount: totalAmount, description: "Room charge", date: new Date().toISOString() });
+      folio.push({
+        id: `${reservation.id}-room-charge`,
+        amount: totalAmount,
+        description: "Room charge",
+        timestamp: new Date().toISOString(),
+      });
     }
 
     const updatedReservationData = {
