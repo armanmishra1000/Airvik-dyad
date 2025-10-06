@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/auth-context";
 import { DataProvider } from "@/context/data-context";
+import { StickyBookingButton } from "@/components/sticky-booking-button";
 
 const fontSans = Inter({
   subsets: ["latin"],
@@ -45,6 +46,7 @@ export default function RootLayout({
           <AuthProvider>
             <DataProvider>
               {children}
+              <StickyBookingButton />
               <Toaster />
             </DataProvider>
           </AuthProvider>

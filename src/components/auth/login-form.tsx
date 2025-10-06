@@ -17,9 +17,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -46,11 +52,11 @@ export function LoginForm() {
     });
 
     if (error) {
-      toast.error("Unable to sign in", {
+      toast.error("Login failed", {
         description: error.message,
       });
     } else {
-      toast.success("Welcome back", {
+      toast.success("Login successful!", {
         description: "Redirecting you to the dashboard...",
       });
       router.push("/dashboard");
@@ -58,83 +64,76 @@ export function LoginForm() {
     setIsLoading(false);
   }
 
+  const newLocal = "mx-auto flex w-full max-w-sm min-h-screen flex-col justify-center px-4 py-16 sm:max-w-md";
   return (
-    <div className="space-y-8">
-      <div className="space-y-2 text-center">
-        <h1 className="font-serif text-3xl text-foreground">Sign in</h1>
-        <p className="text-sm text-muted-foreground">
-          Access your dashboard by using the credentials you created for the ashram.
-        </p>
-      </div>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-6"
-        >
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="hotelowner@gmail.com"
-                    {...field}
-                    type="email"
-                    autoComplete="email"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel>Password</FormLabel>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm font-medium text-primary underline underline-offset-4"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <FormControl>
-                  <Input
-                    placeholder="••••••••"
-                    {...field}
-                    type="password"
-                    autoComplete="current-password"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button
-            type="submit"
-            className="h-12 w-full"
-            disabled={isLoading}
-            aria-busy={isLoading}
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                Signing in
-              </span>
-            ) : (
-              "Sign in"
-            )}
-          </Button>
-        </form>
-      </Form>
-      <p className="text-center text-sm text-muted-foreground">
-        Need help? Contact the ashram administration for account assistance.
-      </p>
+    <div className={newLocal}>
+      <Card className="w-full shadow-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-serif text-foreground">
+            Sign in
+          </CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
+            Access the ashram dashboard using your registered credentials.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="hotelowner@gmail.com"
+                        {...field}
+                        type="email"
+                        autoComplete="email"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="••••••••"
+                        {...field}
+                        type="password"
+                        autoComplete="current-password"
+                      />
+                    </FormControl>
+                    <div className="mt-2 text-right">
+                      <Link
+                        href="/forgot-password"
+                        className="text-sm font-medium text-primary underline underline-offset-4"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                className="h-11 w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? "Logging in..." : "Login"}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

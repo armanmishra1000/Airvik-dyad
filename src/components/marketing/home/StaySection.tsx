@@ -59,7 +59,7 @@ const accommodations = [
 
 export function StaySection() {
   return (
-    <section className="bg-background pt-20 pb-20 sm:pt-28 sm:pb-0 lg:pb-28">
+    <section className="bg-background py-10 sm:py-12">
       <div className="container mx-auto px-4">
         <motion.div
           className="text-center mb-16"

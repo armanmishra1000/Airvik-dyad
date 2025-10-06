@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { ActivityCard } from "./ActivityCard";
+import { ActivityCard } from "@/components/marketing/home/ActivityCard";
 import { motion, type Variants } from "framer-motion";
 
 const activities = [
@@ -15,7 +15,7 @@ const activities = [
   {
     title: "Veda-Pathshala",
     description: "Preserving ancient wisdom through Vedic education.",
-    imageUrl: "/veda3.webp",
+    imageUrl: "/veda4.webp",
     href: "/about-us",
   },
   {
@@ -52,7 +52,7 @@ export function WelcomeSection() {
       opacity: 1,
       transition: {
         duration: 0.6,
-        ease: "easeOut",
+        ease: [0.16, 1, 0.3, 1],
       },
     },
   };
@@ -64,7 +64,7 @@ export function WelcomeSection() {
       opacity: 1,
       transition: {
         duration: 0.8,
-        ease: "easeOut",
+        ease: [0.16, 1, 0.3, 1],
       },
     },
   };
@@ -76,14 +76,14 @@ export function WelcomeSection() {
       opacity: 1,
       transition: {
         duration: 0.8,
-        ease: "easeOut",
+        ease: [0.16, 1, 0.3, 1],
       },
     },
   };
 
   return (
     <>
-      <section className="bg-background pb-20 sm:pb-28 lg:py-28 overflow-hidden">
+      <section className="bg-background py-10 sm:py-12 overflow-hidden">
         <div className="container mx-auto px-4">
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
@@ -98,7 +98,7 @@ export function WelcomeSection() {
               className="order-2 md:order-1"
             >
               <Image
-                src="/rishikesh-ahsram.png"
+                src="/rishikesh-temple.jpg"
                 alt="Sahajanand Wellness Ashram in Rishikesh"
                 width={600}
                 height={400}
@@ -115,13 +115,13 @@ export function WelcomeSection() {
                   <div className="flex items-center justify-center md:justify-start mb-2">
                     Welcome Home{" "}
                     <Image
-                      src="/swaminarayan-logo-1.png"
+                      src="/welcom-1.png"
                       alt="Sahajanand Wellness"
                       width={32}
                       height={32}
                       quality={100}
                       className="w-10 h-10 object-contain"
-                    ></Image>
+                    />
                   </div>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight">
@@ -138,7 +138,7 @@ export function WelcomeSection() {
                   beautiful gardens.
                 </p>
                 <p>
-                  Embodying the principle of 'welfare for all,' we welcome
+                  Embodying the principle of &lsquo;welfare for all,&rsquo; we welcome
                   seekers from every path to experience the profound peace and
                   spiritual nourishment offered here on the banks of the Ganga.
                 </p>
@@ -149,7 +149,7 @@ export function WelcomeSection() {
       </section>
 
       {/* Ashram Activities Section */}
-      <section className="bg-gradient-to-b from-background to-secondary/60 sm:pb-28">
+      <section className="bg-gradient-to-b from-background to-secondary/60 py-10 sm:py-12">
         <div className="container mx-auto px-4">
           <motion.div
             className="text-center mb-16"
@@ -160,13 +160,13 @@ export function WelcomeSection() {
           >
             <div className="flex justify-center mb-2">
               <Image
-                src="/marketing/logo.png"
+                src="/logo-removebg-preview.png"
                 alt="Sahajanand Wellness"
                 width={50}
                 height={50}
                 quality={100}
                 className="mt-10 object-contain"
-              ></Image>
+              />
             </div>
             <h3 className="text-4xl md:text-5xl font-bold font-serif text-foreground mb-2">
               Our Sacred Activities
@@ -200,3 +200,4 @@ export function WelcomeSection() {
     </>
   );
 }
+
