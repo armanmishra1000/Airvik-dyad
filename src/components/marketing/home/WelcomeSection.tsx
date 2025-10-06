@@ -138,7 +138,7 @@ export function WelcomeSection() {
                   beautiful gardens.
                 </p>
                 <p>
-                  Embodying the principle of 'welfare for all,' we welcome
+                  Embodying the principle of &apos;welfare for all,&apos; we welcome
                   seekers from every path to experience the profound peace and
                   spiritual nourishment offered here on the banks of the Ganga.
                 </p>

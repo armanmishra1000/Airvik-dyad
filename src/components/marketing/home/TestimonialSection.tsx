@@ -8,7 +8,6 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
-import { Quote } from "lucide-react";
 import { motion } from "framer-motion";
 
 const testimonials = [
@@ -81,9 +80,8 @@ export function TestimonialSection() {
                   <div className="p-4 h-full">
                     <Card className="bg-card h-full flex flex-col justify-center shadow-md border-l-4 border-primary">
                       <CardContent className="p-8 text-center space-y-6">
-                        {/* <Quote className="h-8 w-8 text-primary/50 mx-auto" /> */}
                         <p className="text-lg font-serif italic text-foreground/80">
-                          "{testimonial.quote}"
+                          &ldquo;{testimonial.quote}&rdquo;
                         </p>
                         {/* <p className="font-semibold text-muted-foreground text-sm tracking-wider uppercase">
                           - {testimonial.author}

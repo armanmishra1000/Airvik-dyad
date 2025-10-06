@@ -1,6 +1,7 @@
 "use client"
 
-import { ColumnDef, RowData } from "@tanstack/react-table"
+import Image from "next/image"
+import { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -16,23 +17,50 @@ import type { RoomType } from "@/data/types"
 import { RoomTypeFormDialog } from "./room-type-form-dialog"
 import { useDataContext } from "@/context/data-context"
 
+function RoomTypeImageCell({ roomType }: { roomType: RoomType }) {
+  const imageUrl =
+    roomType.mainPhotoUrl || roomType.photos?.[0] || "/room-placeholder.svg"
+
+  return (
+    <div className="relative h-10 w-16 overflow-hidden rounded-md">
+      <Image
+        src={imageUrl}
+        alt={roomType.name}
+        fill
+        className="object-cover"
+        sizes="64px"
+        unoptimized
+      />
+    </div>
+  )
+}
+
+function RoomTypeAmenitiesCell({ amenityIds }: { amenityIds: string[] }) {
+  const { amenities: allAmenities } = useDataContext()
+
+  if (!amenityIds?.length) {
+    return <span className="text-muted-foreground">N/A</span>
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {amenityIds.map((id) => {
+        const amenity = allAmenities.find((item) => item.id === id)
+        return (
+          <Badge key={id} variant="secondary">
+            {amenity?.name || id}
+          </Badge>
+        )
+      })}
+    </div>
+  )
+}
+
 export const columns: ColumnDef<RoomType>[] = [
   {
     id: "image",
     header: "Image",
-    cell: ({ row }) => {
-      const roomType = row.original
-      const imageUrl = roomType.mainPhotoUrl || roomType.photos?.[0] || "/room-placeholder.svg"
-      return (
-        <div className="w-16 h-10 relative rounded-md overflow-hidden">
-            <img 
-                src={imageUrl}
-                alt={roomType.name}
-                className="absolute inset-0 h-full w-full object-cover"
-            />
-        </div>
-      )
-    },
+    cell: ({ row }) => <RoomTypeImageCell roomType={row.original} />,
   },
   {
     accessorKey: "name",
@@ -54,22 +82,9 @@ export const columns: ColumnDef<RoomType>[] = [
     accessorKey: "amenities",
     header: "Amenities",
     cell: ({ row }) => {
-        const { amenities: allAmenities } = useDataContext();
-        const amenityIds = row.getValue("amenities") as string[];
-        if (!amenityIds || amenityIds.length === 0) {
-            return <span className="text-muted-foreground">N/A</span>
-        }
-        return (
-            <div className="flex flex-wrap gap-1">
-                {amenityIds.map(id => {
-                    const amenity = allAmenities.find(a => a.id === id);
-                    return (
-                        <Badge key={id} variant="secondary">{amenity?.name || id}</Badge>
-                    )
-                })}
-            </div>
-        )
-    }
+      const amenityIds = row.getValue("amenities") as string[]
+      return <RoomTypeAmenitiesCell amenityIds={amenityIds} />
+    },
   },
   {
     id: "actions",

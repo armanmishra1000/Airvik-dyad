@@ -27,10 +27,10 @@ interface StickyNoteCardProps {
 }
 
 const colorClasses = {
-  yellow: "bg-yellow-100 border-yellow-200 dark:bg-yellow-900/50 dark:border-yellow-800",
-  pink: "bg-pink-100 border-pink-200 dark:bg-pink-900/50 dark:border-pink-800",
-  blue: "bg-blue-100 border-blue-200 dark:bg-blue-900/50 dark:border-blue-800",
-  green: "bg-green-100 border-green-200 dark:bg-green-900/50 dark:border-green-800",
+  yellow: "border border-secondary/50 bg-secondary/30",
+  pink: "border border-accent/50 bg-accent/30",
+  blue: "border border-primary/40 bg-primary/15",
+  green: "border border-muted/50 bg-muted/40",
 };
 
 const rotations = [

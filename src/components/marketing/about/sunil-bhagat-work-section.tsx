@@ -14,13 +14,13 @@ export function SunilBhagatWorkSection() {
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight mb-8">
-            Swami's Work: A Legacy of Compassion
+            Swami&apos;s Work: A Legacy of Compassion
           </h2>
           <div className="space-y-6 text-lg text-muted-foreground">
             <p>
-              Swami's work extends far beyond spiritual discourses, embodying
-              the principle of 'welfare for all' in every action. He is the
-              guiding force behind the ashram's extensive charitable
+              Swami&apos;s work extends far beyond spiritual discourses, embodying
+              the principle of &apos;welfare for all&apos; in every action. He is the
+              guiding force behind the ashram&apos;s extensive charitable
               activities, ensuring that compassion and service are at the heart
               of our community.
             </p>
@@ -34,7 +34,7 @@ export function SunilBhagatWorkSection() {
             <p>
               Through his tireless efforts, Swami has cultivated a profound
               environment of selfless service (seva). He inspires visitors and
-              residents alike to participate in the ashram's mission, creating a
+              residents alike to participate in the ashram&apos;s mission, creating a
               sanctuary where individuals can deepen their spiritual practice
               while making a positive impact on the world.
             </p>

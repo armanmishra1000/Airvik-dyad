@@ -13,7 +13,7 @@ import {
 } from "date-fns";
 import { toast } from "sonner";
 import Image from "next/image";
-import { ThumbsUp, ParkingCircle, Loader2 } from "lucide-react";
+import { ThumbsUp, Loader2 } from "lucide-react";
 
 import { useDataContext } from "@/context/data-context";
 import { Button } from "@/components/ui/button";
@@ -209,12 +209,14 @@ function BookingReviewContent() {
 
       // Redirect to the confirmation page of the first reservation in the group
       router.push(`/book/confirmation/${newReservations[0].id}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const description =
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred. Please try again or contact support.";
       console.error("Booking failed:", error);
       toast.error("Booking Failed", {
-        description:
-          error.message ||
-          "An unexpected error occurred. Please try again or contact support.",
+        description,
       });
       setIsProcessing(false);
     }

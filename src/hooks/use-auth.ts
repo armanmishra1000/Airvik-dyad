@@ -4,6 +4,13 @@ import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import type { User, Role, Permission } from "@/data/types";
+
+type ProfileWithRole = {
+  id: string;
+  name: string | null;
+  role_id: string;
+  roles: Role | null;
+};
 import { getUserProfile } from "@/lib/api";
 
 export function useAuth() {
@@ -17,12 +24,18 @@ export function useAuth() {
     try {
       const { data: profile, error } = await getUserProfile(user.id);
       if (error) throw error;
-      
+      if (!profile) throw new Error("Profile not found");
+
+      const typedProfile = profile as ProfileWithRole;
+
       setAuthUser(user);
-      // @ts-ignore
-      setCurrentUser({ id: profile.id, name: profile.name, email: user.email, roleId: profile.role_id });
-      // @ts-ignore
-      setUserRole(profile.roles);
+      setCurrentUser({
+        id: typedProfile.id,
+        name: typedProfile.name ?? "",
+        email: user.email ?? "",
+        roleId: typedProfile.role_id,
+      });
+      setUserRole(typedProfile.roles);
     } catch (error) {
       console.error("Failed to fetch user profile, signing out.", error);
       await supabase.auth.signOut();

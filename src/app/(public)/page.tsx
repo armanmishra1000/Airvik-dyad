@@ -13,7 +13,7 @@ import { TestimonialSection } from "@/components/marketing/home/TestimonialSecti
 import { GallerySection } from "@/components/marketing/home/GallerySection";
 import { OurRoomsSection } from "@/components/marketing/home/OurRoomsSection";
 import { Marquee } from "@/components/marketing/layout/Marquee";
-import { ArrowRight, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 
 const features = [
   {

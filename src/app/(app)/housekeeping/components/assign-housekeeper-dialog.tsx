@@ -36,7 +36,7 @@ export function AssignHousekeeperDialog({
 }: AssignHousekeeperDialogProps) {
   const [open, setOpen] = React.useState(false);
   const [selectedUserId, setSelectedUserId] = React.useState<string>(
-    currentAssigneeId || ''
+    currentAssigneeId || ""
   );
   const { assignHousekeeper, users, roles } = useDataContext();
 
@@ -46,7 +46,7 @@ export function AssignHousekeeperDialog({
     : [];
 
   const handleSave = () => {
-    if (!selectedUserId || selectedUserId === '') {
+    if (!selectedUserId || selectedUserId === "") {
       toast.error("Please select a housekeeper.");
       return;
     }
@@ -60,23 +60,27 @@ export function AssignHousekeeperDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-xs">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Assign Housekeeper</DialogTitle>
+          <DialogTitle className="font-serif text-lg font-semibold">
+            Assign Housekeeper
+          </DialogTitle>
           <DialogDescription>
             Choose a housekeeper to clean this room.
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4 space-y-2">
-          <Label htmlFor="housekeeper-select">Housekeeper</Label>
-          <Select
-            value={selectedUserId}
-            onValueChange={setSelectedUserId}
-          >
-            <SelectTrigger id="housekeeper-select">
+        <div className="space-y-3 py-2">
+          <Label htmlFor="housekeeper-select" className="text-sm font-medium">
+            Housekeeper
+          </Label>
+          <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+            <SelectTrigger
+              id="housekeeper-select"
+              className="h-11 rounded-xl border-border/50 bg-card/80"
+            >
               <SelectValue placeholder="Select a housekeeper" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-2xl border-border/40 bg-card/95 backdrop-blur">
               {housekeepers.map((user) => (
                 <SelectItem key={user.id} value={user.id}>
                   {user.name}
@@ -85,7 +89,7 @@ export function AssignHousekeeperDialog({
             </SelectContent>
           </Select>
         </div>
-        <DialogFooter>
+        <DialogFooter className="pt-2">
           <Button type="button" onClick={handleSave}>
             Save Assignment
           </Button>

@@ -45,8 +45,8 @@ export function ReservationsHistoryTable<TData, TValue>({
   })
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border">
+    <div className="space-y-6">
+      <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -82,7 +82,10 @@ export function ReservationsHistoryTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-muted-foreground"
+                >
                   No reservations found for this guest.
                 </TableCell>
               </TableRow>

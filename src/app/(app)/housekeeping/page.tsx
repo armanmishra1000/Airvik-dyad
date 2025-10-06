@@ -64,12 +64,12 @@ export default function HousekeepingPage() {
   }, [statusFilter, roomsWithDetails]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <HousekeepingToolbar
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
       />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filteredRooms.map((room) => (
           <RoomStatusCard
             key={room.id}
@@ -79,8 +79,10 @@ export default function HousekeepingPage() {
         ))}
       </div>
       {filteredRooms.length === 0 && (
-        <div className="text-center text-muted-foreground py-12">
-          <p>No rooms match the selected status.</p>
+        <div className="rounded-2xl border border-dashed border-border/40 bg-card/60 py-16 text-center text-muted-foreground">
+          <p className="text-sm font-medium uppercase tracking-wide">
+            No rooms match the selected status
+          </p>
         </div>
       )}
     </div>

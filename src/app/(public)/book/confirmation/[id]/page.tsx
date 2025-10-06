@@ -428,7 +428,7 @@ export default function BookingConfirmationPage() {
                 </CardContent>
                 <Separator className="my-4" />
                 <CardHeader className="pt-0">
-                  <CardTitle className="text-foreground font-serif">What's Next?</CardTitle>
+                  <CardTitle className="text-foreground font-serif">What&apos;s Next?</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground pt-0">
                   <div className="flex items-start gap-3">

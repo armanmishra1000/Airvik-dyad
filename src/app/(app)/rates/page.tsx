@@ -8,7 +8,7 @@ export default function RatesPage() {
   const { ratePlans } = useDataContext();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <RatePlansDataTable columns={columns} data={ratePlans} />
     </div>
   );

@@ -4,7 +4,6 @@ import * as React from "react";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import type { User, Role, Permission } from "@/data/types";
 import { useAuth } from "@/hooks/use-auth";
-import { AppSkeleton } from "@/components/layout/app-skeleton";
 
 interface AuthContextType {
   authUser: AuthUser | null;

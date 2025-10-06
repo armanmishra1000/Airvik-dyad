@@ -6,6 +6,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -38,25 +39,25 @@ export function GuestDetailsCard({ guest }: GuestDetailsCardProps) {
           Details of the primary guest for this reservation.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center font-semibold">
-          <User className="mr-2 h-4 w-4 text-muted-foreground" />
+      <CardContent className="space-y-5 text-sm">
+        <div className="flex items-center gap-3 text-base font-semibold">
+          <User className="h-5 w-5 text-muted-foreground" />
           {guest.firstName} {guest.lastName}
         </div>
-        <div className="flex items-center text-sm">
-          <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
-          {guest.email}
+        <div className="flex items-center gap-3">
+          <Mail className="h-4 w-4 text-muted-foreground" />
+          <span>{guest.email}</span>
         </div>
-        <div className="flex items-center text-sm">
-          <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-          {guest.phone || "Not provided"}
+        <div className="flex items-center gap-3">
+          <Phone className="h-4 w-4 text-muted-foreground" />
+          <span>{guest.phone || "Not provided"}</span>
         </div>
       </CardContent>
-      <div className="border-t p-4">
+      <CardFooter className="border-t border-border/40 px-6 py-4">
         <Button variant="outline" size="sm" asChild>
           <Link href={`/guests/${guest.id}`}>View Guest Profile</Link>
         </Button>
-      </div>
+      </CardFooter>
     </Card>
   );
 }

@@ -101,8 +101,9 @@ export function UserFormDialog({
           setOpen(false);
         }
       }
-    } catch (e: any) {
-      toast.error("An unexpected error occurred", { description: e.message });
+    } catch (error: unknown) {
+      const description = error instanceof Error ? error.message : "Please try again.";
+      toast.error("An unexpected error occurred", { description });
     } finally {
       setIsSubmitting(false);
     }
@@ -111,7 +112,7 @@ export function UserFormDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit User" : "Add New User"}
@@ -121,7 +122,7 @@ export function UserFormDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -190,7 +191,7 @@ export function UserFormDialog({
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="border-t border-border/40 pt-4 sm:justify-end">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Saving..." : (isEditing ? "Save Changes" : "Create User")}
               </Button>

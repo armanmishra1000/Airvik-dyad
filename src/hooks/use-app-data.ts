@@ -323,10 +323,41 @@ import * as React from "react";
 import { useAuthContext } from "@/context/auth-context";
 import * as api from "@/lib/api";
 import type {
-  Reservation, Guest, ReservationStatus, FolioItem, HousekeepingAssignment, Room, RoomType, RoomCategory,
-  RatePlan, Property, User, Role, Amenity, StickyNote, DashboardComponentId
+  Reservation,
+  Guest,
+  ReservationStatus,
+  FolioItem,
+  HousekeepingAssignment,
+  Room,
+  RoomType,
+  RoomCategory,
+  RatePlan,
+  Property,
+  User,
+  Role,
+  Amenity,
+  StickyNote,
+  DashboardComponentId,
 } from "@/data/types";
-import { formatISO, differenceInDays } from "date-fns";
+import { differenceInDays } from "date-fns";
+
+type FolioItemRecord = FolioItem & { reservation_id: string };
+type RoomTypeAmenityRecord = { room_type_id: string; amenity_id: string };
+
+type CreateReservationPayload = {
+  guestId: string;
+  roomIds: string[];
+  ratePlanId: string;
+  checkInDate: string;
+  checkOutDate: string;
+  numberOfGuests: number;
+  status: ReservationStatus;
+  notes?: string;
+  bookingDate: string;
+  source: Reservation["source"];
+};
+
+type UserProfileUpdate = Partial<Pick<User, "name" | "roleId">>;
 
 const defaultProperty: Property = {
   id: "default-property-id",
@@ -392,14 +423,22 @@ export function useAppData() {
       setUsers(usersFuncRes.data || []);
       setHousekeepingAssignments(housekeepingAssignmentsRes.data || []);
 
-      const reservationsWithFolios = (reservationsRes.data || []).map(res => ({
-        ...res,
-        folio: (folioItemsRes.data || []).filter(item => item.reservation_id === res.id)
-      }));
-      setReservations(reservationsWithFolios as any);
+      const folioItems = (folioItemsRes.data || []) as FolioItemRecord[];
+      const reservationsWithFolios: Reservation[] = (reservationsRes.data || []).map((res) => {
+        const folio = folioItems
+          .filter((item) => item.reservation_id === res.id)
+        .map((item) => {
+          const { reservation_id, ...folioItem } = item;
+          void reservation_id;
+          return folioItem;
+        });
+        return { ...res, folio };
+      });
+      setReservations(reservationsWithFolios);
 
+      const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
       const roomTypesData = (roomTypesRes.data || []).map(rt => {
-        const amenitiesForRoomType = (roomTypeAmenitiesRes.data || [])
+        const amenitiesForRoomType = roomTypeAmenities
           .filter(rta => rta.room_type_id === rt.id)
           .map(rta => rta.amenity_id);
         return api.fromDbRoomType({ ...rt, amenities: amenitiesForRoomType });
@@ -446,30 +485,30 @@ export function useAppData() {
     return true;
   };
 
-  const addReservation = async (payload: any) => {
-    const { roomIds, ...rest } = payload;
+  const addReservation = async (payload: CreateReservationPayload) => {
+    const { roomIds, ...reservationDetails } = payload;
     const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-    const ratePlan = ratePlans.find(rp => rp.id === rest.ratePlanId);
+    const ratePlan = ratePlans.find(rp => rp.id === reservationDetails.ratePlanId);
     if (!ratePlan) {
       throw new Error("Rate plan not found for reservation.");
     }
-    const nights = differenceInDays(new Date(rest.checkOutDate), new Date(rest.checkInDate));
+    const nights = differenceInDays(new Date(reservationDetails.checkOutDate), new Date(reservationDetails.checkInDate));
     const totalAmount = nights * ratePlan.price;
 
-    const newReservationsData = roomIds.map((roomId: string) => ({
+    const newReservationsData = roomIds.map((roomId) => ({
       booking_id: bookingId,
-      guest_id: rest.guestId,
+      guest_id: reservationDetails.guestId,
       room_id: roomId,
-      rate_plan_id: rest.ratePlanId,
-      check_in_date: rest.checkInDate,
-      check_out_date: rest.checkOutDate,
-      number_of_guests: rest.numberOfGuests,
-      status: rest.status,
-      notes: rest.notes,
+      rate_plan_id: reservationDetails.ratePlanId,
+      check_in_date: reservationDetails.checkInDate,
+      check_out_date: reservationDetails.checkOutDate,
+      number_of_guests: reservationDetails.numberOfGuests,
+      status: reservationDetails.status,
+      notes: reservationDetails.notes,
       total_amount: totalAmount,
-      booking_date: rest.bookingDate,
-      source: rest.source,
+      booking_date: reservationDetails.bookingDate,
+      source: reservationDetails.source,
     }));
 
     const { data, error } = await api.addReservation(newReservationsData);
@@ -494,8 +533,10 @@ export function useAppData() {
 
   const addFolioItem = async (reservationId: string, item: Omit<FolioItem, "id" | "timestamp">) => {
     const { data, error } = await api.addFolioItem({ ...item, reservation_id: reservationId });
-    if (error) throw error;
-    setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, folio: [...r.folio, data], totalAmount: r.totalAmount + data.amount } : r));
+    if (error || !data) throw error ?? new Error("Failed to add folio item");
+    const { reservation_id, ...folioItem } = data as FolioItemRecord;
+    void reservation_id;
+    setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, folio: [...r.folio, folioItem], totalAmount: r.totalAmount + folioItem.amount } : r));
   };
 
   const addRoomType = async (roomTypeData: Omit<RoomType, "id">) => {
@@ -506,7 +547,23 @@ export function useAppData() {
   };
 
   const updateRoomType = async (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id">>) => {
-    const { data, error } = await api.upsertRoomType({ ...updatedData, id: roomTypeId });
+    const existingRoomType = roomTypes.find((roomType) => roomType.id === roomTypeId);
+    if (!existingRoomType) {
+      throw new Error("Room type not found.");
+    }
+
+    const payload = {
+      id: roomTypeId,
+      name: updatedData.name ?? existingRoomType.name,
+      description: updatedData.description ?? existingRoomType.description,
+      maxOccupancy: updatedData.maxOccupancy ?? existingRoomType.maxOccupancy,
+      bedTypes: updatedData.bedTypes ?? existingRoomType.bedTypes,
+      photos: updatedData.photos ?? existingRoomType.photos,
+      mainPhotoUrl: updatedData.mainPhotoUrl ?? existingRoomType.mainPhotoUrl,
+      amenities: updatedData.amenities ?? existingRoomType.amenities,
+    };
+
+    const { data, error } = await api.upsertRoomType(payload);
     if (error) throw error;
     const updatedRoomType = api.fromDbRoomType(data);
     setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? updatedRoomType : rt));
@@ -596,8 +653,20 @@ export function useAppData() {
   };
 
   const updateUser = async (userId: string, updatedData: Partial<Omit<User, "id">>) => {
-    const { data, error } = await api.updateUserProfile(userId, updatedData as any);
-    if (error) throw error;
+    const payload: UserProfileUpdate = {};
+    if (typeof updatedData.name !== "undefined") {
+      payload.name = updatedData.name;
+    }
+    if (typeof updatedData.roleId !== "undefined") {
+      payload.roleId = updatedData.roleId;
+    }
+
+    if (Object.keys(payload).length === 0) {
+      return;
+    }
+
+    const { data, error } = await api.updateUserProfile(userId, payload);
+    if (error || !data) throw error ?? new Error("Failed to update user profile");
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, name: data.name, roleId: data.role_id } : u));
   };
 

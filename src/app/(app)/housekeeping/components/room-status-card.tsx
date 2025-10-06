@@ -11,7 +11,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Room, RoomStatus, HousekeepingAssignment } from "@/data/types";
-import { User, Wrench } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { User } from "lucide-react";
 import { UpdateStatusDialog } from "./update-status-dialog";
 import { AssignHousekeeperDialog } from "./assign-housekeeper-dialog";
 
@@ -28,44 +29,68 @@ interface RoomStatusCardProps {
 
 const statusStyles: {
   [key in RoomStatus]: {
-    variant: "default" | "secondary" | "destructive" | "outline";
+    className: string;
     label: string;
   };
 } = {
-  Clean: { variant: "default", label: "Clean" },
-  Inspected: { variant: "default", label: "Inspected" },
-  Dirty: { variant: "destructive", label: "Dirty" },
-  Maintenance: { variant: "outline", label: "Maintenance" },
+  Clean: {
+    className:
+      "border border-accent/50 bg-accent/30 text-accent-foreground",
+    label: "Clean",
+  },
+  Inspected: {
+    className:
+      "border border-primary/40 bg-primary/10 text-primary",
+    label: "Inspected",
+  },
+  Dirty: {
+    className:
+      "border border-destructive/40 bg-destructive/10 text-destructive",
+    label: "Dirty",
+  },
+  Maintenance: {
+    className:
+      "border border-secondary/50 bg-secondary/30 text-secondary-foreground",
+    label: "Maintenance",
+  },
 };
 
 export function RoomStatusCard({ room, onStatusUpdate }: RoomStatusCardProps) {
-  const { variant, label } = statusStyles[room.status];
+  const { className, label } = statusStyles[room.status];
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex h-full flex-col">
       <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>Room {room.roomNumber}</CardTitle>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="font-serif text-lg font-semibold">Room {room.roomNumber}</CardTitle>
             <CardDescription>{room.roomTypeName}</CardDescription>
           </div>
-          <Badge variant={variant}>{label}</Badge>
+          <Badge
+            className={cn(
+              "self-start rounded-full px-3 py-1 text-xs font-medium",
+              className
+            )}
+          >
+            {label}
+          </Badge>
         </div>
       </CardHeader>
       <CardContent className="flex-1">
         {room.assignment && room.status === "Dirty" ? (
-          <div className="text-sm text-muted-foreground flex items-center gap-2">
+          <div className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card/80 px-4 py-3 text-sm text-muted-foreground shadow-sm">
             <User className="h-4 w-4" />
-            <span>
-              Assigned to: <strong>{room.housekeeperName}</strong> (
-              {room.assignment.status})
+            <span className="font-medium text-foreground">
+              Assigned to: <span className="font-semibold">{room.housekeeperName}</span> ({room.assignment.status})
             </span>
           </div>
         ) : (
-          <div className="text-sm text-muted-foreground">Vacant</div>
+          <div className="rounded-2xl border border-dashed border-border/50 px-4 py-3 text-sm text-muted-foreground">
+            Vacant
+          </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-end gap-2">
+      <CardFooter className="flex flex-wrap items-center justify-end gap-3 border-t border-border/40 px-6 py-4">
         {room.status === "Dirty" && (
           <AssignHousekeeperDialog
             roomId={room.id}

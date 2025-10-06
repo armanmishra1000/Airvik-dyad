@@ -8,15 +8,12 @@ import {
   useRouter,
 } from "next/navigation";
 import {
-  Users,
-  Bed,
   Calendar as CalendarIcon,
   MapPin,
   Star,
   Share2,
   MoreHorizontal,
   ArrowLeft,
-  ChevronRight,
   Clock,
   ParkingCircle,
   Info,
@@ -27,44 +24,21 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  format,
-  differenceInDays,
-  formatISO,
-  eachDayOfInterval,
-  parseISO,
-  parse,
-} from "date-fns";
-import type { DateRange } from "react-day-picker";
+import { format, formatISO, eachDayOfInterval, parseISO, parse } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/shared/icon";
-import { Separator } from "@/components/ui/separator";
 import type { IconName } from "@/lib/icons";
 import { RoomTypeCard } from "@/components/public/room-type-card";
 
@@ -106,7 +80,6 @@ export default function RoomDetailsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const {
-    property,
     reservations,
     roomTypes,
     amenities: allAmenities,
@@ -289,8 +262,6 @@ export default function RoomDetailsPage() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                {/* <CarouselPrevious className="absolute left-2 opacity-0 group-hover:opacity-100 transition-opacity" /> */}
-                {/* <CarouselNext className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity" /> */}
               </Carousel>
             </div>
           </div>
@@ -447,7 +418,7 @@ export default function RoomDetailsPage() {
                                   }}
                                   onSelect={field.onChange}
                                   numberOfMonths={2}
-                                  disabled={{ before: new Date() }}
+                                  disabled={disabledDates}
                                 />
                               </PopoverContent>
                             </Popover>

@@ -78,53 +78,56 @@ import {
 
     const components: Record<DashboardComponentId, React.ReactNode> = {
         stats: (
-            <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Occupancy</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Occupancy</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{occupancy.toFixed(0)}%</div>
+                    <CardContent className="space-y-2">
+                        <div className="text-3xl font-semibold">{occupancy.toFixed(0)}%</div>
                         <p className="text-xs text-muted-foreground">{occupiedRoomsCount} of {rooms.length} rooms occupied</p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Arrivals Today</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Arrivals Today</CardTitle>
                         <LogIn className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">+{todayArrivals.length}</div>
-                        <p className="text-xs text-muted-foreground">guests arriving</p>
+                    <CardContent className="space-y-2">
+                        <div className="text-3xl font-semibold">+{todayArrivals.length}</div>
+                        <p className="text-xs text-muted-foreground">Guests arriving</p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Departures Today</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Departures Today</CardTitle>
                         <LogOut className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">-{todayDepartures.length}</div>
-                        <p className="text-xs text-muted-foreground">guests departing</p>
+                    <CardContent className="space-y-2">
+                        <div className="text-3xl font-semibold">-{todayDepartures.length}</div>
+                        <p className="text-xs text-muted-foreground">Guests departing</p>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Available Rooms</CardTitle>
+                    <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+                        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Available Rooms</CardTitle>
                         <Bed className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{availableRooms}</div>
-                        <p className="text-xs text-muted-foreground">ready for check-in</p>
+                    <CardContent className="space-y-2">
+                        <div className="text-3xl font-semibold">{availableRooms}</div>
+                        <p className="text-xs text-muted-foreground">Ready for check-in</p>
                     </CardContent>
                 </Card>
             </div>
         ),
         tables: (
-            <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+            <div className="grid gap-6 md:gap-8 lg:grid-cols-2">
                 <Card>
-                    <CardHeader><CardTitle className="font-serif">Today's Arrivals</CardTitle><CardDescription>Guests scheduled to check-in today.</CardDescription></CardHeader>
+                    <CardHeader>
+                        <CardTitle className="font-serif text-lg font-semibold">Today&apos;s Arrivals</CardTitle>
+                        <CardDescription>Guests scheduled to check-in today.</CardDescription>
+                    </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader><TableRow><TableHead>Guest</TableHead><TableHead>Room</TableHead><TableHead className="text-right">Status</TableHead></TableRow></TableHeader>
@@ -132,14 +135,17 @@ import {
                                 {todayArrivals.length > 0 ? todayArrivals.map(res => {
                                     const guest = guests.find(g => g.id === res.guestId);
                                     const room = rooms.find(r => r.id === res.roomId);
-                                    return (<TableRow key={res.id}><TableCell><div className="font-medium">{guest?.firstName} {guest?.lastName}</div><div className="text-sm text-muted-foreground">{guest?.email}</div></TableCell><TableCell>{room?.roomNumber}</TableCell><TableCell className="text-right"><Badge>{res.status}</Badge></TableCell></TableRow>)
-                                }) : (<TableRow><TableCell colSpan={3} className="h-24 text-center">No arrivals today.</TableCell></TableRow>)}
+                                    return (<TableRow key={res.id}><TableCell><div className="font-medium">{guest?.firstName} {guest?.lastName}</div><div className="text-xs text-muted-foreground">{guest?.email}</div></TableCell><TableCell>{room?.roomNumber}</TableCell><TableCell className="text-right"><Badge variant="secondary">{res.status}</Badge></TableCell></TableRow>)
+                                }) : (<TableRow><TableCell colSpan={3} className="h-24 text-center text-muted-foreground">No arrivals today.</TableCell></TableRow>)}
                             </TableBody>
                         </Table>
                     </CardContent>
                 </Card>
                 <Card>
-                    <CardHeader><CardTitle className="font-serif">Today's Departures</CardTitle><CardDescription>Guests scheduled to check-out today.</CardDescription></CardHeader>
+                    <CardHeader>
+                        <CardTitle className="font-serif text-lg font-semibold">Today&apos;s Departures</CardTitle>
+                        <CardDescription>Guests scheduled to check-out today.</CardDescription>
+                    </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader><TableRow><TableHead>Guest</TableHead><TableHead>Room</TableHead><TableHead className="text-right">Status</TableHead></TableRow></TableHeader>
@@ -147,8 +153,8 @@ import {
                                 {todayDepartures.length > 0 ? todayDepartures.map(res => {
                                     const guest = guests.find(g => g.id === res.guestId);
                                     const room = rooms.find(r => r.id === res.roomId);
-                                    return (<TableRow key={res.id}><TableCell><div className="font-medium">{guest?.firstName} {guest?.lastName}</div><div className="text-sm text-muted-foreground">{guest?.email}</div></TableCell><TableCell>{room?.roomNumber}</TableCell><TableCell className="text-right"><Badge>{res.status}</Badge></TableCell></TableRow>)
-                                }) : (<TableRow><TableCell colSpan={3} className="h-24 text-center">No departures today.</TableCell></TableRow>)}
+                                    return (<TableRow key={res.id}><TableCell><div className="font-medium">{guest?.firstName} {guest?.lastName}</div><div className="text-xs text-muted-foreground">{guest?.email}</div></TableCell><TableCell>{room?.roomNumber}</TableCell><TableCell className="text-right"><Badge variant="secondary">{res.status}</Badge></TableCell></TableRow>)
+                                }) : (<TableRow><TableCell colSpan={3} className="h-24 text-center text-muted-foreground">No departures today.</TableCell></TableRow>)}
                             </TableBody>
                         </Table>
                     </CardContent>
@@ -174,9 +180,9 @@ import {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-6">
             <div className="flex justify-end">
-                <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
+                <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)}>
                     {isEditing ? <Check className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
                     {isEditing ? "Save Layout" : "Edit Layout"}
                 </Button>
@@ -188,7 +194,7 @@ import {
                 onDragEnd={handleDragEnd}
             >
                 <SortableContext items={dashboardLayout} strategy={verticalListSortingStrategy}>
-                    <div className="flex flex-col gap-4 md:gap-8">
+                    <div className="flex flex-col gap-6 md:gap-8">
                         {dashboardLayout.map(id => (
                             <DraggableCard key={id} id={id} isEditing={isEditing}>
                                 {components[id]}

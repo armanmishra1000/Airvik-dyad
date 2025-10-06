@@ -8,7 +8,7 @@ export default function RoomsPage() {
   const { rooms } = useDataContext();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <RoomsDataTable columns={columns} data={rooms} />
     </div>
   );

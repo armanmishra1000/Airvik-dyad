@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  ArrowLeft,
-  CheckCircle2,
-  LogIn,
-  LogOut,
-  XCircle,
-  Edit,
-} from "lucide-react";
+import { ArrowLeft, LogIn, LogOut, XCircle, Edit } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -46,17 +39,17 @@ export function ReservationHeader({ reservation }: ReservationHeaderProps) {
 
   return (
     <>
-      <div className="flex items-center gap-4 mb-4">
-        <Button variant="outline" size="icon" className="h-7 w-7" asChild>
+      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-border/40 bg-card/80 px-4 py-3 shadow-sm">
+        <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-border/50" asChild>
           <Link href="/reservations">
             <ArrowLeft className="h-4 w-4" />
             <span className="sr-only">Back</span>
           </Link>
         </Button>
-        <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
+        <h1 className="flex-1 text-base font-semibold uppercase tracking-wide text-muted-foreground sm:text-sm">
           Reservation Details
         </h1>
-        <Badge variant="outline" className="ml-auto sm:ml-0">
+        <Badge variant="outline" className="ml-auto rounded-full px-3 py-1 text-xs font-medium sm:ml-0">
           {reservation.status}
         </Badge>
         <div className="hidden items-center gap-2 md:ml-auto md:flex">

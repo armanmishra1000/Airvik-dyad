@@ -14,6 +14,7 @@ import {
   TableCell,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { useDataContext } from "@/context/data-context";
 import type { Reservation } from "@/data/types";
 
@@ -35,13 +36,16 @@ export function LinkedReservationsCard({ reservation }: LinkedReservationsCardPr
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Group Booking</CardTitle>
+        <CardTitle className="font-serif text-lg font-semibold">
+          Group Booking
+        </CardTitle>
         <CardDescription>
           This reservation is part of a group booking.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
+        <div className="rounded-2xl border border-border/40">
+          <Table>
           <TableBody>
             {linkedReservations.map((res) => {
               const room = rooms.find((r) => r.id === res.roomId);
@@ -49,17 +53,25 @@ export function LinkedReservationsCard({ reservation }: LinkedReservationsCardPr
               return (
                 <TableRow key={res.id}>
                   <TableCell>
-                    <Link href={`/reservations/${res.id}`} className="font-medium text-primary hover:underline">
+                      <Link
+                        href={`/reservations/${res.id}`}
+                        className="font-medium text-primary hover:underline"
+                      >
                       Room {room?.roomNumber}
                     </Link>
-                    <div className="text-sm text-muted-foreground">{roomType?.name}</div>
+                    <div className="text-xs text-muted-foreground">{roomType?.name}</div>
                   </TableCell>
-                  <TableCell className="text-right">{res.status}</TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant="outline" className="capitalize">
+                        {res.status}
+                      </Badge>
+                    </TableCell>
                 </TableRow>
               );
             })}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

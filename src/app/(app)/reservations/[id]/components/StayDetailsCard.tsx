@@ -31,38 +31,38 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
       <CardHeader>
         <CardTitle>Stay Details</CardTitle>
         <CardDescription>
-          Information about the guest's stay.
+          Information about the guest&apos;s stay.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 text-sm">
-        <div className="flex items-center">
-          <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">
+      <CardContent className="space-y-5 text-sm">
+        <div className="flex flex-wrap items-center gap-3 text-base">
+          <CalendarDays className="h-5 w-5 text-muted-foreground" />
+          <span className="font-semibold">
             {format(parseISO(reservation.checkInDate), "MMM d, yyyy")}
           </span>
-          <span className="mx-2 text-muted-foreground">&rarr;</span>
-          <span className="font-medium">
+          <span className="text-muted-foreground">&rarr;</span>
+          <span className="font-semibold">
             {format(parseISO(reservation.checkOutDate), "MMM d, yyyy")}
           </span>
         </div>
         <Separator />
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center">
-            <Moon className="mr-2 h-4 w-4 text-muted-foreground" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex items-center gap-3">
+            <Moon className="h-4 w-4 text-muted-foreground" />
             <span>{reservation.nights} nights</span>
           </div>
-          <div className="flex items-center">
-            <Users className="mr-2 h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-3">
+            <Users className="h-4 w-4 text-muted-foreground" />
             <span>{reservation.numberOfGuests} guests</span>
           </div>
-          <div className="flex items-center">
-            <BedDouble className="mr-2 h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-3">
+            <BedDouble className="h-4 w-4 text-muted-foreground" />
             <span>
               {reservation.roomNumber} ({roomType?.name})
             </span>
           </div>
-          <div className="flex items-center">
-            <BedDouble className="mr-2 h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-3">
+            <BedDouble className="h-4 w-4 text-muted-foreground" />
             <span>{ratePlan?.name}</span>
           </div>
         </div>
@@ -70,7 +70,9 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
           <>
             <Separator />
             <div>
-              <h4 className="font-medium mb-1">Notes</h4>
+              <h4 className="mb-2 font-serif text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Notes
+              </h4>
               <p className="text-muted-foreground">{reservation.notes}</p>
             </div>
           </>

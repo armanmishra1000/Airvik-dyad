@@ -1,85 +1,219 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { Property, Guest, Reservation, Room, RoomType, RoomCategory, RatePlan, Role, Amenity, StickyNote, User, HousekeepingAssignment, FolioItem } from "@/data/types";
+import type {
+  Property,
+  Guest,
+  Reservation,
+  Room,
+  RoomType,
+  RoomCategory,
+  RatePlan,
+  Role,
+  Amenity,
+  StickyNote,
+  FolioItem,
+  ReservationStatus,
+} from "@/data/types";
+
+type DbGuest = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+};
+
+type GuestUpdatePayload = Partial<
+  Pick<DbGuest, "first_name" | "last_name" | "email" | "phone">
+>;
+
+type DbRoom = {
+  id: string;
+  room_number: string;
+  room_type_id: string;
+  status: Room["status"];
+  photos: string[] | null;
+};
+
+type RoomUpdatePayload = Partial<
+  Pick<DbRoom, "room_number" | "room_type_id" | "status" | "photos">
+>;
+
+type DbRoomType = {
+  id: string;
+  name: string;
+  description: string;
+  max_occupancy: number;
+  bed_types: string[];
+  amenities?: string[] | null;
+  photos?: string[] | null;
+  main_photo_url?: string | null;
+};
+
+type DbReservation = {
+  id: string;
+  booking_id: string;
+  guest_id: string;
+  room_id: string;
+  rate_plan_id: string;
+  check_in_date: string;
+  check_out_date: string;
+  number_of_guests: number;
+  status: ReservationStatus;
+  notes?: string | null;
+  folio?: FolioItem[] | null;
+  total_amount: number;
+  booking_date: string;
+  source: Reservation["source"];
+};
+
+type ReservationUpdatePayload = Partial<
+  Pick<
+    DbReservation,
+    | "booking_id"
+    | "guest_id"
+    | "room_id"
+    | "rate_plan_id"
+    | "check_in_date"
+    | "check_out_date"
+    | "number_of_guests"
+    | "status"
+    | "notes"
+    | "folio"
+    | "total_amount"
+    | "booking_date"
+    | "source"
+  >
+>;
+
+type DbReservationInsert = ReservationUpdatePayload & {
+  booking_id: string;
+  guest_id: string;
+  room_id: string;
+  rate_plan_id: string;
+  check_in_date: string;
+  check_out_date: string;
+  number_of_guests: number;
+  status: ReservationStatus;
+  total_amount: number;
+  booking_date: string;
+  source: Reservation["source"];
+};
+
+type RoomTypeAmenityRow = {
+  amenity_id: string;
+  room_type_id: string;
+};
+
+type RoomTypeUpsertInput = Omit<RoomType, "id"> & {
+  id?: string;
+};
+
+type FolioItemInsertPayload = Omit<FolioItem, "id" | "timestamp"> & {
+  reservation_id: string;
+  timestamp?: string;
+};
+
+type StickyNoteInsertPayload = Omit<StickyNote, "id" | "createdAt"> & {
+  user_id: string;
+};
+
+type RoomTypeWithAmenitiesRow = DbRoomType & {
+  room_type_amenities: RoomTypeAmenityRow[] | null;
+};
+
+type UpdateUserProfilePayload = Partial<{
+  name: string;
+  roleId: string;
+}>;
 
 // --- Data Transformation Helpers ---
 
-const fromDbGuest = (dbGuest: any): Guest => ({
-    id: dbGuest.id,
-    firstName: dbGuest.first_name,
-    lastName: dbGuest.last_name,
-    email: dbGuest.email,
-    phone: dbGuest.phone,
+const fromDbGuest = (dbGuest: DbGuest): Guest => ({
+  id: dbGuest.id,
+  firstName: dbGuest.first_name,
+  lastName: dbGuest.last_name,
+  email: dbGuest.email,
+  phone: dbGuest.phone,
 });
 
-const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>) => {
-    const dbData: { [key: string]: any } = {};
-    if (appGuest.firstName) dbData.first_name = appGuest.firstName;
-    if (appGuest.lastName) dbData.last_name = appGuest.lastName;
-    if (appGuest.email) dbData.email = appGuest.email;
-    if (appGuest.phone) dbData.phone = appGuest.phone;
-    return dbData;
+const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>): GuestUpdatePayload => {
+  const dbData: GuestUpdatePayload = {};
+  if (appGuest.firstName) dbData.first_name = appGuest.firstName;
+  if (appGuest.lastName) dbData.last_name = appGuest.lastName;
+  if (appGuest.email) dbData.email = appGuest.email;
+  if (appGuest.phone) dbData.phone = appGuest.phone;
+  return dbData;
 };
 
-const fromDbRoom = (dbRoom: any): Room => ({
-    id: dbRoom.id,
-    roomNumber: dbRoom.room_number,
-    roomTypeId: dbRoom.room_type_id,
-    status: dbRoom.status,
-    photos: dbRoom.photos,
+const fromDbRoom = (dbRoom: DbRoom): Room => ({
+  id: dbRoom.id,
+  roomNumber: dbRoom.room_number,
+  roomTypeId: dbRoom.room_type_id,
+  status: dbRoom.status,
+  photos: dbRoom.photos ?? undefined,
 });
 
-const toDbRoom = (appRoom: Partial<Omit<Room, "id">>) => {
-    const dbData: { [key: string]: any } = {};
-    if (appRoom.roomNumber) dbData.room_number = appRoom.roomNumber;
-    if (appRoom.roomTypeId) dbData.room_type_id = appRoom.roomTypeId;
-    if (appRoom.status) dbData.status = appRoom.status;
-    if (appRoom.photos) dbData.photos = appRoom.photos;
-    return dbData;
+const toDbRoom = (appRoom: Partial<Omit<Room, "id">>): RoomUpdatePayload => {
+  const dbData: RoomUpdatePayload = {};
+  if (appRoom.roomNumber) dbData.room_number = appRoom.roomNumber;
+  if (appRoom.roomTypeId) dbData.room_type_id = appRoom.roomTypeId;
+  if (appRoom.status) dbData.status = appRoom.status;
+  if (appRoom.photos) dbData.photos = appRoom.photos;
+  return dbData;
 };
 
-export const fromDbRoomType = (dbRoomType: any): RoomType => ({
-    id: dbRoomType.id,
-    name: dbRoomType.name,
-    description: dbRoomType.description,
-    maxOccupancy: dbRoomType.max_occupancy,
-    bedTypes: dbRoomType.bed_types,
-    amenities: dbRoomType.amenities || [],
-    photos: dbRoomType.photos || [],
-    mainPhotoUrl: dbRoomType.main_photo_url,
+export const fromDbRoomType = (dbRoomType: DbRoomType): RoomType => ({
+  id: dbRoomType.id,
+  name: dbRoomType.name,
+  description: dbRoomType.description,
+  maxOccupancy: dbRoomType.max_occupancy,
+  bedTypes: dbRoomType.bed_types,
+  amenities: dbRoomType.amenities ?? [],
+  photos: dbRoomType.photos ?? [],
+  mainPhotoUrl: dbRoomType.main_photo_url ?? undefined,
 });
 
-const fromDbReservation = (dbReservation: any): Reservation => ({
-    id: dbReservation.id,
-    bookingId: dbReservation.booking_id,
-    guestId: dbReservation.guest_id,
-    roomId: dbReservation.room_id,
-    ratePlanId: dbReservation.rate_plan_id,
-    checkInDate: dbReservation.check_in_date,
-    checkOutDate: dbReservation.check_out_date,
-    numberOfGuests: dbReservation.number_of_guests,
-    status: dbReservation.status,
-    notes: dbReservation.notes,
-    folio: dbReservation.folio || [],
-    totalAmount: dbReservation.total_amount,
-    bookingDate: dbReservation.booking_date,
-    source: dbReservation.source,
+const fromDbReservation = (dbReservation: DbReservation): Reservation => ({
+  id: dbReservation.id,
+  bookingId: dbReservation.booking_id,
+  guestId: dbReservation.guest_id,
+  roomId: dbReservation.room_id,
+  ratePlanId: dbReservation.rate_plan_id,
+  checkInDate: dbReservation.check_in_date,
+  checkOutDate: dbReservation.check_out_date,
+  numberOfGuests: dbReservation.number_of_guests,
+  status: dbReservation.status,
+  notes: dbReservation.notes ?? undefined,
+  folio: dbReservation.folio ?? [],
+  totalAmount: dbReservation.total_amount,
+  bookingDate: dbReservation.booking_date,
+  source: dbReservation.source,
 });
 
-const toDbReservation = (appReservation: Partial<Reservation>) => {
-    const dbData: { [key: string]: any } = {};
-    if (appReservation.bookingId) dbData.booking_id = appReservation.bookingId;
-    if (appReservation.guestId) dbData.guest_id = appReservation.guestId;
-    if (appReservation.roomId) dbData.room_id = appReservation.roomId;
-    if (appReservation.ratePlanId) dbData.rate_plan_id = appReservation.ratePlanId;
-    if (appReservation.checkInDate) dbData.check_in_date = appReservation.checkInDate;
-    if (appReservation.checkOutDate) dbData.check_out_date = appReservation.checkOutDate;
-    if (appReservation.numberOfGuests) dbData.number_of_guests = appReservation.numberOfGuests;
-    if (appReservation.status) dbData.status = appReservation.status;
-    if (appReservation.notes) dbData.notes = appReservation.notes;
-    if (appReservation.totalAmount) dbData.total_amount = appReservation.totalAmount;
-    if (appReservation.bookingDate) dbData.booking_date = appReservation.bookingDate;
-    if (appReservation.source) dbData.source = appReservation.source;
-    return dbData;
+const toDbReservation = (
+  appReservation: Partial<Reservation>
+): ReservationUpdatePayload => {
+  const dbData: ReservationUpdatePayload = {};
+  if (appReservation.bookingId) dbData.booking_id = appReservation.bookingId;
+  if (appReservation.guestId) dbData.guest_id = appReservation.guestId;
+  if (appReservation.roomId) dbData.room_id = appReservation.roomId;
+  if (appReservation.ratePlanId) dbData.rate_plan_id = appReservation.ratePlanId;
+  if (appReservation.checkInDate) dbData.check_in_date = appReservation.checkInDate;
+  if (appReservation.checkOutDate) dbData.check_out_date = appReservation.checkOutDate;
+  if (typeof appReservation.numberOfGuests === "number") {
+    dbData.number_of_guests = appReservation.numberOfGuests;
+  }
+  if (appReservation.status) dbData.status = appReservation.status;
+  if (typeof appReservation.notes !== "undefined") {
+    dbData.notes = appReservation.notes;
+  }
+  if (appReservation.folio) dbData.folio = appReservation.folio;
+  if (typeof appReservation.totalAmount === "number") {
+    dbData.total_amount = appReservation.totalAmount;
+  }
+  if (appReservation.bookingDate) dbData.booking_date = appReservation.bookingDate;
+  if (appReservation.source) dbData.source = appReservation.source;
+  return dbData;
 };
 
 // --- File Upload Helper ---
@@ -136,10 +270,14 @@ export const getReservations = async () => {
     if (error || !data) return { data, error, ...rest };
     return { data: data.map(fromDbReservation), error, ...rest };
 };
-export const addReservation = async (reservationsData: any[]) => {
-    const { data, error, ...rest } = await supabase.from('reservations').insert(reservationsData).select();
-    if (error || !data) return { data, error, ...rest };
-    return { data: data.map(fromDbReservation), error, ...rest };
+export const addReservation = async (reservationsData: DbReservationInsert[]) => {
+  const { data, error, ...rest } = await supabase
+    .from('reservations')
+    .insert(reservationsData)
+    .select();
+  if (error || !data) return { data, error, ...rest };
+  const typedData = data as DbReservation[];
+  return { data: typedData.map(fromDbReservation), error, ...rest };
 };
 export const updateReservation = async (id: string, updatedData: Partial<Reservation>) => {
     const { data, error, ...rest } = await supabase.from('reservations').update(toDbReservation(updatedData)).eq('id', id).select().single();
@@ -150,7 +288,8 @@ export const updateReservationStatus = (id: string, status: string) => supabase.
 
 // Folio Items
 export const getFolioItems = () => supabase.from('folio_items').select('*');
-export const addFolioItem = (itemData: any) => supabase.from('folio_items').insert([itemData]).select().single();
+export const addFolioItem = (itemData: FolioItemInsertPayload) =>
+  supabase.from('folio_items').insert([itemData]).select().single();
 
 // Rooms
 export const getRooms = async () => {
@@ -173,18 +312,18 @@ export const deleteRoom = (id: string) => supabase.from('rooms').delete().eq('id
 // Room Types
 export const getRoomTypes = () => supabase.from('room_types').select('*');
 export const getRoomTypeAmenities = () => supabase.from('room_type_amenities').select('*');
-export const upsertRoomType = (roomTypeData: any) => {
-    const params = {
-        p_id: roomTypeData.id || null,
-        p_name: roomTypeData.name,
-        p_description: roomTypeData.description,
-        p_max_occupancy: roomTypeData.maxOccupancy,
-        p_bed_types: roomTypeData.bedTypes,
-        p_photos: roomTypeData.photos,
-        p_main_photo_url: roomTypeData.mainPhotoUrl,
-        p_amenity_ids: roomTypeData.amenities,
-    };
-    return supabase.rpc('upsert_room_type_with_amenities', params).single();
+export const upsertRoomType = (roomTypeData: RoomTypeUpsertInput) => {
+  const params = {
+    p_id: roomTypeData.id ?? null,
+    p_name: roomTypeData.name,
+    p_description: roomTypeData.description,
+    p_max_occupancy: roomTypeData.maxOccupancy,
+    p_bed_types: roomTypeData.bedTypes,
+    p_photos: roomTypeData.photos,
+    p_main_photo_url: roomTypeData.mainPhotoUrl,
+    p_amenity_ids: roomTypeData.amenities,
+  };
+  return supabase.rpc('upsert_room_type_with_amenities', params).single();
 };
 export const deleteRoomType = (id: string) => supabase.from('room_types').delete().eq('id', id);
 
@@ -196,29 +335,28 @@ export const deleteRoomCategory = (id: string) => supabase.from('room_categories
 
 // New function for Room Details Page
 export const getRoomTypeWithAmenities = async (id: string) => {
-    const { data, error } = await supabase
-        .from('room_types')
-        .select(`*, room_type_amenities (amenity_id)`)
-        .eq('id', id)
-        .single();
+  const { data, error } = await supabase
+    .from('room_types')
+    .select('*, room_type_amenities (amenity_id)')
+    .eq('id', id)
+    .single();
 
-    if (error) {
-        console.error("Error fetching room type with amenities:", error);
-        return { data: null, error };
-    }
-    if (!data) {
-        return { data: null, error: null };
-    }
+  if (error) {
+    console.error("Error fetching room type with amenities:", error);
+    return { data: null, error };
+  }
 
-    const roomTypeData = {
-        ...data,
-        // @ts-ignore
-        amenities: data.room_type_amenities.map((rta: any) => rta.amenity_id),
-    };
-    // @ts-ignore
-    delete roomTypeData.room_type_amenities;
+  if (!data) {
+    return { data: null, error: null };
+  }
 
-    return { data: fromDbRoomType(roomTypeData), error: null };
+  const { room_type_amenities, ...roomTypeFields } = data as RoomTypeWithAmenitiesRow;
+  const roomTypeData: DbRoomType = {
+    ...roomTypeFields,
+    amenities: (room_type_amenities ?? []).map((rta) => rta.amenity_id),
+  };
+
+  return { data: fromDbRoomType(roomTypeData), error: null };
 };
 
 
@@ -236,7 +374,16 @@ export const deleteRole = (id: string) => supabase.from('roles').delete().eq('id
 
 // Users & Profiles
 export const getUsers = () => supabase.functions.invoke('get-users');
-export const updateUserProfile = (id: string, updatedData: { name: string; roleId: string; }) => supabase.from('profiles').update({ name: updatedData.name, role_id: updatedData.roleId }).eq('id', id).select().single();
+export const updateUserProfile = (id: string, updatedData: UpdateUserProfilePayload) => {
+  const payload: Record<string, unknown> = {};
+  if (typeof updatedData.name !== "undefined") {
+    payload.name = updatedData.name;
+  }
+  if (typeof updatedData.roleId !== "undefined") {
+    payload.role_id = updatedData.roleId;
+  }
+  return supabase.from('profiles').update(payload).eq('id', id).select().single();
+};
 export const deleteAuthUser = (id: string) => supabase.functions.invoke('delete-user', { body: { userIdToDelete: id } });
 export const getUserProfile = (id: string) => supabase.from('profiles').select('*, roles(*)').eq('id', id).single();
 
@@ -248,7 +395,8 @@ export const deleteAmenity = (id: string) => supabase.from('amenities').delete()
 
 // Sticky Notes
 export const getStickyNotes = (userId: string) => supabase.from('sticky_notes').select('*').eq('user_id', userId);
-export const addStickyNote = (noteData: any) => supabase.from('sticky_notes').insert([noteData]).select().single();
+export const addStickyNote = (noteData: StickyNoteInsertPayload) =>
+  supabase.from('sticky_notes').insert([noteData]).select().single();
 export const updateStickyNote = (id: string, updatedData: Partial<StickyNote>) => supabase.from('sticky_notes').update(updatedData).eq('id', id).select().single();
 export const deleteStickyNote = (id: string) => supabase.from('sticky_notes').delete().eq('id', id);
 

@@ -22,7 +22,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ReservationStatus } from "@/data/types"
+import type { FolioItem, ReservationStatus } from "@/data/types"
 
 export type ReservationWithDetails = {
     id: string;
@@ -34,7 +34,7 @@ export type ReservationWithDetails = {
     numberOfGuests: number;
     status: ReservationStatus;
     notes?: string | undefined;
-    folio: any[];
+    folio: FolioItem[];
     totalAmount: number;
     guestName: string;
     roomNumber: string;

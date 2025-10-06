@@ -8,7 +8,7 @@ export default function GuestsPage() {
   const { guests } = useDataContext();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <GuestsDataTable columns={columns} data={guests} />
     </div>
   );
