@@ -43,6 +43,13 @@ const attractions = [
   },
 ];
 
+/**
+ * Render a responsive, animated section showcasing key experiences and attractions.
+ *
+ * The section displays a responsive grid of attraction info cards that animate into view with staggered transitions.
+ *
+ * @returns A JSX element containing the section with animated attraction cards
+ */
 export function KeyAttractionsSection() {
   const containerVariants = {
     hidden: { opacity: 0 },

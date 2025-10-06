@@ -372,6 +372,11 @@ const defaultProperty: Property = {
   currency: "USD",
 };
 
+/**
+ * Manages application state and provides actions to fetch and mutate property, reservations, guests, rooms, room types and categories, rate plans, users, roles, amenities, sticky notes, housekeeping assignments, and dashboard layout.
+ *
+ * @returns An object with current state values (isLoading, property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments) and action handlers for CRUD and utility operations, including updateProperty, addGuest, deleteGuest, addReservation, refetchUsers, updateGuest, updateReservation, updateReservationStatus, addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType, deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser, addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, and updateDashboardLayout.
+ */
 export function useAppData() {
   const { authUser } = useAuthContext();
   const [isLoading, setIsLoading] = React.useState(true);

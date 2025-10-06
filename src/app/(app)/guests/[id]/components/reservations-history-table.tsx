@@ -26,6 +26,15 @@ interface ReservationsHistoryTableProps<TData, TValue> {
   data: TData[]
 }
 
+/**
+ * Render a sortable, paginated reservations history table driven by provided column definitions and data.
+ *
+ * @typeParam TData - The shape of each row of data.
+ * @typeParam TValue - The value type used by the column definitions.
+ * @param columns - Column definitions that determine table headers and cell rendering.
+ * @param data - Array of rows to display in the table.
+ * @returns The rendered reservations history table element, including headers, rows, an empty-state message when no rows exist, and pagination controls.
+ */
 export function ReservationsHistoryTable<TData, TValue>({
   columns,
   data,

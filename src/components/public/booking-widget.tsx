@@ -41,6 +41,12 @@ interface BookingWidgetProps {
   onSearch: (values: BookingSearchFormValues) => void;
 }
 
+/**
+ * Render a booking search form with a date range picker, occupancy controls (rooms, adults, children), and a submit button.
+ *
+ * @param onSearch - Callback invoked with validated booking search values when the form is submitted
+ * @returns The BookingWidget React element containing the form and interactive controls
+ */
 export function BookingWidget({ onSearch }: BookingWidgetProps) {
   const form = useForm<BookingSearchFormValues>({
     resolver: zodResolver(searchSchema),

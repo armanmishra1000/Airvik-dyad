@@ -24,6 +24,14 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
 });
 
+/**
+ * Renders a "Forgot password" form and handles sending a password reset email.
+ *
+ * On submit, requests a reset link via Supabase, shows a success or error toast,
+ * and resets the form when the request succeeds.
+ *
+ * @returns A React element containing the forgot-password form UI.
+ */
 export function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = React.useState(false);
 

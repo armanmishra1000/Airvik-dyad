@@ -3,6 +3,11 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+/**
+ * Renders the "Swami's Message" section with a centered heading, a responsive two-column layout containing a motivational text and an image, and entrance animations for the heading, content, and image.
+ *
+ * @returns The section's React element.
+ */
 export function SunilBhagatMessageSection() {
   return (
     <section className="py-10 lg:py-28 md:py-18 bg-muted/50">

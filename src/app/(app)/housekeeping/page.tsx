@@ -8,6 +8,16 @@ import { HousekeepingToolbar } from "./components/housekeeping-toolbar";
 import { RoomStatusCard } from "./components/room-status-card";
 import { useDataContext } from "@/context/data-context";
 
+/**
+ * Render the housekeeping dashboard with a status filter, room cards, and an empty-state display.
+ *
+ * The page shows a toolbar to select which room statuses to view, a responsive grid of RoomStatusCard
+ * components for the filtered rooms, and a styled empty-state message when no rooms match the filter.
+ * Updating a room's status from a card will update the room, display a success or error toast, and,
+ * if the new status is `Clean`, mark the day's housekeeping assignment for that room as `Completed`.
+ *
+ * @returns The React element for the housekeeping page.
+ */
 export default function HousekeepingPage() {
   const {
     housekeepingAssignments,

@@ -27,6 +27,15 @@ import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmatio
 import { useDataContext } from "@/context/data-context"
 import type { Role } from "@/data/types"
 
+/**
+ * Render a roles table with sorting, pagination, an Add Role dialog, and per-row delete confirmation.
+ *
+ * Renders the provided columns and data using react-table, exposes UI for adding roles, paginates and sorts rows, and opens a confirmation dialog before deleting a role. Successful or failed deletions surface a toast notification.
+ *
+ * @param columns - Column definitions used to render table headers and cells
+ * @param data - Array of role objects to display in the table
+ * @returns A React element that displays the roles data table with controls for adding, sorting, paginating, and deleting roles
+ */
 export function RolesDataTable<TData extends Role, TValue>({
   columns,
   data,

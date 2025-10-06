@@ -54,6 +54,13 @@ const paymentSchema = z.object({
   phone: z.string().min(1, "Phone number is required."),
 });
 
+/**
+ * Render the booking review UI, validate payment and guest details, allocate available rooms, create guest and reservation records, and navigate to the booking confirmation.
+ *
+ * This component reads booking parameters from the URL, computes stay length and total cost, presents a review and payment form, and on submit attempts to assign physical rooms that do not conflict with existing reservations. On success it creates a guest and reservations, then redirects to the confirmation page for the created reservation group. On failure it surfaces user-facing errors via toast notifications.
+ *
+ * @returns The booking review React element to be mounted in the application.
+ */
 function BookingReviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -531,5 +538,4 @@ export default function BookingReviewPage() {
     </React.Suspense>
   );
 }
-
 

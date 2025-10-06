@@ -1,5 +1,12 @@
 import React from "react";
 
+/**
+ * Renders a horizontally scrolling marquee of repeated "Jay Shree Swaminarayan 📿" items.
+ *
+ * The component duplicates the content sequence to create a seamless, continuous scroll and applies styling classes for background, foreground, spacing, and the marquee animation.
+ *
+ * @returns A JSX element containing the animated marquee with two identical content blocks for continuous looping.
+ */
 export function Marquee() {
   const marqueeContent = (
     <>

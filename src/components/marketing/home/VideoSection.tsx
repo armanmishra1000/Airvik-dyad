@@ -15,6 +15,13 @@ const videos = [
   },
 ];
 
+/**
+ * Render the "Visual Journey" marketing section that showcases animated, embedded YouTube videos with title overlays.
+ *
+ * The section includes a heading with a meditation symbol, a descriptive paragraph, and a responsive grid of videos that animate into view.
+ *
+ * @returns The React element for the "Visual Journey" section containing the animated video grid and captions.
+ */
 export function VideoSection() {
   const containerVariants = {
     hidden: { opacity: 0 },

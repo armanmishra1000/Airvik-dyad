@@ -47,6 +47,13 @@ const FacilityCircleCard = ({ imageUrl, title }: Facility) => (
   </div>
 );
 
+/**
+ * Renders the "Ashram Facilities & Spaces" section with an animated heading and a responsive grid of circular facility cards.
+ *
+ * The grid items animate into view with a staggered vertical fade-in and each card supports hover interactions.
+ *
+ * @returns A React element containing the animated section with facility cards.
+ */
 export function AshramFacilitiesCircleSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },

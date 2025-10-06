@@ -41,6 +41,16 @@ interface RatePlanFormDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Render a dialog containing a form to create a new rate plan or edit an existing one.
+ *
+ * The form is prefilled when `ratePlan` is provided, and submitting it will add or update
+ * the rate plan via the data context and display success or error toasts.
+ *
+ * @param ratePlan - Optional existing rate plan used to prefill fields and enable edit mode
+ * @param children - Trigger element rendered as the dialog trigger
+ * @returns The dialog element that contains the rate plan form and submit controls
+ */
 export function RatePlanFormDialog({
   ratePlan,
   children,

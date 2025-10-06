@@ -26,6 +26,14 @@ export const metadata: Metadata = {
   description: "A spiritual ashram in Rishikesh dedicated to religious, educational, and health-related activities. Experience tranquility and spiritual rejuvenation.",
 };
 
+/**
+ * Renders the application's root HTML structure and wraps page content with global providers and layout essentials.
+ *
+ * Wraps `children` with ThemeProvider, AuthProvider, and DataProvider, injects global fonts and body classes, and includes the Toaster.
+ *
+ * @param children - The page or application content to render inside the root layout
+ * @returns The root `<html>`/`<body>` structure that hosts global providers and the rendered `children`
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

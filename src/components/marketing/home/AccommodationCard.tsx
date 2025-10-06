@@ -16,6 +16,17 @@ interface AccommodationCardProps {
   href: string;
 }
 
+/**
+ * Renders a marketing card for an accommodation with an image, metadata, and a "Book Now" call to action.
+ *
+ * @param title - The card title, displayed prominently above the description.
+ * @param description - A brief description shown below the title; visually clamped to three lines.
+ * @param imageUrl - Source URL for the header image shown at the top of the card.
+ * @param tag - Short label shown next to the icon to highlight a feature or category.
+ * @param Icon - Icon component (receives `LucideProps`) rendered next to the tag.
+ * @param href - Destination URL the "Book Now" button navigates to.
+ * @returns The rendered JSX element for an accommodation card.
+ */
 export function AccommodationCard({
   title,
   description,

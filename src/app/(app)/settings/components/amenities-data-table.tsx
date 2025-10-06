@@ -27,6 +27,13 @@ import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmatio
 import { useDataContext } from "@/context/data-context"
 import type { Amenity } from "@/data/types"
 
+/**
+ * Renders a configurable data table for managing amenities, including sorting, pagination, and a delete confirmation flow.
+ *
+ * @param columns - Column definitions for the table; each definition controls header and cell rendering for a column.
+ * @param data - Array of amenity items to display in the table.
+ * @returns The rendered React element for the amenities data table.
+ */
 export function AmenitiesDataTable<TData extends Amenity, TValue>({
   columns,
   data,

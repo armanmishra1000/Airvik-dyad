@@ -28,6 +28,13 @@ import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
 import type { Room } from "@/data/types"
 
+/**
+ * Render a paginated, sortable table of rooms with create and delete workflows.
+ *
+ * @param columns - Column definitions used to render table headers and cells.
+ * @param data - Array of room items to display in the table.
+ * @returns A React element that renders the rooms data table, pagination controls, add-room dialog, and delete confirmation dialog.
+ */
 export function RoomsDataTable<TData extends Room, TValue>({
   columns,
   data,

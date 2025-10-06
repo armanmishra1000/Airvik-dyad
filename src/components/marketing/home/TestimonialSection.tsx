@@ -33,6 +33,14 @@ const testimonials = [
   },
 ];
 
+/**
+ * Render the "Echoes of Peace" testimonial section with an autoplaying, looping carousel.
+ *
+ * The section includes an animated heading and a responsive carousel of testimonial quotes.
+ * The carousel auto-advances every 4 seconds and pauses while the user hovers over it.
+ *
+ * @returns A JSX element containing the testimonial section
+ */
 export function TestimonialSection() {
   const plugin = React.useRef(
     Autoplay({ delay: 4000, stopOnInteraction: true })

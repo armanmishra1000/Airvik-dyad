@@ -16,6 +16,20 @@ interface FeatureCardProps {
   href?: string;
 }
 
+/**
+ * Renders a styled feature card with an image, title, and description.
+ *
+ * When `highlighted` is true, the card shows a full-width "Learn More" button
+ * that links to `href` (defaults to `"#"` when not provided).
+ *
+ * @param title - The card title displayed prominently.
+ * @param description - The body text shown under the title.
+ * @param imageUrl - Source URL for the card image (used as the card's visual).
+ * @param highlighted - If true, applies highlighted styling and renders the CTA button.
+ * @param className - Optional additional class names to merge into the card container.
+ * @param href - Optional destination for the "Learn More" button; defaults to `"#"`.
+ * @returns The feature card React element.
+ */
 export function FeatureCard({
   title,
   description,

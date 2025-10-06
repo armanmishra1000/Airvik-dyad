@@ -55,6 +55,13 @@ const statusStyles: {
   },
 };
 
+/**
+ * Render a card showing a room's number, type, current status badge, assignment (if any), and actions to assign a housekeeper or update the room status.
+ *
+ * @param room - Room data including status and optional housekeeping assignment used to determine the badge styling, content area, and available actions.
+ * @param onStatusUpdate - Callback invoked with the room id and the chosen new status when the room's status is updated.
+ * @returns The card element representing the room's status, assignment state, and action buttons.
+ */
 export function RoomStatusCard({ room, onStatusUpdate }: RoomStatusCardProps) {
   const { className, label } = statusStyles[room.status];
 

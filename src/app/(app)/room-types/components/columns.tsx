@@ -17,6 +17,12 @@ import type { RoomType } from "@/data/types"
 import { RoomTypeFormDialog } from "./room-type-form-dialog"
 import { useDataContext } from "@/context/data-context"
 
+/**
+ * Render a compact image cell for a room type.
+ *
+ * @param roomType - The room type whose image to display; uses `roomType.mainPhotoUrl` if present, otherwise the first entry of `roomType.photos`, and falls back to a placeholder. The room type's `name` is used as the image alt text.
+ * @returns A JSX element containing the constrained image element for the table cell.
+ */
 function RoomTypeImageCell({ roomType }: { roomType: RoomType }) {
   const imageUrl =
     roomType.mainPhotoUrl || roomType.photos?.[0] || "/room-placeholder.svg"
@@ -35,6 +41,14 @@ function RoomTypeImageCell({ roomType }: { roomType: RoomType }) {
   )
 }
 
+/**
+ * Render amenity badges for a room type.
+ *
+ * Displays a collection of secondary badges for each amenity ID, showing the amenity's name when available and the raw ID otherwise; renders "N/A" when no IDs are provided.
+ *
+ * @param amenityIds - Array of amenity IDs to display as badges
+ * @returns The JSX element containing badges for the provided amenity IDs or a muted "N/A" text when the array is empty
+ */
 function RoomTypeAmenitiesCell({ amenityIds }: { amenityIds: string[] }) {
   const { amenities: allAmenities } = useDataContext()
 

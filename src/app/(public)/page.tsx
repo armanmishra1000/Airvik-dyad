@@ -42,6 +42,14 @@ const features = [
   },
 ];
 
+/**
+ * Render the marketing homepage layout with hero, feature cards, and supporting sections.
+ *
+ * Composes the public landing page including a hero (background image, logo, headline, and booking action),
+ * a responsive features grid, and the Welcome, Video, Stay, OurRooms, Testimonial, Gallery, and Marquee sections.
+ *
+ * @returns The React element representing the homepage layout.
+ */
 export default function HomePage() {
   const containerVariants = {
     hidden: { opacity: 0 },

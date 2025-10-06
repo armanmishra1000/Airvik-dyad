@@ -39,6 +39,16 @@ interface RoomCategoryFormDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Renders a dialog containing a form to create a new room category or edit an existing one.
+ *
+ * The form validates input against the roomCategorySchema, submits created/updated values
+ * to the data context, shows success or error toasts, resets on success, and closes the dialog.
+ *
+ * @param roomCategory - Optional existing room category; if provided the form is initialized for editing.
+ * @param children - Trigger element rendered as the dialog trigger.
+ * @returns The dialog component that hosts the create/edit room category form.
+ */
 export function RoomCategoryFormDialog({
   roomCategory,
   children,

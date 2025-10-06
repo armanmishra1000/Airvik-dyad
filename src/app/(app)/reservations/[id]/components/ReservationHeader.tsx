@@ -16,6 +16,17 @@ interface ReservationHeaderProps {
   reservation: ReservationWithDetails;
 }
 
+/**
+ * Renders the header for a reservation detail view with status badge and action controls.
+ *
+ * The header displays the reservation status, navigation, and action buttons for editing,
+ * checking in, checking out, and cancelling. Triggering a status change calls
+ * `updateReservationStatus`, shows a toast notification ("Reservation status updated to {status}."),
+ * and, when cancelling, closes the cancel dialog.
+ *
+ * @param reservation - Reservation data (must include `id` and `status`) used to drive UI state and actions
+ * @returns The rendered reservation header JSX element
+ */
 export function ReservationHeader({ reservation }: ReservationHeaderProps) {
   const { updateReservationStatus } = useDataContext();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);

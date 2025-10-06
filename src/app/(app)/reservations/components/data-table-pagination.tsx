@@ -21,6 +21,15 @@ interface DataTablePaginationProps<TData> {
   table: Table<TData>
 }
 
+/**
+ * Render pagination controls and a page-size selector for a table instance.
+ *
+ * Displays the number of selected rows, a "Rows per page" selector, current page information,
+ * and first/previous/next/last navigation buttons that update the table's pagination state.
+ *
+ * @param table - The TanStack Table instance used to read and modify pagination and selection state.
+ * @returns A JSX element containing the pagination controls for the provided table instance.
+ */
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {

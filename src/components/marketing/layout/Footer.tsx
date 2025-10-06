@@ -19,6 +19,12 @@ const socialLinks = [
   { href: "#", icon: Youtube },
 ];
 
+/**
+ * Render the website footer containing branding, contact information, quick links, and social media icons.
+ *
+ * @returns A JSX element representing the footer section with logo and subtitle, contact details (email, phone, address),
+ * quick navigation links, a separator, and social icons/credit line.
+ */
 export function Footer() {
   return (
     <footer className="bg-muted/50 border-t">

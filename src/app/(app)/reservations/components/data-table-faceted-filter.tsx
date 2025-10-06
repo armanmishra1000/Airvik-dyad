@@ -33,6 +33,16 @@ interface DataTableFacetedFilterProps<TData, TValue> {
   }[]
 }
 
+/**
+ * Render a popover-based faceted filter UI bound to a table column.
+ *
+ * Renders a trigger button that displays the filter title and selected-state badges, and a popover listing selectable facet options with optional counts. Selecting or deselecting options updates the provided column's filter value; a "Clear filters" action clears all selections.
+ *
+ * @param column - The table column whose faceted unique values and filter state drive the UI; may be undefined to render a no-op control.
+ * @param title - The placeholder/title shown on the trigger button and in the command input.
+ * @param options - The list of facet options to display; each option supplies a `label`, `value`, and optional `icon`.
+ * @returns The JSX element for the faceted filter popover tied to the given column.
+ */
 export function DataTableFacetedFilter<TData, TValue>({
   column,
   title,

@@ -23,6 +23,13 @@ const experiences = [
   },
 ];
 
+/**
+ * Render a responsive, animated section that displays three curated Rishikesh experiences over a full-bleed background image.
+ *
+ * The section includes a dark overlay, an animated header with title and subtitle, and a stagger-animated responsive grid of ExperienceCard items.
+ *
+ * @returns The section element containing the background image, overlay, animated header, and the responsive grid of experience cards.
+ */
 export function RishikeshExperienceSection() {
   const containerVariants = {
     hidden: { opacity: 0 },

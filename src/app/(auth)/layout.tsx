@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { AppSkeleton } from "@/components/layout/app-skeleton";
 
+/**
+ * Render an authentication layout that redirects authenticated users and displays the auth UI for unauthenticated users.
+ *
+ * Triggers a navigation to "/dashboard" when authentication has finished loading and a current user exists.
+ *
+ * @param children - The authentication UI to render inside the centered card (e.g., sign-in or sign-up form).
+ * @returns The layout element: an AppSkeleton while redirecting for authenticated users, or a centered card containing `children` for unauthenticated users.
+ */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const { currentUser, isLoading } = useAuthContext();
   const router = useRouter();

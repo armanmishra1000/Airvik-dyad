@@ -29,6 +29,13 @@ const galleryImages = [
   },
 ];
 
+/**
+ * Renders a responsive, animated image gallery section with a heading and decorative Om image.
+ *
+ * The section displays a centered title and subtitle, then a responsive image grid (2 columns on small screens,
+ * 4 columns on medium+). Grid items animate into view with staggered scale/fade effects and each tile uses
+ * Next.js Image with object-cover to fill its cell. Image `alt` text from the gallery data is preserved for accessibility.
+ */
 export function GallerySection() {
   const containerVariants = {
     hidden: { opacity: 0 },

@@ -75,6 +75,13 @@ const amenityIcons: Record<string, IconName> = {
   "Swimming Pool": "Waves",
 };
 
+/**
+ * Renders the room details page for a specific room type, including gallery, amenities, booking panel, and related rooms.
+ *
+ * The component reads the room type ID from route params, obtains data from the app context, computes photo and availability data, manages booking form state (dates and guests), and navigates to the booking review page on submit.
+ *
+ * @returns A React element representing the complete room details page UI.
+ */
 export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();

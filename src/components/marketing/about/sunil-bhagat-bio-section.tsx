@@ -3,6 +3,12 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+/**
+ * Renders an animated, responsive two-column biography section for Sunil Bhagat (Swami),
+ * including a centered heading, image, and descriptive text.
+ *
+ * @returns A JSX element containing the bio section with responsive layout and entrance animations.
+ */
 export function SunilBhagatBioSection() {
   return (
     <section className="py-10 lg:py-28 md:py-18 bg-background">

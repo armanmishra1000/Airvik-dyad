@@ -28,6 +28,15 @@ import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
 import type { User } from "@/data/types"
 
+/**
+ * Renders a users data table with sorting, pagination, row actions, and a delete confirmation flow.
+ *
+ * The table supports client-side sorting and pagination, an optional "Add User" action (shown when the current user has the `create:user` permission), and an inline delete confirmation dialog that calls the data context's delete handler.
+ *
+ * @param columns - Column definitions for the table.
+ * @param data - Array of user records to display in the table.
+ * @returns The React element for the users data table UI.
+ */
 export function UsersDataTable<TData extends User, TValue>({
   columns,
   data,

@@ -8,6 +8,14 @@ interface ExperienceCardProps {
   Icon: React.ComponentType<LucideProps>;
 }
 
+/**
+ * Render a styled card showing an icon, title, and description.
+ *
+ * @param title - The card's title text
+ * @param description - The descriptive text shown in the card content
+ * @param Icon - A React component (accepting `LucideProps`) used as the card's icon
+ * @returns A React element representing the styled experience card
+ */
 export function ExperienceCard({
   title,
   description,

@@ -55,6 +55,13 @@ const galleryImages = [
   },
 ];
 
+/**
+ * Render the "Visual Journey" responsive, animated image gallery section.
+ *
+ * The section contains a header (title, subtitle, and centered Om image) and a responsive grid of gallery tiles that animate into view with a staggered reveal and scale slightly on hover.
+ *
+ * @returns A JSX element containing the complete gallery section
+ */
 export function GalleryPageSection() {
   const containerVariants = {
     hidden: { opacity: 0 },

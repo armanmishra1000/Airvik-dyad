@@ -11,6 +11,12 @@ interface DataTableToolbarProps<TData> {
   table: Table<TData>
 }
 
+/**
+ * Renders toolbar controls for a data table, including a guest name filter, an optional status facet, view options, and a create-reservation dialog.
+ *
+ * @param table - The TanStack Table instance used to read and update column filter values and derive available columns (e.g., "guestName" and optional "status").
+ * @returns The toolbar element containing filters and action controls for the provided table.
+ */
 export function DataTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {

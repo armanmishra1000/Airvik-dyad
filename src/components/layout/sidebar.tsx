@@ -53,6 +53,16 @@ interface SidebarProps {
   setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+/**
+ * Render the application's sidebar with navigation, settings, and a collapse toggle.
+ *
+ * The sidebar displays navigation items filtered by the current user's permissions,
+ * highlights the active route, and adapts its layout based on the `isCollapsed` state.
+ *
+ * @param isCollapsed - Whether the sidebar is collapsed (icon-only) or expanded (full labels)
+ * @param setIsCollapsed - State setter called to toggle the collapsed state
+ * @returns The sidebar element containing navigation links, an optional settings control, and a toggle button
+ */
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname();
   const { hasPermission } = useAuthContext();

@@ -28,6 +28,14 @@ import { Calendar } from "@/components/ui/calendar";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 
+/**
+ * Render a revenue report card with a date-range picker and a daily revenue bar chart.
+ *
+ * Displays total revenue per day for the selected period by aggregating `totalAmount`
+ * from reservations with status "Checked-out" obtained from the data context.
+ *
+ * @returns A JSX element containing the revenue report UI (header with date picker and a bar chart of daily revenue).
+ */
 export function RevenueReport() {
   const { reservations } = useDataContext();
   const [date, setDate] = React.useState<DateRange | undefined>({

@@ -26,6 +26,14 @@ interface BillingCardProps {
   reservation: ReservationWithDetails;
 }
 
+/**
+ * Render a billing and folio card for a reservation.
+ *
+ * Displays each folio line item (date, description, amount), action controls to add a charge or record a payment, and a final balance due.
+ *
+ * @param reservation - Reservation object containing a `folio` array of line items (each with `timestamp`, `description`, and `amount`) and `totalAmount` used for the balance calculation
+ * @returns The billing card React element for the provided reservation
+ */
 export function BillingCard({ reservation }: BillingCardProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {

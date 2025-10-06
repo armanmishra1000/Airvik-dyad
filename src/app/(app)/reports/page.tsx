@@ -7,6 +7,12 @@ import {
 import { OccupancyReport } from "./components/occupancy-report";
 import { RevenueReport } from "./components/revenue-report";
 
+/**
+ * Render the Reports page containing a header and tabbed views for available reports.
+ *
+ * @returns The page's JSX element containing the title, subtitle, and a Tabs control with
+ * occupancy and revenue report content (the guests tab is shown as disabled).
+ */
 export default function ReportsPage() {
   return (
     <div className="space-y-6">

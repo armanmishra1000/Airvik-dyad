@@ -46,6 +46,15 @@ interface RoomTypeFormDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Render a dialog triggered by `children` that contains a validated form for creating or editing a room type.
+ *
+ * The form is prefilled when `roomType` is provided. Submitting the form will create a new room type or update the existing one via the data context, then close the dialog on success.
+ *
+ * @param roomType - Optional existing room type to edit; omit to open the form for creating a new room type.
+ * @param children - Element used as the dialog trigger.
+ * @returns The dialog React element containing the room type form.
+ */
 export function RoomTypeFormDialog({
   roomType,
   children,

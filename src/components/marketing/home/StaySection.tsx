@@ -57,6 +57,11 @@ const accommodations = [
   },
 ];
 
+/**
+ * Renders the "Your Spiritual Sanctuary" stay section containing an animated header, a carousel of accommodation cards, and a reserve CTA button.
+ *
+ * @returns The section element as a JSX.Element
+ */
 export function StaySection() {
   return (
     <section className="bg-background pt-20 pb-20 sm:pt-28 sm:pb-0 lg:pb-28">

@@ -1,5 +1,10 @@
 import Image from "next/image";
 
+/**
+ * Renders a responsive, full-width hero section featuring a background image of Rishikesh with a dark semi-transparent overlay.
+ *
+ * @returns The JSX element for the hero section.
+ */
 export function RishikeshHeroSection() {
   return (
     <section className="relative w-full h-[200px] sm:h-[300px]">

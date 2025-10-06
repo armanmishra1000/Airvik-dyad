@@ -13,6 +13,16 @@ type ProfileWithRole = {
 };
 import { getUserProfile } from "@/lib/api";
 
+/**
+ * Exposes authentication state, the current application user and role, loading status, and a permission-checking helper.
+ *
+ * @returns An object with the following properties:
+ * - `authUser` — the Supabase `AuthUser` for the signed-in session, or `null` if not signed in.
+ * - `currentUser` — the application `User` (id, name, email, roleId) derived from the profile, or `null` if not available.
+ * - `userRole` — the current `Role` object with permissions, or `null` if not available.
+ * - `isLoading` — `true` while authentication or profile fetching is in progress, `false` otherwise.
+ * - `hasPermission` — a function that returns `true` if the current role name is `'Hotel Owner'` or the role's permissions include the supplied permission, `false` otherwise.
+ */
 export function useAuth() {
   const [authUser, setAuthUser] = React.useState<AuthUser | null>(null);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);

@@ -1,5 +1,12 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+/**
+ * Renders a responsive two-column skeleton UI shown while application content is loading.
+ *
+ * The layout includes a sidebar (hidden on small screens) with a header, eight menu placeholders, and a footer action placeholder, and a main content area with a sticky header, four skeleton cards, and a large content block.
+ *
+ * @returns The JSX element representing the skeleton layout.
+ */
 export function AppSkeleton() {
   return (
     <div className="grid min-h-screen w-full bg-background md:grid-cols-[240px_1fr] lg:grid-cols-[288px_1fr]">

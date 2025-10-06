@@ -3,6 +3,11 @@
 import React from "react";
 import { motion } from "framer-motion";
 
+/**
+ * Renders a responsive section containing an animated heading and an embedded Google Map showing SahajAnand Wellness in Rishikesh.
+ *
+ * @returns The JSX element for the map section, including the animated header and the iframe map.
+ */
 export function MapSection() {
   return (
     <section className="bg-background py-10 lg:py-28 md:py-18">

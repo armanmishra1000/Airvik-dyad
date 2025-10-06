@@ -258,6 +258,14 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+/**
+ * Render the booking confirmation page for a reservation.
+ *
+ * Looks up the reservation using the route `id`, derives related guest and room data,
+ * and displays reservation details, hotel information, and next steps.
+ *
+ * @returns The booking confirmation page as a React element. If no matching reservation is found, triggers a 404 page.
+ */
 export default function BookingConfirmationPage() {
   const params = useParams<{ id: string }>();
   const { property, reservations, guests, rooms, roomTypes } = useDataContext();

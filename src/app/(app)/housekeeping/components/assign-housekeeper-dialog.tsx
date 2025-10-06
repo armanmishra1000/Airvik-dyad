@@ -29,6 +29,17 @@ interface AssignHousekeeperDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Render a dialog that lets the user select and assign a housekeeper to a room.
+ *
+ * The component validates that a housekeeper is selected, calls the data context's
+ * assignHousekeeper action when saved, and shows success or error toasts.
+ *
+ * @param roomId - Identifier of the room to assign
+ * @param currentAssigneeId - Optional user ID to preselect as the current assignee
+ * @param children - Trigger element rendered inside the dialog trigger
+ * @returns The React element for the Assign Housekeeper dialog
+ */
 export function AssignHousekeeperDialog({
   roomId,
   currentAssigneeId,

@@ -17,6 +17,12 @@ import type { Room } from "@/data/types"
 import { RoomFormDialog } from "./room-form-dialog"
 import { useDataContext } from "@/context/data-context"
 
+/**
+ * Renders a compact, fixed-size thumbnail for a room using the room's photo or fallbacks.
+ *
+ * @param room - The room object used to select the image, alt text, and to lookup the room type.
+ * @returns A container element with the room image; falls back to the room type's main photo, the room type's first photo, or a placeholder when no photo exists.
+ */
 function RoomImageCell({ room }: { room: Room }) {
   const { roomTypes } = useDataContext()
   const roomType = roomTypes.find((rt) => rt.id === room.roomTypeId)
@@ -40,6 +46,12 @@ function RoomImageCell({ room }: { room: Room }) {
   )
 }
 
+/**
+ * Render the human-friendly name for a room type.
+ *
+ * @param roomTypeId - The room type identifier to look up.
+ * @returns A <span> element containing the room type's name, or "Unknown" if not found.
+ */
 function RoomTypeCell({ roomTypeId }: { roomTypeId: string }) {
   const { roomTypes } = useDataContext()
   const roomType = roomTypes.find((rt) => rt.id === roomTypeId)

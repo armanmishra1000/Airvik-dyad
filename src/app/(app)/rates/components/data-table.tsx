@@ -28,6 +28,13 @@ import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
 import type { RatePlan } from "@/data/types"
 
+/**
+ * Renders a rate plans data table with sorting, pagination, create and delete controls.
+ *
+ * Displays table headers and rows based on the provided `columns` and `data`, conditionally shows an "Add Rate Plan" button when the caller has the `create:rate_plan` permission, and manages item deletion via a confirmation dialog with success/error toasts.
+ *
+ * @returns The rendered Rate Plans data table element.
+ */
 export function RatePlansDataTable<TData extends RatePlan, TValue>({
   columns,
   data,

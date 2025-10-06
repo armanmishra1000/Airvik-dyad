@@ -3,6 +3,11 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+/**
+ * Renders a responsive, animated "Rishikesh" story section with a heading, image, and descriptive text.
+ *
+ * @returns The section's JSX element containing an animated header and a two-column layout (image on one side and text on the other).
+ */
 export function RishikeshStorySection() {
   const containerVariants = {
     hidden: { opacity: 0 },

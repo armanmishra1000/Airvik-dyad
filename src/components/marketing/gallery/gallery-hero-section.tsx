@@ -1,6 +1,11 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+/**
+ * Renders the gallery hero section with a full-bleed background image, semi-transparent overlay, and animated centered heading and subtitle.
+ *
+ * @returns The JSX element for the gallery hero section.
+ */
 export function GalleryHeroSection() {
   return (
     <section className="relative w-full h-[300px] sm:h-[400px] md:h-[500px]">

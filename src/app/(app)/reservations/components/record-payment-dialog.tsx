@@ -44,6 +44,15 @@ interface RecordPaymentDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Render a dialog that lets users record a payment against a reservation.
+ *
+ * The dialog provides inputs for amount and payment method, submits the payment to the reservation folio, shows success or error feedback, and closes on success.
+ *
+ * @param reservationId - The identifier of the reservation to which the payment will be applied.
+ * @param children - The trigger element rendered inside the dialog trigger.
+ * @returns The React element representing the record-payment dialog and its trigger.
+ */
 export function RecordPaymentDialog({
   reservationId,
   children,

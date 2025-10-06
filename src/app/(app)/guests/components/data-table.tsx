@@ -28,6 +28,16 @@ import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
 import type { Guest } from "@/data/types"
 
+/**
+ * Render a data table for guest records with sorting, pagination, and add/delete flows.
+ *
+ * The table supports column definitions, client-side sorting and pagination, a permission-gated
+ * "Add Guest" action, and a confirmation dialog for deleting a selected guest.
+ *
+ * @param columns - Column definitions used to render each column of the table.
+ * @param data - Array of guest items to display in the table.
+ * @returns A React element containing the guests table, controls (Add Guest button when permitted), pagination, and delete confirmation dialog.
+ */
 export function GuestsDataTable<TData extends Guest, TValue>({
   columns,
   data,

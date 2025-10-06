@@ -90,6 +90,13 @@ const FlippableCard = ({ place }: { place: (typeof placesToVisit)[0] }) => {
   );
 };
 
+/**
+ * Render a responsive "Explore the Wonders of Rishikesh" section with an autoplaying carousel of flippable place cards.
+ *
+ * The section includes an animated header, a looping carousel that advances every 3000ms (pauses on interaction), and previous/next controls. Each carousel item is a flippable card that shows an image and title on the front and a description on the back.
+ *
+ * @returns A React element containing the carousel section populated from the local places data.
+ */
 export function PlacesToVisitSection() {
   const plugin = React.useRef(
     Autoplay({ delay: 3000, stopOnInteraction: true })

@@ -62,6 +62,15 @@ const colorOptions = [
   },
 ] as const;
 
+/**
+ * Render a dialog containing a form to create a new sticky note or edit an existing one.
+ *
+ * The dialog is controlled internally and is opened via the provided `children` trigger.
+ *
+ * @param note - Optional existing sticky note to edit; when provided the form initializes with its values and submission updates that note.
+ * @param children - Trigger element (usually a button or icon) that opens the dialog when interacted with.
+ * @returns A React element that renders the modal dialog with the sticky note form.
+ */
 export function StickyNoteFormDialog({
   note,
   children,

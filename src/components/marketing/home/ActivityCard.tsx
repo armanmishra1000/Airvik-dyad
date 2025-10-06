@@ -15,6 +15,11 @@ interface ActivityCardProps {
   href: string;
 }
 
+/**
+ * Renders a marketing activity card with a full-bleed background image, gradient overlay, title, collapsible description, and a "VIEW" link; expansion is hover-controlled on desktop and toggle-controlled on mobile/tablet.
+ *
+ * @returns The rendered activity card element.
+ */
 export function ActivityCard({
   title,
   description,

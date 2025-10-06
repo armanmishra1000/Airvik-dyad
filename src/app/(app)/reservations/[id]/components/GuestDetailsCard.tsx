@@ -17,6 +17,12 @@ interface GuestDetailsCardProps {
   guest?: Guest;
 }
 
+/**
+ * Render a card displaying a guest's contact details or a placeholder when no guest is provided.
+ *
+ * @param guest - Optional guest object to display. If omitted, the card shows a "Guest details not found." message.
+ * @returns A Card element containing the guest's name, email, phone (or "Not provided"), and a link to the guest profile, or a Card with a not-found message when `guest` is undefined.
+ */
 export function GuestDetailsCard({ guest }: GuestDetailsCardProps) {
   if (!guest) {
     return (

@@ -18,6 +18,15 @@ interface BookingSummaryProps {
   onClear: () => void;
 }
 
+/**
+ * Renders a compact booking summary card showing selected room types, nights, cost, and actions.
+ *
+ * @param selection - Array of selected room types to display.
+ * @param searchValues - Booking search values containing date range, guest counts, and requested rooms.
+ * @param onRemove - Callback invoked with the index of a room to remove from the selection.
+ * @param onClear - Callback invoked to clear the entire selection.
+ * @returns The booking summary React node, or `null` if there is no selection or missing dates.
+ */
 export function BookingSummary({
   selection,
   searchValues,

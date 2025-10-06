@@ -39,6 +39,13 @@ const propertySchema = z.object({
   google_maps_url: z.string().url("Please enter a valid Google Maps embed URL."),
 });
 
+/**
+ * Render a property settings form that lets users view and edit property fields and persist changes to application state.
+ *
+ * The form is populated from the current property in data context, validates input against the property schema, shows a live Google Maps preview when an embed URL is provided, and parses the comma-separated photos field into an array before updating the property. On successful submit the updated property is saved via the data context and a success toast is shown.
+ *
+ * @returns A React element containing the property settings form.
+ */
 export function PropertySettingsForm() {
   const { property, updateProperty } = useDataContext();
 

@@ -54,6 +54,15 @@ interface UserFormDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Renders a dialog containing a form for creating a new user or editing an existing user.
+ *
+ * When `user` is provided the form behaves as an edit form (email is disabled and password is hidden); otherwise the form includes a password field for creation. The component shows success/error toasts, invokes data operations (create or update), and refreshes the user list on success.
+ *
+ * @param user - Optional user object to edit; when omitted the dialog is used to create a new user.
+ * @param children - Element that serves as the dialog trigger.
+ * @returns The rendered UserFormDialog element.
+ */
 export function UserFormDialog({
   user,
   children,

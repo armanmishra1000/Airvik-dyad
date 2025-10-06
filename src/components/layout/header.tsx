@@ -33,6 +33,13 @@ const navItems = [
   { href: "/reports", label: "Reports", requiredPermission: "read:report" },
 ] satisfies Array<{ href: string; label: string; requiredPermission: Permission }>;
 
+/**
+ * Renders the application header including page title, property name, permission-filtered navigation, and user controls.
+ *
+ * The header shows a mobile sheet with accessible navigation links (filtered by the current user's permissions), a central title derived from the active route or "Dashboard", a theme toggle, and a user dropdown that displays the current user's name and role and provides a logout action.
+ *
+ * @returns The header JSX element containing navigation, title/property display, theme toggle, and user menu with logout
+ */
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();

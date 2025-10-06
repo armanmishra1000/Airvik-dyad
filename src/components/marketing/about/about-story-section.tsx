@@ -3,6 +3,13 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+/**
+ * Render the "Our Sacred Story" section with a responsive two-column layout that displays an image of the guiding teacher and descriptive text, each animated into view.
+ *
+ * The section includes a centered logo and heading, an image column, and a content column describing the ashram's history, leadership, and core activities. Layout and text alignment adapt between small and large screens.
+ *
+ * @returns The React element representing the About Story section.
+ */
 export function AboutStorySection() {
   return (
     <section className="py-10 lg:py-28 md:py-18">

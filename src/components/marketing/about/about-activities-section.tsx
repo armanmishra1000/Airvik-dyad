@@ -38,6 +38,11 @@ const activities = [
   },
 ];
 
+/**
+ * Renders the "Our Sacred Activities" section with an animated, responsive grid of activity cards.
+ *
+ * @returns The section's JSX element containing a centered title and a stagger-animated grid of ActivityInfoCard items.
+ */
 export function AboutActivitiesSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },

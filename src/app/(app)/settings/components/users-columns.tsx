@@ -16,6 +16,12 @@ import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
 import { UserFormDialog } from "./user-form-dialog"
 
+/**
+ * Displays the name of the role corresponding to the provided roleId.
+ *
+ * @param roleId - The identifier of the role to look up
+ * @returns A JSX element containing the role's name if found, otherwise the string "Unknown"
+ */
 function UserRoleCell({ roleId }: { roleId: string }) {
   const { roles } = useDataContext()
   const role = roles.find((item) => item.id === roleId)
@@ -23,6 +29,13 @@ function UserRoleCell({ roleId }: { roleId: string }) {
   return <span>{role?.name || "Unknown"}</span>
 }
 
+/**
+ * Render an actions dropdown for a user with permission-controlled "Edit" and "Delete" items.
+ *
+ * @param user - The user for which actions are rendered; passed to the edit dialog and delete callback.
+ * @param onDelete - Optional callback invoked with `user` when the "Delete" item is selected.
+ * @returns A JSX element rendering the permission-gated actions menu for the given user.
+ */
 function UserActionsCell({
   user,
   onDelete,

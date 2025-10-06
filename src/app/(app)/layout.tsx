@@ -8,6 +8,15 @@ import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/auth-context";
 import { AppSkeleton } from "@/components/layout/app-skeleton";
 
+/**
+ * Application layout that renders the sidebar, header, and main content while enforcing authentication.
+ *
+ * Renders a loading skeleton while authentication is pending, redirects to "/login" if unauthenticated,
+ * and otherwise displays the app shell with the provided children inside the main content area.
+ *
+ * @param children - Content to render inside the layout's main content region
+ * @returns The layout element containing the sidebar, header, and children, or a loading skeleton/null while authentication state resolves
+ */
 export default function AppLayout({
   children,
 }: {

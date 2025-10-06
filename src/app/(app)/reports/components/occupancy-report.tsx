@@ -28,6 +28,15 @@ import { Calendar } from "@/components/ui/calendar";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 
+/**
+ * Render an occupancy report card with a date-range picker and occupancy bar chart.
+ *
+ * The component computes daily occupancy percentages for the selected date range based on
+ * reservations (excluding those with status "Cancelled") and the available rooms, and presents
+ * the results in a responsive card containing a calendar popover and a bar chart.
+ *
+ * @returns The rendered occupancy report card element.
+ */
 export function OccupancyReport() {
   const { reservations, rooms } = useDataContext();
   const [date, setDate] = React.useState<DateRange | undefined>({

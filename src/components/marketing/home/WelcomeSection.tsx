@@ -33,6 +33,11 @@ const activities = [
   },
 ];
 
+/**
+ * Renders the landing welcome section and the "Our Sacred Activities" grid with animated, responsive layout.
+ *
+ * @returns The component's JSX element containing the hero (image and intro text) and the animated activities grid.
+ */
 export function WelcomeSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },

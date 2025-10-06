@@ -8,6 +8,14 @@ import { cn } from "@/lib/utils"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
+/**
+ * Render a styled Calendar wrapped around react-day-picker with default layout, classNames, and navigation icons.
+ *
+ * @param className - Additional class names to be merged into the calendar container.
+ * @param classNames - Optional DayPicker classNames overrides; merged with the component's defaults.
+ * @param showOutsideDays - Whether to display days from adjacent months; defaults to `true`.
+ * @returns The rendered React element for the calendar.
+ */
 function Calendar({
   className,
   classNames,

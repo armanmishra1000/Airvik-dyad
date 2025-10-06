@@ -8,6 +8,13 @@ import { TriangleAlert } from "lucide-react";
 import { useDataContext } from "@/context/data-context";
 import Link from "next/link";
 
+/**
+ * Render the "Our Rooms" marketing section with header, loading placeholders, room cards, empty state, and a call-to-action.
+ *
+ * Displays a grid of six Skeleton placeholders while initial data is loading. Once loaded, shows up to the first six `RoomTypeCard` items if `roomTypes` are available; otherwise renders a bordered empty-state panel with an alert icon. Always includes a centered "View All Rooms" button linking to `/book`.
+ *
+ * @returns The React element for the Our Rooms section.
+ */
 export function OurRoomsSection() {
   const { roomTypes, isLoading: isInitialLoading } = useDataContext();
 

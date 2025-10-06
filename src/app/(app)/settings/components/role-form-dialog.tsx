@@ -54,6 +54,15 @@ const permissionGroups = (allPermissions as readonly Permission[]).reduce((acc, 
   return acc;
 }, {} as Record<PermissionResource, { action: string; permission: Permission }[]>);
 
+/**
+ * Renders a dialog containing a form to create a new role or edit an existing role.
+ *
+ * The dialog provides inputs for the role name and a grouped permissions selector. When submitted,
+ * it creates a new role or updates the provided role via the data context, shows a success toast,
+ * resets the form, and closes the dialog.
+ *
+ * @returns The dialog element that opens a role creation/edit form and applies the created or updated role.
+ */
 export function RoleFormDialog({
   role,
   children,

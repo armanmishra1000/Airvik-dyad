@@ -1,5 +1,10 @@
 import Image from "next/image";
 
+/**
+ * Displays a responsive hero section with a full-bleed background image and a semi-transparent black overlay.
+ *
+ * @returns A JSX element representing the hero section containing the background image and overlay.
+ */
 export function AboutHeroSection() {
   return (
     <section className="relative w-full h-[200px] sm:h-[300px]">

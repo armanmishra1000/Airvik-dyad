@@ -1,5 +1,10 @@
 import Image from "next/image";
 
+/**
+ * Renders a full-width hero section showing a background image of Sunil Bhagat with a semi-transparent black overlay.
+ *
+ * @returns A React element containing the image-filled hero section with an overlay.
+ */
 export function SunilBhagatHeroSection() {
   return (
     <section className="relative w-full h-[200px] sm:h-[300px]">

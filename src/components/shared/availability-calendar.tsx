@@ -78,6 +78,13 @@ const defaultStatusStyle = {
 const getStatusStyle = (status: ReservationStatus) =>
   reservationStatusStyles[status] ?? defaultStatusStyle;
 
+/**
+ * Renders an interactive monthly availability calendar showing room bookings and their statuses.
+ *
+ * The calendar displays one month at a time with sticky room labels, day columns, merged cells for multi-day bookings, status-based styling, and tooltips with guest and reservation details. Users can navigate months using the provided controls.
+ *
+ * @returns The rendered calendar element showing room availability for the current month
+ */
 export function AvailabilityCalendar() {
   const { reservations, guests, rooms } = useDataContext();
   const [currentMonth, setCurrentMonth] = React.useState(new Date());

@@ -17,6 +17,15 @@ interface RoomTypeCardProps {
   hasSearched: boolean;
 }
 
+/**
+ * Render a card summarizing a room type with actions to view details or select it.
+ *
+ * @param roomType - Room type data used to populate image, title, description, occupancy, and bed types
+ * @param onSelect - Callback invoked with `roomType` when the "Select Room" button is pressed
+ * @param isSelectionComplete - When `true`, disables the "Select Room" button to prevent further selection
+ * @param hasSearched - When `true`, shows a "Select Room" action; otherwise shows a "View Details & Book" link
+ * @returns A React element containing the room type card UI
+ */
 export function RoomTypeCard({
   roomType,
   onSelect,

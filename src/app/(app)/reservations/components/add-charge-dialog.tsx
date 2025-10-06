@@ -37,6 +37,13 @@ interface AddChargeDialogProps {
   children: React.ReactNode;
 }
 
+/**
+ * Renders a dialog that lets the user add a new charge to a reservation folio.
+ *
+ * @param reservationId - Reservation identifier to which the new charge will be added.
+ * @param children - Trigger element that opens the dialog when activated.
+ * @returns The dialog element containing the charge form and trigger.
+ */
 export function AddChargeDialog({
   reservationId,
   children,

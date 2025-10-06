@@ -51,6 +51,13 @@ import {
   import { DashboardStickyNotes } from "./components/DashboardStickyNotes";
   import { DraggableCard } from "./components/DraggableCard";
   
+  /**
+   * Render the dashboard page showing occupancy stats, today’s arrivals and departures, sticky notes, and availability calendar, with an optional drag-and-drop layout editing mode.
+   *
+   * The component reads reservations, guests, rooms, and dashboard layout from the data context and derives today’s arrivals/departures, occupied/available rooms, and occupancy percentage. When editing is enabled, dashboard sections can be reordered via drag-and-drop and the updated layout is persisted via the context updater.
+   *
+   * @returns The dashboard page React element
+   */
   export default function DashboardPage() {
     const { reservations, guests, dashboardLayout, updateDashboardLayout, rooms } = useDataContext();
     const [isEditing, setIsEditing] = React.useState(false);

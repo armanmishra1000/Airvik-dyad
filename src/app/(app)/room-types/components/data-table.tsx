@@ -28,6 +28,16 @@ import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
 import type { RoomType } from "@/data/types"
 
+/**
+ * Renders a sortable, paginated data table for room types with controls for adding and deleting entries.
+ *
+ * The table supports column-based sorting, pagination, and a delete-confirmation flow that calls the data context's
+ * deleteRoomType function. If the current user has the "create:room_type" permission, an "Add Room Type" button is shown.
+ *
+ * @param columns - Column definitions describing how each column should render and behave
+ * @param data - Array of room type items to display in the table
+ * @returns The React element tree for the room types data table, including pagination and a delete confirmation dialog
+ */
 export function RoomTypesDataTable<TData extends RoomType, TValue>({
   columns,
   data,

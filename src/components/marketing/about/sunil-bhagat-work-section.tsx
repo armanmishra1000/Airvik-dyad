@@ -2,6 +2,11 @@
 
 import { motion } from "framer-motion";
 
+/**
+ * Render a responsive section describing Swami's charitable work with a fade-and-slide animation when it enters the viewport.
+ *
+ * @returns A JSX element containing a titled content block and three descriptive paragraphs, wrapped in a motion-enabled container for in-view animation.
+ */
 export function SunilBhagatWorkSection() {
   return (
     <section className="mb-6 lg:mb-20 md:mb-12 bg-background">

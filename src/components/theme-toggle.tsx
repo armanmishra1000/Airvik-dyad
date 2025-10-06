@@ -6,6 +6,14 @@ import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
 
+/**
+ * Render a button that toggles the UI theme between light and dark.
+ *
+ * The button displays a sun icon for the light theme and a moon icon for the dark theme,
+ * and includes a visually hidden label for accessibility.
+ *
+ * @returns A React element representing the theme toggle button
+ */
 export function ThemeToggle() {
   const { setTheme, theme } = useTheme()
 

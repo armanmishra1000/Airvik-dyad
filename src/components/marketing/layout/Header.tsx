@@ -52,6 +52,13 @@ const socialLinks = [
   { href: "#", icon: Youtube },
 ];
 
+/**
+ * Render the site's responsive, fixed header with a top social bar, primary navigation, and mobile drawer.
+ *
+ * The header updates its styling when the page is scrolled past 50 pixels to apply a translucent background, blur, and shadow. On desktop it shows a navigation menu with optional dropdowns and a "BOOK NOW" action; on mobile it exposes the navigation inside a right-side sheet with collapsible submenus and the same action.
+ *
+ * @returns The header element containing the top bar, main navigation, and mobile sheet.
+ */
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
 

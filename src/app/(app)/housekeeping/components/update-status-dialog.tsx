@@ -29,6 +29,17 @@ const availableStatuses: RoomStatus[] = [
   "Maintenance",
 ];
 
+/**
+ * Render a controlled dialog that lets the user choose and save a new status for a room.
+ *
+ * The dialog initializes its selection from `room.status` each time it opens. Clicking the provided
+ * `children` opens the dialog; clicking "Save Changes" invokes `onUpdate` with the chosen status and closes the dialog.
+ *
+ * @param room - The room being updated; its `roomNumber` is shown in the title and its `status` initializes the selection.
+ * @param onUpdate - Callback invoked with the newly selected `RoomStatus` when the user saves.
+ * @param children - Element that acts as the trigger to open the dialog.
+ * @returns The rendered dialog React element.
+ */
 export function UpdateStatusDialog({
   room,
   onUpdate,

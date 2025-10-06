@@ -32,6 +32,11 @@ const YouTubeEmbed = ({
   </div>
 );
 
+/**
+ * Renders the "Swami's Speech" marketing section with a background image, header text, a main embedded YouTube video, and a responsive grid of additional embedded videos that reveal with entrance animations.
+ *
+ * @returns The JSX element for the Swami's Speech section containing the background layer, descriptive text, the main video card, and a grid of other videos with animated reveal effects.
+ */
 export function SwamiSpeechSection() {
   return (
     <section className="bg-background overflow-hidden">

@@ -6,30 +6,55 @@ import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Renders a Radix UI Menubar Menu element forwarding all received props.
+ *
+ * @returns The rendered MenubarPrimitive.Menu React element.
+ */
 function MenubarMenu({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Menu>) {
   return <MenubarPrimitive.Menu {...props} />
 }
 
+/**
+ * Thin wrapper around Radix UI's MenubarPrimitive.Group that forwards all props.
+ *
+ * @returns The rendered Menubar group element with the provided props
+ */
 function MenubarGroup({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Group>) {
   return <MenubarPrimitive.Group {...props} />
 }
 
+/**
+ * Renders a menubar portal using the underlying Radix Portal primitive.
+ *
+ * @returns The Portal element with the provided props applied to the underlying Radix Portal.
+ */
 function MenubarPortal({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Portal>) {
   return <MenubarPrimitive.Portal {...props} />
 }
 
+/**
+ * Render a radio group for grouping menubar radio items.
+ *
+ * @returns A React element representing the menubar radio group populated with the provided props.
+ */
 function MenubarRadioGroup({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.RadioGroup>) {
   return <MenubarPrimitive.RadioGroup {...props} />
 }
 
+/**
+ * Renders a menubar submenu using Radix's Sub primitive and marks it with `data-slot="menubar-sub"`.
+ *
+ * @returns A React element representing the menubar submenu.
+ */
 function MenubarSub({
   ...props
 }: React.ComponentProps<typeof MenubarPrimitive.Sub>) {
