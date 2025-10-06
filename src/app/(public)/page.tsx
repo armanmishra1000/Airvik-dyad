@@ -18,22 +18,25 @@ import { ArrowRight, Calendar } from "lucide-react";
 const features = [
   {
     title: "Annakshetra",
-    description: "Experience divine community kitchen serving free meals to all visitors",
-    imageUrl: "/marketing/home/annakshetra.png",
+    description:
+      "Experience divine community kitchen serving free meals to all visitors",
+    imageUrl: "/annakshetra.png",
     highlighted: false,
     href: "/about-us",
   },
   {
     title: "Ashram Stay",
-    description: "Peaceful accommodation amidst spiritual surroundings in Rishikesh",
-    imageUrl: "/marketing/home/sahaj-home.png",
+    description:
+      "Peaceful accommodation amidst spiritual surroundings in Rishikesh",
+    imageUrl: "/ashram-stay.png",
     highlighted: true,
     href: "/book",
   },
   {
     title: "Yoga & Meditation",
-    description: "Daily yoga sessions and meditation programs for inner peace",
-    imageUrl: "/marketing/home/yoga.png",
+    description:
+      "Daily yoga sessions and meditation programs for inner peace",
+    imageUrl: "/yoga-meditation.jpg",
     highlighted: false,
     href: "/about-us",
   },
@@ -68,7 +71,7 @@ export default function HomePage() {
       <section className="relative w-full h-[70vh] min-h-[500px]">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/marketing/home/hero-background.png"
+            src="/ganga-rishikesh.jpg"
             alt="Sahajanand Ashram Rishikesh"
             fill
             className="object-cover"
@@ -86,7 +89,7 @@ export default function HomePage() {
           >
             <motion.div variants={itemVariants} className="flex justify-center">
               <Image
-                src="/marketing/home/Swami-narayan.png"
+                src="/swaminarayan-logo-1.png"
                 alt="Sahajanand Wellness"
                 width={96}
                 height={96}

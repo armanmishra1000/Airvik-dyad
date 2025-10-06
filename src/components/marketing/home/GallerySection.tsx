@@ -7,24 +7,24 @@ import { motion } from "framer-motion";
 
 const galleryImages = [
   {
-    src: "/marketing/home/Trayambakeshwar_Temple_VK.jpg",
+    src: "/Trayambakeshwar_Temple_VK.jpg",
     alt: "Exterior view of the Sahajanand Wellness ashram building",
     className: "md:col-span-2 md:row-span-2",
   },
   {
-    src: "/marketing/home/ganga-rishikesh.jpg",
+    src: "/ganga-rishikesh.jpg",
     alt: "Ganga Aarti ceremony with a large crowd",
   },
   {
-    src: "/marketing/home/havan.png",
+    src: "/havan.png",
     alt: "The dining hall (Annakshetra) at the ashram",
   },
   {
-    src: "/marketing/home/ved-pathsala.png",
+    src: "/ved-pathsala.png",
     alt: "Priests performing the Ganga Aarti at night",
   },
   {
-    src: "/marketing/home/gallery-room-05-2-1.png",
+    src: "/gallery-room-05-2-1.png",
     alt: "A spiritual ceremony taking place at the ashram",
   },
 ];
@@ -71,7 +71,7 @@ export function GallerySection() {
           </p>
           <div className="flex justify-center mb-2">
             <Image
-              src="/marketing/home/om.png"
+              src="/om.png"
               alt="Sahajanand Wellness"
               width={40}
               height={40}

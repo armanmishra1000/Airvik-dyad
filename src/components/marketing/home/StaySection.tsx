@@ -20,7 +20,7 @@ const accommodations = [
     title: "Brahmbhoj [Semi Deluxe ] 2",
     description:
       "The ultimate sanctuary for peace and tranquility. A retreat space designed for deep spiritual renewal and inner healing. We must inform all the devotees that this is not a hotel but a dharmshala run by a religious trust for serving pilgrims and saints.",
-    imageUrl: "/marketing/home/Brahmbhoj.jpg",
+    imageUrl: "/Dining Hall.png",
     tag: "souls of ancestors",
     Icon: Leaf,
     href: "/book",
@@ -30,7 +30,7 @@ const accommodations = [
     title: "AnnaDaan [Premium Room ] 2",
     description:
       "A sacred space for deep meditation and inner contemplation. Simple furnishings create a serene environment for spiritual practice. Sunlight from the window and full ventilation help maintain a connection with the natural surroundings.",
-    imageUrl: "/marketing/home/annakshetra.png",
+    imageUrl: "/annakshetra.png",
     tag: "leaf or plate",
     Icon: BrainCircuit,
     href: "/book",
@@ -40,7 +40,7 @@ const accommodations = [
     title: "Havan Donation [Economy Non AC ] only 2 person",
     description:
       "Designed for seekers engaged in selfless service. A peaceful sanctuary that balances rest with dedicated spiritual practice. Visitors are requested to help maintain the serenity of the ashram and participate in its sacred activities.",
-    imageUrl: "/marketing/home/havan.png",
+    imageUrl: "/havan.png",
     tag: "neutralizing pollutants",
     Icon: HandHeart,
     href: "/book",
@@ -50,7 +50,7 @@ const accommodations = [
     title: "Ganga Aarti [Ganga Darshan ] 2/4",
     description:
       "Wake to the tranquil sounds and sacred sights of the holy river. These rooms offer a perfect vantage point for morning contemplation and experiencing the divine atmosphere of the Ganga, making for a truly memorable stay.",
-    imageUrl: "/marketing/home/ganga-arti.avif",
+    imageUrl: "/ganga-arti.jpg",
     tag: "River View",
     Icon: Leaf,
     href: "/book",

@@ -53,7 +53,7 @@ export function VideoSection() {
               Visual Journey
             </h3>
             <Image
-              src="/swami-img-removebg-preview.png"
+              src="/om.png"
               alt="Meditation symbol"
               width={40}
               height={40}

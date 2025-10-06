@@ -9,26 +9,26 @@ const activities = [
   {
     title: "Gaushala",
     description: "A sanctuary for cows, embodying selfless service.",
-    imageUrl: "/marketing/home/about-goshala-2.jpg",
+    imageUrl: "/about-goshala-2.jpg",
     href: "/about-us",
   },
   {
     title: "Veda-Pathshala",
     description: "Preserving ancient wisdom through Vedic education.",
-    imageUrl: "/marketing/home/veda4.webp",
+    imageUrl: "/veda3.webp",
     href: "/about-us",
   },
   {
     title: "Annakshetra",
     description:
       "Serving humanity through daily, wholesome meals for all visitors and the local community.",
-    imageUrl: "/marketing/home/annakshetra.png",
+    imageUrl: "/annakshetra.png",
     href: "/about-us",
   },
   {
     title: "Ganga Aarti",
     description: "Experience the divine evening ceremony on our ghat.",
-    imageUrl: "/marketing/home/ganga-arti.jpg",
+    imageUrl: "/ganga-arti.jpg",
     href: "/about-us",
   },
 ];
@@ -98,7 +98,7 @@ export function WelcomeSection() {
               className="order-2 md:order-1"
             >
               <Image
-                src="/marketing/home/rishikesh-temple.jpg"
+                src="/rishikesh-ahsram.png"
                 alt="Sahajanand Wellness Ashram in Rishikesh"
                 width={600}
                 height={400}
@@ -115,7 +115,7 @@ export function WelcomeSection() {
                   <div className="flex items-center justify-center md:justify-start mb-2">
                     Welcome Home{" "}
                     <Image
-                      src="/marketing/home/welcom-1.png"
+                      src="/swaminarayan-logo-1.png"
                       alt="Sahajanand Wellness"
                       width={32}
                       height={32}
@@ -160,7 +160,7 @@ export function WelcomeSection() {
           >
             <div className="flex justify-center mb-2">
               <Image
-                src="/marketing/home/logo-removebg-preview.png"
+                src="/marketing/logo.png"
                 alt="Sahajanand Wellness"
                 width={50}
                 height={50}
