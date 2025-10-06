@@ -44,7 +44,7 @@ export function StickyBookingButton() {
 
     return featuredRoomMatchers.map((room) => {
       const matchedRoomType = roomTypes.find((roomType) =>
-        roomType.name.toLowerCase().includes(room.match.toLowerCase())
+        roomType.name.toLowerCase().startsWith(room.match.toLowerCase())
       );
 
       return {
@@ -60,6 +60,7 @@ export function StickyBookingButton() {
         <PopoverTrigger asChild>
           <Button
             className="flex h-auto w-auto items-center gap-2 rounded-l-lg rounded-r-none p-3 text-base"
+            aria-label="Open booking panel"
             style={{ writingMode: "vertical-rl" }}
           >
             <CalendarCheck className="h-5 w-5 rotate-90" />

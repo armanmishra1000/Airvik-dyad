@@ -5,7 +5,7 @@ import { Mail, Phone, MapPin, Facebook, Twitter, Youtube } from "lucide-react";
 
 const quickLinks = [
   { href: "/about-us", label: "About Us" },
-  { href: "#", label: "Rooms" },
+  { href: "/booking", label: "Rooms" },
 ];
 
 const socialLinks = [
