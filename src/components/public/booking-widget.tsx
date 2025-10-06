@@ -54,7 +54,7 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
   const { guests, children, rooms } = form.watch();
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-lg">
+    <Card className="w-full max-w-4xl mx-auto shadow-lg bg-card border-border/50">
       <CardContent className="p-4">
         <Form {...form}>
           <form

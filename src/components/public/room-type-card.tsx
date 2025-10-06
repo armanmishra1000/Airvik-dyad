@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Users, Bed } from "lucide-react";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -24,10 +23,10 @@ export function RoomTypeCard({
   isSelectionComplete,
   hasSearched,
 }: RoomTypeCardProps) {
-  const detailsLink = `/rooms/${roomType.id}`;
+  const detailsLink = `/book/rooms/${roomType.id}`;
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col bg-card border-border/50">
       <CardHeader className="p-0">
         <div className="aspect-video relative">
           <img
@@ -42,8 +41,8 @@ export function RoomTypeCard({
         </div>
       </CardHeader>
       <div className="flex flex-col flex-1 p-4">
-        <CardTitle>{roomType.name}</CardTitle>
-        <CardDescription className="mt-2 flex-1">
+        <CardTitle className="text-foreground font-serif">{roomType.name}</CardTitle>
+        <CardDescription className="mt-2 flex-1 text-muted-foreground">
           {roomType.description}
         </CardDescription>
         <div className="flex items-center gap-6 text-sm text-muted-foreground mt-4">
@@ -67,9 +66,6 @@ export function RoomTypeCard({
             <Link href={detailsLink}>View Details & Book</Link>
           </Button>
         )}
-        <Button asChild variant="link" className="text-sm rounded-lg">
-          <Link href={detailsLink}>View Room Details</Link>
-        </Button>
       </CardFooter>
     </Card>
   );

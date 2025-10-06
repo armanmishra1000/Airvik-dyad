@@ -222,7 +222,7 @@ export default function RoomDetailsPage() {
       : description;
 
   return (
-    <div className="bg-gray-50 dark:bg-black">
+    <div className="bg-background">
       <div className="container mx-auto p-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-1 text-sm font-medium">
@@ -299,7 +299,7 @@ export default function RoomDetailsPage() {
         <div className="grid lg:grid-cols-5 gap-x-12">
           <div className="lg:col-span-3 space-y-8">
             <div>
-              <h1 className="sm:text-3xl text-2xl lg:text-4xl font-bold">
+              <h1 className="sm:text-3xl text-2xl lg:text-4xl font-bold font-serif text-foreground">
                 {roomType.name}
               </h1>
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
@@ -329,8 +329,8 @@ export default function RoomDetailsPage() {
               )}
             </p>
 
-            <div className="border rounded-xl p-4">
-              <h2 className="text-xl font-bold mb-6">Amenities</h2>
+            <div className="border border-border/50 rounded-xl p-4 bg-card">
+              <h2 className="text-xl font-bold font-serif text-foreground mb-6">Amenities</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6">
                 {roomType.amenities.map((amenityId) => {
                   const amenity = allAmenities.find((a) => a.id === amenityId);
@@ -351,8 +351,8 @@ export default function RoomDetailsPage() {
               </div>
             </div>
 
-            <div className="border rounded-xl p-4">
-              <h2 className="text-xl font-bold mb-6">Ashram Rules</h2>
+            <div className="border border-border/50 rounded-xl p-4 bg-card">
+              <h2 className="text-xl font-bold font-serif text-foreground mb-6">Ashram Rules</h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
@@ -585,7 +585,7 @@ export default function RoomDetailsPage() {
 
         {relatedRoomTypes.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-3xl font-bold mb-8">Related Rooms</h2>
+            <h2 className="text-3xl font-bold font-serif text-foreground mb-8">Related Rooms</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedRoomTypes.slice(0, 3).map((relatedRoomType) => (
                 <RoomTypeCard
