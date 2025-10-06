@@ -126,7 +126,7 @@ export function CreateReservationDialog() {
       <DialogTrigger asChild>
         <Button>Add Reservation</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Create Reservation</DialogTitle>
           <DialogDescription>
@@ -134,7 +134,7 @@ export function CreateReservationDialog() {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="guestId"
@@ -172,9 +172,9 @@ export function CreateReservationDialog() {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
-                          variant={"outline"}
+                          variant="outline"
                           className={cn(
-                            "w-full justify-start text-left font-normal",
+                            "h-11 w-full justify-start gap-3 rounded-xl border border-border/40 bg-card/80 text-left text-sm font-medium shadow-sm",
                             !field.value?.from && "text-muted-foreground"
                           )}
                         >
@@ -194,7 +194,7 @@ export function CreateReservationDialog() {
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto rounded-2xl border border-border/50 bg-card/95 p-0 shadow-lg backdrop-blur" align="start">
                       <Calendar
                         initialFocus
                         mode="range"
@@ -218,8 +218,8 @@ export function CreateReservationDialog() {
               render={() => (
                 <FormItem>
                   <FormLabel>Available Rooms</FormLabel>
-                  <ScrollArea className="h-40 w-full rounded-md border">
-                    <div className="p-4">
+                  <ScrollArea className="h-44 w-full rounded-2xl border border-border/50 bg-card/80 shadow-sm">
+                    <div className="space-y-3 p-4">
                       {availableRooms.length > 0 ? (
                         availableRooms.map((room) => {
                           const roomType = roomTypes.find(rt => rt.id === room.roomTypeId);
@@ -231,7 +231,7 @@ export function CreateReservationDialog() {
                               render={({ field }) => (
                                 <FormItem
                                   key={room.id}
-                                  className="flex flex-row items-start space-x-3 space-y-0 mb-2"
+                                  className="flex flex-row items-center gap-3 space-y-0 rounded-xl border border-border/40 bg-card/95 px-4 py-3 shadow-sm"
                                 >
                                   <FormControl>
                                     <Checkbox
@@ -247,7 +247,7 @@ export function CreateReservationDialog() {
                                       }}
                                     />
                                   </FormControl>
-                                  <FormLabel className="font-normal">
+                                  <FormLabel className="text-sm font-medium">
                                     Room {room.roomNumber} ({roomType?.name})
                                   </FormLabel>
                                 </FormItem>
@@ -256,7 +256,7 @@ export function CreateReservationDialog() {
                           );
                         })
                       ) : (
-                        <div className="text-sm text-muted-foreground text-center pt-12">
+                        <div className="py-8 text-center text-sm text-muted-foreground">
                           {selectedDateRange?.from ? "No rooms available." : "Select dates first."}
                         </div>
                       )}
@@ -279,7 +279,7 @@ export function CreateReservationDialog() {
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="border-t border-border/40 pt-4 sm:justify-end">
               <Button type="submit">Save Reservation</Button>
             </DialogFooter>
           </form>

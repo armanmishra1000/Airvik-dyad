@@ -43,10 +43,23 @@ interface StickyNoteFormDialogProps {
 }
 
 const colorOptions = [
-  { value: "yellow", className: "bg-yellow-200 hover:bg-yellow-300" },
-  { value: "pink", className: "bg-pink-200 hover:bg-pink-300" },
-  { value: "blue", className: "bg-blue-200 hover:bg-blue-300" },
-  { value: "green", className: "bg-green-200 hover:bg-green-300" },
+  {
+    value: "yellow",
+    className:
+      "border border-secondary/50 bg-secondary/30 hover:bg-secondary/40",
+  },
+  {
+    value: "pink",
+    className: "border border-accent/50 bg-accent/30 hover:bg-accent/40",
+  },
+  {
+    value: "blue",
+    className: "border border-primary/40 bg-primary/15 hover:bg-primary/20",
+  },
+  {
+    value: "green",
+    className: "border border-muted/50 bg-muted/40 hover:bg-muted/50",
+  },
 ] as const;
 
 export function StickyNoteFormDialog({
@@ -99,7 +112,7 @@ export function StickyNoteFormDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="title"
@@ -141,10 +154,17 @@ export function StickyNoteFormDialog({
                       type="single"
                       value={field.value}
                       onValueChange={field.onChange}
-                      className="justify-start"
+                      className="justify-start gap-3"
                     >
                       {colorOptions.map(opt => (
-                        <ToggleGroupItem key={opt.value} value={opt.value} className={cn("w-10 h-10", opt.className)} />
+                        <ToggleGroupItem
+                          key={opt.value}
+                          value={opt.value}
+                          className={cn(
+                            "h-11 w-11 rounded-xl shadow-sm",
+                            opt.className
+                          )}
+                        />
                       ))}
                     </ToggleGroup>
                   </FormControl>

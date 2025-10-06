@@ -35,16 +35,18 @@ export function BillingCard({ reservation }: BillingCardProps) {
   };
 
   return (
-    <Card>
+    <Card className="flex h-full flex-col">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Billing & Folio</CardTitle>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <CardTitle className="font-serif text-lg font-semibold">
+              Billing & Folio
+            </CardTitle>
             <CardDescription>
               All charges and payments for this reservation.
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <RecordPaymentDialog reservationId={reservation.id}>
               <Button variant="outline" size="sm">
                 Record Payment
@@ -58,8 +60,9 @@ export function BillingCard({ reservation }: BillingCardProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <Table>
+      <CardContent className="space-y-6">
+        <div className="rounded-2xl border border-border/40">
+          <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[120px]">Date</TableHead>
@@ -76,8 +79,8 @@ export function BillingCard({ reservation }: BillingCardProps) {
                 <TableCell>{item.description}</TableCell>
                 <TableCell
                   className={cn(
-                    "text-right",
-                    item.amount < 0 && "text-green-600"
+                      "text-right font-medium",
+                      item.amount < 0 ? "text-emerald-600" : "text-foreground"
                   )}
                 >
                   {item.amount < 0
@@ -96,14 +99,15 @@ export function BillingCard({ reservation }: BillingCardProps) {
                 </TableCell>
               </TableRow>
             )}
-            <TableRow className="font-bold bg-muted/50 text-base">
-              <TableCell colSpan={2}>Balance Due</TableCell>
-              <TableCell className="text-right">
-                {formatCurrency(reservation.totalAmount)}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+              <TableRow className="bg-primary/5 text-base font-semibold text-primary">
+                <TableCell colSpan={2}>Balance Due</TableCell>
+                <TableCell className="text-right">
+                  {formatCurrency(reservation.totalAmount)}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

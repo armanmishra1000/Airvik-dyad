@@ -94,7 +94,7 @@ export function AmenityFormDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Amenity" : "Add New Amenity"}
@@ -104,7 +104,7 @@ export function AmenityFormDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -130,7 +130,7 @@ export function AmenityFormDialog({
                         <Button
                           variant="outline"
                           role="combobox"
-                          className="w-full justify-between"
+                          className="h-11 w-full justify-between rounded-xl border border-border/40 bg-card/80 font-medium shadow-sm"
                         >
                           {field.value ? (
                             <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export function AmenityFormDialog({
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[250px] p-0">
+                    <PopoverContent className="w-[260px] rounded-2xl border border-border/50 bg-card/95 p-0 shadow-lg backdrop-blur">
                       <Command>
                         <CommandInput placeholder="Search icon..." />
                         <CommandEmpty>No icon found.</CommandEmpty>
@@ -170,7 +170,7 @@ export function AmenityFormDialog({
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="border-t border-border/40 pt-4 sm:justify-end">
               <Button type="submit">
                 {isEditing ? "Save Changes" : "Create Amenity"}
               </Button>

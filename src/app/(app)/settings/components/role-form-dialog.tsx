@@ -110,7 +110,7 @@ export function RoleFormDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -130,12 +130,12 @@ export function RoleFormDialog({
               render={() => (
                 <FormItem>
                     <FormLabel>Permissions</FormLabel>
-                    <ScrollArea className="h-72 w-full rounded-md border">
-                        <div className="p-4">
+                    <ScrollArea className="h-72 w-full rounded-2xl border border-border/50 bg-card/80 shadow-sm">
+                        <div className="space-y-5 p-5">
                         {Object.entries(permissionGroups).map(([resource, actions]) => (
-                            <div key={resource} className="mb-4">
-                                <h4 className="font-medium capitalize mb-2">{resource.replace("_", " ")}</h4>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div key={resource} className="space-y-3">
+                                <h4 className="font-serif text-sm font-semibold uppercase text-muted-foreground">{resource.replace("_", " ")}</h4>
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                 {actions.map(({ action, permission }) => (
                                     <FormField
                                     key={permission}
@@ -145,7 +145,7 @@ export function RoleFormDialog({
                                         return (
                                         <FormItem
                                             key={permission}
-                                            className="flex flex-row items-start space-x-3 space-y-0"
+                                            className="flex flex-row items-center gap-3 space-y-0 rounded-xl border border-border/40 bg-card/95 px-3 py-2 shadow-sm"
                                         >
                                             <FormControl>
                                             <Checkbox
@@ -161,7 +161,7 @@ export function RoleFormDialog({
                                                 }}
                                             />
                                             </FormControl>
-                                            <FormLabel className="font-normal capitalize">
+                                            <FormLabel className="text-sm font-medium capitalize">
                                                 {action}
                                             </FormLabel>
                                         </FormItem>
@@ -178,7 +178,7 @@ export function RoleFormDialog({
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="border-t border-border/40 pt-4 sm:justify-end">
               <Button type="submit">
                 {isEditing ? "Save Changes" : "Create Role"}
               </Button>

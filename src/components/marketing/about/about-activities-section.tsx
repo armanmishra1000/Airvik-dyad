@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import type { Variants } from "framer-motion";
 import { ActivityInfoCard } from "./activity-info-card";
 
 const activities = [
@@ -38,7 +39,7 @@ const activities = [
 ];
 
 export function AboutActivitiesSection() {
-  const containerVariants: any = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -48,7 +49,7 @@ export function AboutActivitiesSection() {
     },
   };
 
-  const itemVariants: any = {
+  const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,

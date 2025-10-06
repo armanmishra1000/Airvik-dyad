@@ -73,15 +73,15 @@ export function UsersDataTable<TData extends User, TValue>({
 
   return (
     <>
-      <div className="space-y-4">
-          <div className="flex items-center justify-end">
-              {hasPermission("create:user") && (
-                <UserFormDialog>
-                    <Button>Add User</Button>
-                </UserFormDialog>
-              )}
-          </div>
-        <div className="rounded-md border">
+      <div className="space-y-6">
+        <div className="flex items-center justify-end gap-3">
+          {hasPermission("create:user") && (
+            <UserFormDialog>
+              <Button>Add User</Button>
+            </UserFormDialog>
+          )}
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -117,7 +117,10 @@ export function UsersDataTable<TData extends User, TValue>({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center text-muted-foreground"
+                  >
                     No users found.
                   </TableCell>
                 </TableRow>

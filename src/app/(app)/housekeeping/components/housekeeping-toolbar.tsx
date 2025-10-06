@@ -15,18 +15,24 @@ export function HousekeepingToolbar({
   onStatusChange,
 }: HousekeepingToolbarProps) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="rounded-2xl border border-border/40 bg-card/80 px-4 py-3 shadow-sm">
       <ToggleGroup
         type="single"
         value={statusFilter}
         onValueChange={(value) => {
           if (value) onStatusChange(value as RoomStatus | "all");
         }}
+        className="flex flex-wrap gap-2"
       >
-        {statuses.map(status => (
-            <ToggleGroupItem key={status} value={status} aria-label={`Filter by ${status}`}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-            </ToggleGroupItem>
+        {statuses.map((status) => (
+          <ToggleGroupItem
+            key={status}
+            value={status}
+            aria-label={`Filter by ${status}`}
+            className="capitalize"
+          >
+            {status}
+          </ToggleGroupItem>
         ))}
       </ToggleGroup>
     </div>

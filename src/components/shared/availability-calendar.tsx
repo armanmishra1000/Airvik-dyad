@@ -40,18 +40,43 @@ import { ReservationStatus } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 
-const getStatusColor = (status: ReservationStatus) => {
-  switch (status) {
-    case "Checked-in":
-      return "bg-green-600 hover:bg-green-700";
-    case "Confirmed":
-      return "bg-blue-600 hover:bg-blue-700";
-    case "Tentative":
-      return "bg-yellow-500 hover:bg-yellow-600";
-    default:
-      return "bg-gray-500";
-  }
+const reservationStatusStyles: Record<
+  ReservationStatus,
+  { ribbon: string; dot: string }
+> = {
+  Tentative: {
+    ribbon: "border border-secondary/50 bg-secondary/30 text-secondary-foreground",
+    dot: "bg-secondary/80",
+  },
+  Confirmed: {
+    ribbon: "border border-primary/40 bg-primary/10 text-primary",
+    dot: "bg-primary/80",
+  },
+  "Checked-in": {
+    ribbon: "border border-accent/50 bg-accent/30 text-accent-foreground",
+    dot: "bg-accent/80",
+  },
+  "Checked-out": {
+    ribbon: "border border-muted/50 bg-muted/40 text-muted-foreground",
+    dot: "bg-muted/70",
+  },
+  Cancelled: {
+    ribbon: "border border-destructive/40 bg-destructive/10 text-destructive",
+    dot: "bg-destructive/80",
+  },
+  "No-show": {
+    ribbon: "border border-destructive/40 bg-destructive/10 text-destructive",
+    dot: "bg-destructive/80",
+  },
 };
+
+const defaultStatusStyle = {
+  ribbon: "border border-muted/40 bg-muted/40 text-muted-foreground",
+  dot: "bg-muted/70",
+};
+
+const getStatusStyle = (status: ReservationStatus) =>
+  reservationStatusStyles[status] ?? defaultStatusStyle;
 
 export function AvailabilityCalendar() {
   const { reservations, guests, rooms } = useDataContext();
@@ -81,47 +106,57 @@ export function AvailabilityCalendar() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <CardTitle>Availability Overview</CardTitle>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <CardTitle className="font-serif text-lg font-semibold">Availability Overview</CardTitle>
             <CardDescription>
               Monthly view of room bookings. Hover over a booking for details.
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={handlePrevMonth}>
+          <div className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card/80 px-3 py-2 shadow-sm">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 rounded-xl border-border/40"
+              onClick={handlePrevMonth}
+            >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-lg font-semibold w-32 text-center">
+            <span className="min-w-[140px] text-center text-base font-semibold">
               {format(currentMonth, "MMMM yyyy")}
             </span>
-            <Button variant="outline" size="icon" onClick={handleNextMonth}>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 rounded-xl border-border/40"
+              onClick={handleNextMonth}
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
         <TooltipProvider delayDuration={0}>
-          <div className="overflow-x-auto border rounded-lg">
+          <div className="overflow-x-auto rounded-2xl border border-border/40 bg-card/80 p-4 shadow-sm">
             <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky left-0 z-10 bg-background/95 backdrop-blur-sm w-24 sm:w-32 border-r">
+                  <TableHead className="sticky left-0 z-10 w-24 border-r border-border/30 bg-card/95 backdrop-blur sm:w-32">
                     Room
                   </TableHead>
                   {daysInMonth.map((day) => (
                     <TableHead
                       key={day.toString()}
                       className={cn(
-                        "text-center p-2 w-12",
-                        isSameDay(day, new Date()) && "bg-muted"
+                        "w-12 p-2 text-center",
+                        isSameDay(day, new Date()) && "bg-primary/10"
                       )}
                     >
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                         {format(day, "E")}
                       </div>
-                      <div className="text-base font-bold">
+                      <div className="text-base font-semibold">
                         {format(day, "d")}
                       </div>
                     </TableHead>
@@ -140,8 +175,8 @@ export function AvailabilityCalendar() {
                         <TableCell
                           key={day.toString()}
                           className={cn(
-                            "border-l p-0",
-                            isSameDay(day, new Date()) && "bg-muted/50"
+                            "border-l border-border/20 p-0",
+                            isSameDay(day, new Date()) && "bg-primary/5"
                           )}
                         />
                       );
@@ -169,21 +204,22 @@ export function AvailabilityCalendar() {
                         const guest = guests.find(
                           (g) => g.id === reservation.guestId
                         );
+                        const statusStyle = getStatusStyle(reservation.status);
                         dayCells.push(
                           <TableCell
                             key={day.toString()}
                             colSpan={span}
                             className={cn(
-                              "p-0 border-l",
-                              isSameDay(day, new Date()) && "bg-muted/50"
+                              "border-l border-border/20 p-0",
+                              isSameDay(day, new Date()) && "bg-primary/5"
                             )}
                           >
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div
                                   className={cn(
-                                    "h-12 text-white rounded-md m-1 p-2 text-xs font-medium flex items-center overflow-hidden cursor-pointer transition-colors",
-                                    getStatusColor(reservation.status)
+                                    "m-1 flex h-12 items-center overflow-hidden rounded-xl px-3 py-2 text-xs font-medium shadow-sm",
+                                    statusStyle.ribbon
                                   )}
                                 >
                                   <span className="truncate">
@@ -217,7 +253,7 @@ export function AvailabilityCalendar() {
                   }
                   return (
                     <TableRow key={room.id}>
-                      <TableCell className="font-medium sticky left-0 z-10 bg-background/95 backdrop-blur-sm border-r">
+                      <TableCell className="sticky left-0 z-10 border-r border-border/30 bg-card/95 backdrop-blur font-semibold">
                         {room.roomNumber}
                       </TableCell>
                       {dayCells}
@@ -227,15 +263,36 @@ export function AvailabilityCalendar() {
               </TableBody>
             </Table>
           </div>
-          <div className="flex items-center gap-4 mt-4 text-sm">
-            <span className="font-semibold">Legend:</span>
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <span className="font-serif text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Legend
+            </span>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-sm bg-blue-600" />
-              <span>Confirmed</span>
+              <div
+                className={cn(
+                  "h-3 w-3 rounded-full",
+                  getStatusStyle("Confirmed").dot
+                )}
+              />
+              <span className="text-sm text-muted-foreground">Confirmed</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-sm bg-green-600" />
-              <span>Checked-in</span>
+              <div
+                className={cn(
+                  "h-3 w-3 rounded-full",
+                  getStatusStyle("Checked-in").dot
+                )}
+              />
+              <span className="text-sm text-muted-foreground">Checked-in</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  "h-3 w-3 rounded-full",
+                  getStatusStyle("Tentative").dot
+                )}
+              />
+              <span className="text-sm text-muted-foreground">Tentative</span>
             </div>
           </div>
         </TooltipProvider>

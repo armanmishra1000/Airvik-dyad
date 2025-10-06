@@ -66,8 +66,8 @@ export function RishikeshStorySection() {
             className="space-y-6 text-lg text-muted-foreground text-center lg:text-left order-1 lg:order-2"
           >
             <p>
-              Rishikesh, known as the 'Gateway to the Garhwal Himalayas' and
-              the 'Yoga Capital of the World,' is a town of profound
+              Rishikesh, known as the &apos;Gateway to the Garhwal Himalayas&apos; and
+              the &apos;Yoga Capital of the World,&apos; is a town of profound
               spiritual significance. Nestled in the foothills of the
               Himalayas in northern India, it is a place where the sacred
               river Ganga flows, purifying all who come to its banks.

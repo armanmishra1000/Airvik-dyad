@@ -109,7 +109,7 @@ export function RoomTypeFormDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -171,7 +171,7 @@ export function RoomTypeFormDialog({
               render={() => (
                 <FormItem>
                   <FormLabel>Amenities</FormLabel>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 rounded-md border p-4">
+                  <div className="grid grid-cols-2 gap-3 rounded-2xl border border-border/50 bg-card/80 p-5 shadow-sm md:grid-cols-3">
                     {allAmenities.map((amenity) => (
                       <FormField
                         key={amenity.id}
@@ -181,7 +181,7 @@ export function RoomTypeFormDialog({
                           return (
                             <FormItem
                               key={amenity.id}
-                              className="flex flex-row items-start space-x-3 space-y-0"
+                              className="flex flex-row items-center gap-3 space-y-0 rounded-xl border border-border/40 bg-card/95 px-3 py-2 shadow-sm"
                             >
                               <FormControl>
                                 <Checkbox
@@ -197,7 +197,7 @@ export function RoomTypeFormDialog({
                                   }}
                                 />
                               </FormControl>
-                              <FormLabel className="font-normal">
+                              <FormLabel className="text-sm font-medium">
                                 {amenity.name}
                               </FormLabel>
                             </FormItem>
@@ -228,7 +228,7 @@ export function RoomTypeFormDialog({
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="border-t border-border/40 pt-4 sm:justify-end">
               <Button type="submit">
                 {isEditing ? "Save Changes" : "Create Room Type"}
               </Button>

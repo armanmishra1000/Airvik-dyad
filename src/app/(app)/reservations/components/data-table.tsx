@@ -5,7 +5,6 @@ import {
   ColumnDef,
   ColumnFiltersState,
   ExpandedState,
-  RowData,
   SortingState,
   VisibilityState,
   flexRender,
@@ -30,22 +29,22 @@ import {
 import { DataTableToolbar } from "./data-table-toolbar"
 import { DataTablePagination } from "./data-table-pagination"
 import { CancelReservationDialog } from "./cancel-reservation-dialog"
-
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+import type { ReservationWithDetails } from "./columns"
+interface DataTableProps {
+  columns: ColumnDef<ReservationWithDetails, unknown>[]
+  data: ReservationWithDetails[]
   onCancelReservation: (reservationId: string) => void
   onCheckInReservation: (reservationId: string) => void
   onCheckOutReservation: (reservationId: string) => void
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable({
   columns,
   data,
   onCancelReservation,
   onCheckInReservation,
   onCheckOutReservation,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -53,38 +52,38 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [expanded, setExpanded] = React.useState<ExpandedState>({})
-  const [reservationToCancel, setReservationToCancel] = React.useState<TData | null>(null);
+  const [reservationToCancel, setReservationToCancel] =
+    React.useState<ReservationWithDetails | null>(null)
 
-  const handleOpenCancelDialog = (reservation: TData) => {
+  const handleOpenCancelDialog = (reservation: ReservationWithDetails) => {
     setReservationToCancel(reservation);
   };
 
   const handleConfirmCancellation = () => {
-    if (reservationToCancel) {
-      // @ts-ignore
-      if (reservationToCancel.subRows) {
-        // @ts-ignore
-        reservationToCancel.subRows.forEach(subRes => onCancelReservation(subRes.id));
-      } else {
-        // @ts-ignore
-        onCancelReservation(reservationToCancel.id);
-      }
+    if (!reservationToCancel) {
+      return
     }
-    setReservationToCancel(null);
+
+    const reservations = reservationToCancel.subRows?.length
+      ? reservationToCancel.subRows
+      : [reservationToCancel]
+
+    reservations.forEach((reservation) => onCancelReservation(reservation.id))
+    setReservationToCancel(null)
   };
 
-  const handleGroupAction = (reservation: TData, action: (id: string) => void) => {
-    // @ts-ignore
-    if (reservation.subRows) {
-        // @ts-ignore
-        reservation.subRows.forEach(subRes => action(subRes.id));
-    } else {
-        // @ts-ignore
-        action(reservation.id);
-    }
-  };
+  const handleGroupAction = (
+    reservation: ReservationWithDetails,
+    action: (id: string) => void
+  ) => {
+    const reservations = reservation.subRows?.length
+      ? reservation.subRows
+      : [reservation]
 
-  const table = useReactTable({
+    reservations.forEach((item) => action(item.id))
+  }
+
+  const table = useReactTable<ReservationWithDetails>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -105,16 +104,18 @@ export function DataTable<TData, TValue>({
       expanded,
     },
     meta: {
-        checkInReservation: (res: TData) => handleGroupAction(res, onCheckInReservation),
-        checkOutReservation: (res: TData) => handleGroupAction(res, onCheckOutReservation),
+        checkInReservation: (res: ReservationWithDetails) =>
+          handleGroupAction(res, onCheckInReservation),
+        checkOutReservation: (res: ReservationWithDetails) =>
+          handleGroupAction(res, onCheckOutReservation),
         openCancelDialog: handleOpenCancelDialog,
     }
   })
 
   return (
-    <div className="space-y-4">
-        <DataTableToolbar table={table} />
-      <div className="rounded-md border">
+    <div className="space-y-6">
+      <DataTableToolbar table={table} />
+      <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -150,7 +151,10 @@ export function DataTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-muted-foreground"
+                >
                   No results.
                 </TableCell>
               </TableRow>

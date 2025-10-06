@@ -135,7 +135,12 @@ export function EditReservationDialog({
       i === 0 ? { ...e, amount: totalAmount } : e
     );
     if (folio.length === 0) {
-      folio.push({ amount: totalAmount, description: "Room charge", date: new Date().toISOString() });
+      folio.push({
+        id: `${reservation.id}-room-charge`,
+        amount: totalAmount,
+        description: "Room charge",
+        timestamp: new Date().toISOString(),
+      });
     }
 
     const updatedReservationData = {
@@ -159,7 +164,7 @@ export function EditReservationDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Edit Reservation</DialogTitle>
           <DialogDescription>
@@ -167,7 +172,7 @@ export function EditReservationDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="guestId"
@@ -200,8 +205,11 @@ export function EditReservationDialog({
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
-                          variant={"outline"}
-                          className={cn("w-full justify-start text-left font-normal", !field.value?.from && "text-muted-foreground")}
+                          variant="outline"
+                          className={cn(
+                            "h-11 w-full justify-start gap-3 rounded-xl border border-border/40 bg-card/80 text-left text-sm font-medium shadow-sm",
+                            !field.value?.from && "text-muted-foreground"
+                          )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {field.value?.from ? (
@@ -219,7 +227,7 @@ export function EditReservationDialog({
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto rounded-2xl border border-border/50 bg-card/95 p-0 shadow-lg backdrop-blur" align="start">
                       <Calendar
                         initialFocus
                         mode="range"
@@ -254,7 +262,7 @@ export function EditReservationDialog({
                           </SelectItem>
                         ))
                       ) : (
-                        <div className="p-2 text-sm text-muted-foreground text-center">
+                        <div className="px-3 py-4 text-center text-sm text-muted-foreground">
                           No rooms available.
                         </div>
                       )}
@@ -286,7 +294,7 @@ export function EditReservationDialog({
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="border-t border-border/40 pt-4 sm:justify-end">
               <Button type="submit">Save Changes</Button>
             </DialogFooter>
           </form>

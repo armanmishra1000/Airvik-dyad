@@ -22,22 +22,25 @@ import { useDataContext } from "@/context/data-context";
 import { useAuthContext } from "@/context/auth-context";
 import { ThemeToggle } from "../theme-toggle";
 import { supabase } from "@/integrations/supabase/client";
+import type { Permission } from "@/data/types";
 
 const navItems = [
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/reservations", label: "Reservations" },
-    { href: "/calendar", label: "Calendar" },
-    { href: "/housekeeping", label: "Housekeeping" },
-    { href: "/guests", label: "Guests" },
-    { href: "/reports", label: "Reports" },
-  ];
+  { href: "/dashboard", label: "Dashboard", requiredPermission: "read:reservation" },
+  { href: "/reservations", label: "Reservations", requiredPermission: "read:reservation" },
+  { href: "/calendar", label: "Calendar", requiredPermission: "read:reservation" },
+  { href: "/housekeeping", label: "Housekeeping", requiredPermission: "read:room" },
+  { href: "/guests", label: "Guests", requiredPermission: "read:guest" },
+  { href: "/reports", label: "Reports", requiredPermission: "read:report" },
+] satisfies Array<{ href: string; label: string; requiredPermission: Permission }>;
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { property, roles } = useDataContext();
-  const { currentUser } = useAuthContext();
-  const pageTitle = navItems.find(item => item.href === pathname)?.label || "Dashboard";
+  const { currentUser, hasPermission } = useAuthContext();
+  const accessibleNavItems = navItems.filter((item) => hasPermission(item.requiredPermission));
+  const activeNavItem = accessibleNavItems.find((item) => item.href === pathname);
+  const pageTitle = activeNavItem?.label || "Dashboard";
   const userRole = roles.find(r => r.id === currentUser?.roleId);
 
   const handleLogout = async () => {
@@ -46,57 +49,87 @@ export function Header() {
   };
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/50 bg-background/80 px-6 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:h-20 lg:px-8">
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="shrink-0 md:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0 rounded-2xl border border-border/50 bg-card/80 text-foreground shadow-sm transition-colors hover:text-primary focus-visible:ring-primary/40 md:hidden"
+          >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col">
-          <nav className="grid gap-2 text-lg font-medium">
-            <Link
-              href="#"
-              className="flex items-center gap-2 text-lg font-semibold mb-4"
-            >
-              <Package2 className="h-6 w-6" />
-              <span className="">{property.name}</span>
-            </Link>
-            {navItems.map(({ href, label }) => (
-                 <Link
-                 key={href}
-                 href={href}
-                 className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-               >
-                 {label}
-               </Link>
-            ))}
+        <SheetContent
+          side="left"
+          className="flex flex-col gap-6 overflow-y-auto rounded-r-3xl border-border/50 bg-card/95 p-0 pb-8 pl-6 pr-4 shadow-lg backdrop-blur"
+        >
+          <nav className="flex flex-col gap-4">
+            <div className="flex items-center gap-3 border-b border-border/50 pb-4 pt-6 pr-2">
+              <Package2 className="h-6 w-6 text-primary" />
+              <div className="flex flex-col">
+                <span className="text-lg font-serif font-semibold text-foreground">
+                  {property.name}
+                </span>
+                <span className="text-sm text-muted-foreground">Quick navigation</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {accessibleNavItems.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-base font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
           </nav>
         </SheetContent>
       </Sheet>
 
-      <div className="w-full flex-1">
-        <h1 className="text-lg font-semibold">{pageTitle}</h1>
+      <div className="w-full flex-1 overflow-hidden">
+        <div className="flex flex-col gap-1">
+          <h1 className="truncate text-xl font-serif font-semibold tracking-tight text-foreground">
+            {pageTitle}
+          </h1>
+          {property?.name && (
+            <p className="text-sm text-muted-foreground">{property.name}</p>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-4">
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-2xl border border-border/50 bg-card/80 text-foreground shadow-sm transition-colors hover:text-primary"
+            >
               <CircleUser className="h-5 w-5" />
               <span className="sr-only">Toggle user menu</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>
-                {currentUser ? currentUser.name : "No user"}
-                <p className="text-xs font-normal text-muted-foreground">
-                    {userRole?.name}
-                </p>
+          <DropdownMenuContent
+            align="end"
+            className="w-56 rounded-2xl border border-border/50 bg-card/95 p-2 shadow-lg backdrop-blur"
+          >
+            <DropdownMenuLabel className="text-sm font-serif font-semibold text-foreground">
+              {currentUser ? currentUser.name : "No user"}
+              <p className="text-xs font-normal text-muted-foreground">
+                {userRole?.name}
+              </p>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-border/50" />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            >
+              Logout
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -84,7 +84,7 @@ export function PropertySettingsForm() {
       <CardHeader>
         <CardTitle>Property Details</CardTitle>
         <CardDescription>
-          Update your hotel's information. Changes will be saved
+          Update your hotel&apos;s information. Changes will be saved
           immediately.
         </CardDescription>
       </CardHeader>
@@ -171,7 +171,7 @@ export function PropertySettingsForm() {
                     <Textarea {...field} />
                   </FormControl>
                   <FormDescription>
-                    Go to Google Maps, find your location, click "Share", then "Embed a map", and copy the src URL.
+                    Go to Google Maps, find your location, click &quot;Share&quot;, then &quot;Embed a map&quot;, and copy the src URL.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

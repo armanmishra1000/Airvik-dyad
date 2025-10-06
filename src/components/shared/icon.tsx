@@ -5,13 +5,18 @@ import * as icons from "lucide-react";
 import type { LucideProps } from "lucide-react";
 import type { IconName } from "@/lib/icons";
 
+type LucideIconComponent = React.ForwardRefExoticComponent<
+  Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>
+>;
+
+const lucideIcons = icons as unknown as Record<string, LucideIconComponent>;
+
 interface IconProps extends LucideProps {
   name: IconName | string;
 }
 
 export const Icon = ({ name, ...props }: IconProps) => {
-  // @ts-ignore
-  const LucideIcon = icons[name];
+  const LucideIcon = lucideIcons[name];
 
   if (!LucideIcon) {
     return <icons.HelpCircle {...props} />; // Fallback icon

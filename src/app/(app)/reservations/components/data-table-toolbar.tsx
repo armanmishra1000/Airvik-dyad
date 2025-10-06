@@ -15,15 +15,15 @@ export function DataTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex flex-1 items-center space-x-2">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
         <Input
           placeholder="Filter by guest name..."
           value={(table.getColumn("guestName")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("guestName")?.setFilterValue(event.target.value)
           }
-          className="h-8 w-[150px] lg:w-[250px]"
+          className="w-full sm:w-[220px] lg:w-[280px]"
         />
         {table.getColumn("status") && (
           <DataTableFacetedFilter
@@ -33,7 +33,7 @@ export function DataTableToolbar<TData>({
           />
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <DataTableViewOptions table={table} />
         <CreateReservationDialog />
       </div>

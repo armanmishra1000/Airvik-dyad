@@ -80,7 +80,6 @@ export function TestimonialSection() {
                   <div className="p-4 h-full">
                     <Card className="bg-card h-full flex flex-col justify-center shadow-md border-l-4 border-primary">
                       <CardContent className="p-8 text-center space-y-6">
-                        {/* <Quote className="h-8 w-8 text-primary/50 mx-auto" /> */}
                         <p className="text-lg font-serif italic text-foreground/80">
                           &ldquo;{testimonial.quote}&rdquo;
                         </p>

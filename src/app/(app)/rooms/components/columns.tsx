@@ -1,6 +1,7 @@
 "use client"
 
-import { ColumnDef, RowData } from "@tanstack/react-table"
+import Image from "next/image"
+import { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -16,27 +17,41 @@ import type { Room } from "@/data/types"
 import { RoomFormDialog } from "./room-form-dialog"
 import { useDataContext } from "@/context/data-context"
 
+function RoomImageCell({ room }: { room: Room }) {
+  const { roomTypes } = useDataContext()
+  const roomType = roomTypes.find((rt) => rt.id === room.roomTypeId)
+  const imageUrl =
+    room.photos?.[0] ||
+    roomType?.mainPhotoUrl ||
+    roomType?.photos?.[0] ||
+    "/room-placeholder.svg"
+
+  return (
+    <div className="relative h-10 w-16 overflow-hidden rounded-md">
+      <Image
+        src={imageUrl}
+        alt={`Room ${room.roomNumber}`}
+        fill
+        className="object-cover"
+        sizes="64px"
+        unoptimized
+      />
+    </div>
+  )
+}
+
+function RoomTypeCell({ roomTypeId }: { roomTypeId: string }) {
+  const { roomTypes } = useDataContext()
+  const roomType = roomTypes.find((rt) => rt.id === roomTypeId)
+
+  return <span>{roomType?.name || "Unknown"}</span>
+}
+
 export const columns: ColumnDef<Room>[] = [
     {
         id: "image",
         header: "Image",
-        cell: ({ row }) => {
-          const room = row.original
-          const { roomTypes } = useDataContext()
-          const roomType = roomTypes.find(rt => rt.id === room.roomTypeId)
-          
-          const imageUrl = room.photos?.[0] || roomType?.mainPhotoUrl || roomType?.photos?.[0] || "/room-placeholder.svg"
-          
-          return (
-            <div className="w-16 h-10 relative rounded-md overflow-hidden">
-                <img 
-                    src={imageUrl}
-                    alt={`Room ${room.roomNumber}`}
-                    className="absolute inset-0 h-full w-full object-cover"
-                />
-            </div>
-          )
-        },
+    cell: ({ row }) => <RoomImageCell room={row.original} />,
       },
   {
     accessorKey: "roomNumber",
@@ -46,11 +61,9 @@ export const columns: ColumnDef<Room>[] = [
     accessorKey: "roomTypeId",
     header: "Room Type",
     cell: ({ row }) => {
-        const { roomTypes } = useDataContext()
-        const roomTypeId = row.getValue("roomTypeId") as string;
-        const roomType = roomTypes.find(rt => rt.id === roomTypeId);
-        return <span>{roomType?.name || "Unknown"}</span>
-    }
+      const roomTypeId = row.getValue("roomTypeId") as string
+      return <RoomTypeCell roomTypeId={roomTypeId} />
+    },
   },
   {
     accessorKey: "status",
