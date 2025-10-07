@@ -111,8 +111,8 @@ export function StaySection() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="absolute left-0 top-[112px] -translate-y-1/2 -translate-x-1/2 rounded-full h-10 w-10 lg:h-12 lg:w-12 bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground z-10" />
-            <CarouselNext className="absolute right-0 top-[112px] -translate-y-1/2 translate-x-1/2 rounded-full h-10 w-10 lg:h-12 lg:w-12 bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground z-10" />
+            <CarouselPrevious className="absolute left-0 top-[40%] -translate-y-1/2 -translate-x-1/2 rounded-full h-10 w-10 lg:h-12 lg:w-12 bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground z-10" />
+            <CarouselNext className="absolute right-0 top-[40%] -translate-y-1/2 translate-x-1/2 rounded-full h-10 w-10 lg:h-12 lg:w-12 bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground z-10" />
           </Carousel>
         </motion.div>
 
@@ -126,7 +126,7 @@ export function StaySection() {
           <Button
             asChild
             size="lg"
-            className="bg-primary hover:bg-primary-hover px-8 py-6 text-base rounded-md"
+            className="bg-primary hover:bg-primary-hover px-8 py-6 text-base rounded-2xl"
           >
             <Link href="/book/review">Reserve Your Sacred Stay</Link>
           </Button>

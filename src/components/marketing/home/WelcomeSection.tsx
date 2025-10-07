@@ -102,7 +102,7 @@ export function WelcomeSection() {
                 alt="Sahajanand Wellness Ashram in Rishikesh"
                 width={600}
                 height={400}
-                className="rounded-lg shadow-lg w-full h-auto object-cover"
+                className="rounded-2xl shadow-lg w-full h-auto object-cover"
               />
             </motion.div>
             {/* Text Column */}
@@ -160,12 +160,12 @@ export function WelcomeSection() {
           >
             <div className="flex justify-center mb-2">
               <Image
-                src="/logo-removebg-preview.png"
+                src="/swaminarayan-logo-1.png"
                 alt="Sahajanand Wellness"
-                width={50}
-                height={50}
+                width={40}
+                height={40}
                 quality={100}
-                className="mt-10 object-contain"
+                className="w-10 h-10 mt-10 object-contain"
               />
             </div>
             <h3 className="text-4xl md:text-5xl font-bold font-serif text-foreground mb-2">
