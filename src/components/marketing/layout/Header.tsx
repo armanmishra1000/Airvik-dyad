@@ -182,7 +182,7 @@ export function Header() {
                     <NavigationMenuLink asChild>
                       <Link
                         href={link.href || "#"}
-                        className="inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover transition-colors bg-transparent hover:bg-primary/15 hover:text-primary focus:outline-none"
+                        className="inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover transition-colors bg-transparent hover:bg-primary/15 hover:text-primary focus-visible:bg-primary/15 focus-visible:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40"
                       >
                         {link.label}
                       </Link>
