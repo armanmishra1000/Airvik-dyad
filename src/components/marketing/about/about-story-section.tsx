@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export function AboutStorySection() {
   return (
-    <section className="py-12 md:py-18 lg:py-24">
+    <section className="py-12 md:py-20">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-6xl">
           <motion.div
@@ -75,7 +75,7 @@ export function AboutStorySection() {
                 </p>
 
                 <p>
-                  Guiding the ashram's spiritual journey is
+                  Guiding the ashram&apos;s spiritual journey is
                   <span className="mx-1 font-semibold text-foreground">
                     Sunil Bhagat,
                   </span>

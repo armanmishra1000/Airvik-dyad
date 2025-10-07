@@ -50,11 +50,11 @@ export function AboutHeroSection() {
     },
   ];
 
-  const newLocal = "absolute inset-0 bg-gradient-to-br from-primary/70 via-primary/40 to-transparent";
+  const newLocal = "absolute inset-0 bg-gradient-to-br from-primary/60 via-primary/40 to-transparent";
   return (
     <section
       ref={sectionRef}
-      className="relative w-full min-h-screen flex items-center overflow-hidden"
+      className="relative w-full min-h-[80vh] flex items-center overflow-hidden"
     >
       {/* Background Image with Gradient Overlay */}
       <div className="absolute inset-0 z-0">
