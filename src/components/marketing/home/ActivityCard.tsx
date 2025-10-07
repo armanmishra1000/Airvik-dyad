@@ -87,7 +87,7 @@ export function ActivityCard({
                 size="icon"
                 variant="ghost"
                 onClick={handleToggleClick}
-                className="flex-shrink-0 rounded-full hover:bg-white/20 hover:text-white"
+                className="flex-shrink-0 rounded-full hover:bg-white/20 hover:text-white text-white"
                 aria-expanded={isExpanded}
                 aria-label={isExpanded ? "Collapse" : "Expand"}
               >
