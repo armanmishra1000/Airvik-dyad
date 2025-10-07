@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 export function AboutStorySection() {
@@ -38,7 +39,7 @@ export function AboutStorySection() {
               <figure className="flex h-full flex-col space-y-4">
                 <div className="relative aspect-square overflow-hidden rounded-2xl border border-border/70">
                   <Image
-                    src="/sunilbhgat.png"
+                    src="/sunilbhagat.png"
                     alt="Sunil Bhagat (Swami), spiritual guide of Sahajanand Wellness"
                     fill
                     sizes="(min-width: 1024px) 480px, 90vw"
@@ -96,13 +97,13 @@ export function AboutStorySection() {
               </div>
 
               <div className="pt-2">
-                <a
+                <Link
                   href="/gallery"
                   className="inline-flex items-center text-sm font-semibold text-primary transition-colors hover:text-primary/80"
                 >
                   Discover our Gallery
                   <span className="ml-2">→</span>
-                </a>
+                </Link>
               </div>
             </motion.div>
           </div>
