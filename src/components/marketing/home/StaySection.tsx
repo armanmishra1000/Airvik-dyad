@@ -126,7 +126,7 @@ export function StaySection() {
           <Button
             asChild
             size="lg"
-            className="bg-primary hover:bg-primary-hover px-8 py-6 text-base rounded-2xl text-sm"
+            className="bg-primary hover:bg-primary-hover px-8 py-6 text-base rounded-2xl"
           >
             <Link href="/book/review">Reserve Your Sacred Stay</Link>
           </Button>
