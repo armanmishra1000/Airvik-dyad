@@ -16,16 +16,15 @@ interface ActivityCardProps {
 }
 
 /**
- * Render an interactive activity card with a background image, title, description, and a VIEW link.
+ * Renders an interactive activity card with a background image, title, description, and a VIEW link.
  *
- * The card expands to reveal the description and the VIEW button on hover (desktop) or when toggled via
- * the action button (mobile/tablet).
+ * The card reveals the description and the VIEW button on hover for desktop devices, and on toggle via the action button for mobile/tablet devices.
  *
  * @param title - The card title displayed prominently
  * @param description - The descriptive text revealed when the card is expanded
  * @param imageUrl - Background image URL used to fill the card
  * @param href - Destination URL used by the VIEW link
- * @returns The JSX element representing the activity card
+ * @returns The JSX element for the activity card
  */
 export function ActivityCard({
   title,
