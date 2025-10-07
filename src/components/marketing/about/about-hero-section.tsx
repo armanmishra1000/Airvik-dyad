@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Users, Award, Calendar } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * Renders the hero section for the About page with a background image, headline, CTAs, and credibility highlights that animate into view.
+ *
+ * The component observes its section element entering the viewport and toggles an internal visibility state to drive staggered entrance animations for the heading, supporting copy, buttons, and credibility items.
+ *
+ * @returns A JSX element containing the About page hero section.
+ */
 export function AboutHeroSection() {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);

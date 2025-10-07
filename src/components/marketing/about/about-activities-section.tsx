@@ -38,6 +38,14 @@ const activities = [
   },
 ];
 
+/**
+ * Renders the "Our Sacred Activities" section with an animated title and a responsive grid of activity cards.
+ *
+ * The title block animates into view and the grid items appear with a staggered entrance. The grid adapts to show
+ * 1 column on small screens, 2 on medium, and 3 on large screens; each card is populated from the local `activities` data.
+ *
+ * @returns The section element containing the animated title and the responsive activities grid
+ */
 export function AboutActivitiesSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
