@@ -12,7 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BookingSummary } from "@/components/public/booking-summary";
 import type { RoomType } from "@/data/types";
-import { TriangleAlert } from "lucide-react";
+import { TriangleAlert, LayoutGrid, List, LayoutList } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function RoomsPage() {
   const { roomTypes, isLoading: isInitialLoading } = useDataContext();
@@ -21,11 +22,13 @@ export default function RoomsPage() {
     availableRoomTypes,
     isLoading: isSearching,
     setAvailableRoomTypes,
+    hasNoInventory,
   } = useAvailabilitySearch();
   const [hasSearched, setHasSearched] = React.useState(false);
   const [searchValues, setSearchValues] =
     React.useState<BookingSearchFormValues | null>(null);
   const [selection, setSelection] = React.useState<RoomType[]>([]);
+  const [viewMode, setViewMode] = React.useState<"card" | "grid" | "list">("card");
 
   const handleSearch = (values: BookingSearchFormValues) => {
     search(values.dateRange, values.guests, values.children, values.rooms);
@@ -64,16 +67,16 @@ export default function RoomsPage() {
 
   return (
     /* Main Content */
-    <div className="py-8">
+    <div>
       {/* Booking Widget */}
-      <section className="py-8 bg-muted/20">
+      <section className="relative py-12 md:py-16 bg-gradient-to-b from-primary/5 via-muted/20 to-background">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-serif mb-4">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight font-serif mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               Find Your Perfect Stay
             </h1>
-            <p className="max-w-2xl mx-auto text-lg text-muted-foreground">
-              Search available rooms and book your spiritual retreat at Sahajanand Ashram
+            <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
+              Discover peace and tranquility at Sahajanand Ashram. Search for your ideal accommodation.
             </p>
           </div>
           <BookingWidget onSearch={handleSearch} />
@@ -83,15 +86,31 @@ export default function RoomsPage() {
       {/* Room Types */}
       <section className="py-12 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-10">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
             <h2 className="text-3xl font-bold">
               {hasSearched ? "Available Rooms" : "Our Rooms"}
             </h2>
-            {hasSearched && (
-              <Button variant="link" onClick={handleClearSearch}>
-                Clear Search & View All
-              </Button>
-            )}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as "card" | "grid" | "list")} className="bg-muted/50 p-1 rounded-lg border border-border/50">
+                <ToggleGroupItem value="card" aria-label="Card view" className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3">
+                  <LayoutList className="h-4 w-4 mr-2" />
+                  <span className="text-sm hidden sm:inline">Card</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="grid" aria-label="Grid view" className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3">
+                  <LayoutGrid className="h-4 w-4 mr-2" />
+                  <span className="text-sm hidden sm:inline">Grid</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="List view" className="data-[state=on]:bg-background data-[state=on]:shadow-sm px-3">
+                  <List className="h-4 w-4 mr-2" />
+                  <span className="text-sm hidden sm:inline">List</span>
+                </ToggleGroupItem>
+              </ToggleGroup>
+              {hasSearched && (
+                <Button variant="ghost" onClick={handleClearSearch} className="text-muted-foreground hover:text-foreground">
+                  Clear Search & View All
+                </Button>
+              )}
+            </div>
           </div>
 
           {showLoading ? (
@@ -114,17 +133,27 @@ export default function RoomsPage() {
           ) : (
             <>
               {roomsToDisplay && roomsToDisplay.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {roomsToDisplay.map((roomType) => (
-                    <RoomTypeCard
-                      key={roomType.id}
-                      roomType={roomType}
-                      onSelect={handleSelectRoom}
-                      isSelectionComplete={isSelectionComplete}
-                      hasSearched={hasSearched}
-                    />
-                  ))}
-                </div>
+                <>
+                  {hasSearched && hasNoInventory && (
+                    <div className="mb-6 p-4 bg-amber-100 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900 rounded-lg">
+                      <p className="text-amber-900 dark:text-amber-100">
+                        <strong>Note:</strong> Room inventory is not fully configured. Showing available room types based on occupancy requirements. Please contact us for exact availability.
+                      </p>
+                    </div>
+                  )}
+                  <div className={viewMode === "list" ? "space-y-4" : viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"}>
+                    {roomsToDisplay.map((roomType) => (
+                      <RoomTypeCard
+                        key={roomType.id}
+                        roomType={roomType}
+                        onSelect={handleSelectRoom}
+                        isSelectionComplete={isSelectionComplete}
+                        hasSearched={hasSearched}
+                        viewMode={viewMode}
+                      />
+                    ))}
+                  </div>
+                </>
               ) : (
                 /* No Rooms Found */
                 <div className="py-16 border rounded-lg bg-muted/40">
@@ -135,7 +164,9 @@ export default function RoomsPage() {
                     <h3 className="text-xl font-semibold">No Rooms Found</h3>
                     <p className="text-muted-foreground">
                       {hasSearched
-                        ? "Sorry, no rooms are available for your selected dates. Please try different dates."
+                        ? hasNoInventory 
+                          ? "No room types match your occupancy requirements. Try searching for fewer rooms or guests."
+                          : "Sorry, no rooms are available for your selected dates. Please try different dates."
                         : "There are no room types configured for this property."}
                     </p>
                   </div>

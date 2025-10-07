@@ -42,6 +42,17 @@ interface BookingWidgetProps {
 }
 
 export function BookingWidget({ onSearch }: BookingWidgetProps) {
+  const [isMobile, setIsMobile] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const form = useForm<BookingSearchFormValues>({
     resolver: zodResolver(searchSchema),
     defaultValues: {
@@ -54,12 +65,13 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
   const { guests, children, rooms } = form.watch();
 
   return (
-    <Card className="w-full max-w-4xl mx-auto shadow-lg bg-card border-border/50">
-      <CardContent className="p-4">
+    <Card className="w-full max-w-5xl mx-auto shadow-xl bg-gradient-to-br from-card via-card to-card/90 backdrop-blur-md border-border/20 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+      <CardContent className="relative p-8">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSearch)}
-            className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-[2fr_1.5fr_auto] gap-4 items-start"
+            className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-[2fr_1.5fr_auto] gap-6 items-start"
           >
             <FormField
               control={form.control}
@@ -72,27 +84,53 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-full h-14 justify-start text-left font-normal text-base",
+                            "w-full h-14 justify-start text-left font-normal text-base border-2 hover:border-primary/50 transition-all duration-300 bg-background/50",
                             !field.value?.from && "text-muted-foreground"
                           )}
                         >
-                          <CalendarIcon className="mr-2 h-5 w-5" />
-                          {field.value?.from ? (
-                            field.value.to ? (
-                              <>
-                                {format(field.value.from, "LLL dd, y")} -{" "}
-                                {format(field.value.to, "LLL dd, y")}
-                              </>
-                            ) : (
-                              format(field.value.from, "LLL dd, y")
-                            )
-                          ) : (
-                            <span>Check-in — Check-out</span>
-                          )}
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center">
+                              <CalendarIcon className="mr-3 h-5 w-5 text-primary" />
+                              {field.value?.from ? (
+                                field.value.to ? (
+                                  <div className="flex flex-col items-start">
+                                    <span className="text-xs text-muted-foreground">Check-in → Check-out</span>
+                                    <span className="text-sm font-medium">
+                                      {format(field.value.from, "MMM dd")} - {format(field.value.to, "MMM dd, yyyy")}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col items-start">
+                                    <span className="text-xs text-muted-foreground">Check-in date</span>
+                                    <span className="text-sm font-medium">{format(field.value.from, "MMM dd, yyyy")}</span>
+                                  </div>
+                                )
+                              ) : (
+                                <span className="text-muted-foreground">Select dates</span>
+                              )}
+                            </div>
+                          </div>
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0 shadow-2xl border-2" align="start">
+                      <div className="p-4 pb-3 bg-gradient-to-r from-primary/10 via-transparent to-primary/10">
+                        <div className="flex justify-between items-center gap-8">
+                          <div className="flex-1">
+                            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Check-in</div>
+                            <div className="font-semibold text-base">
+                              {field.value?.from ? format(field.value.from, "EEE, MMM d") : "Select date"}
+                            </div>
+                          </div>
+                          <div className="h-8 w-px bg-border" />
+                          <div className="flex-1">
+                            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Check-out</div>
+                            <div className="font-semibold text-base">
+                              {field.value?.to ? format(field.value.to, "EEE, MMM d") : "Select date"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                       <Calendar
                         initialFocus
                         mode="range"
@@ -102,8 +140,41 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                           to: field.value?.to,
                         }}
                         onSelect={field.onChange}
-                        numberOfMonths={2}
+                        numberOfMonths={isMobile ? 1 : 2}
                         disabled={{ before: new Date() }}
+                        modifiers={{
+                          booked: [],
+                        }}
+                        modifiersStyles={{
+                          booked: {
+                            textDecoration: "line-through",
+                            opacity: 0.5,
+                          },
+                        }}
+                        classNames={{
+                          months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                          month: "space-y-4",
+                          caption: "flex justify-center pt-1 relative items-center",
+                          caption_label: "text-sm font-medium",
+                          nav: "space-x-1 flex items-center",
+                          nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                          nav_button_previous: "absolute left-1",
+                          nav_button_next: "absolute right-1",
+                          table: "w-full border-collapse space-y-1",
+                          head_row: "flex",
+                          head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+                          row: "flex w-full mt-2",
+                          cell: "text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+                          day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md",
+                          day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-md",
+                          day_today: "bg-accent text-accent-foreground font-bold rounded-md",
+                          day_outside: "text-muted-foreground opacity-50",
+                          day_disabled: "text-muted-foreground opacity-50",
+                          day_range_middle: "aria-selected:bg-primary/20 aria-selected:text-accent-foreground rounded-md",
+                          day_range_start: "aria-selected:bg-primary aria-selected:text-primary-foreground rounded-md",
+                          day_range_end: "aria-selected:bg-primary aria-selected:text-primary-foreground rounded-md",
+                          day_hidden: "invisible",
+                        }}
                       />
                     </PopoverContent>
                   </Popover>
@@ -116,57 +187,75 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
-                  className="w-full h-14 justify-start text-left font-normal text-base"
+                  className="w-full h-14 justify-start text-left font-normal text-base border-2 hover:border-primary/50 transition-all duration-300 bg-background/50"
                 >
-                  <Users className="mr-2 h-5 w-5" />
-                  <div className="truncate">
-                    <span>{rooms} room{rooms > 1 && 's'}, </span>
-                    <span>{guests} adult{guests > 1 && 's'}</span>
-                    {children > 0 && <span>, {children} children</span>}
+                  <div className="flex items-center w-full">
+                    <Users className="mr-3 h-5 w-5 text-primary" />
+                    <div className="flex flex-col items-start">
+                      <span className="text-xs text-muted-foreground">Guests & Rooms</span>
+                      <span className="text-sm font-medium">
+                        {rooms} room{rooms > 1 && 's'}, {guests + children} guest{(guests + children) > 1 && 's'}
+                      </span>
+                    </div>
                   </div>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-72">
-                <div className="grid gap-4">
+              <PopoverContent className="w-80 shadow-2xl border-2">
+                <div className="grid gap-5">
                   <div className="space-y-2">
-                    <h4 className="font-medium leading-none">Select Occupancy</h4>
+                    <h4 className="font-semibold text-base">Select Occupancy</h4>
                     <p className="text-sm text-muted-foreground">
-                      Choose rooms, adults, and children.
+                      Adjust rooms and guests for your stay
                     </p>
                   </div>
-                  <Separator />
-                  <div className="space-y-4">
+                  <Separator className="bg-border/50" />
+                  <div className="space-y-5">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Building className="mr-2 h-4 w-4" />
-                        <span className="font-medium">Rooms</span>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Building className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <span className="font-medium">Rooms</span>
+                          <p className="text-xs text-muted-foreground">Number of rooms</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("rooms", Math.max(1, rooms - 1))} type="button"><Minus className="h-4 w-4" /></Button>
-                        <span className="w-4 text-center">{rooms}</span>
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("rooms", rooms + 1)} type="button"><Plus className="h-4 w-4" /></Button>
+                      <div className="flex items-center gap-3">
+                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("rooms", Math.max(1, rooms - 1))} type="button"><Minus className="h-3 w-3" /></Button>
+                        <span className="w-8 text-center font-semibold">{rooms}</span>
+                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("rooms", rooms + 1)} type="button"><Plus className="h-3 w-3" /></Button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Users className="mr-2 h-4 w-4" />
-                        <span className="font-medium">Adults</span>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Users className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <span className="font-medium">Adults</span>
+                          <p className="text-xs text-muted-foreground">Ages 13 or above</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("guests", Math.max(1, guests - 1))} type="button"><Minus className="h-4 w-4" /></Button>
-                        <span className="w-4 text-center">{guests}</span>
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("guests", guests + 1)} type="button"><Plus className="h-4 w-4" /></Button>
+                      <div className="flex items-center gap-3">
+                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("guests", Math.max(1, guests - 1))} type="button"><Minus className="h-3 w-3" /></Button>
+                        <span className="w-8 text-center font-semibold">{guests}</span>
+                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("guests", guests + 1)} type="button"><Plus className="h-3 w-3" /></Button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Bed className="mr-2 h-4 w-4" />
-                        <span className="font-medium">Children</span>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Bed className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <span className="font-medium">Children</span>
+                          <p className="text-xs text-muted-foreground">Ages 0 to 12</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("children", Math.max(0, children - 1))} type="button"><Minus className="h-4 w-4" /></Button>
-                        <span className="w-4 text-center">{children}</span>
-                        <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => form.setValue("children", children + 1)} type="button"><Plus className="h-4 w-4" /></Button>
+                      <div className="flex items-center gap-3">
+                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("children", Math.max(0, children - 1))} type="button"><Minus className="h-3 w-3" /></Button>
+                        <span className="w-8 text-center font-semibold">{children}</span>
+                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("children", children + 1)} type="button"><Plus className="h-3 w-3" /></Button>
                       </div>
                     </div>
                   </div>
@@ -174,8 +263,17 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
               </PopoverContent>
             </Popover>
 
-            <Button type="submit" className="w-full h-14 text-lg">
-              Search
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-0"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span>Search Availability</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </div>
             </Button>
           </form>
         </Form>
