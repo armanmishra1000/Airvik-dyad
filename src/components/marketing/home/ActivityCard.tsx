@@ -15,6 +15,18 @@ interface ActivityCardProps {
   href: string;
 }
 
+/**
+ * Render an interactive activity card with a background image, title, description, and a VIEW link.
+ *
+ * The card expands to reveal the description and the VIEW button on hover (desktop) or when toggled via
+ * the action button (mobile/tablet).
+ *
+ * @param title - The card title displayed prominently
+ * @param description - The descriptive text revealed when the card is expanded
+ * @param imageUrl - Background image URL used to fill the card
+ * @param href - Destination URL used by the VIEW link
+ * @returns The JSX element representing the activity card
+ */
 export function ActivityCard({
   title,
   description,
@@ -87,7 +99,7 @@ export function ActivityCard({
                 size="icon"
                 variant="ghost"
                 onClick={handleToggleClick}
-                className="flex-shrink-0 rounded-full hover:bg-white/20 hover:text-white"
+                className="flex-shrink-0 rounded-full hover:bg-white/20 hover:text-white text-white"
                 aria-expanded={isExpanded}
                 aria-label={isExpanded ? "Collapse" : "Expand"}
               >

@@ -33,6 +33,13 @@ const activities = [
   },
 ];
 
+/**
+ * Render the welcome section with a hero image and text, followed by an animated grid of activity cards.
+ *
+ * The component includes entrance animations for the hero image, text blocks, header, and each activity card using Framer Motion.
+ *
+ * @returns The React element containing the welcome hero and the "Our Sacred Activities" animated grid.
+ */
 export function WelcomeSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -98,11 +105,11 @@ export function WelcomeSection() {
               className="order-2 md:order-1"
             >
               <Image
-                src="/rishikesh-temple.jpg"
+                src="/about-usImg.png"
                 alt="Sahajanand Wellness Ashram in Rishikesh"
                 width={600}
                 height={400}
-                className="rounded-2xl shadow-lg w-full h-auto object-cover"
+                className="h-96 rounded-2xl shadow-lg w-full object-cover"
               />
             </motion.div>
             {/* Text Column */}
@@ -113,22 +120,14 @@ export function WelcomeSection() {
               <div className="text-center md:text-left">
                 <div className="text-sm font-semibold uppercase tracking-widest text-primary mb-4">
                   <div className="flex items-center justify-center md:justify-start mb-2">
-                    Welcome Home{" "}
-                    <Image
-                      src="/welcom-1.png"
-                      alt="Sahajanand Wellness"
-                      width={32}
-                      height={32}
-                      quality={100}
-                      className="w-10 h-10 object-contain"
-                    />
+                    Welcome Home
                   </div>
                 </div>
                 <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight">
                   Sahajanand Wellness: A Sacred Space for the Welfare of All
                 </h2>
               </div>
-              <div className="mt-6 space-y-6 text-muted-foreground text-base md:text-lg leading-relaxed">
+              <div className="mt-6 space-y-6 text-center md:text-left text-muted-foreground text-base md:text-lg leading-relaxed">
                 <p>
                   Sahajanand Wellness is a true spiritual haven, lying on the
                   holy banks of Mother Ganga in the lap of the lush Himalayas.
@@ -200,4 +199,3 @@ export function WelcomeSection() {
     </>
   );
 }
-
