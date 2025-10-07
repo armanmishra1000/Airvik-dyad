@@ -65,18 +65,18 @@ export function Header() {
     };
   }, []);
 
-  const newLocal = "sticky top-0 left-0 right-0 z-[1001] transition-all duration-300 bg-muted/70";
+  const newLocal = "sticky top-0 left-0 right-0 z-[1001] transition-all duration-300 bg-white border-b border-border";
   return (
     <header
       className={cn(
         newLocal,
-        isScrolled ? "bg-background/90 backdrop-blur-sm shadow-md border-b" : ""
+        isScrolled ? "bg-white shadow-md border-b" : ""
       )}
     >
       {/* Top Bar */}
       <div
         className={cn(
-          "backdrop-blur-sm transition-all duration-300 ease-in-out bg-primary/70",
+          "backdrop-blur-sm transition-all duration-300 ease-in-out bg-primary-hover",
           isScrolled
             ? "max-h-0 py-0 opacity-0 border-transparent"
             : "max-h-12 py-2.5 opacity-100"
@@ -107,15 +107,10 @@ export function Header() {
       </div>
 
       {/* Main Header */}
-      <div
-        className={cn(
-          "container mx-auto flex items-center justify-between p-2 transition-colors duration-300",
-          isScrolled ? "text-foreground" : "text-white"
-        )}
-      >
+      <div className="container mx-auto flex items-center justify-between p-2 transition-colors duration-300 text-foreground">
         <Link href="/" className="flex items-center">
           <Image
-            src="/marketing/logo.png"
+            src="/logo.png"
             alt="SahajAnand Wellness Logo"
             width={360}
             height={160}
@@ -131,7 +126,7 @@ export function Header() {
                 <NavigationMenuItem key={link.label}>
                   {link.subLinks ? (
                     <>
-                      <NavigationMenuTrigger className="text-sm font-medium text-primary-hover hover:text-primary transition-colors bg-transparent hover:bg-accent/50 focus:bg-accent/50 data-[state=open]:bg-accent/50">
+                      <NavigationMenuTrigger className="text-sm font-medium text-primary-hover hover:text-primary transition-colors bg-transparent">
                         {link.label}
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
@@ -166,7 +161,7 @@ export function Header() {
         </nav>
         <Button
           asChild
-          className="hidden xl:block bg-primary hover:bg-primary-hover text-primary-foreground"
+          className="hidden bg-primary hover:bg-primary-hover text-primary-foreground flex justify-center text-center"
         >
           <Link href="/book/review">BOOK NOW</Link>
         </Button>
@@ -216,7 +211,7 @@ export function Header() {
                 )}
                 <Button
                   asChild
-                  className="bg-primary hover:bg-primary-hover text-primary-foreground mt-4"
+                  className="bg-primary hover:bg-primary-hover text-primary-foreground mt-4 flex justify-center text-center"
                 >
                   <Link href="/book/review">BOOK NOW</Link>
                 </Button>

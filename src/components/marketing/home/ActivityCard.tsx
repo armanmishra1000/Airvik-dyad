@@ -44,7 +44,7 @@ export function ActivityCard({
 
   return (
     <div
-      className="group relative h-[400px] overflow-hidden rounded-lg text-white"
+      className="group relative h-[400px] overflow-hidden rounded-2xl text-white"
       {...containerProps}
     >
       {/* Background Image */}

@@ -39,7 +39,7 @@ export function VideoSection() {
   };
 
   return (
-    <section className="bg-gradient-to-b from-background to-secondary/20 py-10 sm:py-12">
+    <section className="to-secondary/20 py-10 sm:py-12">
       <div className="container mx-auto px-4">
         <motion.div
           className="text-center mb-16"
@@ -53,7 +53,7 @@ export function VideoSection() {
               Visual Journey
             </h3>
             <Image
-              src="/om.png"
+              src="/swami-img-removebg-preview.png"
               alt="Meditation symbol"
               width={40}
               height={40}
@@ -76,7 +76,7 @@ export function VideoSection() {
             <motion.div
               key={video.id}
               variants={itemVariants}
-              className="relative w-full overflow-hidden rounded-lg shadow-lg pt-[56.25%]"
+              className="relative w-full overflow-hidden rounded-2xl shadow-lg pt-[56.25%]"
             >
               <iframe
                 src={`https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1&loop=1&playlist=${video.id}&controls=0&showinfo=0&rel=0`}
