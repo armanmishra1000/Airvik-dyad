@@ -50,6 +50,7 @@ export function AboutHeroSection() {
     },
   ];
 
+  const newLocal = "absolute inset-0 bg-gradient-to-br from-primary/70 via-primary/40 to-transparent";
   return (
     <section
       ref={sectionRef}
@@ -65,7 +66,7 @@ export function AboutHeroSection() {
           quality={100}
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-primary/60 to-transparent" />
+        <div className={newLocal} />
       </div>
 
       {/* Content Container */}
@@ -122,7 +123,7 @@ export function AboutHeroSection() {
                 size="lg"
                 className="bg-white text-primary hover:bg-white/90 shadow-md"
               >
-                <Link href="#team">Meet Our Guides</Link>
+                <Link href="/sunil-bhagat">Meet Our Guides</Link>
               </Button>
             </div>
 
