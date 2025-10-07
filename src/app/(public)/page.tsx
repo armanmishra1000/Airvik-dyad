@@ -70,7 +70,7 @@ export default function HomePage() {
   return (
     <div className="bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative w-full h-[50vh] min-h-[450px]">
+      <section className="relative w-full h-[70vh] min-h-[500px]">
         <Image
           src="/home-img.png"
           alt="Rishikesh temple by the Ganges"
@@ -80,9 +80,9 @@ export default function HomePage() {
           priority
         />
         <div className="absolute inset-0 bg-black/40" />
-        <div className="relative z-10 flex flex-col items-center justify-start h-full text-center text-white">
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white">
           <motion.div
-            className="max-w-4xl"
+            className="max-w-4xl pb-20"
             initial="hidden"
             animate="visible"
             variants={containerVariants}
