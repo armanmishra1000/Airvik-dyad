@@ -42,7 +42,6 @@ const navLinks = [
     ],
   },
   { href: "/book/review", label: "Booking" },
-  { href: "/login", label: "Admin Login" },
 ];
 
 const socialLinks = [
@@ -66,28 +65,29 @@ export function Header() {
     };
   }, []);
 
+  const newLocal = "sticky top-0 left-0 right-0 z-[1001] transition-all duration-300 bg-muted/70";
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-[1001] transition-all duration-300 bg-muted/50",
+        newLocal,
         isScrolled ? "bg-background/90 backdrop-blur-sm shadow-md border-b" : ""
       )}
     >
       {/* Top Bar */}
       <div
         className={cn(
-          "bg-primary-hover backdrop-blur-sm transition-all duration-300 ease-in-out border-b",
+          "backdrop-blur-sm transition-all duration-300 ease-in-out bg-primary/70",
           isScrolled
             ? "max-h-0 py-0 opacity-0 border-transparent"
-            : "max-h-12 py-2 opacity-100"
+            : "max-h-12 py-2.5 opacity-100"
         )}
         style={{ overflow: "hidden" }}
       >
         <div className="container mx-auto flex h-full items-center justify-between px-4">
-          <p className="hidden text-sm font-medium text-primary-foreground/80 md:block">
+          <p className="hidden text-sm font-medium text-white/90 md:block">
             Welcome to Sahajanand Ashram (Estd: 1987)
           </p>
-          <p className="text-sm font-medium text-primary-foreground/80 md:hidden">
+          <p className="sm:text-sm text-xs font-medium text-white/90 md:hidden">
             Welcome to Sahajanand Ashram
           </p>
           <div className="flex items-center space-x-4">
@@ -97,9 +97,9 @@ export function Header() {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary-foreground/60 hover:text-primary-foreground transition-colors"
+                className="text-white/90 transition-colors"
               >
-                <link.icon className="h-4 w-4" />
+                <link.icon className="size-5" />
               </a>
             ))}
           </div>
@@ -121,7 +121,7 @@ export function Header() {
             height={160}
             quality={100}
             priority
-            className="h-12 w-auto xl:h-24"
+            className="h-12 w-auto xl:h-20"
           />
         </Link>
         <nav className="hidden xl:flex space-x-1 self-stretch">
@@ -173,13 +173,14 @@ export function Header() {
         <div className="xl:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              {/* menu button */}
+              <Button variant="ghost" size="icon" className="text-primary-hover">
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
             <SheetContent
               side="right"
-              className="bg-background text-foreground z-[1002]"
+              className="bg-background text-foreground z-[1002] w-full max-w-none border-none"
             >
               <nav className="flex flex-col space-y-2 mt-8">
                 {navLinks.map((link) =>
@@ -238,7 +239,7 @@ const ListItem = React.forwardRef<
         <Link
           ref={ref}
           className={cn(
-            "block select-none rounded-md px-4 py-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            "block select-none  rounded-md px-4 py-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className
           )}
           {...props}
@@ -252,3 +253,5 @@ const ListItem = React.forwardRef<
   );
 });
 ListItem.displayName = "ListItem";
+
+

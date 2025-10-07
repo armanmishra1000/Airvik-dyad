@@ -39,7 +39,7 @@ export function TestimonialSection() {
   );
 
   return (
-    <section className="bg-background sm:pt-28 pb-20">
+    <section className="bg-background py-10 sm:py-12">
       <div className="container mx-auto px-4">
         <motion.div
           className="text-center mb-16"

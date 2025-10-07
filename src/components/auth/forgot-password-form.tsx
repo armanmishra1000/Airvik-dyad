@@ -16,6 +16,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -54,55 +61,57 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2 text-center">
-        <h1 className="font-serif text-3xl text-foreground">Forgot password</h1>
-        <p className="text-sm text-muted-foreground">
-          Enter the email connected to your account and we’ll send you a link to
-          create a new password.
-        </p>
-      </div>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-6"
-        >
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder="hotelowner@gmail.com"
-                    {...field}
-                    type="email"
-                    autoComplete="email"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button
-            type="submit"
-            className="h-12 w-full"
-            disabled={isLoading}
-            aria-busy={isLoading}
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                Sending instructions
-              </span>
-            ) : (
-              "Send reset link"
-            )}
-          </Button>
-        </form>
-      </Form>
-      <p className="text-center text-sm text-muted-foreground">
+    <div className="mx-auto flex w-full max-w-sm min-h-screen flex-col justify-center px-4 py-16 sm:max-w-md">
+      <Card className="w-full shadow-xl">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-serif text-foreground">
+            Forgot password
+          </CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
+            Enter the email linked to your account and we&apos;ll send a reset link.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="hotelowner@gmail.com"
+                        {...field}
+                        type="email"
+                        autoComplete="email"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                className="h-11 w-full"
+                disabled={isLoading}
+                aria-busy={isLoading}
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    Sending instructions
+                  </span>
+                ) : (
+                  "Send reset link"
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         Remembered your password?{" "}
         <Link
           href="/login"

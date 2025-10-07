@@ -1,49 +1,50 @@
 "use client";
 
-import React from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { motion, type Variants } from "framer-motion";
 import { FeatureCard } from "@/components/marketing/home/FeatureCard";
 import { WelcomeSection } from "@/components/marketing/home/WelcomeSection";
 import { VideoSection } from "@/components/marketing/home/VideoSection";
 import { StaySection } from "@/components/marketing/home/StaySection";
 import { TestimonialSection } from "@/components/marketing/home/TestimonialSection";
 import { GallerySection } from "@/components/marketing/home/GallerySection";
-import { OurRoomsSection } from "@/components/marketing/home/OurRoomsSection";
 import { Marquee } from "@/components/marketing/layout/Marquee";
-import { Calendar } from "lucide-react";
 
-const features = [
+type Feature = {
+  title: string;
+  description: string;
+  imageUrl: string;
+  highlighted: boolean;
+  href?: string;
+};
+
+const features: Feature[] = [
   {
     title: "Annakshetra",
     description:
-      "Experience divine community kitchen serving free meals to all visitors",
+      "Serving humanity through daily, wholesome meals for all visitors and the local community.",
     imageUrl: "/annakshetra.png",
     highlighted: false,
-    href: "/about-us",
   },
   {
     title: "Ashram Stay",
     description:
-      "Peaceful accommodation amidst spiritual surroundings in Rishikesh",
-    imageUrl: "/ashram-stay.png",
+      "Experience tranquility and spiritual rejuvenation by booking a stay in our serene ashram rooms.",
+    imageUrl: "/sahaj-home.png",
     highlighted: true,
-    href: "/book",
+    href: "/booking",
   },
   {
     title: "Yoga & Meditation",
     description:
-      "Daily yoga sessions and meditation programs for inner peace",
-    imageUrl: "/yoga-meditation.jpg",
+      "Harmonize your mind, body, and soul with our daily yoga and guided meditation sessions.",
+    imageUrl: "/yoga.png",
     highlighted: false,
-    href: "/about-us",
   },
 ];
 
 export default function HomePage() {
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -53,115 +54,115 @@ export default function HomePage() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
       transition: {
         duration: 0.6,
-        ease: "easeOut" as const,
+        ease: [0.16, 1, 0.3, 1],
       },
     },
   };
 
+  const newLocal = "relative mb-10 md:mb-20";
   return (
-    <div className="min-h-screen">
+    <div className="bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative w-full h-[70vh] min-h-[500px]">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/ganga-rishikesh.jpg"
-            alt="Sahajanand Ashram Rishikesh"
-            fill
-            className="object-cover"
-            quality={100}
-            priority
-          />
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
-
+      <section className="relative w-full h-[70vh] min-h-[600px]">
+        <Image
+          src="/hero-background.png"
+          alt="Rishikesh temple by the Ganges"
+          fill
+          style={{ objectFit: "cover" }}
+          quality={100}
+          priority
+        />
+        <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
           <motion.div
-            variants={containerVariants}
+            className="max-w-4xl"
             initial="hidden"
             animate="visible"
+            variants={containerVariants}
           >
-            <motion.div variants={itemVariants} className="flex justify-center">
+            <motion.div
+              variants={itemVariants}
+              className="flex justify-center mb-2"
+            >
               <Image
-                src="/swaminarayan-logo-1.png"
+                src="/Swami-narayan.png"
                 alt="Sahajanand Wellness"
-                width={96}
-                height={96}
+                width={128}
+                height={128}
                 quality={100}
-                className="w-24 h-24 sm:w-32 sm:h-32 mt-4 sm:mt-10 object-contain"
+                className="w-24 h-24 sm:size-40 mt-4 sm:mt-10 object-contain"
               />
             </motion.div>
-            <motion.div
+            <motion.p
               variants={itemVariants}
               className="text-sm sm:text-md font-semibold tracking-widest text-primary-foreground/80 mb-2 sm:mb-4 uppercase"
             >
               YOUR SANCTUARY AWAITS
-            </motion.div>
+            </motion.p>
             <motion.h1
               variants={itemVariants}
               className="text-4xl sm:text-5xl md:text-7xl font-bold font-serif leading-tight"
             >
               Sahajanand Wellness
             </motion.h1>
-            <motion.div
+            <motion.p
               variants={itemVariants}
               className="mt-4 text-base sm:text-lg font-medium tracking-wider text-primary-foreground/90 uppercase"
             >
               WELLNESS - THE BEST GIFT TO YOURSELF
-            </motion.div>
-            <motion.div
-              variants={itemVariants}
-              className="mt-8 flex flex-col sm:flex-row gap-4 justify-center"
-            >
-              <Button asChild size="lg" className="bg-primary hover:bg-primary-hover">
-                <Link href="/book/review">
-                  <Calendar className="mr-2 h-5 w-5" />
-                  Book Your Stay
-                </Link>
-              </Button>
-            </motion.div>
+            </motion.p>
           </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="relative lg:-mt-24 pb-20">
-        <div className="container mx-auto px-4 pt-20 lg:pt-12">
+      <section className={newLocal}>
+        <div className="container mx-auto px-4 -mt-20">
           <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            variants={containerVariants}
           >
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.2 }}
-                viewport={{ once: true }}
-              >
-                <FeatureCard {...feature} />
+            {features.map((feature) => (
+              <motion.div key={feature.title} variants={itemVariants}>
+                <FeatureCard
+                  title={feature.title}
+                  description={feature.description}
+                  imageUrl={feature.imageUrl}
+                  highlighted={feature.highlighted}
+                  href={feature.href}
+                  className="h-full"
+                />
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
+      {/* Welcome Section */}
+
       <WelcomeSection />
-      <VideoSection />
-      <StaySection />
-      <OurRoomsSection />
-      <TestimonialSection />
+
+      {/* Gallery Section */}
       <GallerySection />
 
+      {/* Video Section */}
+      <VideoSection />
+
+      {/* Stay Section */}
+      <StaySection />
+
+      {/* Testimonial Section */}
+      <TestimonialSection />
       <Marquee />
     </div>
   );

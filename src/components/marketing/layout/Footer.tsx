@@ -4,13 +4,8 @@ import Link from "next/link";
 import { Mail, Phone, MapPin, Facebook, Twitter, Youtube } from "lucide-react";
 
 const quickLinks = [
-  { href: "/about-us", label: "About Ashram" },
-  { href: "/sunil-bhagat", label: "About Sunil Bhagat" },
-  { href: "/about-rishikesh", label: "About Rishikesh" },
-  { href: "/book", label: "Rooms" },
-  { href: "/book/review", label: "Booking" },
-  { href: "/gallery", label: "Gallery" },
-  { href: "/login", label: "Admin Login" },
+  { href: "/about-us", label: "About Us" },
+  { href: "/booking", label: "Rooms" },
 ];
 
 const socialLinks = [
