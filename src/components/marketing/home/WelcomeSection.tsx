@@ -33,6 +33,13 @@ const activities = [
   },
 ];
 
+/**
+ * Render the welcome section with a hero image and text, followed by an animated grid of activity cards.
+ *
+ * The component includes entrance animations for the hero image, text blocks, header, and each activity card using Framer Motion.
+ *
+ * @returns The React element containing the welcome hero and the "Our Sacred Activities" animated grid.
+ */
 export function WelcomeSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -200,4 +207,3 @@ export function WelcomeSection() {
     </>
   );
 }
-
