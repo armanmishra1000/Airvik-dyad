@@ -70,9 +70,9 @@ export default function HomePage() {
   return (
     <div className="bg-background text-foreground">
       {/* Hero Section */}
-      <section className="relative w-full h-[70vh] min-h-[600px]">
+      <section className="relative w-full h-[70vh] min-h-[500px]">
         <Image
-          src="/hero-background.png"
+          src="/home-img.png"
           alt="Rishikesh temple by the Ganges"
           fill
           style={{ objectFit: "cover" }}
@@ -80,9 +80,9 @@ export default function HomePage() {
           priority
         />
         <div className="absolute inset-0 bg-black/40" />
-        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white px-4">
+        <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white">
           <motion.div
-            className="max-w-4xl"
+            className="max-w-4xl pb-20"
             initial="hidden"
             animate="visible"
             variants={containerVariants}
@@ -97,7 +97,7 @@ export default function HomePage() {
                 width={128}
                 height={128}
                 quality={100}
-                className="w-24 h-24 sm:size-40 mt-4 sm:mt-10 object-contain"
+                className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
               />
             </motion.div>
             <motion.p
@@ -126,7 +126,7 @@ export default function HomePage() {
       <section className={newLocal}>
         <div className="container mx-auto px-4 -mt-20">
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
@@ -140,7 +140,7 @@ export default function HomePage() {
                   imageUrl={feature.imageUrl}
                   highlighted={feature.highlighted}
                   href={feature.href}
-                  className="h-full"
+                  className={`h-full ${feature.highlighted ? "" : "md:h-[360px]"}`}
                 />
               </motion.div>
             ))}

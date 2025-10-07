@@ -53,7 +53,7 @@ export function GallerySection() {
   };
 
   return (
-    <section className="bg-background py-10 sm:py-12">
+    <section className="bg-background py-20 sm:py-28">
       <div className="container mx-auto px-4">
         <motion.div
           className="text-center mb-16"
@@ -91,7 +91,7 @@ export function GallerySection() {
               key={index}
               variants={itemVariants}
               className={cn(
-                "relative overflow-hidden rounded-lg shadow-lg group",
+                "relative overflow-hidden rounded-2xl shadow-lg group",
                 image.className
               )}
             >

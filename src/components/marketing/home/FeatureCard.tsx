@@ -27,7 +27,7 @@ export function FeatureCard({
   return (
     <Card
       className={cn(
-        "bg-card overflow-hidden relative p-0 flex flex-col",
+        "bg-card overflow-hidden relative p-0 flex flex-col bg-white p-2",
         highlighted && "ring-2 ring-primary shadow-primary/20",
         className
       )}
@@ -38,7 +38,8 @@ export function FeatureCard({
           alt={title}
           fill
           style={{ objectFit: "cover" }}
-          className="rounded-lg"
+          className="rounded-xl"
+          
         />
       </div>
       <CardHeader>
@@ -46,7 +47,12 @@ export function FeatureCard({
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col flex-grow">
+      <CardContent
+        className={cn(
+          "flex flex-col flex-grow",
+          !highlighted && "justify-center gap-4"
+        )}
+      >
         <p className="text-muted-foreground">{description}</p>
         {highlighted && (
           <div className="mt-auto pt-4">
