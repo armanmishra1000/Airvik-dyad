@@ -3,6 +3,11 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 
+/**
+ * Renders the "Our Sacred Story" section with an animated header, responsive two-column layout, image with caption, descriptive text, and a gallery CTA.
+ *
+ * @returns A JSX element containing the fully assembled section markup and animations.
+ */
 export function AboutStorySection() {
   return (
     <section className="py-12 md:py-20">

@@ -9,6 +9,15 @@ interface ActivityInfoCardProps {
   className?: string;
 }
 
+/**
+ * Render a styled card that displays an image, a title, and a description for an activity.
+ *
+ * @param title - The card's title and the image alt text
+ * @param description - The descriptive text shown in the card body
+ * @param imageUrl - Source URL for the image displayed at the top of the card
+ * @param className - Optional additional CSS classes applied to the root Card element
+ * @returns The card JSX element containing the image, header, and content
+ */
 export function ActivityInfoCard({
   title,
   description,
