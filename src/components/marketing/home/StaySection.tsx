@@ -57,6 +57,13 @@ const accommodations = [
   },
 ];
 
+/**
+ * Render the "Your Spiritual Sanctuary" section with an animated header, a looping horizontal carousel of accommodation cards, and a reservation call-to-action.
+ *
+ * The component animates its header and carousel into view, maps the module-level `accommodations` array into CarouselItem elements which render AccommodationCard entries, provides previous/next carousel controls, and exposes a button linking to the booking review page.
+ *
+ * @returns The JSX element representing the complete Stay section UI
+ */
 export function StaySection() {
   return (
     <section className="bg-background py-10 sm:py-12">
