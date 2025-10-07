@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
@@ -53,26 +52,64 @@ const socialLinks = [
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  const updateHeaderHeight = useCallback(() => {
+    if (!headerRef.current) {
+      return;
+    }
+
+    setHeaderHeight(headerRef.current.getBoundingClientRect().height);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
+      updateHeaderHeight();
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [updateHeaderHeight]);
 
-  const newLocal = "sticky top-0 left-0 right-0 z-[1001] transition-all duration-300 bg-white border-b border-border";
+  useEffect(() => {
+    if (!headerRef.current) {
+      return;
+    }
+
+    const node = headerRef.current;
+
+    updateHeaderHeight();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      updateHeaderHeight();
+    });
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [updateHeaderHeight]);
+
+  const HEADER_BASE_CLASSES =
+    "fixed top-0 left-0 right-0 z-[1001] transition-all duration-300 bg-white border-b border-border";
   return (
-    <header
-      className={cn(
-        newLocal,
-        isScrolled ? "bg-white shadow-md border-b" : ""
-      )}
-    >
+    <>
+      <header
+        ref={headerRef}
+        className={cn(
+          HEADER_BASE_CLASSES,
+          isScrolled ? "bg-white shadow-md border-b" : ""
+        )}
+      >
       {/* Top Bar */}
       <div
         className={cn(
@@ -126,11 +163,11 @@ export function Header() {
                 <NavigationMenuItem key={link.label}>
                   {link.subLinks ? (
                     <>
-                      <NavigationMenuTrigger className="text-sm font-medium text-primary-hover hover:text-primary transition-colors bg-transparent">
+                      <NavigationMenuTrigger className="text-lg font-medium transition-colors bg-transparent">
                         {link.label}
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
-                        <ul className="grid w-[240px] gap-1 p-2">
+                        <ul className="grid w-[240px] gap-1 p-2.5">
                           {link.subLinks.map((subLink) => (
                             <ListItem
                               key={subLink.label}
@@ -145,10 +182,7 @@ export function Header() {
                     <NavigationMenuLink asChild>
                       <Link
                         href={link.href || "#"}
-                        className={cn(
-                          navigationMenuTriggerStyle(),
-                          "text-sm font-medium hover:text-primary transition-colors bg-transparent hover:bg-accent/50 focus:bg-accent/50"
-                        )}
+                        className="inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover transition-colors bg-transparent hover:bg-primary/15 hover:text-primary focus:outline-none"
                       >
                         {link.label}
                       </Link>
@@ -220,7 +254,13 @@ export function Header() {
           </Sheet>
         </div>
       </div>
-    </header>
+      </header>
+      <div
+        aria-hidden="true"
+        className="w-full"
+        style={{ height: headerHeight }}
+      />
+    </>
   );
 }
 
@@ -234,7 +274,7 @@ const ListItem = React.forwardRef<
         <Link
           ref={ref}
           className={cn(
-            "block select-none  rounded-md px-4 py-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            "block select-none rounded-2xl px-4 py-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className
           )}
           {...props}
