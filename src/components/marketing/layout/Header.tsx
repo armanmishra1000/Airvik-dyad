@@ -50,6 +50,13 @@ const socialLinks = [
   { href: "#", icon: Youtube },
 ];
 
+/**
+ * Render the site's responsive header with navigation, social links, and a spacer that preserves layout beneath the fixed header.
+ *
+ * The header tracks scroll position to toggle compact styling and observes its own size to update an invisible spacer element whose height matches the header, preventing layout shift when the header is fixed.
+ *
+ * @returns The header JSX element including the top bar, main navigation (desktop and mobile variants), booking CTA, and an invisible spacer whose height equals the current header height.
+ */
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const headerRef = useRef<HTMLDivElement | null>(null);
@@ -288,5 +295,4 @@ const ListItem = React.forwardRef<
   );
 });
 ListItem.displayName = "ListItem";
-
 
