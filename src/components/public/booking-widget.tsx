@@ -76,7 +76,14 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
             <FormField
               control={form.control}
               name="dateRange"
-              render={({ field }) => (
+              render={({ field }) => {
+                const handleDateSelect = (range: any) => {
+                  if (range) {
+                    field.onChange(range);
+                  }
+                };
+                
+                return (
                 <FormItem>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -134,14 +141,11 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                       <Calendar
                         initialFocus
                         mode="range"
-                        defaultMonth={field.value?.from}
-                        selected={{
-                          from: field.value?.from,
-                          to: field.value?.to,
-                        }}
-                        onSelect={field.onChange}
+                        defaultMonth={field.value?.from || new Date()}
+                        selected={field.value}
+                        onSelect={handleDateSelect}
                         numberOfMonths={isMobile ? 1 : 2}
-                        disabled={{ before: new Date() }}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                         modifiers={{
                           booked: [],
                         }}
@@ -180,7 +184,8 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                   </Popover>
                   <FormMessage className="pl-2" />
                 </FormItem>
-              )}
+                );
+              }}
             />
             
             <Popover>
