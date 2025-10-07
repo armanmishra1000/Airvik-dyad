@@ -31,6 +31,14 @@ const featuredRoomMatchers = [
   },
 ];
 
+/**
+ * Renders a fixed, vertical "Booking" button that opens a right-side popover with featured room links.
+ *
+ * The popover lists predefined featured rooms; each list item links to a specific room page when a matching
+ * room type exists in the data context, or falls back to the generic booking page. A footer button links to the full rooms listing.
+ *
+ * @returns A JSX element containing the booking trigger button and its popover content with room links.
+ */
 export function StickyBookingButton() {
   const { roomTypes } = useDataContext();
 

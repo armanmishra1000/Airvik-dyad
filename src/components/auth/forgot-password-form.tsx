@@ -31,6 +31,13 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
 });
 
+/**
+ * Render a forgot-password form that sends a password reset link to the provided email.
+ *
+ * Displays validation, a loading state, success or error toasts, and resets the form when a reset link is successfully requested.
+ *
+ * @returns The rendered JSX element for the forgot-password form.
+ */
 export function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = React.useState(false);
 

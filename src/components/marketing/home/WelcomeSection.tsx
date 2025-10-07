@@ -33,6 +33,14 @@ const activities = [
   },
 ];
 
+/**
+ * Renders the welcome hero and an animated "Our Sacred Activities" grid for the Sahajanand Wellness landing section.
+ *
+ * The component displays a two-column introductory section (image and descriptive text) followed by a responsive,
+ * animated grid of activity cards.
+ *
+ * @returns The JSX element containing the welcome hero and activities sections.
+ */
 export function WelcomeSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -200,4 +208,3 @@ export function WelcomeSection() {
     </>
   );
 }
-

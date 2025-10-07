@@ -29,6 +29,13 @@ const galleryImages = [
   },
 ];
 
+/**
+ * Render a gallery section titled "Glimpses of Serenity" that displays a responsive grid of images with staggered entrance animations.
+ *
+ * The section includes a centered heading, a subtitle, a decorative emblem image, and a responsive image grid whose items animate into view with a staggered scale-and-fade effect.
+ *
+ * @returns A React element containing the gallery section with an animated, responsive image grid.
+ */
 export function GallerySection() {
   const containerVariants = {
     hidden: { opacity: 0 },

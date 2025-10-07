@@ -14,6 +14,15 @@ const socialLinks = [
   { href: "#", icon: Youtube },
 ];
 
+/**
+ * Site footer component rendering brand, contact information, quick navigation, and social links.
+ *
+ * Renders a responsive footer section with a logo and subtitle, contact details (email, phone, address),
+ * a list of quick links, and social media icons. External links open in a new tab with appropriate
+ * security attributes.
+ *
+ * @returns The footer JSX element containing the logo, contact details, quick links, and social icons.
+ */
 export function Footer() {
   return (
     <footer className="bg-muted/50 border-t">
