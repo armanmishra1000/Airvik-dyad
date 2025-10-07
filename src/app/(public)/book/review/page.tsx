@@ -45,7 +45,7 @@ import {
 import type { RoomType } from "@/data/types";
 
 const paymentSchema = z.object({
-  paymentMethod: z.enum(["card", "property"]).default("card"),
+  paymentMethod: z.enum(["card", "property"]),
   cardName: z.string().optional(),
   cardNumber: z.string().optional(),
   expiryDate: z.string().optional(),
@@ -54,7 +54,7 @@ const paymentSchema = z.object({
   lastName: z.string().min(1, "Last name is required."),
   email: z.string().email("Please enter a valid email."),
   country: z.string({ required_error: "Country is required." }),
-  phoneCountryCode: z.string().default("+91"),
+  phoneCountryCode: z.string(),
   phone: z.string().min(10, "Phone number must be at least 10 digits."),
 }).refine(
   (data) => {
@@ -197,8 +197,8 @@ function BookingReviewContent() {
     );
   }
 
-  const fromDate = parse(bookingDetails.from, "yyyy-MM-dd", new Date());
-  const toDate = parse(bookingDetails.to, "yyyy-MM-dd", new Date());
+  const fromDate = parse(bookingDetails.from!, "yyyy-MM-dd", new Date());
+  const toDate = parse(bookingDetails.to!, "yyyy-MM-dd", new Date());
   const nights = differenceInDays(toDate, fromDate);
   const totalCost = selectedRoomTypes.length * nights * (ratePlan?.price || 0);
   const firstRoomType = selectedRoomTypes[0];
