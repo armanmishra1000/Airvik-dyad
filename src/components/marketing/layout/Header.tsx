@@ -37,10 +37,11 @@ const navLinks = [
       { href: "/about-us", label: "About Ashram" },
       { href: "/sunil-bhagat", label: "About Sunil Bhagat" },
       { href: "/about-rishikesh", label: "About Rishikesh" },
-      { href: "/gallery", label: "Gallery" },
     ],
   },
-  { href: "/book/review", label: "Booking" },
+  { href: "/shop", label: "Shop" },
+  { href: "/amenities", label: "Amenities" },
+  { href: "/ashrams-glimpse", label: "Ashram’s Glimpse" },
 ];
 
 const socialLinks = [
@@ -57,6 +58,11 @@ const socialLinks = [
  * is scrolled more than 50 pixels; it also updates header styling (shadow/border) based on that state.
  *
  * @returns A React element containing the complete header UI.
+ * Render the site's responsive header with navigation, social links, and a spacer that preserves layout beneath the fixed header.
+ *
+ * The header tracks scroll position to toggle compact styling and observes its own size to update an invisible spacer element whose height matches the header, preventing layout shift when the header is fixed.
+ *
+ * @returns The header JSX element including the top bar, main navigation (desktop and mobile variants), booking CTA, and an invisible spacer whose height equals the current header height.
  */
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -130,10 +136,10 @@ export function Header() {
       >
         <div className="container mx-auto flex h-full items-center justify-between px-4">
           <p className="hidden text-sm font-medium text-white/90 md:block">
-            Welcome to Sahajanand Ashram (Estd: 1987)
+            Swaminarayan Ashram (Estd: 1987)
           </p>
           <p className="sm:text-sm text-xs font-medium text-white/90 md:hidden">
-            Welcome to Sahajanand Ashram
+            Swaminarayan Ashram
           </p>
           <div className="flex items-center space-x-4">
             {socialLinks.map((link, index) => (
@@ -205,7 +211,7 @@ export function Header() {
           asChild
           className="hidden bg-primary hover:bg-primary-hover text-primary-foreground xl:flex justify-center text-center"
         >
-          <Link href="/book/review">BOOK NOW</Link>
+          <Link href="/book">BOOK NOW</Link>
         </Button>
         <div className="xl:hidden">
           <Sheet>
@@ -259,7 +265,7 @@ export function Header() {
                   asChild
                   className="bg-primary hover:bg-primary-hover text-primary-foreground mt-8 flex w-full justify-center text-center"
                 >
-                  <Link href="/book/review">BOOK NOW</Link>
+                  <Link href="/book">BOOK NOW</Link>
                 </Button>
               </SheetClose>
             </SheetContent>
