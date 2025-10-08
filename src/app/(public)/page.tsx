@@ -6,6 +6,7 @@ import { FeatureCard } from "@/components/marketing/home/FeatureCard";
 import { WelcomeSection } from "@/components/marketing/home/WelcomeSection";
 import { VideoSection } from "@/components/marketing/home/VideoSection";
 import { StaySection } from "@/components/marketing/home/StaySection";
+import { RoomsShowcaseSection } from "@/components/marketing/home/RoomsShowcaseSection";
 import { TestimonialSection } from "@/components/marketing/home/TestimonialSection";
 import { GallerySection } from "@/components/marketing/home/GallerySection";
 import { Marquee } from "@/components/marketing/layout/Marquee";
@@ -167,8 +168,8 @@ export default function HomePage() {
       {/* Video Section */}
       <VideoSection />
 
-      {/* Stay Section */}
-      <StaySection />
+      
+      <RoomsShowcaseSection />
 
       {/* Testimonial Section */}
       <TestimonialSection />
