@@ -6,12 +6,12 @@ import { motion } from "framer-motion";
 
 const videos = [
   {
-    id: "KU45jWBn57Y",
-    title: "Divine Ganga Aarti",
+    id: "_Sj-tf26TcY",
+    title: "Ganga Aarti at Triveni Ghat (Night)",
   },
   {
     id: "V2CrSWlqkgA",
-    title: "Enhancing Serenity & Charity Work",
+    title: "Ashram Visual Tour.",
   },
 ];
 
