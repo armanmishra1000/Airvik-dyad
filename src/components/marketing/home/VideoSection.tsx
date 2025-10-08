@@ -6,12 +6,12 @@ import { motion } from "framer-motion";
 
 const videos = [
   {
-    id: "KU45jWBn57Y",
-    title: "Divine Ganga Aarti",
+    id: "mo71k6k5E-k&t=86s",
+    title: "Divine Ganga Aarti – Rishikesh Dham",
   },
   {
     id: "V2CrSWlqkgA",
-    title: "Enhancing Serenity & Charity Work",
+    title: "Ashram Visual Tour",
   },
 ];
 
@@ -56,7 +56,7 @@ export function VideoSection() {
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
           <div className="flex items-center justify-center mb-4">
-            <h3 className="text-4xl md:text-5xl font-bold font-serif text-foreground mr-4">
+            <h3 className="text-4xl md:text-5xl font-bold text-foreground mr-4">
               Visual Journey
             </h3>
             <Image
@@ -83,20 +83,24 @@ export function VideoSection() {
             <motion.div
               key={video.id}
               variants={itemVariants}
-              className="relative w-full overflow-hidden rounded-2xl shadow-lg pt-[56.25%]"
+              className="flex flex-col items-center w-full"
             >
-              <iframe
-                src={`https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1&loop=1&playlist=${video.id}&controls=0&showinfo=0&rel=0`}
-                title={video.title}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="absolute top-0 left-0 w-full h-full"
-              ></iframe>
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                <h4 className="text-center text-xl font-serif font-semibold text-white">
-                  {video.title}
-                </h4>
+              <div className="relative w-full overflow-hidden rounded-2xl shadow-lg shadow-primary/5 bg-black pt-[56.25%]">
+                <iframe
+                  src={`https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1&loop=1&playlist=${video.id}&controls=0&showinfo=0&rel=0`}
+                  title={video.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="absolute top-0 left-0 w-full h-full"
+                ></iframe>
+              </div>
+              <div className="w-full -mt-4 px-5">
+                <div className="mx-auto rounded-2xl border border-border/40 bg-primary/15 px-6 py-3 text-center">
+                  <h4 className="text-sm lg:text-xl mt-3 font-semibold text-primary">
+                    {video.title}
+                  </h4>
+                </div>
               </div>
             </motion.div>
           ))}
