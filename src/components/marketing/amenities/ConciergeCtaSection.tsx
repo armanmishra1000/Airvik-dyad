@@ -53,35 +53,26 @@ export function ConciergeCtaSection() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
         >
-            <motion.div
-              className="flex-1 space-y-4"
-              variants={contentVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.4 }}
+          <motion.div className="flex-1 space-y-4" variants={contentVariants}>
+            <motion.h2
+              variants={itemVariants}
+              className="text-2xl sm:text-4xl leading-tight max-w-4xl"
             >
-              <motion.h2
-                variants={itemVariants}
-                className="text-2xl sm:text-4xl leading-tight max-w-4xl"
-              >
-                Reserve your stay and let our concierge personalise every moment
-              </motion.h2>
-              <motion.p
-                variants={itemVariants}
-                className="text-base sm:text-lg text-muted-foreground max-w-3xl"
-              >
-                Share your intentions with us whether it&apos;s detox, devotion,
-                or discovery and we will lovingly orchestrate the amenities,
-                rituals, and experiences around you.
-              </motion.p>
-            </motion.div>
+              Reserve your stay and let our concierge personalise every moment
+            </motion.h2>
+            <motion.p
+              variants={itemVariants}
+              className="text-base sm:text-lg text-muted-foreground max-w-3xl"
+            >
+              Share your intentions with us whether it&apos;s detox, devotion, or
+              discovery and we will lovingly orchestrate the amenities, rituals,
+              and experiences around you.
+            </motion.p>
+          </motion.div>
 
           <motion.div
             className="flex flex-col sm:flex-row gap-4 w-full md:w-auto"
             variants={contentVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.4 }}
           >
             <motion.div variants={itemVariants}>
               <Button
