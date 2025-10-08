@@ -65,6 +65,13 @@ const amenityClusters: AmenityCluster[] = [
   },
 ];
 
+/**
+ * Render a responsive, animated section showcasing signature amenity cards.
+ *
+ * Each card displays an icon, badge, tagline, and a list of points and is revealed with staggered entrance animations.
+ *
+ * @returns The section's JSX element containing the header and animated amenity cards.
+ */
 export function SignatureAmenitiesSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },

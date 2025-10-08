@@ -42,6 +42,11 @@ const highlightStats: HighlightStat[] = [
   },
 ];
 
+/**
+ * Renders the amenities hero section with a full-bleed background image, headline, call-to-action, and an animated grid of highlight stats.
+ *
+ * @returns A JSX element containing the hero layout, overlay, CTA linking to /book, and animated statistic cards
+ */
 export function AmenitiesHeroSection() {
   const textVariants: Variants = {
     hidden: { x: 20, opacity: 0 },
