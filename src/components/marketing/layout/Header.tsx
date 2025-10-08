@@ -12,7 +12,7 @@ import {
   Youtube,
   Instagram,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Collapsible,
   CollapsibleContent,
@@ -144,7 +144,7 @@ export function Header() {
       </div>
 
       {/* Main Header */}
-      <div className="container mx-auto flex items-center justify-between p-2 transition-colors duration-300 text-foreground">
+      <div className="container mx-auto px-4 flex items-center justify-between xl:h-24 h-20 transition-colors duration-300 text-foreground">
         <Link href="/" className="flex items-center">
           <Image
             src="/logo.png"
@@ -153,7 +153,7 @@ export function Header() {
             height={160}
             quality={100}
             priority
-            className="h-12 w-auto xl:h-20"
+            className="h-16 w-auto xl:h-20"
           />
         </Link>
         <nav className="hidden xl:flex space-x-1 self-stretch">
@@ -195,7 +195,7 @@ export function Header() {
         </nav>
         <Button
           asChild
-          className="hidden bg-primary hover:bg-primary-hover text-primary-foreground flex justify-center text-center"
+          className="hidden bg-primary hover:bg-primary-hover text-primary-foreground xl:flex justify-center text-center"
         >
           <Link href="/book/review">BOOK NOW</Link>
         </Button>
@@ -209,9 +209,9 @@ export function Header() {
             </SheetTrigger>
             <SheetContent
               side="right"
-              className="bg-background text-foreground z-[1002] w-full max-w-none border-none"
+              className="bg-background text-foreground z-[1002] w-full max-w-none border-none flex h-full flex-col"
             >
-              <nav className="flex flex-col space-y-2 mt-8">
+              <nav className="flex flex-1 flex-col space-y-2 mt-8">
                 {navLinks.map((link) =>
                   link.subLinks ? (
                     <Collapsible key={link.label} className="w-full">
@@ -222,34 +222,38 @@ export function Header() {
                       <CollapsibleContent>
                         <div className="pl-4 mt-2 space-y-3 border-l-2 border-border ml-2">
                           {link.subLinks.map((subLink) => (
-                            <Link
-                              key={subLink.label}
-                              href={subLink.href}
-                              className="block text-base text-muted-foreground hover:text-primary transition-colors"
-                            >
-                              {subLink.label}
-                            </Link>
+                            <SheetClose asChild key={subLink.label}>
+                              <Link
+                                href={subLink.href}
+                                className="block text-base text-muted-foreground hover:text-primary transition-colors"
+                              >
+                                {subLink.label}
+                              </Link>
+                            </SheetClose>
                           ))}
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
                   ) : (
-                    <Link
-                      key={link.label}
-                      href={link.href}
-                      className="text-lg font-medium hover:text-primary transition-colors py-2"
-                    >
-                      {link.label}
-                    </Link>
+                    <SheetClose asChild key={link.label}>
+                      <Link
+                        href={link.href}
+                        className="text-lg font-medium hover:text-primary transition-colors py-2"
+                      >
+                        {link.label}
+                      </Link>
+                    </SheetClose>
                   )
                 )}
+              </nav>
+              <SheetClose asChild>
                 <Button
                   asChild
-                  className="bg-primary hover:bg-primary-hover text-primary-foreground mt-4 flex justify-center text-center"
+                  className="bg-primary hover:bg-primary-hover text-primary-foreground mt-8 flex w-full justify-center text-center"
                 >
                   <Link href="/book/review">BOOK NOW</Link>
                 </Button>
-              </nav>
+              </SheetClose>
             </SheetContent>
           </Sheet>
         </div>
