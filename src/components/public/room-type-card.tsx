@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Users, Bed, Check, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { Users, Bed, Check } from "lucide-react";
 import {
   Card,
   CardDescription,
@@ -31,14 +32,16 @@ export function RoomTypeCard({
     <Card className="flex flex-col bg-card border-border/50 hover:shadow-xl transition-all duration-300 group overflow-hidden">
       <CardHeader className="p-0">
         <div className="aspect-video relative overflow-hidden">
-          <img
+          <Image
             src={
               roomType.mainPhotoUrl ||
               roomType.photos[0] ||
               "/room-placeholder.svg"
             }
             alt={roomType.name}
-            className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
           {hasSearched && (
             <div className="absolute top-4 left-4">

@@ -43,7 +43,7 @@ export function BookingPolicies() {
               <p><strong className="text-gray-900">Check-out:</strong> Before 11:00 AM</p>
               <p><strong className="text-gray-900">Required documents:</strong></p>
               <ul className="list-disc list-inside space-y-1 ml-2">
-                <li>Valid government-issued photo ID (Aadhaar, Passport, Driver's License)</li>
+                <li>Valid government-issued photo ID (Aadhaar, Passport, Driver&apos;s License)</li>
                 <li>Booking confirmation (email or SMS)</li>
               </ul>
               <p><strong className="text-gray-900">Age requirement:</strong> Guests must be 18 years or older</p>

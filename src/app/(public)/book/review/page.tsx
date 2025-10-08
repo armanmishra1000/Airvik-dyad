@@ -20,7 +20,7 @@ import { BookingReviewSkeleton } from "@/components/public/booking-review-skelet
 import { InlineAlert } from "@/components/public/inline-alert";
 import { PaymentTrustBadges } from "@/components/public/payment-trust-badges";
 import { BookingPolicies } from "@/components/public/booking-policies";
-import { DateConflictBanner } from "@/components/public/date-conflict-banner";
+
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -95,7 +95,7 @@ function BookingReviewContent() {
     type: "availability" | "validation" | "payment";
     message: string;
   } | null>(null);
-  const [hasAvailabilityConflict, setHasAvailabilityConflict] = React.useState(false);
+  const [, setHasAvailabilityConflict] = React.useState(false);
   const [paymentMethod, setPaymentMethod] = React.useState<"card" | "property">("card");
 
   const bookingDetails = React.useMemo(() => {

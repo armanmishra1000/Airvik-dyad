@@ -1,6 +1,6 @@
 import { AlertCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, addDays } from "date-fns";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
 interface AlternativeDateRange {

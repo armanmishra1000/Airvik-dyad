@@ -19,7 +19,6 @@ import {
   Info,
   ChevronDown,
   Building,
-  TicketPercent,
   Users,
   Wifi,
   Shield,
@@ -33,7 +32,7 @@ import * as z from "zod";
 import { format, formatISO, eachDayOfInterval, parseISO, parse, addDays, isFriday, differenceInDays } from "date-fns";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import {
@@ -842,7 +841,7 @@ export default function RoomDetailsPage() {
                     </Button>
                     
                     <p className="text-xs text-center text-gray-500">
-                      You won't be charged yet. Review before payment.
+                      You won&apos;t be charged yet. Review before payment.
                     </p>
                   </form>
                 </Form>

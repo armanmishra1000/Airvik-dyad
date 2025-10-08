@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, Users, Bed, Minus, Plus, Building } from "lucide-react";
+import type { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -77,7 +78,7 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
               control={form.control}
               name="dateRange"
               render={({ field }) => {
-                const handleDateSelect = (range: any) => {
+                const handleDateSelect = (range: DateRange | undefined) => {
                   if (range) {
                     field.onChange(range);
                   }
