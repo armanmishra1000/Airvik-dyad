@@ -41,7 +41,7 @@ const navLinks = [
   },
   { href: "/shop", label: "Shop" },
   { href: "/amenities", label: "Amenities" },
-  { href: "/ashrams-glimpse", label: "Ashram’s Glimpse" },
+  { href: "/gallery", label: "Ashram’s Glimpse" },
 ];
 
 const socialLinks = [
