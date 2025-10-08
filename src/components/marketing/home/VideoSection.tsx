@@ -15,6 +15,13 @@ const videos = [
   },
 ];
 
+/**
+ * Renders the "Visual Journey" section with a centered header and an animated responsive grid of videos.
+ *
+ * The grid contains two embedded YouTube videos that play muted and loop by default, each displaying a bottom title overlay.
+ *
+ * @returns The JSX section element containing the header and the animated video grid
+ */
 export function VideoSection() {
   const containerVariants = {
     hidden: { opacity: 0 },

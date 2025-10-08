@@ -51,6 +51,14 @@ const socialLinks = [
   { href: "#", icon: Youtube },
 ];
 
+/**
+ * Render the site's responsive header with navigation, social links, and a scroll-aware sticky top bar.
+ *
+ * The component tracks window scroll position and collapses the top informational bar when the page
+ * is scrolled more than 50 pixels; it also updates header styling (shadow/border) based on that state.
+ *
+ * @returns A React element containing the complete header UI.
+ */
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -248,5 +256,4 @@ const ListItem = React.forwardRef<
   );
 });
 ListItem.displayName = "ListItem";
-
 
