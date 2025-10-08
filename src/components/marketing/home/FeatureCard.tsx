@@ -24,7 +24,7 @@ interface FeatureCardProps {
  * @param imageUrl - Source URL for the card image shown at the top
  * @param highlighted - When `true`, visually emphasizes the card and shows a full-width "Learn More" action
  * @param className - Additional CSS classes applied to the root Card element
- * @param href - Destination URL for the "Learn More" link; defaults to `#` when not provided
+ * @param href - Destination URL for the "Learn More" link; defaults to `/book` when not provided
  * @returns A JSX element representing the feature card
  */
 export function FeatureCard({
@@ -35,8 +35,7 @@ export function FeatureCard({
   className,
   href,
 }: FeatureCardProps) {
-  const 
-  targetHref = href === "/book" ? "/book" : "/book";
+  const targetHref = href ?? "/book";
   return (
     <Card
       className={cn(
