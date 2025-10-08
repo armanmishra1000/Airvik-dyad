@@ -49,7 +49,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/50 bg-background/80 px-6 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:h-20 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/50 px-4 shadow-sm lg:h-20 lg:px-8">
       <Sheet>
         <SheetTrigger asChild>
           <Button

@@ -6,11 +6,6 @@ import { toast } from "sonner";
 import * as React from "react";
 
 import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -27,19 +22,11 @@ interface StickyNoteCardProps {
 }
 
 const colorClasses = {
-  yellow: "border border-secondary/50 bg-secondary/30",
-  pink: "border border-accent/50 bg-accent/30",
-  blue: "border border-primary/40 bg-primary/15",
-  green: "border border-muted/50 bg-muted/40",
+  yellow: "bg-secondary/40 text-secondary-foreground border-secondary/60 dark:bg-secondary/25 dark:text-secondary-foreground dark:border-secondary/40",
+  pink: "bg-accent/40 text-accent-foreground border-accent/60 dark:bg-accent/25 dark:text-accent-foreground dark:border-accent/40",
+  blue: "bg-primary/20 text-primary-foreground border-primary/50 dark:bg-primary/15 dark:text-primary-foreground dark:border-primary/35",
+  green: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-100 dark:border-emerald-700/50",
 };
-
-const rotations = [
-  "transform -rotate-2",
-  "transform rotate-1",
-  "transform rotate-2",
-  "transform -rotate-1",
-  "transform rotate-3",
-];
 
 export function StickyNoteCard({ note }: StickyNoteCardProps) {
   const { deleteStickyNote } = useDataContext();
@@ -49,11 +36,8 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
     setHasMounted(true);
   }, []);
 
-  const rotationClass = React.useMemo(() => {
-    // Make rotation deterministic based on note ID to prevent hydration mismatch
-    const index = note.id.charCodeAt(note.id.length - 1) % rotations.length;
-    return rotations[index];
-  }, [note.id]);
+  // No rotation - keep cards straight in horizontal format
+  const rotationClass = "";
 
   const formattedDate = React.useMemo(() => {
     if (!hasMounted) return null;
@@ -72,26 +56,37 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
   };
 
   return (
-    <Card className={cn("shadow-md hover:shadow-lg transition-shadow", colorClasses[note.color], rotationClass)}>
-      <CardHeader className="flex-row items-start justify-between p-3">
-        <p className="text-xs text-muted-foreground">
+    <div 
+      className={cn(
+        "group relative rounded-xl border shadow-sm transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-primary/40 focus-within:ring-offset-2",
+        colorClasses[note.color],
+        rotationClass
+      )}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 p-4">
+        <time className="text-xs opacity-70" dateTime={note.createdAt}>
           {formattedDate}
-        </p>
+        </time>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-6 w-6">
+            <Button 
+              size="icon" 
+              className="h-7 w-7 opacity-60 transition-opacity hover:opacity-100 focus:opacity-100 sm:h-8 sm:w-8 rounded-xl" 
+              aria-label="Note options"
+            >
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-40">
             <StickyNoteFormDialog note={note}>
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <Edit className="mr-2 h-4 w-4" />
+                <Edit className="mr-2 h-4 w-4 " />
                 <span>Edit</span>
               </DropdownMenuItem>
             </StickyNoteFormDialog>
             <DropdownMenuItem
-              className="text-destructive"
+              className="text-destructive focus:text-destructive"
               onSelect={handleDelete}
             >
               <Trash2 className="mr-2 h-4 w-4" />
@@ -99,13 +94,19 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </CardHeader>
-      <CardContent className="p-3 pt-0">
-        <h4 className="font-bold font-serif mb-1">{note.title}</h4>
+      </div>
+
+      {/* Content */}
+      <div className="px-4 pb-4">
+        <h4 className="mb-2 font-serif text-base font-semibold leading-snug sm:text-lg">
+          {note.title}
+        </h4>
         {note.description && (
-          <p className="whitespace-pre-wrap font-serif text-sm">{note.description}</p>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-90 sm:text-[15px]">
+            {note.description}
+          </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
