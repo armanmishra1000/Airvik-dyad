@@ -35,22 +35,23 @@ export function FeatureCard({
   className,
   href,
 }: FeatureCardProps) {
+  const 
+  targetHref = href === "/book" ? "/book" : "/book";
   return (
     <Card
       className={cn(
-        "bg-card overflow-hidden relative p-0 flex flex-col bg-white p-2",
+        "bg-card overflow-hidden relative flex flex-col bg-white p-2.5",
         highlighted && "ring-2 ring-primary shadow-primary/20",
         className
       )}
     >
-      <div className="relative h-48 w-full">
+      <div className="relative md:h-64 h-48 w-full">
         <Image
           src={imageUrl}
           alt={title}
           fill
           style={{ objectFit: "cover" }}
           className="rounded-xl"
-          
         />
       </div>
       <CardHeader>
@@ -65,13 +66,14 @@ export function FeatureCard({
         )}
       >
         <p className="text-muted-foreground">{description}</p>
+        {/* learn more button */}
         {highlighted && (
           <div className="mt-auto pt-4">
             <Button
               asChild
               className="w-full bg-primary hover:bg-primary-hover"
             >
-              <Link href={href || "#"}>Learn More</Link>
+              <Link href={targetHref}>Book Ashram Stay</Link>
             </Button>
           </div>
         )}
