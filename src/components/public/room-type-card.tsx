@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Users, Bed, Check } from "lucide-react";
@@ -11,6 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { RoomType } from "@/data/types";
+import { Icon } from "@/components/shared/icon";
+import { useDataContext } from "@/context/data-context";
 
 interface RoomTypeCardProps {
   roomType: RoomType;
@@ -26,6 +30,11 @@ export function RoomTypeCard({
   hasSearched,
 }: RoomTypeCardProps) {
   const detailsLink = `/book/rooms/${roomType.id}`;
+  const { amenities: allAmenities } = useDataContext();
+
+  const resolvedAmenities = (roomType.amenities || [])
+    .map((id) => allAmenities.find((a) => a.id === id))
+    .filter((a): a is { id: string; name: string; icon: string } => !!a);
 
   // Card view
   return (
@@ -75,20 +84,16 @@ export function RoomTypeCard({
             <span>{roomType.bedTypes.join(", ")}</span>
           </div>
         </div>
-        {!hasSearched && roomType.amenities && roomType.amenities.length > 0 && (() => {
-          const validAmenities = roomType.amenities.filter(
-            amenity => !amenity.match(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i)
-          );
-          return validAmenities.length > 0 ? (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {validAmenities.slice(0, 3).map((amenity, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {amenity}
-                </Badge>
-              ))}
-            </div>
-          ) : null;
-        })()}
+        {!hasSearched && resolvedAmenities.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {resolvedAmenities.slice(0, 3).map((a) => (
+              <Badge key={a.id} variant="outline" className="text-xs">
+                <Icon name={a.icon} className="h-3.5 w-3.5 mr-1" />
+                {a.name}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
       <CardFooter className="flex-col items-stretch gap-2 px-5 pb-5">
         {hasSearched ? (
