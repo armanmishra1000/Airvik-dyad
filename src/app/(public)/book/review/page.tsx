@@ -88,6 +88,7 @@ function BookingReviewContent() {
     addGuest,
     addReservation,
     ratePlans,
+    isLoading,
   } = useDataContext();
 
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -135,16 +136,37 @@ function BookingReviewContent() {
     },
   });
 
-  const isLoading = roomTypes.length === 0;
 
-  // Validate query parameters
-  const hasValidParams = React.useMemo(() => {
-    return Boolean(
+
+  // Validate query parameters and date range
+  const { hasValidParams, hasValidDates, fromDate, toDate, nights } = React.useMemo(() => {
+    const basicParamsValid = Boolean(
       bookingDetails.roomTypeIds.length > 0 &&
       bookingDetails.from &&
       bookingDetails.to &&
       bookingDetails.guests
     );
+    
+    if (!basicParamsValid) {
+      return { hasValidParams: false, hasValidDates: false, fromDate: null, toDate: null, nights: 0 };
+    }
+    
+    // Parse dates and validate
+    const parsedFromDate = parse(bookingDetails.from!, "yyyy-MM-dd", new Date());
+    const parsedToDate = parse(bookingDetails.to!, "yyyy-MM-dd", new Date());
+    
+    // Check if dates are valid and from < to
+    const datesValid = !isNaN(parsedFromDate.getTime()) && !isNaN(parsedToDate.getTime());
+    const calculatedNights = datesValid ? differenceInDays(parsedToDate, parsedFromDate) : 0;
+    const dateOrderValid = calculatedNights > 0;
+    
+    return {
+      hasValidParams: basicParamsValid,
+      hasValidDates: datesValid && dateOrderValid,
+      fromDate: parsedFromDate,
+      toDate: parsedToDate,
+      nights: calculatedNights
+    };
   }, [bookingDetails]);
 
   if (isLoading) {
@@ -180,14 +202,26 @@ function BookingReviewContent() {
     );
   }
 
-  // Show error for invalid parameters
-  if (!hasValidParams || selectedRoomTypes.length === 0) {
+  // Show error for invalid parameters or dates
+  if (!hasValidParams || !hasValidDates || selectedRoomTypes.length === 0) {
+    const errorTitle = !hasValidParams 
+      ? "Invalid Booking Details"
+      : !hasValidDates 
+      ? "Invalid Date Range"
+      : "No Rooms Selected";
+    
+    const errorDescription = !hasValidParams
+      ? "Required booking information is missing. Please start a new search with valid dates and room selection."
+      : !hasValidDates
+      ? "The selected dates are invalid or check-out must be after check-in. Please select a valid date range."
+      : "No room types were found for your selection. Please return to search and try again.";
+    
     return (
       <div className="container mx-auto px-4 py-10 max-w-2xl">
         <InlineAlert
           variant="error"
-          title="Invalid Booking Details"
-          description="Required booking information is missing. Please start a new search with valid dates and room selection."
+          title={errorTitle}
+          description={errorDescription}
           action={{
             label: "Return to Search",
             onClick: () => router.push("/book"),
@@ -197,9 +231,7 @@ function BookingReviewContent() {
     );
   }
 
-  const fromDate = parse(bookingDetails.from!, "yyyy-MM-dd", new Date());
-  const toDate = parse(bookingDetails.to!, "yyyy-MM-dd", new Date());
-  const nights = differenceInDays(toDate, fromDate);
+  // At this point, fromDate, toDate, and nights are guaranteed to be valid
   const totalCost = selectedRoomTypes.length * nights * (ratePlan?.price || 0);
   const firstRoomType = selectedRoomTypes[0];
 
@@ -233,7 +265,7 @@ function BookingReviewContent() {
               res.roomId === room.id &&
               res.status !== "Cancelled" &&
               areIntervalsOverlapping(
-                { start: fromDate, end: toDate },
+                { start: fromDate!, end: toDate! },
                 {
                   start: parseISO(res.checkInDate),
                   end: parseISO(res.checkOutDate),
@@ -374,14 +406,14 @@ function BookingReviewContent() {
                 <div>
                   <p className="font-semibold">Check-in</p>
                   <p className="text-base">
-                    {format(fromDate, "E, d MMM yyyy")}
+                    {format(fromDate!, "E, d MMM yyyy")}
                   </p>
                   <p className="text-sm text-muted-foreground">From 12:00</p>
                 </div>
                 <Separator orientation="vertical" className="h-auto" />
                 <div>
                   <p className="font-semibold">Check-out</p>
-                  <p className="text-base">{format(toDate, "E, d MMM yyyy")}</p>
+                  <p className="text-base">{format(toDate!, "E, d MMM yyyy")}</p>
                   <p className="text-sm text-muted-foreground">Until 11:00</p>
                 </div>
               </div>

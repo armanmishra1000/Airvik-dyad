@@ -79,9 +79,7 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
               name="dateRange"
               render={({ field }) => {
                 const handleDateSelect = (range: DateRange | undefined) => {
-                  if (range) {
-                    field.onChange(range);
-                  }
+                  field.onChange(range);
                 };
                 
                 return (
