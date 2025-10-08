@@ -12,8 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BookingSummary } from "@/components/public/booking-summary";
 import type { RoomType } from "@/data/types";
-import { TriangleAlert, LayoutGrid, List, LayoutList } from "lucide-react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { TriangleAlert } from "lucide-react";
 
 export default function RoomsPage() {
   const { roomTypes, isLoading: isInitialLoading } = useDataContext();
@@ -28,7 +27,7 @@ export default function RoomsPage() {
   const [searchValues, setSearchValues] =
     React.useState<BookingSearchFormValues | null>(null);
   const [selection, setSelection] = React.useState<RoomType[]>([]);
-  const [viewMode, setViewMode] = React.useState<"card" | "grid" | "list">("card");
+
 
   const handleSearch = (values: BookingSearchFormValues) => {
     search(values.dateRange, values.guests, values.children, values.rooms);
@@ -91,37 +90,6 @@ export default function RoomsPage() {
               {hasSearched ? "Available Rooms" : "Our Rooms"}
             </h2>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <ToggleGroup 
-                type="single" 
-                value={viewMode} 
-                onValueChange={(value) => value && setViewMode(value as "card" | "grid" | "list")} 
-                className="inline-flex h-11 items-center justify-center rounded-xl bg-muted/30 p-1.5 text-muted-foreground shadow-sm border border-border/40"
-              >
-                <ToggleGroupItem 
-                  value="card" 
-                  aria-label="Card view" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-background data-[state=on]:text-primary data-[state=on]:shadow-md hover:bg-background/60 hover:text-foreground"
-                >
-                  <LayoutList className="h-4 w-4 mr-2" />
-                  <span className="text-sm">Card</span>
-                </ToggleGroupItem>
-                <ToggleGroupItem 
-                  value="grid" 
-                  aria-label="Grid view" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-background data-[state=on]:text-primary data-[state=on]:shadow-md hover:bg-background/60 hover:text-foreground"
-                >
-                  <LayoutGrid className="h-4 w-4 mr-2" />
-                  <span className="text-sm">Grid</span>
-                </ToggleGroupItem>
-                <ToggleGroupItem 
-                  value="list" 
-                  aria-label="List view" 
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-background data-[state=on]:text-primary data-[state=on]:shadow-md hover:bg-background/60 hover:text-foreground"
-                >
-                  <List className="h-4 w-4 mr-2" />
-                  <span className="text-sm">List</span>
-                </ToggleGroupItem>
-              </ToggleGroup>
               {hasSearched && (
                 <Button 
                   variant="outline" 
@@ -166,7 +134,7 @@ export default function RoomsPage() {
                       </p>
                     </div>
                   )}
-                  <div className={viewMode === "list" ? "space-y-4" : viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {roomsToDisplay.map((roomType) => (
                       <RoomTypeCard
                         key={roomType.id}
@@ -174,7 +142,7 @@ export default function RoomsPage() {
                         onSelect={handleSelectRoom}
                         isSelectionComplete={isSelectionComplete}
                         hasSearched={hasSearched}
-                        viewMode={viewMode}
+
                       />
                     ))}
                   </div>
