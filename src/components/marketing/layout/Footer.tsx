@@ -24,7 +24,7 @@ export function Footer() {
           <div>
             <Link href="/" className="mb-4 inline-block">
               <Image
-                src="/marketing/logo.png"
+                src="/logo.png"
                 alt="SahajAnand Wellness Logo"
                 width={360}
                 height={144}
