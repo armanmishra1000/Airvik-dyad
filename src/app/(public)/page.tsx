@@ -166,8 +166,6 @@ export default function HomePage() {
 
       {/* Video Section */}
       <VideoSection />
-
-      
       <RoomsShowcaseSection />
 
       {/* Testimonial Section */}
