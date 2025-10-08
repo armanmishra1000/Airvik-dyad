@@ -58,11 +58,9 @@ const accommodations = [
 ];
 
 /**
- * Render the "Your Spiritual Sanctuary" section containing an animated header, a looping accommodation carousel, and a reservation call-to-action.
+ * Renders the Stay section with a title, subtitle, looping accommodation carousel, and a reservation call-to-action.
  *
- * The section presents a title and subtitle, a horizontally looping carousel of accommodation cards with previous/next controls, and a prominent button linking to the booking review page.
- *
- * @returns The JSX element representing the Stay section UI
+ * @returns The JSX element for the Stay section
  */
 export function StaySection() {
   return (

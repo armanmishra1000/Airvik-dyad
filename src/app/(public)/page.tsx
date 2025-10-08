@@ -45,13 +45,11 @@ const features: Feature[] = [
 ];
 
 /**
- * Root page component that renders the Sahajanand Wellness home page layout.
+ * Renders the Sahajanand Wellness home page layout.
  *
- * Renders the hero banner with background image and animated title, a features grid
- * with staggered entrance animations, and the site sections: Welcome, Gallery,
- * Video, Stay, Testimonial, and Marquee.
+ * Displays a full-screen hero banner with a background image and animated title, a features grid that animates with staggered entrances, and the page sections in order: Welcome, Gallery, Video, RoomsShowcase, Testimonial, and Marquee.
  *
- * @returns The JSX element representing the complete home page.
+ * @returns The JSX element for the home page
  */
 export default function HomePage() {
   const containerVariants: Variants = {

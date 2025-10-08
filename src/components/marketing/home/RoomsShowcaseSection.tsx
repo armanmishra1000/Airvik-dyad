@@ -97,6 +97,13 @@ const roomsData: Array<{
   },
 ];
 
+/**
+ * Renders a responsive showcase section with card-based room listings and a looping carousel.
+ *
+ * For each predefined room it attempts to match a room type from the data context to determine the booking link and preferred image; if no match is found, it falls back to a default booking route and a local image. Each card shows an image, title, description, amenity icons with tooltips, and a "Book Now" button.
+ *
+ * @returns A React element containing the rooms showcase section ready for placement in a page layout.
+ */
 export function RoomsShowcaseSection() {
   const { roomTypes } = useDataContext();
 
