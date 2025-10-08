@@ -4,6 +4,11 @@ import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
+/**
+ * Renders a stylized, responsive CTA section that animates into view and presents a heading, descriptive text, and a "Book accommodation" button linking to /book.
+ *
+ * @returns A React element containing the concierge CTA section.
+ */
 export function ConciergeCtaSection() {
   const cardVariants: Variants = {
     hidden: { opacity: 0, y: 24 },
