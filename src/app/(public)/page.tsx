@@ -5,7 +5,6 @@ import { motion, type Variants } from "framer-motion";
 import { FeatureCard } from "@/components/marketing/home/FeatureCard";
 import { WelcomeSection } from "@/components/marketing/home/WelcomeSection";
 import { VideoSection } from "@/components/marketing/home/VideoSection";
-import { StaySection } from "@/components/marketing/home/StaySection";
 import { RoomsShowcaseSection } from "@/components/marketing/home/RoomsShowcaseSection";
 import { TestimonialSection } from "@/components/marketing/home/TestimonialSection";
 import { GallerySection } from "@/components/marketing/home/GallerySection";

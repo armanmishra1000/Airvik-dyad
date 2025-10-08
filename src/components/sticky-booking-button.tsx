@@ -101,7 +101,7 @@ export function StickyBookingButton() {
           </div>
           <div className="bg-muted/50 p-4 border-t">
             <Button asChild size="lg" className="w-full">
-              <Link href="/booking">View All Rooms</Link>
+              <Link href="/book">View All Rooms</Link>
             </Button>
           </div>
         </PopoverContent>

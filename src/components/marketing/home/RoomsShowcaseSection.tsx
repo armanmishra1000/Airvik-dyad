@@ -152,7 +152,7 @@ export function RoomsShowcaseSection() {
                             {room.description}
                           </CardDescription>
                           <TooltipProvider delayDuration={100}>
-                            <div className="flex justify-strat gap-4 overflow-x-auto sm:overflow-visible">
+                            <div className="flex justify-start gap-4 overflow-x-auto sm:overflow-visible">
                               {room.amenities.map((amenity) => (
                                 <Tooltip key={amenity.label}>
                                 <TooltipTrigger asChild>
@@ -181,8 +181,8 @@ export function RoomsShowcaseSection() {
                 );
               })}
             </CarouselContent>
-            <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 top-[50%] -translate-x-1/2 rounded-full bg-card border border-primary  h-10 w-10 text-primary hover:bg-primary hover:text-primary-foreground" />
-            <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 top-[50%] translate-x-1/2 rounded-full bg-card border border-primary h-10 w-10 text-primary hover:bg-primary hover:text-primary-foreground" />
+            <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full bg-card border border-primary h-10 w-10 text-primary hover:bg-primary hover:text-primary-foreground" />
+            <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full bg-card border border-primary h-10 w-10 text-primary hover:bg-primary hover:text-primary-foreground" />
           </Carousel>
         </div>
       </div>
