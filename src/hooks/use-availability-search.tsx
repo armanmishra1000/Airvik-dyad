@@ -18,11 +18,13 @@ export function useAvailabilitySearch() {
   const [availableRoomTypes, setAvailableRoomTypes] = React.useState<
     RoomType[] | null
   >(null);
+  const [hasNoInventory, setHasNoInventory] = React.useState(false);
 
   const search = React.useCallback(
     (dateRange: DateRange, guests: number, children: number, requestedRooms: number) => {
       setIsLoading(true);
       setAvailableRoomTypes(null);
+      setHasNoInventory(false);
 
       // Simulate network delay for a better user experience
       setTimeout(() => {
@@ -32,6 +34,18 @@ export function useAvailabilitySearch() {
         }
 
         const totalOccupants = guests + children;
+
+        // If no rooms are configured, show all room types that meet occupancy requirements
+        // with a warning message (to be displayed by the consuming component)
+        if (!rooms || rooms.length === 0) {
+          const availableByOccupancy = roomTypes.filter((rt) => {
+            return rt.maxOccupancy >= Math.ceil(totalOccupants / requestedRooms);
+          });
+          setAvailableRoomTypes(availableByOccupancy);
+          setHasNoInventory(true);
+          setIsLoading(false);
+          return;
+        }
 
         const available = roomTypes.filter((rt) => {
           // Check if the room type can accommodate the guests per room
@@ -94,5 +108,5 @@ export function useAvailabilitySearch() {
     [reservations, roomTypes, rooms]
   );
 
-  return { search, availableRoomTypes, isLoading, setAvailableRoomTypes };
+  return { search, availableRoomTypes, isLoading, setAvailableRoomTypes, hasNoInventory };
 }

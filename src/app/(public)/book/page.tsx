@@ -21,11 +21,13 @@ export default function RoomsPage() {
     availableRoomTypes,
     isLoading: isSearching,
     setAvailableRoomTypes,
+    hasNoInventory,
   } = useAvailabilitySearch();
   const [hasSearched, setHasSearched] = React.useState(false);
   const [searchValues, setSearchValues] =
     React.useState<BookingSearchFormValues | null>(null);
   const [selection, setSelection] = React.useState<RoomType[]>([]);
+
 
   const handleSearch = (values: BookingSearchFormValues) => {
     search(values.dateRange, values.guests, values.children, values.rooms);
@@ -64,16 +66,16 @@ export default function RoomsPage() {
 
   return (
     /* Main Content */
-    <div className="py-8">
+    <div>
       {/* Booking Widget */}
-      <section className="py-8 bg-muted/20">
+      <section className="relative py-12 md:py-16 bg-gradient-to-b from-primary/5 via-muted/20 to-background">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-serif mb-4">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight font-serif mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               Find Your Perfect Stay
             </h1>
-            <p className="max-w-2xl mx-auto text-lg text-muted-foreground">
-              Search available rooms and book your spiritual retreat at Sahajanand Ashram
+            <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
+              Discover peace and tranquility at Sahajanand Ashram. Search for your ideal accommodation.
             </p>
           </div>
           <BookingWidget onSearch={handleSearch} />
@@ -83,15 +85,25 @@ export default function RoomsPage() {
       {/* Room Types */}
       <section className="py-12 md:py-20">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-10">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
             <h2 className="text-3xl font-bold">
               {hasSearched ? "Available Rooms" : "Our Rooms"}
             </h2>
-            {hasSearched && (
-              <Button variant="link" onClick={handleClearSearch}>
-                Clear Search & View All
-              </Button>
-            )}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              {hasSearched && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleClearSearch} 
+                  className="h-11 px-4 border-border/40 bg-background/50 hover:bg-background hover:border-border transition-all duration-200"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Clear Search & View All
+                </Button>
+              )}
+            </div>
           </div>
 
           {showLoading ? (
@@ -114,17 +126,27 @@ export default function RoomsPage() {
           ) : (
             <>
               {roomsToDisplay && roomsToDisplay.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {roomsToDisplay.map((roomType) => (
-                    <RoomTypeCard
-                      key={roomType.id}
-                      roomType={roomType}
-                      onSelect={handleSelectRoom}
-                      isSelectionComplete={isSelectionComplete}
-                      hasSearched={hasSearched}
-                    />
-                  ))}
-                </div>
+                <>
+                  {hasSearched && hasNoInventory && (
+                    <div className="mb-6 p-4 bg-amber-100 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900 rounded-lg">
+                      <p className="text-amber-900 dark:text-amber-100">
+                        <strong>Note:</strong> Room inventory is not fully configured. Showing available room types based on occupancy requirements. Please contact us for exact availability.
+                      </p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {roomsToDisplay.map((roomType) => (
+                      <RoomTypeCard
+                        key={roomType.id}
+                        roomType={roomType}
+                        onSelect={handleSelectRoom}
+                        isSelectionComplete={isSelectionComplete}
+                        hasSearched={hasSearched}
+
+                      />
+                    ))}
+                  </div>
+                </>
               ) : (
                 /* No Rooms Found */
                 <div className="py-16 border rounded-lg bg-muted/40">
@@ -135,7 +157,9 @@ export default function RoomsPage() {
                     <h3 className="text-xl font-semibold">No Rooms Found</h3>
                     <p className="text-muted-foreground">
                       {hasSearched
-                        ? "Sorry, no rooms are available for your selected dates. Please try different dates."
+                        ? hasNoInventory 
+                          ? "No room types match your occupancy requirements. Try searching for fewer rooms or guests."
+                          : "Sorry, no rooms are available for your selected dates. Please try different dates."
                         : "There are no room types configured for this property."}
                     </p>
                   </div>
