@@ -11,7 +11,7 @@ const videos = [
   },
   {
     id: "V2CrSWlqkgA",
-    title: "Ashram Visual Tour.",
+    title: "Ashram Visual Tour",
   },
 ];
 
