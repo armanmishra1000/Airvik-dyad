@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   Youtube,
   Instagram,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Collapsible,
   CollapsibleContent,
@@ -25,7 +25,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
@@ -61,30 +60,68 @@ const socialLinks = [
  */
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+
+  const updateHeaderHeight = useCallback(() => {
+    if (!headerRef.current) {
+      return;
+    }
+
+    setHeaderHeight(headerRef.current.getBoundingClientRect().height);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
+      updateHeaderHeight();
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [updateHeaderHeight]);
 
-  const newLocal = "sticky top-0 left-0 right-0 z-[1001] transition-all duration-300 bg-white border-b border-border";
+  useEffect(() => {
+    if (!headerRef.current) {
+      return;
+    }
+
+    const node = headerRef.current;
+
+    updateHeaderHeight();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      updateHeaderHeight();
+    });
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [updateHeaderHeight]);
+
+  const HEADER_BASE_CLASSES =
+    "fixed top-0 left-0 right-0 z-[1001] transition-all duration-300 bg-white border-b border-border";
   return (
-    <header
-      className={cn(
-        newLocal,
-        isScrolled ? "bg-white shadow-md border-b" : ""
-      )}
-    >
+    <>
+      <header
+        ref={headerRef}
+        className={cn(
+          HEADER_BASE_CLASSES,
+          isScrolled ? "bg-white shadow-md border-b" : ""
+        )}
+      >
       {/* Top Bar */}
       <div
         className={cn(
-          "backdrop-blur-sm transition-all duration-300 ease-in-out bg-primary-hover",
+          "backdrop-blur-sm transition-all duration-300 ease-in-out bg-primary-hover/85",
           isScrolled
             ? "max-h-0 py-0 opacity-0 border-transparent"
             : "max-h-12 py-2.5 opacity-100"
@@ -115,7 +152,7 @@ export function Header() {
       </div>
 
       {/* Main Header */}
-      <div className="container mx-auto flex items-center justify-between p-2 transition-colors duration-300 text-foreground">
+      <div className="container mx-auto px-4 flex items-center justify-between xl:h-24 h-20 transition-colors duration-300 text-foreground">
         <Link href="/" className="flex items-center">
           <Image
             src="/logo.png"
@@ -124,7 +161,7 @@ export function Header() {
             height={160}
             quality={100}
             priority
-            className="h-12 w-auto xl:h-20"
+            className="h-16 w-auto xl:h-20"
           />
         </Link>
         <nav className="hidden xl:flex space-x-1 self-stretch">
@@ -134,7 +171,7 @@ export function Header() {
                 <NavigationMenuItem key={link.label}>
                   {link.subLinks ? (
                     <>
-                      <NavigationMenuTrigger className="text-sm font-medium text-primary-hover hover:text-primary transition-colors bg-transparent">
+                      <NavigationMenuTrigger className="relative inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover transition-colors bg-transparent hover:bg-primary/15 hover:text-primary focus-visible:bg-primary/15 focus-visible:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40 data-[state=open]:bg-primary/15 data-[state=open]:text-primary after:absolute after:left-0 after:right-0 after:-bottom-5 after:h-3 after:content-['']">
                         {link.label}
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
@@ -153,10 +190,7 @@ export function Header() {
                     <NavigationMenuLink asChild>
                       <Link
                         href={link.href || "#"}
-                        className={cn(
-                          navigationMenuTriggerStyle(),
-                          "text-sm font-medium hover:text-primary transition-colors bg-transparent hover:bg-accent/50 focus:bg-accent/50"
-                        )}
+                        className="inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover transition-colors bg-transparent hover:bg-primary/15 hover:text-primary focus-visible:bg-primary/15 focus-visible:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40"
                       >
                         {link.label}
                       </Link>
@@ -169,7 +203,7 @@ export function Header() {
         </nav>
         <Button
           asChild
-          className="hidden bg-primary hover:bg-primary-hover text-primary-foreground flex justify-center text-center"
+          className="hidden bg-primary hover:bg-primary-hover text-primary-foreground xl:flex justify-center text-center"
         >
           <Link href="/book/review">BOOK NOW</Link>
         </Button>
@@ -183,9 +217,9 @@ export function Header() {
             </SheetTrigger>
             <SheetContent
               side="right"
-              className="bg-background text-foreground z-[1002] w-full max-w-none border-none"
+              className="bg-background text-foreground z-[1002] w-full max-w-none border-none flex h-full flex-col"
             >
-              <nav className="flex flex-col space-y-2 mt-8">
+              <nav className="flex flex-1 flex-col space-y-2 mt-8">
                 {navLinks.map((link) =>
                   link.subLinks ? (
                     <Collapsible key={link.label} className="w-full">
@@ -196,39 +230,49 @@ export function Header() {
                       <CollapsibleContent>
                         <div className="pl-4 mt-2 space-y-3 border-l-2 border-border ml-2">
                           {link.subLinks.map((subLink) => (
-                            <Link
-                              key={subLink.label}
-                              href={subLink.href}
-                              className="block text-base text-muted-foreground hover:text-primary transition-colors"
-                            >
-                              {subLink.label}
-                            </Link>
+                            <SheetClose asChild key={subLink.label}>
+                              <Link
+                                href={subLink.href}
+                                className="block text-base text-muted-foreground hover:text-primary transition-colors"
+                              >
+                                {subLink.label}
+                              </Link>
+                            </SheetClose>
                           ))}
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
                   ) : (
-                    <Link
-                      key={link.label}
-                      href={link.href}
-                      className="text-lg font-medium hover:text-primary transition-colors py-2"
-                    >
-                      {link.label}
-                    </Link>
+                    <SheetClose asChild key={link.label}>
+                      <Link
+                        href={link.href}
+                        className="text-lg font-medium hover:text-primary transition-colors py-2"
+                      >
+                        {link.label}
+                      </Link>
+                    </SheetClose>
                   )
                 )}
+              </nav>
+              <SheetClose asChild>
                 <Button
                   asChild
-                  className="bg-primary hover:bg-primary-hover text-primary-foreground mt-4 flex justify-center text-center"
+                  className="bg-primary hover:bg-primary-hover text-primary-foreground mt-8 flex w-full justify-center text-center"
                 >
                   <Link href="/book/review">BOOK NOW</Link>
                 </Button>
-              </nav>
+              </SheetClose>
             </SheetContent>
           </Sheet>
         </div>
       </div>
-    </header>
+      </header>
+      <div
+        aria-hidden="true"
+        className="w-full"
+        style={{ height: headerHeight }}
+      />
+    </>
   );
 }
 
@@ -242,7 +286,7 @@ const ListItem = React.forwardRef<
         <Link
           ref={ref}
           className={cn(
-            "block select-none  rounded-md px-4 py-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            "block select-none rounded-2xl px-4 py-3 leading-none no-underline outline-none transition-colors hover:bg-primary/15 hover:text-primary",
             className
           )}
           {...props}
