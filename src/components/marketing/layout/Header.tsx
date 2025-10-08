@@ -113,7 +113,7 @@ export function Header() {
       {/* Top Bar */}
       <div
         className={cn(
-          "backdrop-blur-sm transition-all duration-300 ease-in-out bg-primary-hover",
+          "backdrop-blur-sm transition-all duration-300 ease-in-out bg-primary-hover/85",
           isScrolled
             ? "max-h-0 py-0 opacity-0 border-transparent"
             : "max-h-12 py-2.5 opacity-100"
@@ -163,11 +163,11 @@ export function Header() {
                 <NavigationMenuItem key={link.label}>
                   {link.subLinks ? (
                     <>
-                      <NavigationMenuTrigger className="text-lg font-medium transition-colors bg-transparent">
+                      <NavigationMenuTrigger className="relative inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover transition-colors bg-transparent hover:bg-primary/15 hover:text-primary focus-visible:bg-primary/15 focus-visible:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40 data-[state=open]:bg-primary/15 data-[state=open]:text-primary after:absolute after:left-0 after:right-0 after:-bottom-5 after:h-3 after:content-['']">
                         {link.label}
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
-                        <ul className="grid w-[240px] gap-1 p-2.5">
+                        <ul className="grid w-[240px] gap-1 p-2">
                           {link.subLinks.map((subLink) => (
                             <ListItem
                               key={subLink.label}
