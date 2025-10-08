@@ -1,6 +1,6 @@
 "use client";
 
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { MoreVertical, Trash2, Edit } from "lucide-react";
 import { toast } from "sonner";
 import * as React from "react";
@@ -43,7 +43,7 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
     if (!hasMounted) return null;
 
     try {
-      const date = new Date(note.createdAt);
+      const date = parseISO(note.createdAt);
       return isNaN(date.getTime()) ? "Invalid date" : formatDistanceToNow(date, { addSuffix: true });
     } catch {
       return "Invalid date";

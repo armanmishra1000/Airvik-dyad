@@ -29,7 +29,7 @@ import {
   
   import { Button } from "@/components/ui/button";
   import type { DashboardComponentId } from "@/data/types"
-  import { isToday } from "date-fns"
+  import { isToday, parseISO } from "date-fns"
   import { useDataContext } from "@/context/data-context";
   import { AvailabilityCalendar } from "@/components/shared/availability-calendar";
   import { DashboardStickyNotes } from "./components/DashboardStickyNotes";
@@ -55,13 +55,13 @@ import {
         })
     );
 
-    const todayArrivals = reservations.filter(r => isToday(new Date(r.checkInDate)) && r.status !== 'Cancelled');
-    const todayDepartures = reservations.filter(r => isToday(new Date(r.checkOutDate)) && r.status !== 'Cancelled');
+    const todayArrivals = reservations.filter(r => isToday(parseISO(r.checkInDate)) && r.status !== 'Cancelled');
+    const todayDepartures = reservations.filter(r => isToday(parseISO(r.checkOutDate)) && r.status !== 'Cancelled');
     
     const occupiedRoomsCount = reservations.filter(r => {
         const today = new Date();
-        const checkIn = new Date(r.checkInDate);
-        const checkOut = new Date(r.checkOutDate);
+        const checkIn = parseISO(r.checkInDate);
+        const checkOut = parseISO(r.checkOutDate);
         return r.status === 'Checked-in' || (today >= checkIn && today < checkOut && r.status === 'Confirmed');
     }).length;
 
