@@ -103,7 +103,7 @@ export function StickyBookingButton() {
           side="left"
           align="center"
           sideOffset={12}
-          className="w-[min(90vw,420px)] z-[1003] p-0 shadow-2xl border-border/30 bg-background/90 backdrop-blur-sm rounded-xl"
+          className="w-[min(90vw,420px)] z-[1003] p-0 shadow-2xl border-border/30 bg-background rounded-xl"
         >
           <div>
             <div className="p-4 border-b border-border/50">
