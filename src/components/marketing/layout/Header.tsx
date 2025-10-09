@@ -60,6 +60,11 @@ const socialLinks: SocialLink[] = [
  * Render the site's responsive header with navigation, social links, and a non-sticky top bar.
  *
  * The main navigation sticks without animations while an invisible spacer preserves layout alignment.
+ * Render the site's responsive header with a scroll-aware top bar, navigation, social links, booking CTA, and an invisible spacer that preserves layout beneath the fixed header.
+ *
+ * The header toggles compact styling when the page is scrolled more than 50 pixels and observes its own size to keep the spacer height in sync, preventing layout shift.
+ *
+ * @returns The header JSX element including the top informational bar, main navigation (desktop and mobile), booking call-to-action, and an invisible spacer whose height matches the current header height.
  */
 export function Header() {
   const topBarRef = useRef<HTMLDivElement | null>(null);
