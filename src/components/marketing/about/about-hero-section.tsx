@@ -22,8 +22,8 @@ export function AboutHeroSection() {
       x: 0,
       transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.2 }
     }
-  };
-
+  };  
+  
   return (
     <section className="bg-background py-10 sm:py-12 overflow-hidden">
       <div className="container mx-auto px-4">
@@ -32,7 +32,6 @@ export function AboutHeroSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.25 }}
-          transition={{ staggerChildren: 0.3 }}
         >
           {/* Left Column: Main Content */}
           <motion.div
