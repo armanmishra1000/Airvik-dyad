@@ -15,20 +15,30 @@ const testimonials = [
   {
     quote:
       "Sahajanand Wellness provided me with an incredible space to reconnect with myself",
+    image: "/user-2.png",
+    imageAlt: "Guest meditating in harmony",
   },
   {
     quote:
       "We all enjoyed a lot, very good property, location, hospitality... try to come back soon.",
+    image: "/tS-2.jpg",
+    imageAlt: "Guest expressing gratitude",
   },
   {
     quote:
       "A very nice place to stay in Rishikesh... a very nice place to stay in the natural beauty next to Gangaji.",
+    image: "/user-1.png",
+    imageAlt: "Guest radiating joy",
   },
   {
     quote:
       "The retreats at Sahajanand helped me find inner peace and true relaxation",
+    image: "/t-4.webp",
+    imageAlt: "Guest experiencing serenity",
   },
 ];
+
+const testimonialCardBackground = "rgba(255, 248, 243, 0.85)";
 
 const renderQuote = (quote: string) => quote;
 
@@ -78,15 +88,18 @@ export function TestimonialSection() {
                   className="basis-full sm:basis-1/2 lg:basis-1/3"
                 >
                   <div className="p-4 h-full">
-                    <Card className="relative h-full rounded-3xl bg-card border border-white/80">
-                      <CardContent className="relative flex h-full flex-col items-center gap-8 px-8 py-6 lg:py-8 lg:px-10 md:py-8 text-center">
-                        <div className="flex items-center justify-center">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-white">
+                    <Card
+                      className="relative h-full rounded-3xl border border-white/80"
+                      style={{ backgroundColor: testimonialCardBackground }}
+                    >
+                      <CardContent className="relative flex h-full flex-col items-center gap-8 px-8 pt-24 lg:pt-16 pb-6 text-center md:pt-24 md:pb-8 lg:px-10 lg:pt-28">
+                        <div className="flex items-center justify-center -mt-16">
+                          <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex h-24 w-24 lg:w-32 lg:h-32 items-center justify-center rounded-full border-4 border-white bg-white">
                             <Image
-                              src="/icons/lotus-outline.svg"
-                              alt="Lotus accent"
-                              width={28}
-                              height={28}
+                              src={testimonial.image}
+                              alt={testimonial.imageAlt}
+                              fill
+                              className="object-cover rounded-full"
                             />
                           </div>
                         </div>
