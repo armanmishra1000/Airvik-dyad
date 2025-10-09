@@ -158,7 +158,7 @@ export function RoomsShowcaseSection() {
     <section className="bg-background py-20">
       <div className="container mx-auto px-4">
         <h2 className="text-4xl sm:text-5xl font-bold font-serif text-center text-foreground">
-          Your Spiritual Sanctuary
+          Your Sacred Stay
         </h2>
         <p className="mt-4 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
           Sanctified spaces for every devotee’s stay.
