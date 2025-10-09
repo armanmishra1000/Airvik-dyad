@@ -38,7 +38,7 @@ export function FeatureCard({
   return (
     <Card
       className={cn(
-        "bg-card overflow-hidden relative p-0 flex flex-col bg-white p-2",
+        "bg-card overflow-hidden relative flex flex-col bg-white p-2",
         highlighted && "ring-2 ring-primary shadow-primary/20",
         className
       )}
