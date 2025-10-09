@@ -35,7 +35,7 @@ export function DraggableCard({ id, children, isEditing }: DraggableCardProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "relative rounded-lg transition-shadow",
+        "relative min-w-0 rounded-lg transition-shadow",
         isEditing && "ring-2 ring-primary ring-offset-2 ring-offset-background",
         isDragging && "shadow-2xl opacity-80"
       )}
