@@ -26,6 +26,7 @@ const galleryImages = [
   {
     src: "/gallery-room-05-2-1.png",
     alt: "A spiritual ceremony taking place at the ashram",
+    className: "hidden md:block",
   },
 ];
 

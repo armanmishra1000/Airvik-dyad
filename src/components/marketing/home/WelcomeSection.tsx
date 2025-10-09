@@ -33,13 +33,13 @@ const activities = [
   },
 ];
 
-/**
- * Renders the welcome hero and an animated grid of activity cards.
- *
- * The hero and activity cards use Framer Motion variants for entrance animations.
- *
- * @returns The React element containing the welcome hero and the "Our Sacred Activities" animated grid.
- */
+const serviceBadges = [
+  { label: "Yoga & Meditation" },
+  { label: "Ganga Aarti" },
+  { label: "Vedic Learning" },
+  { label: "Sacred Service" },
+];
+
 export function WelcomeSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -84,6 +84,7 @@ export function WelcomeSection() {
       transition: {
         duration: 0.8,
         ease: [0.16, 1, 0.3, 1],
+        staggerChildren: 0.15,
       },
     },
   };
@@ -93,55 +94,64 @@ export function WelcomeSection() {
       <section className="bg-background py-10 sm:py-12 overflow-hidden">
         <div className="container mx-auto px-4">
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
+            className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.25 }}
             transition={{ staggerChildren: 0.3 }}
           >
-            {/* Image Column */}
             <motion.div
               variants={imageVariants}
-              className="order-2 md:order-1"
+              className="order-2 lg:order-1"
             >
               <Image
-                src="/about-usImg.png"
+                src="/gangadhat.png"
                 alt="Sahajanand Wellness Ashram in Rishikesh"
-                width={600}
-                height={400}
-                className="h-96 rounded-2xl shadow-lg w-full object-cover"
+                width={700}
+                height={500}
+                className="relative h-auto sm:h-[450px] md:h-[500px] rounded-2xl w-full object-cover"
+                priority
               />
             </motion.div>
-            {/* Text Column */}
+
             <motion.div
               variants={textVariants}
-              className="order-1 md:order-2"
+              className="order-1 lg:order-2"
             >
-              <div className="text-center md:text-left">
-                <div className="text-sm font-semibold uppercase tracking-widest text-primary mb-4">
-                  <div className="flex items-center justify-center md:justify-start mb-2">
+              <motion.div variants={itemVariants} className="text-center lg:text-left space-y-4">
+                <div>
+                  <span className="text-sm font-semibold uppercase tracking-widest text-primary">
                     Welcome Home
-                  </div>
+                  </span>
                 </div>
-                <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight">
-                  Sahajanand Wellness: A Sacred Space for the Welfare of All
+                
+                <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground">
+                  A Sacred Space for the Welfare of All
                 </h2>
-              </div>
-              <div className="mt-6 space-y-6 text-center md:text-left text-muted-foreground text-base md:text-lg leading-relaxed">
-                <p>
-                  Sahajanand Wellness is a true spiritual haven, lying on the
-                  holy banks of Mother Ganga in the lap of the lush Himalayas.
-                  It is one of the largest ashrams in Rishikesh, providing its
-                  thousands of pilgrims who come from all corners of the Earth
-                  with a clean, pure and sacred atmosphere as well as abundant,
-                  beautiful gardens.
+
+                <p className="text-base text-muted-foreground md:text-lg">
+                  Sahajanand Wellness is a registered religious trust on the banks of the Ganges at Muni-Ki-Reti, Rishikesh. It offers simple dharmshala stays, yoga, daily Ganga Aarti and community services (langar, Vedic classes, gaushala) for pilgrims and spiritual seekers.
                 </p>
-                <p>
-                  Embodying the principle of &lsquo;welfare for all,&rsquo; we welcome
-                  seekers from every path to experience the profound peace and
-                  spiritual nourishment offered here on the banks of the Ganga.
-                </p>
-              </div>
+                
+              </motion.div>
+
+              <motion.div 
+                variants={itemVariants}
+                className="sm:flex flex-wrap justify-center lg:justify-start gap-3 mt-4 hidden"
+              >
+                {serviceBadges.map((badge) => (
+                  <div
+                    key={badge.label}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-background border border-primary/20 shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-300 group"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary group-hover:scale-125 transition-transform duration-300" />
+                    <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
+                      {badge.label}
+                    </span>
+                  </div>
+                ))}
+              </motion.div>
+
             </motion.div>
           </motion.div>
         </div>
