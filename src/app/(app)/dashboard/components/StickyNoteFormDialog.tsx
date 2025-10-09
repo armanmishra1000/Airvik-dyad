@@ -42,28 +42,32 @@ interface StickyNoteFormDialogProps {
   children: React.ReactNode;
 }
 
-const colorOptions = [
+export const colorOptions = [
   {
     value: "yellow",
     label: "Yellow",
+    cardClass: "bg-secondary/50 text-secondary-foreground border-secondary/70 dark:bg-secondary/30 dark:text-secondary-foreground dark:border-secondary/50",
     normalClass: "bg-secondary/40 border-secondary/50 hover:bg-secondary/50 dark:bg-secondary/30 dark:border-secondary/40",
     selectedClass: "data-[state=on]:bg-secondary/60 data-[state=on]:border-secondary dark:data-[state=on]:bg-secondary/50 dark:data-[state=on]:border-secondary",
   },
   {
     value: "pink",
     label: "Pink",
+    cardClass: "bg-accent/50 text-foreground border-accent/70 dark:bg-accent/30 dark:text-foreground dark:border-accent/50",
     normalClass: "bg-accent/40 border-accent/50 hover:bg-accent/50 dark:bg-accent/30 dark:border-accent/40",
     selectedClass: "data-[state=on]:bg-accent/60 data-[state=on]:border-accent dark:data-[state=on]:bg-accent/50 dark:data-[state=on]:border-accent",
   },
   {
     value: "blue",
     label: "Blue",
+    cardClass: "bg-primary/25 text-foreground border-primary/60 dark:bg-primary/20 dark:text-foreground dark:border-primary/40",
     normalClass: "bg-primary/20 border-primary/40 hover:bg-primary/30 dark:bg-primary/15 dark:border-primary/30",
     selectedClass: "data-[state=on]:bg-primary/35 data-[state=on]:border-primary dark:data-[state=on]:bg-primary/30 dark:data-[state=on]:border-primary",
   },
   {
     value: "green",
     label: "Green",
+    cardClass: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-100 dark:border-emerald-700/50",
     normalClass: "bg-emerald-100 border-emerald-300 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:border-emerald-700/50",
     selectedClass: "data-[state=on]:bg-emerald-200 data-[state=on]:border-emerald-500 dark:data-[state=on]:bg-emerald-800/60 dark:data-[state=on]:border-emerald-600",
   },
@@ -140,8 +144,8 @@ export function StickyNoteFormDialog({
                     <FormControl>
                       <Input 
                         placeholder="Note title..." 
-                        className="h-10 sm:h-11 border border-input focus-visible:border-input"
-                        autoFocus
+                        className="h-10 sm:h-11"
+                        // autoFocus
                         {...field} 
                       />
                     </FormControl>
@@ -158,7 +162,7 @@ export function StickyNoteFormDialog({
                     <FormControl>
                       <Textarea
                         placeholder="Your note details here..."
-                        className="min-h-[100px] sm:min-h-[120px] resize-none border border-input focus-visible:border-input"
+                        className="min-h-[100px] sm:min-h-[120px] resize-none"
                         {...field}
                       />
                     </FormControl>
@@ -186,7 +190,7 @@ export function StickyNoteFormDialog({
                             aria-label={opt.label}
                             title={opt.label}
                             className={cn(
-                              "h-10 w-10 sm:h-12 sm:w-12 rounded-xl border-2 transition-all",
+                              "h-10 w-10 sm:h-12 sm:w-12 rounded-xl border-2 focus-visible:outline-none focus-visible:ring-0",
                               "data-[state=on]:border-[3px]",
                               opt.normalClass,
                               opt.selectedClass

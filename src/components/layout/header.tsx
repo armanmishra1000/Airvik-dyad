@@ -55,7 +55,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="shrink-0 rounded-2xl border border-border/50 bg-card/80 text-foreground shadow-sm transition-colors hover:text-primary focus-visible:ring-primary/40 md:hidden"
+            className="shrink-0 rounded-xl border border-border/40 hover:border-primary/40 bg-card/80 text-foreground shadow-sm transition-colors hover:text-primary md:hidden"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
@@ -80,7 +80,7 @@ export function Header() {
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-base font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                  className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-base font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-0"
                 >
                   {label}
                 </Link>
@@ -107,7 +107,7 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-2xl border border-border/50 bg-card/80 text-foreground shadow-sm transition-colors hover:text-primary"
+              className="rounded-xl border border-border/40 hover:border-primary/40 bg-card/80 text-foreground shadow-sm transition-colors hover:text-primary"
             >
               <CircleUser className="h-5 w-5" />
               <span className="sr-only">Toggle user menu</span>
@@ -126,7 +126,7 @@ export function Header() {
             <DropdownMenuSeparator className="bg-border/50" />
             <DropdownMenuItem
               onClick={handleLogout}
-              className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
               Logout
             </DropdownMenuItem>

@@ -183,7 +183,7 @@ import {
     return (
         <div className="space-y-6">
             <div className="flex justify-end">
-                <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)}>
+                <Button variant="outline" size="sm" className="focus-visible:ring-0" onClick={() => setIsEditing(!isEditing)}>
                     {isEditing ? <Check className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
                     {isEditing ? "Save Layout" : "Edit Layout"}
                 </Button>

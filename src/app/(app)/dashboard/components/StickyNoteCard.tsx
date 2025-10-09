@@ -15,18 +15,16 @@ import { Button } from "@/components/ui/button";
 import type { StickyNote } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
-import { StickyNoteFormDialog } from "./StickyNoteFormDialog";
+import { StickyNoteFormDialog, colorOptions } from "./StickyNoteFormDialog";
 
 interface StickyNoteCardProps {
   note: StickyNote;
 }
 
-const colorClasses = {
-  yellow: "bg-secondary/40 text-secondary-foreground border-secondary/60 dark:bg-secondary/25 dark:text-secondary-foreground dark:border-secondary/40",
-  pink: "bg-accent/40 text-accent-foreground border-accent/60 dark:bg-accent/25 dark:text-accent-foreground dark:border-accent/40",
-  blue: "bg-primary/20 text-primary-foreground border-primary/50 dark:bg-primary/15 dark:text-primary-foreground dark:border-primary/35",
-  green: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-100 dark:border-emerald-700/50",
-};
+// Create colorClasses object from shared colorOptions
+const colorClasses = Object.fromEntries(
+  colorOptions.map(option => [option.value, option.cardClass])
+) as Record<typeof colorOptions[number]["value"], string>;
 
 export function StickyNoteCard({ note }: StickyNoteCardProps) {
   const { deleteStickyNote } = useDataContext();
@@ -58,7 +56,7 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
   return (
     <div 
       className={cn(
-        "group relative rounded-xl border shadow-sm transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-primary/40 focus-within:ring-offset-2",
+        "group relative rounded-xl border shadow-sm transition-all duration-200 hover:shadow-md focus-visible:outline-none",
         colorClasses[note.color],
         rotationClass
       )}
@@ -78,7 +76,7 @@ export function StickyNoteCard({ note }: StickyNoteCardProps) {
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuContent align="end" className="w-40 space-y-1">
             <StickyNoteFormDialog note={note}>
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <Edit className="mr-2 h-4 w-4 " />

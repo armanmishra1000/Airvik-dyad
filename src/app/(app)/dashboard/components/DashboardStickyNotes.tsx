@@ -14,7 +14,7 @@ export function DashboardStickyNotes() {
         <div className="flex flex-row items-center justify-between border-b border-border/50 sm:p-6 p-4">
             <h2 className="text-xl font-semibold tracking-tight">Sticky Notes</h2>
             <StickyNoteFormDialog>
-                <Button size="sm">
+                <Button size="sm" className=" focus-visible:ring-0">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Note
                 </Button>

@@ -137,7 +137,7 @@ export function AvailabilityCalendar() {
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         <TooltipProvider delayDuration={0}>
           {/* Scrollable Calendar Container */}
-          <div className="overflow-x-auto rounded-xl border border-border/40 bg-background/50 shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-border/40 bg-background/50 shadow-sm focus:outline-none ">
             <div className="min-w-max">
               <Table>
                 <TableHeader>
