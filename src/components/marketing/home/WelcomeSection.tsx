@@ -34,10 +34,10 @@ const activities = [
 ];
 
 const serviceBadges = [
-  { label: "Yoga & Meditation", icon: true },
-  { label: "Ganga Aarti", icon: true },
-  { label: "Vedic Learning", icon: true },
-  { label: "Sacred Service", icon: true },
+  { label: "Yoga & Meditation" },
+  { label: "Ganga Aarti" },
+  { label: "Vedic Learning" },
+  { label: "Sacred Service" },
 ];
 
 export function WelcomeSection() {
@@ -158,9 +158,7 @@ export function WelcomeSection() {
                     custom={index}
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-background border border-primary/20 shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-300 group"
                   >
-                    {badge.icon && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary group-hover:scale-125 transition-transform duration-300" />
-                    )}
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary group-hover:scale-125 transition-transform duration-300" />
                     <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
                       {badge.label}
                     </span>
