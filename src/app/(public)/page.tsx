@@ -16,30 +16,34 @@ type Feature = {
   imageUrl: string;
   highlighted: boolean;
   href?: string;
+  desktopPositionClass: string;
 };
 
 const features: Feature[] = [
   {
-    title: "Annakshetra",
-    description:
-      "Serving humanity through daily, wholesome meals for all visitors and the local community.",
-    imageUrl: "/annakshetra.png",
-    highlighted: false,
-  },
-  {
     title: "Ashram Stay",
     description:
-      "Experience tranquility and spiritual rejuvenation by booking a stay in our serene ashram rooms.",
-    imageUrl: "/sahaj-home.png",
+      "Peaceful and comfortable ashram rooms for meditation, reflection, and spiritual retreat",
+    imageUrl: "/ashram-stays.png",
     highlighted: true,
     href: "/booking",
+    desktopPositionClass: "lg:col-start-2 lg:row-start-1",
+  },
+  {
+    title: "Annakshetra",
+    description:
+      "Wholesome meals for all, serving visitors and the local community with love in Rishikesh.",
+    imageUrl: "/annakshetra.png",
+    highlighted: false,
+    desktopPositionClass: "lg:col-start-1 lg:row-start-1",
   },
   {
     title: "Yoga & Meditation",
     description:
-      "Harmonize your mind, body, and soul with our daily yoga and guided meditation sessions.",
-    imageUrl: "/yoga.png",
+      "Daily yoga and guided meditation to harmonize your mind, body, and soul in serene Rishikesh.",
+    imageUrl: "/yoga-ashram.png",
     highlighted: false,
+    desktopPositionClass: "lg:col-start-3 lg:row-start-1",
   },
 ];
 
@@ -91,33 +95,33 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white">
           <motion.div
-            className="max-w-4xl pb-20"
-            initial="hidden"
+            className="max-w-4xl px-4"
+            initial="hidden" 
             animate="visible"
             variants={containerVariants}
           >
             <motion.div
               variants={itemVariants}
-              className="flex justify-center mb-2"
+              className="flex justify-center"
             >
               <Image
                 src="/Swami-narayan.png"
                 alt="Sahajanand Wellness"
-                width={128}
-                height={128}
+                width={150}
+                height={150}
                 quality={100}
-                className="w-24 h-24 sm:w-32 sm:h-32 object-contain"
+                className="size-28 sm:size-40 object-contain"
               />
             </motion.div>
             <motion.p
               variants={itemVariants}
               className="text-sm sm:text-md font-semibold tracking-widest text-primary-foreground/80 mb-2 sm:mb-4 uppercase"
             >
-              YOUR SANCTUARY AWAITS
+              Welcome To
             </motion.p>
             <motion.h1
               variants={itemVariants}
-              className="text-4xl sm:text-5xl md:text-7xl font-bold font-serif leading-tight"
+              className="text-4xl sm:text-5xl lg:text-7xl font-bold font-serif leading-tight"
             >
               Sahajanand Wellness
             </motion.h1>
@@ -135,21 +139,27 @@ export default function HomePage() {
       <section className={newLocal}>
         <div className="container mx-auto px-4 -mt-20">
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center"
+            className="grid grid-cols-1 lg:grid-cols-3 xl:gap-8 gap-6 items-center"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
             variants={containerVariants}
           >
             {features.map((feature) => (
-              <motion.div key={feature.title} variants={itemVariants}>
+              <motion.div
+                key={feature.title}
+                variants={itemVariants}
+                className={feature.desktopPositionClass}
+              >
                 <FeatureCard
                   title={feature.title}
                   description={feature.description}
                   imageUrl={feature.imageUrl}
                   highlighted={feature.highlighted}
                   href={feature.href}
-                  className={`h-full ${feature.highlighted ? "" : "md:h-[360px]"}`}
+                  className={`h-full ${
+                    feature.highlighted ? "" : "lg:h-[400px]"
+                  }`}
                 />
               </motion.div>
             ))}
