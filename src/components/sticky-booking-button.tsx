@@ -105,9 +105,9 @@ export function StickyBookingButton() {
           sideOffset={12}
           className="w-[min(90vw,420px)] z-[1003] p-0 shadow-2xl border-border/30 bg-background/90 backdrop-blur-sm rounded-xl"
         >
-          <div>            
-            <div className="relative p-4">
-              <div className="flex items-center gap-3 mb-6">
+          <div>
+            <div className="p-4 border-b border-border/50">
+              <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-lg bg-primary/10">
                   <CalendarCheck className="h-6 w-6 text-primary" />
                 </div>
@@ -120,7 +120,9 @@ export function StickyBookingButton() {
                   </p>
                 </div>
               </div>
+            </div>
 
+            <div className="p-4">
               <div className="space-y-1.5">
                 {rooms.map((room, index) => (
                   <React.Fragment key={room.name}>
@@ -145,7 +147,7 @@ export function StickyBookingButton() {
                       <ChevronRight className="h-5 w-5 text-muted-foreground/80 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 flex-shrink-0" />
                     </Link>
                     {index < rooms.length - 1 && (
-                      <Separator className="!my-1.5 opacity-50" />
+                      <Separator className="my-1.5 opacity-50" />
                     )}
                   </React.Fragment>
                 ))}
