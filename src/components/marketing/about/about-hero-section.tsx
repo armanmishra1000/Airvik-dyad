@@ -79,7 +79,7 @@ export function AboutHeroSection() {
                 alt="Sahajanand Wellness Ashram"
                 width={600}
                 height={400}
-                className="object-cover aspect-[3/2] rounded-xl w-full"
+                className="object-cover aspect-[3/2] rounded-2xl w-full"
               />
             </div>
           </motion.div>
