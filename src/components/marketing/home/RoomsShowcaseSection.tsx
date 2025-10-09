@@ -20,6 +20,12 @@ import {
 } from "@/components/ui/carousel";
 import { Icon } from "@/components/shared/icon";
 import type { IconName } from "@/lib/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const normalizeName = (value: string) => value.split("[")[0].trim().toLowerCase();
 
@@ -45,6 +51,40 @@ const amenityIconMap: Record<string, IconName> = {
 
 const normalizeAmenityName = (value: string) =>
   value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+type AmenityDisplay = {
+  id: string;
+  name: string;
+  iconName: IconName;
+};
+
+type AmenityIconsProps = {
+  amenities: AmenityDisplay[];
+  gapClass: string;
+};
+
+function AmenityIcons({ amenities, gapClass }: AmenityIconsProps) {
+  return (
+    <div className={`flex flex-wrap ${gapClass}`}>
+      {amenities.map((amenity) => (
+        <TooltipProvider key={amenity.id}>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <div className="h-5 w-7 cursor-pointer">
+                <Icon name={amenity.iconName} className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs bg-white text-foreground border border-border">
+              <div className="flex items-center justify-center gap-2 text-center">
+                <span>{amenity.name}</span>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ))}
+    </div>
+  );
+}
 
 export function RoomsShowcaseSection() {
   const { roomTypes, amenities } = useDataContext();
@@ -124,7 +164,7 @@ export function RoomsShowcaseSection() {
           Sanctified spaces for every devotee’s stay.
         </p>
 
-        <div className="relative mt-12">
+        <div className="relative mt-12 lg:hidden">
           <Carousel opts={{ align: "start", loop: true }} className="w-full">
             <CarouselContent className="-ml-4">
               {featuredRoomTypes.map((room) => (
@@ -134,7 +174,7 @@ export function RoomsShowcaseSection() {
                   >
                     <div className="h-full">
                       <Card className="flex h-full flex-col overflow-hidden bg-card rounded-2xl">
-                        <div className="relative aspect-[3/2] w-full h-56">
+                        <div className="relative aspect-[3/2] w-full h-40">
                           <Image
                             src={room.imageUrl}
                             alt={room.name}
@@ -143,26 +183,19 @@ export function RoomsShowcaseSection() {
                             priority={false}
                           />
                         </div>
-                        <CardContent className="flex flex-1 flex-col gap-4 p-6 bg-white">
+                        <CardContent className="flex flex-1 flex-col gap-4 p-4 bg-white">
                           <div className="overflow-hidden">
-                            <CardTitle className="text-xl font-serif font-semibold truncate">
+                            <CardTitle className="text-lg font-serif font-semibold truncate">
                               {room.name}
                             </CardTitle>
                           </div>
-                          <CardDescription className="text-sm text-muted-foreground line-clamp-2">
+                          <CardDescription className="text-sm text-muted-foreground line-clamp-1">
                             {room.description}
                           </CardDescription>
-                          <div className="flex justify-start gap-3 overflow-x-auto sm:overflow-visible">
-                            {room.amenities.map((amenity) => (
-                              <div
-                                key={amenity.id}
-                                className="flex h-8 shrink-0 items-center gap-2 rounded-full border border-border/50 px-3 py-2 text-sm text-muted-foreground"
-                              >
-                                <Icon name={amenity.iconName} className="h-4 w-4 text-primary-hover" />
-                                <span>{amenity.name}</span>
-                              </div>
-                            ))}
-                          </div>
+                          <AmenityIcons
+                            amenities={room.amenities as AmenityDisplay[]}
+                            gapClass="gap-2"
+                          />
                           <Button asChild className="mt-auto w-full bg-primary hover:bg-primary-hover">
                             <Link href={`/book/rooms/${room.id}`}>Book Now</Link>
                           </Button>
@@ -172,9 +205,45 @@ export function RoomsShowcaseSection() {
                   </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious className="absolute left-1 top-[48%] -translate-y-1/2 -translate-x-1/2 rounded-full h-10 w-10  bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground z-10" />
-            <CarouselNext className="absolute right-1 top-[48%] -translate-y-1/2 translate-x-1/2 rounded-full h-10 w-10  bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground z-10" />
+            <CarouselPrevious className="absolute left-2 top-[46%] -translate-y-1/2 -translate-x-1/2 rounded-full h-8 w-8  bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground z-10" />
+            <CarouselNext className="absolute right-2 top-[46%] -translate-y-1/2 translate-x-1/2 rounded-full h-8 w-8  bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground z-10" />
           </Carousel>
+        </div>
+        <div className="relative mt-12 hidden lg:block">
+          <div className="grid grid-cols-4 gap-6">
+            {featuredRoomTypes.map((room) => (
+              <div key={room.id} className="h-full">
+                <Card className="flex h-full flex-col overflow-hidden bg-card rounded-2xl">
+                  <div className="relative aspect-[3/2] w-full h-40">
+                    <Image
+                      src={room.imageUrl}
+                      alt={room.name}
+                      fill
+                      className="rounded-t-2xl object-cover"
+                      priority={false}
+                    />
+                  </div>
+                  <CardContent className="flex flex-1 flex-col gap-4 p-4 bg-white">
+                    <div className="overflow-hidden">
+                      <CardTitle className="text-lg font-serif font-semibold truncate">
+                        {room.name}
+                      </CardTitle>
+                    </div>
+                    <CardDescription className="text-sm text-muted-foreground line-clamp-1">
+                      {room.description}
+                    </CardDescription>
+                    <AmenityIcons
+                      amenities={room.amenities as AmenityDisplay[]}
+                      gapClass="gap-2"
+                    />
+                    <Button asChild className="mt-auto w-full bg-primary hover:bg-primary-hover">
+                      <Link href={`/book/rooms/${room.id}`}>Book Now</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
