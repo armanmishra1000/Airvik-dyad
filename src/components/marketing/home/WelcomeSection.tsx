@@ -89,18 +89,6 @@ export function WelcomeSection() {
     },
   };
 
-  const badgeVariants: Variants = {
-    hidden: { scale: 0.8, opacity: 0 },
-    visible: {
-      scale: 1,
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    },
-  };
-
   return (
     <>
       <section className="bg-background py-10 sm:py-12 overflow-hidden">
@@ -117,11 +105,11 @@ export function WelcomeSection() {
               className="order-2 lg:order-1"
             >
               <Image
-                src="/about-usImg.png"
+                src="/gangadhat.png"
                 alt="Sahajanand Wellness Ashram in Rishikesh"
                 width={700}
                 height={500}
-                className="relative h-[400px] sm:h-[450px] md:h-[500px] rounded-2xl w-full object-cover"
+                className="relative h-auto sm:h-[450px] md:h-[500px] rounded-2xl w-full object-cover"
                 priority
               />
             </motion.div>
@@ -151,18 +139,16 @@ export function WelcomeSection() {
                 variants={itemVariants}
                 className="sm:flex flex-wrap justify-center lg:justify-start gap-3 mt-4 hidden"
               >
-                {serviceBadges.map((badge, index) => (
-                  <motion.div
+                {serviceBadges.map((badge) => (
+                  <div
                     key={badge.label}
-                    variants={badgeVariants}
-                    custom={index}
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-background border border-primary/20 shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-300 group"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-primary group-hover:scale-125 transition-transform duration-300" />
                     <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
                       {badge.label}
                     </span>
-                  </motion.div>
+                  </div>
                 ))}
               </motion.div>
 
