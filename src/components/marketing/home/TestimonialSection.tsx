@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React from "react";
 import Autoplay from "embla-carousel-autoplay";
 import {
@@ -13,29 +14,27 @@ import { motion } from "framer-motion";
 const testimonials = [
   {
     quote:
-      "Here, amidst the gentle whispers of the Ganga, I found a silence that spoke volumes to my soul. It's not just a place; it's a state of being.",
-    author: "A Seeker from Abroad",
+      "Sahajanand Wellness provided me with an incredible space to reconnect with myself",
   },
   {
     quote:
-      "The morning aarti filled my heart with a devotion I had only read about. Sahajanand Wellness is a true sanctuary for anyone on a spiritual path.",
-    author: "A Pilgrim from India",
+      "We all enjoyed a lot, very good property, location, hospitality... try to come back soon.",
   },
   {
     quote:
-      "Serving in the Annakshetra was the most profound form of meditation. To give without expectation is a lesson I will carry with me forever.",
-    author: "A Volunteer",
+      "A very nice place to stay in Rishikesh... a very nice place to stay in the natural beauty next to Gangaji.",
   },
   {
     quote:
-      "The teachings at the Veda-Pathshala are a beacon of ancient wisdom in the modern world. I feel blessed to have witnessed this sacred tradition.",
-    author: "A Visiting Scholar",
+      "The retreats at Sahajanand helped me find inner peace and true relaxation",
   },
 ];
 
+const renderQuote = (quote: string) => quote;
+
 export function TestimonialSection() {
   const plugin = React.useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+    Autoplay({ delay: 3500, stopOnInteraction: false })
   );
 
   return (
@@ -48,8 +47,8 @@ export function TestimonialSection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight mb-4">
-            Echoes of Peace
+          <h2 className="text-4xl md:text-5xl font-bold  text-foreground leading-tight mb-4">
+            Stories of Stillness
           </h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Heartfelt reflections from those who have experienced the serenity
@@ -58,7 +57,7 @@ export function TestimonialSection() {
         </motion.div>
 
         <motion.div
-          className="relative w-full max-w-4xl mx-auto"
+          className="relative w-full"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -71,20 +70,32 @@ export function TestimonialSection() {
               loop: true,
             }}
             className="w-full"
-            onMouseEnter={plugin.current.stop}
-            onMouseLeave={plugin.current.reset}
           >
             <CarouselContent>
               {testimonials.map((testimonial, index) => (
-                <CarouselItem key={index} className="md:basis-1/2">
+                <CarouselItem
+                  key={index}
+                  className="basis-full sm:basis-1/2 lg:basis-1/3"
+                >
                   <div className="p-4 h-full">
-                    <Card className="bg-card h-full flex flex-col justify-center shadow-md border-l-4 border-primary">
-                      <CardContent className="p-8 text-center space-y-6">
-                        <p className="text-lg font-serif italic text-foreground/80">
-                          &ldquo;{testimonial.quote}&rdquo;
+                    <Card className="relative h-full rounded-3xl bg-card border border-white/80">
+                      <CardContent className="relative flex h-full flex-col items-center gap-8 px-8 py-6 lg:py-8 lg:px-10 md:py-8 text-center">
+                        <div className="flex items-center justify-center">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-white">
+                            <Image
+                              src="/icons/lotus-outline.svg"
+                              alt="Lotus accent"
+                              width={28}
+                              height={28}
+                            />
+                          </div>
+                        </div>
+                        <p className="text-lg leading-relaxed text-muted-foreground">
+                          &ldquo;{renderQuote(testimonial.quote)}&rdquo;
                         </p>
-                        {/* <p className="font-semibold text-muted-foreground text-sm tracking-wider uppercase">
-                          - {testimonial.author}
+                        {/* <div className="mx-auto h-px w-16 bg-primary/30" /> */}
+                        {/* <p className="text-xs font-medium uppercase tracking-[0.4em] text-muted-foreground">
+                          {testimonial.author}
                         </p> */}
                       </CardContent>
                     </Card>
