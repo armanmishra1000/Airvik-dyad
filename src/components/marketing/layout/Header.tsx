@@ -4,14 +4,9 @@ import React, { useEffect, useRef, useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  Menu,
-  ChevronDown,
-  Facebook,
-  Instagram,
-  Linkedin,
-} from "lucide-react";
-import { FaXTwitter } from "react-icons/fa6";
+import { Menu, ChevronDown } from "lucide-react";
+import type { IconType } from "react-icons";
+import { FaFacebook, FaInstagram, FaLinkedin, FaXTwitter } from "react-icons/fa6";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Collapsible,
@@ -46,26 +41,29 @@ const navLinks = [
 
 type SocialLink = {
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  name: string;
+  icon: IconType;
 };
 
 const socialLinks: SocialLink[] = [
-  { href: "https://instagram.com/rishikeshdhamofficial", icon: Instagram },
-  { href: "https://facebook.com/Rishikeshdhamofficial", icon: Facebook },
-  { href: "https://linkedin.com/company/rishikeshdham", icon: Linkedin },
-  { href: "https://x.com/Rishikeshdham", icon: FaXTwitter },
+  {
+    href: "https://instagram.com/rishikeshdhamofficial",
+    name: "Instagram",
+    icon: FaInstagram,
+  },
+  {
+    href: "https://facebook.com/Rishikeshdhamofficial",
+    name: "Facebook",
+    icon: FaFacebook,
+  },
+  {
+    href: "https://linkedin.com/company/rishikeshdham",
+    name: "LinkedIn",
+    icon: FaLinkedin,
+  },
+  { href: "https://x.com/Rishikeshdham", name: "X (Twitter)", icon: FaXTwitter },
 ];
 
-/**
- * Render the site's responsive header with navigation, social links, and a non-sticky top bar.
- *
- * The main navigation sticks without animations while an invisible spacer preserves layout alignment.
- * Render the site's responsive header with a scroll-aware top bar, navigation, social links, booking CTA, and an invisible spacer that preserves layout beneath the fixed header.
- *
- * The header toggles compact styling when the page is scrolled more than 50 pixels and observes its own size to keep the spacer height in sync, preventing layout shift.
- *
- * @returns The header JSX element including the top informational bar, main navigation (desktop and mobile), booking call-to-action, and an invisible spacer whose height matches the current header height.
- */
 export function Header() {
   const topBarRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
@@ -157,15 +155,21 @@ export function Header() {
 
           {/* topbar content */}
           <div className="flex items-center space-x-4">
-            {socialLinks.map((link, index) => (
+            {socialLinks.map((link) => (
               <a
-                key={index}
+                key={link.href}
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/90"
+                aria-label={link.name}
+                title={link.name}
               >
-                <link.icon className="size-5" />
+                <link.icon
+                  className="size-5"
+                  aria-hidden="true"
+                  focusable="false"
+                />
               </a>
             ))}
           </div>
@@ -254,9 +258,9 @@ export function Header() {
                 {navLinks.map((link) =>
                   link.subLinks ? (
                     <Collapsible key={link.label} className="w-full">
-                    <CollapsibleTrigger className="flex justify-between items-center w-full text-lg font-medium hover:text-primary py-2">
+                    <CollapsibleTrigger className="flex justify-between items-center w-full text-lg font-medium hover:text-primary py-2 [&[data-state=open]>svg]:rotate-180">
                         {link.label}
-                      <ChevronDown className="h-5 w-5 [&[data-state=open]]:rotate-180" />
+                      <ChevronDown className="h-5 w-5 transition-transform" />
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="pl-4 mt-2 space-y-3 border-l-2 border-border ml-2">
