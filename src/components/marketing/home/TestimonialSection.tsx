@@ -92,7 +92,7 @@ export function TestimonialSection() {
                       className="relative h-full rounded-3xl border border-white/80"
                       style={{ backgroundColor: testimonialCardBackground }}
                     >
-                      <CardContent className="relative flex h-full flex-col items-center gap-8 px-8 pt-24 lg:pt-16 pb-6 text-center md:pt-24 md:pb-8 lg:px-10 lg:pt-28">
+                      <CardContent className="relative flex h-full flex-col items-center gap-8 px-8 pt-24 pb-6 text-center md:pt-24 md:pb-8 lg:px-10 lg:pt-28">
                         <div className="flex items-center justify-center -mt-16">
                           <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex h-24 w-24 lg:w-32 lg:h-32 items-center justify-center rounded-full border-4 border-white bg-white">
                             <Image
