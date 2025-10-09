@@ -34,9 +34,9 @@ const activities = [
 ];
 
 /**
- * Render the welcome section with a hero image and text, followed by an animated grid of activity cards.
+ * Renders the welcome hero and an animated grid of activity cards.
  *
- * The component includes entrance animations for the hero image, text blocks, header, and each activity card using Framer Motion.
+ * The hero and activity cards use Framer Motion variants for entrance animations.
  *
  * @returns The React element containing the welcome hero and the "Our Sacred Activities" animated grid.
  */

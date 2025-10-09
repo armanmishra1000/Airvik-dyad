@@ -5,27 +5,28 @@ import { useDataContext } from "@/context/data-context";
 import { Button } from "@/components/ui/button";
 import { StickyNoteCard } from "./StickyNoteCard";
 import { StickyNoteFormDialog } from "./StickyNoteFormDialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function DashboardStickyNotes() {
   const { stickyNotes } = useDataContext();
 
   return (
-    <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Sticky Notes</CardTitle>
+    <div className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+        <div className="flex flex-row items-center justify-between border-b border-border/50 sm:p-6 p-4">
+            <h2 className="text-xl font-semibold tracking-tight">Sticky Notes</h2>
             <StickyNoteFormDialog>
-                <Button size="sm">
+                <Button size="sm" className=" focus-visible:ring-0">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Note
                 </Button>
             </StickyNoteFormDialog>
-        </CardHeader>
-        <CardContent>
+        </div>
+        <div className="sm:p-6 p-4">
             {stickyNotes.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="flex items-start gap-4 sm:gap-5 overflow-x-auto scrollbar-thin">
                     {stickyNotes.map((note) => (
-                        <StickyNoteCard key={note.id} note={note} />
+                        <div key={note.id} className="flex-shrink-0 w-[240px] sm:w-[260px]">
+                            <StickyNoteCard note={note} />
+                        </div>
                     ))}
                 </div>
             ) : (
@@ -33,7 +34,7 @@ export function DashboardStickyNotes() {
                     <p>No sticky notes yet. Add one to get started!</p>
                 </div>
             )}
-        </CardContent>
-    </Card>
+        </div>
+    </div>
   );
 }
