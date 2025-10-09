@@ -5,7 +5,7 @@ import { motion, type Variants } from "framer-motion";
 import { FeatureCard } from "@/components/marketing/home/FeatureCard";
 import { WelcomeSection } from "@/components/marketing/home/WelcomeSection";
 import { VideoSection } from "@/components/marketing/home/VideoSection";
-import { StaySection } from "@/components/marketing/home/StaySection";
+import { RoomsShowcaseSection } from "@/components/marketing/home/RoomsShowcaseSection";
 import { TestimonialSection } from "@/components/marketing/home/TestimonialSection";
 import { GallerySection } from "@/components/marketing/home/GallerySection";
 import { Marquee } from "@/components/marketing/layout/Marquee";
@@ -43,6 +43,15 @@ const features: Feature[] = [
   },
 ];
 
+/**
+ * Root page component that renders the Sahajanand Wellness home page layout.
+ *
+ * Renders the hero banner with background image and animated title, a features grid
+ * with staggered entrance animations, and the site sections: Welcome, Gallery,
+ * Video, Stay, Testimonial, and Marquee.
+ *
+ * @returns The JSX element representing the complete home page.
+ */
 export default function HomePage() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -157,9 +166,7 @@ export default function HomePage() {
 
       {/* Video Section */}
       <VideoSection />
-
-      {/* Stay Section */}
-      <StaySection />
+      <RoomsShowcaseSection />
 
       {/* Testimonial Section */}
       <TestimonialSection />

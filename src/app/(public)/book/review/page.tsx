@@ -16,6 +16,13 @@ import Image from "next/image";
 import { ThumbsUp, Loader2 } from "lucide-react";
 
 import { useDataContext } from "@/context/data-context";
+import { BookingReviewSkeleton } from "@/components/public/booking-review-skeleton";
+import { InlineAlert } from "@/components/public/inline-alert";
+import { PaymentTrustBadges } from "@/components/public/payment-trust-badges";
+import { BookingPolicies } from "@/components/public/booking-policies";
+
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -38,21 +45,37 @@ import {
 import type { RoomType } from "@/data/types";
 
 const paymentSchema = z.object({
-  cardName: z.string().min(1, "Name on card is required."),
-  cardNumber: z
-    .string()
-    .min(16, "Card number must be 16 digits.")
-    .max(16, "Card number must be 16 digits."),
-  expiryDate: z
-    .string()
-    .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Invalid expiry date (MM/YY)."),
-  cvc: z.string().min(3, "CVC must be 3 digits.").max(4, "CVC is too long."),
+  paymentMethod: z.enum(["card", "property"]),
+  cardName: z.string().optional(),
+  cardNumber: z.string().optional(),
+  expiryDate: z.string().optional(),
+  cvc: z.string().optional(),
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().min(1, "Last name is required."),
   email: z.string().email("Please enter a valid email."),
   country: z.string({ required_error: "Country is required." }),
-  phone: z.string().min(1, "Phone number is required."),
-});
+  phoneCountryCode: z.string(),
+  phone: z.string().min(10, "Phone number must be at least 10 digits."),
+}).refine(
+  (data) => {
+    if (data.paymentMethod === "card") {
+      return (
+        data.cardName &&
+        data.cardNumber &&
+        data.cardNumber.replace(/\s/g, "").length >= 16 &&
+        data.expiryDate &&
+        /^(0[1-9]|1[0-2])\/\d{2}$/.test(data.expiryDate) &&
+        data.cvc &&
+        data.cvc.length >= 3
+      );
+    }
+    return true;
+  },
+  {
+    message: "All card details are required when paying with card",
+    path: ["cardNumber"],
+  }
+);
 
 function BookingReviewContent() {
   const router = useRouter();
@@ -65,9 +88,16 @@ function BookingReviewContent() {
     addGuest,
     addReservation,
     ratePlans,
+    isLoading,
   } = useDataContext();
 
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [bookingError, setBookingError] = React.useState<{
+    type: "availability" | "validation" | "payment";
+    message: string;
+  } | null>(null);
+  const [, setHasAvailabilityConflict] = React.useState(false);
+  const [paymentMethod, setPaymentMethod] = React.useState<"card" | "property">("card");
 
   const bookingDetails = React.useMemo(() => {
     return {
@@ -92,6 +122,7 @@ function BookingReviewContent() {
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
+      paymentMethod: "card",
       cardName: "",
       cardNumber: "",
       expiryDate: "",
@@ -100,47 +131,120 @@ function BookingReviewContent() {
       lastName: "",
       email: "",
       country: "India",
+      phoneCountryCode: "+91",
       phone: "",
     },
   });
 
-  const isLoading = roomTypes.length === 0 || !ratePlan;
+
+
+  // Validate query parameters and date range
+  const { hasValidParams, hasValidDates, fromDate, toDate, nights } = React.useMemo(() => {
+    const basicParamsValid = Boolean(
+      bookingDetails.roomTypeIds.length > 0 &&
+      bookingDetails.from &&
+      bookingDetails.to &&
+      bookingDetails.guests
+    );
+    
+    if (!basicParamsValid) {
+      return { hasValidParams: false, hasValidDates: false, fromDate: null, toDate: null, nights: 0 };
+    }
+    
+    // Parse dates and validate
+    const parsedFromDate = parse(bookingDetails.from!, "yyyy-MM-dd", new Date());
+    const parsedToDate = parse(bookingDetails.to!, "yyyy-MM-dd", new Date());
+    
+    // Check if dates are valid and from < to
+    const datesValid = !isNaN(parsedFromDate.getTime()) && !isNaN(parsedToDate.getTime());
+    const calculatedNights = datesValid ? differenceInDays(parsedToDate, parsedFromDate) : 0;
+    const dateOrderValid = calculatedNights > 0;
+    
+    return {
+      hasValidParams: basicParamsValid,
+      hasValidDates: datesValid && dateOrderValid,
+      fromDate: parsedFromDate,
+      toDate: parsedToDate,
+      nights: calculatedNights
+    };
+  }, [bookingDetails]);
 
   if (isLoading) {
+    return <BookingReviewSkeleton />;
+  }
+
+  // Show contact us if no rate plan available
+  if (!ratePlan) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh] gap-2">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-primary text-xl">Loading...</p>
+      <div className="container mx-auto px-4 py-10 max-w-2xl">
+        <InlineAlert
+          variant="warning"
+          title="Rate Information Unavailable"
+          description="We're currently updating our pricing. Please contact us directly to complete your booking."
+        />
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Contact Us to Book</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-600">Our team is ready to assist you with your booking.</p>
+            <div className="space-y-2">
+              <p><strong>Phone:</strong> <a href="tel:+919876543210" className="text-primary hover:underline">+91 98765 43210</a></p>
+              <p><strong>Email:</strong> <a href="mailto:reservations@sahajanandwellness.com" className="text-primary hover:underline">reservations@sahajanandwellness.com</a></p>
+              <p><strong>Hours:</strong> 9:00 AM - 9:00 PM IST (7 days)</p>
+            </div>
+            <Button onClick={() => router.push("/book")} className="w-full mt-4">
+              Return to Search
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  if (
-    selectedRoomTypes.length === 0 ||
-    !bookingDetails.from ||
-    !bookingDetails.to
-  ) {
+  // Show error for invalid parameters or dates
+  if (!hasValidParams || !hasValidDates || selectedRoomTypes.length === 0) {
+    const errorTitle = !hasValidParams 
+      ? "Invalid Booking Details"
+      : !hasValidDates 
+      ? "Invalid Date Range"
+      : "No Rooms Selected";
+    
+    const errorDescription = !hasValidParams
+      ? "Required booking information is missing. Please start a new search with valid dates and room selection."
+      : !hasValidDates
+      ? "The selected dates are invalid or check-out must be after check-in. Please select a valid date range."
+      : "No room types were found for your selection. Please return to search and try again.";
+    
     return (
-      <div className="container mx-auto px-4 py-10 text-center">
-        <h1 className="text-2xl font-bold">Invalid Booking Details</h1>
-        <p className="text-muted-foreground">
-          Something went wrong. Please start your search again.
-        </p>
-        <Button onClick={() => router.push("/")} className="mt-4">
-          Back to Home
-        </Button>
+      <div className="container mx-auto px-4 py-10 max-w-2xl">
+        <InlineAlert
+          variant="error"
+          title={errorTitle}
+          description={errorDescription}
+          action={{
+            label: "Return to Search",
+            onClick: () => router.push("/book"),
+          }}
+        />
       </div>
     );
   }
 
-  const fromDate = parse(bookingDetails.from, "yyyy-MM-dd", new Date());
-  const toDate = parse(bookingDetails.to, "yyyy-MM-dd", new Date());
-  const nights = differenceInDays(toDate, fromDate);
+  // At this point, fromDate, toDate, and nights are guaranteed to be valid
   const totalCost = selectedRoomTypes.length * nights * (ratePlan?.price || 0);
   const firstRoomType = selectedRoomTypes[0];
 
+  // Helper function to format card number with spaces
+  const formatCardNumber = (value: string) => {
+    const cleaned = value.replace(/\s/g, "");
+    const chunks = cleaned.match(/.{1,4}/g);
+    return chunks ? chunks.join(" ") : cleaned;
+  };
+
   async function onSubmit(values: z.infer<typeof paymentSchema>) {
     setIsProcessing(true);
+    setBookingError(null); // Clear previous errors
     try {
       // Simulate network delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -161,7 +265,7 @@ function BookingReviewContent() {
               res.roomId === room.id &&
               res.status !== "Cancelled" &&
               areIntervalsOverlapping(
-                { start: fromDate, end: toDate },
+                { start: fromDate!, end: toDate! },
                 {
                   start: parseISO(res.checkInDate),
                   end: parseISO(res.checkOutDate),
@@ -179,9 +283,13 @@ function BookingReviewContent() {
       }
 
       if (!allRoomsFound) {
-        toast.error("One or more rooms are no longer available", {
-          description:
-            "Sorry, some rooms sold out for your selected dates while you were booking.",
+        setBookingError({
+          type: "availability",
+          message: "One or more rooms are no longer available for your selected dates.",
+        });
+        setHasAvailabilityConflict(true);
+        toast.error("Room No Longer Available", {
+          description: "Please select alternative dates or return to search.",
         });
         setIsProcessing(false);
         return;
@@ -210,23 +318,52 @@ function BookingReviewContent() {
       // Redirect to the confirmation page of the first reservation in the group
       router.push(`/book/confirmation/${newReservations[0].id}`);
     } catch (error: unknown) {
-      const description =
+      const errorMessage =
         error instanceof Error
           ? error.message
           : "An unexpected error occurred. Please try again or contact support.";
+      
       console.error("Booking failed:", error);
+      
+      setBookingError({
+        type: "payment",
+        message: errorMessage,
+      });
+      
       toast.error("Booking Failed", {
-        description,
+        description: errorMessage,
       });
       setIsProcessing(false);
     }
   }
+
+  const handleRetry = () => {
+    setBookingError(null);
+    setHasAvailabilityConflict(false);
+  };
 
   return (
     <div className="container px-4 mx-auto py-10">
       <h1 className="lg:text-3xl sm:text-2xl text-lg font-bold font-serif mb-6 text-center">
         Review Your Booking
       </h1>
+
+      {/* Show error alerts */}
+      {bookingError && (
+        <div className="max-w-6xl mx-auto mb-6">
+          <InlineAlert
+            variant="error"
+            title={bookingError.type === "availability" ? "Room Unavailable" : "Booking Failed"}
+            description={bookingError.message}
+            action={{
+              label: "Try Again",
+              onClick: handleRetry,
+            }}
+            onDismiss={() => setBookingError(null)}
+          />
+        </div>
+      )}
+
       <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {/* Booking Summary - Right Side */}
         <div className="space-y-6">
@@ -269,14 +406,14 @@ function BookingReviewContent() {
                 <div>
                   <p className="font-semibold">Check-in</p>
                   <p className="text-base">
-                    {format(fromDate, "E, d MMM yyyy")}
+                    {format(fromDate!, "E, d MMM yyyy")}
                   </p>
                   <p className="text-sm text-muted-foreground">From 12:00</p>
                 </div>
                 <Separator orientation="vertical" className="h-auto" />
                 <div>
                   <p className="font-semibold">Check-out</p>
-                  <p className="text-base">{format(toDate, "E, d MMM yyyy")}</p>
+                  <p className="text-base">{format(toDate!, "E, d MMM yyyy")}</p>
                   <p className="text-sm text-muted-foreground">Until 11:00</p>
                 </div>
               </div>
@@ -413,17 +550,26 @@ function BookingReviewContent() {
                           <FormItem>
                             <FormLabel>Phone number</FormLabel>
                             <div className="flex items-center gap-2">
-                              <Select defaultValue="IN +91">
-                                <SelectTrigger className="w-[120px]">
-                                  <SelectValue placeholder="Code" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="IN +91">IN +91</SelectItem>
-                                  <SelectItem value="US +1">US +1</SelectItem>
-                                  <SelectItem value="UK +44">UK +44</SelectItem>
-                                  <SelectItem value="CA +1">CA +1</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <FormField
+                                control={form.control}
+                                name="phoneCountryCode"
+                                render={({ field: codeField }) => (
+                                  <Select
+                                    value={codeField.value}
+                                    onValueChange={codeField.onChange}
+                                  >
+                                    <SelectTrigger className="w-[120px]">
+                                      <SelectValue placeholder="Code" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="+91">IN +91</SelectItem>
+                                      <SelectItem value="+1">US +1</SelectItem>
+                                      <SelectItem value="+44">UK +44</SelectItem>
+                                      <SelectItem value="+61">AU +61</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
                               <FormControl>
                                 <Input
                                   type="tel"
@@ -439,8 +585,58 @@ function BookingReviewContent() {
                     </div>
                   </div>
                   <Separator />
+                  
+                  {/* Payment Method Selection */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Payment Details</h3>
+                    <h3 className="text-lg font-semibold">Payment Method</h3>
+                    <FormField
+                      control={form.control}
+                      name="paymentMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <RadioGroup
+                              value={field.value}
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                setPaymentMethod(value as "card" | "property");
+                              }}
+                              className="grid grid-cols-2 gap-4"
+                            >
+                              <Label
+                                htmlFor="card"
+                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer [&:has([data-state=checked])]:border-primary"
+                              >
+                                <RadioGroupItem value="card" id="card" className="sr-only" />
+                                <div className="space-y-1 text-center">
+                                  <p className="text-sm font-medium leading-none">Pay Now</p>
+                                  <p className="text-xs text-muted-foreground">Credit/Debit Card</p>
+                                </div>
+                              </Label>
+                              <Label
+                                htmlFor="property"
+                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer [&:has([data-state=checked])]:border-primary"
+                              >
+                                <RadioGroupItem value="property" id="property" className="sr-only" />
+                                <div className="space-y-1 text-center">
+                                  <p className="text-sm font-medium leading-none">Pay at Property</p>
+                                  <p className="text-xs text-muted-foreground">Cash or Card</p>
+                                </div>
+                              </Label>
+                            </RadioGroup>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Card Details - Show only if Pay Now selected */}
+                  {paymentMethod === "card" && (
+                    <>
+                      <Separator />
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Card Details</h3>
+                        <PaymentTrustBadges />
                     <FormField
                       control={form.control}
                       name="cardName"
@@ -464,6 +660,11 @@ function BookingReviewContent() {
                             <Input
                               placeholder="•••• •••• •••• ••••"
                               {...field}
+                              onChange={(e) => {
+                                const formatted = formatCardNumber(e.target.value);
+                                field.onChange(formatted);
+                              }}
+                              maxLength={19}
                             />
                           </FormControl>
                           <FormMessage />
@@ -491,25 +692,43 @@ function BookingReviewContent() {
                           <FormItem>
                             <FormLabel>CVC</FormLabel>
                             <FormControl>
-                              <Input placeholder="•••" {...field} />
+                              <Input placeholder="•••" {...field} maxLength={4} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
-                  </div>
+                      </div>
+                    </>
+                  )}
                   <Button
                     type="submit"
                     className="w-full text-lg rounded-lg h-12"
                     disabled={isProcessing}
                   >
-                    {isProcessing
-                      ? "Processing..."
-                      : `Confirm & Pay $${totalCost.toFixed(2)}`}
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                        Processing...
+                      </>
+                    ) : paymentMethod === "card" ? (
+                      `Confirm & Pay ₹${totalCost.toLocaleString()}`
+                    ) : (
+                      `Confirm Booking - Pay ₹${totalCost.toLocaleString()} at Property`
+                    )}
                   </Button>
+                  
+                  <p className="text-xs text-center text-gray-500 mt-4">
+                    {paymentMethod === "card"
+                      ? "You will be charged immediately. Secure payment powered by SSL encryption."
+                      : "You can pay cash or card when you arrive at the property. Your booking will be confirmed instantly."}
+                  </p>
                 </form>
               </Form>
+              
+              {/* Policies Accordion */}
+              <BookingPolicies />
             </CardContent>
           </Card>
         </div>

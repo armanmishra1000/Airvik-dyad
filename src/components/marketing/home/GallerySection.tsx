@@ -29,6 +29,15 @@ const galleryImages = [
   },
 ];
 
+/**
+ * Renders the "Glimpses of Serenity" gallery section with animated image tiles.
+ *
+ * The section includes a centered heading and subtitle, a small decorative image,
+ * and a responsive grid of images that animate into view with staggered entrance
+ * and scale/fade effects.
+ *
+ * @returns A React element containing the gallery section markup and animations.
+ */
 export function GallerySection() {
   const containerVariants = {
     hidden: { opacity: 0 },
