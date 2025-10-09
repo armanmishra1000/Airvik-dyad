@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+if (!process.env.NEXT_TRACE_SPAN_THRESHOLD_MS) {
+  process.env.NEXT_TRACE_SPAN_THRESHOLD_MS = `${Number.MAX_SAFE_INTEGER}`;
+}
+
 const nextConfig: NextConfig = {
   eslint: {
     // Allow production builds to succeed even if lint errors are present.
