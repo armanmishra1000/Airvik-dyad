@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -11,33 +12,55 @@ import {
 import { CalendarCheck, Bed, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useDataContext } from "@/context/data-context";
+import { cn } from "@/lib/utils";
 
 const featuredRoomMatchers = [
   {
-    label: "Brahmbhoj [Semi Deluxe]",
+    label: "Brahmbhoj",
+    subtitle: "Semi Deluxe",
     match: "Brahmbhoj",
   },
   {
-    label: "AnnaDaan [Premium Room]",
+    label: "AnnaDaan",
+    subtitle: "Premium Room",
     match: "AnnaDaan",
   },
   {
-    label: "Havan Donation [Economy]",
+    label: "Havan Donation",
+    subtitle: "Economy",
     match: "Havan",
   },
   {
-    label: "Ganga Aarti [Ganga Darshan]",
+    label: "Ganga Aarti",
+    subtitle: "Ganga Darshan",
     match: "Ganga",
   },
 ];
 
 export function StickyBookingButton() {
+  const pathname = usePathname();
   const { roomTypes } = useDataContext();
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const isAdminRoute = React.useMemo(() => {
+    return pathname?.startsWith("/dashboard") || 
+           pathname?.startsWith("/calendar") ||
+           pathname?.startsWith("/guests") ||
+           pathname?.startsWith("/rooms") ||
+           pathname?.startsWith("/room-types") ||
+           pathname?.startsWith("/room-categories") ||
+           pathname?.startsWith("/rates") ||
+           pathname?.startsWith("/housekeeping") ||
+           pathname?.startsWith("/reports") ||
+           pathname?.startsWith("/reservations") ||
+           pathname?.startsWith("/settings");
+  }, [pathname]);
 
   const rooms = React.useMemo(() => {
     if (!roomTypes || roomTypes.length === 0) {
       return featuredRoomMatchers.map((room) => ({
         name: room.label,
+        subtitle: room.subtitle,
         href: "/book",
       }));
     }
@@ -49,60 +72,99 @@ export function StickyBookingButton() {
 
       return {
         name: room.label,
+        subtitle: room.subtitle,
         href: matchedRoomType ? `/book/rooms/${matchedRoomType.id}` : "/book",
       };
     });
   }, [roomTypes]);
 
+  if (isAdminRoute) {
+    return null;
+  }
+
   return (
-    <div className="fixed top-1/2 right-0 z-50 -translate-y-1/2">
-      <Popover>
+    <div className="fixed top-1/2 right-0 z-50 -translate-y-1/2 hidden sm:block">
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
-            className="flex h-auto w-auto items-center gap-2 rounded-l-lg rounded-r-none p-3 text-base"
+            className={cn(
+              "flex h-auto w-auto items-center gap-2.5 rounded-l-xl rounded-r-none p-4 text-base shadow-lg hover:shadow-xl transition-all duration-300",
+              "bg-gradient-to-b from-primary to-primary/90 hover:from-primary hover:to-primary",
+              isOpen && "shadow-2xl"
+            )}
             aria-label="Open booking panel"
             style={{ writingMode: "vertical-rl" }}
           >
             <CalendarCheck className="h-5 w-5 rotate-90" />
-            <span className="tracking-widest">Booking</span>
+            <span className="tracking-[0.2em] font-semibold">BOOK NOW</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          side="right"
+          side="left"
           align="center"
-          sideOffset={8}
-          className="w-[350px] sm:w-[400px] z-[1003] p-0 shadow-xl border-border/50"
+          sideOffset={12}
+          className="w-[min(90vw,420px)] z-[1003] p-0 shadow-2xl border-border/30 bg-background rounded-xl"
         >
-          <div className="p-6">
-            <h3 className="text-2xl font-serif font-bold text-foreground mb-4">
-              Book Your Stay
-            </h3>
-            <div className="flex flex-col">
-              {rooms.map((room, index) => (
-                <React.Fragment key={room.name}>
-                  <Link
-                    href={room.href}
-                    className="group flex items-center justify-between gap-4 py-3 rounded-md hover:bg-muted transition-colors -mx-2 px-2"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="bg-primary/10 text-primary p-3 rounded-md">
-                        <Bed className="h-5 w-5" />
-                      </div>
-                      <span className="font-medium text-foreground/80 group-hover:text-foreground transition-colors">
-                        {room.name}
-                      </span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary transition-transform duration-300 group-hover:translate-x-1" />
-                  </Link>
-                  {index < rooms.length - 1 && <Separator className="my-1" />}
-                </React.Fragment>
-              ))}
+          <div>
+            <div className="p-4 border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-primary/10">
+                  <CalendarCheck className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-serif font-bold text-foreground">
+                    Book Your Stay
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Choose your perfect room
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="bg-muted/50 p-4 border-t">
-            <Button asChild size="lg" className="w-full">
-              <Link href="/book">View All Rooms</Link>
-            </Button>
+
+            <div className="p-4">
+              <div className="space-y-1.5">
+                {rooms.map((room, index) => (
+                  <React.Fragment key={room.name}>
+                    <Link
+                      href={room.href}
+                      onClick={() => setIsOpen(false)}
+                      className="group flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-primary/5 border border-transparent hover:border-primary/40 transition-all duration-200"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="bg-primary/10 text-primary p-2.5 rounded-lg flex-shrink-0">
+                          <Bed className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                            {room.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {room.subtitle}
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground/80 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200 flex-shrink-0" />
+                    </Link>
+                    {index < rooms.length - 1 && (
+                      <Separator className="my-1.5 opacity-50" />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-border/50">
+              <Button 
+                asChild 
+                size="lg" 
+                className="w-full font-semibold"
+              >
+                <Link href="/book" onClick={() => setIsOpen(false)}>
+                  View All Rooms
+                </Link>
+              </Button>
+            </div>
           </div>
         </PopoverContent>
       </Popover>
