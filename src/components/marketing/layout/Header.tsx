@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,10 @@ import {
   Menu,
   ChevronDown,
   Facebook,
-  Twitter,
-  Youtube,
   Instagram,
+  Linkedin,
 } from "lucide-react";
+import { FaXTwitter } from "react-icons/fa6";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Collapsible,
@@ -44,95 +44,103 @@ const navLinks = [
   { href: "/gallery", label: "Ashram’s Glimpse" },
 ];
 
-const socialLinks = [
-  { href: "#", icon: Facebook },
-  { href: "#", icon: Twitter },
-  { href: "#", icon: Instagram },
-  { href: "#", icon: Youtube },
+type SocialLink = {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const socialLinks: SocialLink[] = [
+  { href: "https://instagram.com/rishikeshdhamofficial", icon: Instagram },
+  { href: "https://facebook.com/Rishikeshdhamofficial", icon: Facebook },
+  { href: "https://linkedin.com/company/rishikeshdham", icon: Linkedin },
+  { href: "https://x.com/Rishikeshdham", icon: FaXTwitter },
 ];
 
 /**
- * Render the site's responsive header with navigation, social links, and a scroll-aware sticky top bar.
+ * Render the site's responsive header with navigation, social links, and a non-sticky top bar.
  *
- * The component tracks window scroll to collapse the top informational bar after 50 pixels and to apply
- * a shadow/border to the header when scrolled.
- *
- * @returns The React element representing the complete site header, including the top info bar, logo, navigation (desktop and mobile), social links, and booking action.
- * Render the site's responsive header with navigation, social links, and a spacer that preserves layout beneath the fixed header.
- *
- * The header tracks scroll position to toggle compact styling and observes its own size to update an invisible spacer element whose height matches the header, preventing layout shift when the header is fixed.
- *
- * @returns The header JSX element including the top bar, main navigation (desktop and mobile variants), booking CTA, and an invisible spacer whose height equals the current header height.
+ * The main navigation sticks without animations while an invisible spacer preserves layout alignment.
  */
 export function Header() {
-  const [isScrolled, setIsScrolled] = useState(false);
+  const topBarRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [topBarHeight, setTopBarHeight] = useState(0);
+  const [isSticky, setIsSticky] = useState(false);
 
-  const updateHeaderHeight = useCallback(() => {
-    if (!headerRef.current) {
-      return;
+  const updateMeasurements = useCallback(() => {
+    if (headerRef.current) {
+      setHeaderHeight(headerRef.current.getBoundingClientRect().height);
     }
 
-    setHeaderHeight(headerRef.current.getBoundingClientRect().height);
+    if (topBarRef.current) {
+      setTopBarHeight(topBarRef.current.getBoundingClientRect().height);
+    }
   }, []);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-      updateHeaderHeight();
+      const shouldStick = window.scrollY > 0;
+      setIsSticky(shouldStick);
+      updateMeasurements();
     };
 
-    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [updateHeaderHeight]);
+  }, [updateMeasurements]);
 
   useEffect(() => {
-    if (!headerRef.current) {
-      return;
-    }
-
-    const node = headerRef.current;
-
-    updateHeaderHeight();
+    updateMeasurements();
 
     if (typeof ResizeObserver === "undefined") {
       return;
     }
 
+    const navNode = headerRef.current;
+    const topNode = topBarRef.current;
     const observer = new ResizeObserver(() => {
-      updateHeaderHeight();
+      updateMeasurements();
     });
 
-    observer.observe(node);
+    if (navNode) {
+      observer.observe(navNode);
+    }
+
+    if (topNode) {
+      observer.observe(topNode);
+    }
 
     return () => {
+      if (navNode) {
+        observer.unobserve(navNode);
+      }
+
+      if (topNode) {
+        observer.unobserve(topNode);
+      }
+
       observer.disconnect();
     };
-  }, [updateHeaderHeight]);
+  }, [updateMeasurements]);
 
   const HEADER_BASE_CLASSES =
-    "fixed top-0 left-0 right-0 z-[1001] transition-all duration-300 bg-white border-b border-border";
+    "left-0 right-0 z-[1001] border-b border-border";
+  const headerClassName = cn(
+    HEADER_BASE_CLASSES,
+    isSticky ? "fixed bg-white shadow-md" : "absolute bg-white"
+  );
   return (
     <>
-      <header
-        ref={headerRef}
-        className={cn(
-          HEADER_BASE_CLASSES,
-          isScrolled ? "bg-white shadow-md border-b" : ""
-        )}
-      >
-      {/* Top Bar */}
       <div
+        ref={topBarRef}
         className={cn(
-          "backdrop-blur-sm transition-all duration-300 ease-in-out bg-primary-hover/85",
-          isScrolled
-            ? "max-h-0 py-0 opacity-0 border-transparent"
-            : "max-h-12 py-2.5 opacity-100"
+          "backdrop-blur-sm bg-primary-hover/85 transition-none",
+          isSticky ? "py-1.5" : "py-3"
         )}
-        style={{ overflow: "hidden" }}
       >
         <div className="container mx-auto flex h-full items-center justify-between px-4">
           <p className="hidden text-sm font-medium text-white/90 md:block">
@@ -141,6 +149,8 @@ export function Header() {
           <p className="sm:text-sm text-xs font-medium text-white/90 md:hidden">
             Swaminarayan Ashram
           </p>
+
+          {/* topbar content */}
           <div className="flex items-center space-x-4">
             {socialLinks.map((link, index) => (
               <a
@@ -148,7 +158,7 @@ export function Header() {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-white/90 transition-colors"
+                className="text-white/90"
               >
                 <link.icon className="size-5" />
               </a>
@@ -157,8 +167,18 @@ export function Header() {
         </div>
       </div>
 
+      <header
+        ref={headerRef}
+        className={headerClassName}
+        style={{ top: isSticky ? 0 : topBarHeight }}
+      >
       {/* Main Header */}
-      <div className="container mx-auto px-4 flex items-center justify-between xl:h-24 h-20 transition-colors duration-300 text-foreground">
+      <div
+        className={cn(
+          "container mx-auto px-4 flex items-center justify-between text-foreground transition-none",
+          isSticky ? "xl:h-20 h-16" : "xl:h-24 h-20"
+        )}
+      >
         <Link href="/" className="flex items-center">
           <Image
             src="/logo.png"
@@ -177,7 +197,7 @@ export function Header() {
                 <NavigationMenuItem key={link.label}>
                   {link.subLinks ? (
                     <>
-                      <NavigationMenuTrigger className="relative inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover transition-colors bg-transparent hover:bg-primary/15 hover:text-primary focus-visible:bg-primary/15 focus-visible:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40 data-[state=open]:bg-primary/15 data-[state=open]:text-primary after:absolute after:left-0 after:right-0 after:-bottom-5 after:h-3 after:content-['']">
+                      <NavigationMenuTrigger className="relative inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover bg-transparent hover:bg-primary/15 hover:text-primary focus-visible:bg-primary/15 focus-visible:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40 data-[state=open]:bg-primary/15 data-[state=open]:text-primary after:absolute after:left-0 after:right-0 after:-bottom-5 after:h-3 after:content-['']">
                         {link.label}
                       </NavigationMenuTrigger>
                       <NavigationMenuContent>
@@ -196,7 +216,7 @@ export function Header() {
                     <NavigationMenuLink asChild>
                       <Link
                         href={link.href || "#"}
-                        className="inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover transition-colors bg-transparent hover:bg-primary/15 hover:text-primary focus-visible:bg-primary/15 focus-visible:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40"
+                        className="inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover bg-transparent hover:bg-primary/15 hover:text-primary focus-visible:bg-primary/15 focus-visible:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/40"
                       >
                         {link.label}
                       </Link>
@@ -229,9 +249,9 @@ export function Header() {
                 {navLinks.map((link) =>
                   link.subLinks ? (
                     <Collapsible key={link.label} className="w-full">
-                      <CollapsibleTrigger className="flex justify-between items-center w-full text-lg font-medium hover:text-primary transition-colors py-2">
+                    <CollapsibleTrigger className="flex justify-between items-center w-full text-lg font-medium hover:text-primary py-2">
                         {link.label}
-                        <ChevronDown className="h-5 w-5 transition-transform duration-200 [&[data-state=open]]:rotate-180" />
+                      <ChevronDown className="h-5 w-5 [&[data-state=open]]:rotate-180" />
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="pl-4 mt-2 space-y-3 border-l-2 border-border ml-2">
@@ -239,7 +259,7 @@ export function Header() {
                             <SheetClose asChild key={subLink.label}>
                               <Link
                                 href={subLink.href}
-                                className="block text-base text-muted-foreground hover:text-primary transition-colors"
+                              className="block text-base text-muted-foreground hover:text-primary"
                               >
                                 {subLink.label}
                               </Link>
@@ -252,7 +272,7 @@ export function Header() {
                     <SheetClose asChild key={link.label}>
                       <Link
                         href={link.href}
-                        className="text-lg font-medium hover:text-primary transition-colors py-2"
+                    className="text-lg font-medium hover:text-primary py-2"
                       >
                         {link.label}
                       </Link>
@@ -292,7 +312,7 @@ const ListItem = React.forwardRef<
         <Link
           ref={ref}
           className={cn(
-            "block select-none rounded-2xl px-4 py-3 leading-none no-underline outline-none transition-colors hover:bg-primary/15 hover:text-primary",
+            "block select-none rounded-2xl px-4 py-3 leading-none no-underline outline-none hover:bg-primary/15 hover:text-primary",
             className
           )}
           {...props}
