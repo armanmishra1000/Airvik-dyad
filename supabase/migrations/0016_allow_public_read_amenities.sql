@@ -8,5 +8,5 @@ DROP POLICY IF EXISTS "Allow public read access to amenities" ON public.amenitie
 CREATE POLICY "Allow public read access to amenities"
 ON public.amenities
 FOR SELECT
-TO anon
+TO anon, authenticated
 USING (true);
