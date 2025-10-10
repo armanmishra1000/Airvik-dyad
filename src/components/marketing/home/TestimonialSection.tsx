@@ -4,6 +4,7 @@ import Image from "next/image";
 import React from "react";
 import Autoplay from "embla-carousel-autoplay";
 import {
+  type CarouselApi,
   Carousel,
   CarouselContent,
   CarouselItem,
@@ -46,6 +47,25 @@ export function TestimonialSection() {
   const plugin = React.useRef(
     Autoplay({ delay: 3500, stopOnInteraction: false })
   );
+  const [api, setApi] = React.useState<CarouselApi | null>(null);
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    const onSelect = () => {
+      setSelectedIndex(api.selectedScrollSnap());
+    };
+
+    api.on("select", onSelect);
+    onSelect();
+
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
 
   return (
     <section className="bg-background py-10 sm:py-12">
@@ -80,8 +100,9 @@ export function TestimonialSection() {
               loop: true,
             }}
             className="w-full"
+            setApi={setApi}
           >
-            <CarouselContent>
+            <CarouselContent className="cursor-pointer select-none">
               {testimonials.map((testimonial, index) => (
                 <CarouselItem
                   key={index}
@@ -92,9 +113,9 @@ export function TestimonialSection() {
                       className="relative h-full rounded-3xl border border-white/80"
                       style={{ backgroundColor: testimonialCardBackground }}
                     >
-                      <CardContent className="relative flex h-full flex-col items-center gap-8 px-8 pt-24 pb-6 text-center md:pt-24 md:pb-8 lg:px-10 lg:pt-28">
+                      <CardContent className="relative flex h-full flex-col items-center gap-8 px-8 pt-20 pb-6 text-center sm:pt-24 md:pt-24 md:pb-8 lg:px-10 lg:pt-28 select-none">
                         <div className="flex items-center justify-center -mt-16">
-                          <div className="absolute -top-16 left-1/2 -translate-x-1/2 flex h-24 w-24 lg:w-32 lg:h-32 items-center justify-center rounded-full border-4 border-white bg-white">
+                          <div className="absolute -top-12 sm:-top-10 lg:-top-16 left-1/2 -translate-x-1/2 flex h-24 w-24 lg:w-32 lg:h-32 items-center justify-center rounded-full border-4 border-white bg-white">
                             <Image
                               src={testimonial.image}
                               alt={testimonial.imageAlt}
@@ -117,6 +138,21 @@ export function TestimonialSection() {
               ))}
             </CarouselContent>
           </Carousel>
+          <div className="mt-6 flex justify-center gap-2 lg:hidden">
+            {testimonials.map((_, index) => (
+              <button
+                type="button"
+                key={index}
+                className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                  selectedIndex === index
+                    ? "bg-primary"
+                    : "bg-primary/30"
+                }`}
+                onClick={() => api?.scrollTo(index)}
+                aria-label={`Go to testimonial ${index + 1}`}
+              />
+            ))}
+          </div>
         </motion.div>
       </div>
     </section>
