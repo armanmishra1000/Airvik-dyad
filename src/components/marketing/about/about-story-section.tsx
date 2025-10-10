@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 export function AboutStorySection() {
   return (
-    <section className="py-12 md:py-20">
+    <section id="our-story" className="py-12 md:py-20">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-6xl">
           <motion.div
