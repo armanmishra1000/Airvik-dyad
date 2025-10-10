@@ -6,29 +6,28 @@ import { motion } from "framer-motion";
 
 export function AboutStorySection() {
   return (
-    <section className="py-12 md:py-20">
+    <section id="our-story" className="bg-background py-10 sm:py-12 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-6xl">
           <motion.div
-            className="mx-auto max-w-3xl text-center mb-10 lg:mb-12"
+            className="text-center"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary/80">
+            <span className="text-sm font-semibold uppercase tracking-widest text-primary">
               Our Heritage
             </span>
             <h2 className="mt-4 text-4xl font-serif font-bold leading-tight text-foreground md:text-5xl">
               Our Sacred Story
             </h2>
             <p className="mt-4 text-base text-muted-foreground md:text-lg">
-              A timeless sanctuary beside the Ganga, guided by compassion and
-              dedicated to collective wellbeing.
+              A peaceful ashram by the Ganges, guided by compassion and service.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-2 lg:items-start">
+          <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-2 lg:items-center mt-4 lg:mt-12">
             <motion.div
               className="order-2 lg:order-1"
               initial={{ opacity: 0, x: -20 }}
@@ -36,20 +35,18 @@ export function AboutStorySection() {
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <figure className="flex h-full flex-col space-y-4">
-                <div className="relative aspect-square overflow-hidden rounded-2xl border border-border/70">
+              <figure className="flex flex-col space-y-4">
+                <div className="relative rounded-xl overflow-hidden">
                   <Image
-                    src="/sunilbhagat.png"
-                    alt="Sunil Bhagat (Swami), spiritual guide of Sahajanand Wellness"
-                    fill
-                    sizes="(min-width: 1024px) 480px, 90vw"
-                    quality={100}
-                    className="object-cover"
+                    src="/sunil-bhagat-ji.jpg"
+                    alt="Sunil Bhagat Ji (Swami), spiritual guide of Sahajanand Wellness"
+                    width={600}
+                    height={400}
+                    className="object-cover rounded-2xl w-full"
                   />
                 </div>
-                <figcaption className="text-sm text-muted-foreground/80">
-                  Sunil Bhagat (Swami) welcoming seekers at the ashram
-                  courtyard.
+                <figcaption className="text-sm text-muted-foreground">
+                  Sunil Bhagat Ji (Swami) welcoming visitors in the ashram courtyard.
                 </figcaption>
               </figure>
             </motion.div>
@@ -57,52 +54,40 @@ export function AboutStorySection() {
 
             {/* Right Side */}
             <motion.div
-              className="order-1 flex h-full flex-col space-y-6 text-center text-lg text-muted-foreground lg:order-2 lg:text-left"
+              className="order-1 flex h-full flex-col space-y-4 text-center text-lg text-muted-foreground lg:order-2 lg:text-left"
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
-              <div className="space-y-5 text-base leading-relaxed md:text-lg">
+              <div className="space-y-4 text-base leading-relaxed md:text-lg">
                 <p>
-                  Nestled on the sacred banks of the Ganga in Rishikesh, the
+                  Nestled on the banks of the Ganga in Rishikesh,
                   <span className="mx-1 font-semibold text-foreground">
                     Shree Swaminarayan Ashram
                   </span>
-                  has been a sanctuary for spiritual seekers since its
-                  establishment in 1987. Founded by The SahajAnand Wellness
-                  Trust, our ashram is built on the timeless principle of
-                  “welfare for all.”
+                  has welcomed seekers since 1987. Founded by the SahajAnand Wellness Trust, the ashram follows the simple principle of welfare for all.
                 </p>
 
                 <p>
-                  Guiding the ashram&apos;s spiritual journey is
+                  Leading our spiritual life is
                   <span className="mx-1 font-semibold text-foreground">
-                    Sunil Bhagat,
+                    Sunil Bhagat Ji (Swami).
                   </span>
-                  affectionately known as Swami. His profound wisdom and
-                  compassionate teachings inspire all who visit. Under his
-                  guidance, the ashram continues to be a beacon of peace,
-                  service, and spiritual growth.
+                  His kind guidance and teachings gently inspire visitors and residents alike.
                 </p>
 
                 <p>
-                  At the heart of our mission are our core activities: the
-                  Annakshetra, offering daily meals to all; the Gaushala, a
-                  loving home for our sacred cows; and the Veda-Pathshala, which
-                  preserves ancient Vedic wisdom. We welcome you to experience
-                  the tranquility and spiritual nourishment that our ashram
-                  offers.
+                  Our daily work includes the Annakshetra (free meals), the Gaushala (care for cows), and the Veda-Pathshala (Vedic teaching). You're welcome to visit and feel the calm and warmth of the ashram.
                 </p>
               </div>
 
-              <div className="pt-2">
+              <div>
                 <Link
-                  href="/gallery"
-                  className="inline-flex items-center text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+                  href="/sunil-bhagat"
+                  className="text-base font-medium text-primary hover:underline underline-offset-4 focus-visible:outline-none"
                 >
-                  Discover our Gallery
-                  <span className="ml-2">→</span>
+                  Meet Our Guide →
                 </Link>
               </div>
             </motion.div>
@@ -112,3 +97,4 @@ export function AboutStorySection() {
     </section>
   );
 }
+

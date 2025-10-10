@@ -1,25 +1,40 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, Phone, MapPin, Facebook, Twitter, Youtube } from "lucide-react";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Facebook,
+  Instagram,
+  Linkedin,
+} from "lucide-react";
+import { FaXTwitter } from "react-icons/fa6";
+
 
 const quickLinks = [
+  { href: "/book", label: "Rooms" },
   { href: "/about-us", label: "About Us" },
-  { href: "/booking", label: "Rooms" },
+  { href: "/shop", label: "Shop" },
+  { href: "/amenities", label: "Amenities" },
+  { href: "/ashram-glimpse", label: "Ashram Glimpse" },
 ];
 
-const socialLinks = [
-  { href: "#", icon: Facebook },
-  { href: "#", icon: Twitter },
-  { href: "#", icon: Youtube },
+type SocialLink = { href: string; icon: React.ComponentType<{ className?: string }> };
+
+const socialLinks: SocialLink[] = [
+  { href: "https://instagram.com/rishikeshdhamofficial", icon: Instagram },
+  { href: "https://facebook.com/Rishikeshdhamofficial", icon: Facebook },
+  { href: "https://linkedin.com/company/rishikeshdham", icon: Linkedin },
+  { href: "https://x.com/Rishikeshdham", icon: FaXTwitter },
 ];
 
 export function Footer() {
   return (
-    <footer className="bg-muted/50 border-t">
+    <footer className="border-t shadow-md">
       <div className="container mx-auto px-4 pt-16 pb-8">
         {/* First Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-8">
           {/* Column 1: Logo and Subtitle */}
           <div>
             <Link href="/" className="mb-4 inline-block">
@@ -85,6 +100,21 @@ export function Footer() {
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* Column 4: QR Code */}
+          <div className="flex flex-col items-start">
+            <h3 className="text-xl font-serif font-bold text-foreground mb-6">
+              Scan to Explore
+            </h3>
+            <Image
+              src="/qr-code-for-website.jpg"
+              alt="Rishikesh Dham QR code"
+              width={220}
+              height={320}
+              quality={100}
+              className="w-full max-w-[240px] rounded-lg object-contain"
+            />
           </div>
         </div>
 
