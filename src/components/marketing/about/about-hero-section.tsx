@@ -45,12 +45,12 @@ export function AboutHeroSection() {
 
             {/* Headline */}
             <h1 className="text-4xl md:text-5xl font-bold font-serif text-foreground">
-              Rooted Guidance for Modern Seekers
+              A Trust for Service, Learning & Shelter
             </h1>
 
             {/* Body Copy */}
             <p className="text-base text-muted-foreground md:text-lg">
-              For decades we've welcomed seekers to a quiet riverside refuge, balancing Vedic wisdom with practical routines. Join us for mindful stays, honest dialog, and rituals that keep you connected to purpose.
+              Run by a registered religious trust in Muni-Ki-Reti, this ashram provides simple riverside dharmashala accommodation, yogashala and Vedic study programs. Meals are served in the langar hall; the centre holds daily Ganga Aarti and community seva activities all sustained by donations.
             </p>
 
             {/* CTA */}
