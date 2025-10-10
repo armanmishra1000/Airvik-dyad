@@ -1,66 +1,21 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Pause, Play } from "lucide-react";
 
-type YouTubePlayer = {
-  playVideo: () => void;
-  pauseVideo: () => void;
-  seekTo: (seconds: number, allowSeekAhead?: boolean) => void;
-  mute: () => void;
-  destroy: () => void;
-  getIframe?: () => HTMLIFrameElement;
-};
-
-type YouTubeNamespace = {
-  Player: new (
-    element: HTMLElement,
-    options: {
-      videoId: string;
-      host?: string;
-      playerVars?: Record<string, unknown>;
-      events?: {
-        onReady?: (event: { target: YouTubePlayer }) => void;
-        onStateChange?: (event: {
-          data: number;
-          target: YouTubePlayer;
-        }) => void;
-      };
-    }
-  ) => YouTubePlayer;
-  PlayerState: {
-    ENDED: number;
-    PLAYING: number;
-    PAUSED: number;
-  };
-};
-
-declare global {
-  interface Window {
-    YT?: YouTubeNamespace;
-    onYouTubeIframeAPIReady?: () => void;
-  }
-}
-
-type VideoConfig = {
-  id: string;
-  videoId: string;
+type VideoItem = {
+  url: string;
   title: string;
-  start?: number;
 };
 
-const videos: VideoConfig[] = [
+const videos: VideoItem[] = [
   {
-    id: "ganga-aarti",
-    videoId: "mo71k6k5E-k",
+    url: "https://www.youtube.com/watch?v=mo71k6k5E-k&t=86s",
     title: "Divine Ganga Aarti – Rishikesh Dham",
-    start: 86,
   },
   {
-    id: "ashram-tour",
-    videoId: "V2CrSWlqkgA",
+    url: "https://www.youtube.com/watch?v=V2CrSWlqkgA",
     title: "Ashram Visual Tour",
   },
 ];
@@ -87,150 +42,70 @@ const itemVariants = {
   },
 };
 
-function VideoCard({
-  video,
-  apiReady,
-}: {
-  video: VideoConfig;
-  apiReady: boolean;
-}) {
-  const mountRef = useRef<HTMLDivElement | null>(null);
-  const playerRef = useRef<YouTubePlayer | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [showPoster, setShowPoster] = useState(true);
-
-  useEffect(() => {
-    if (!apiReady || !window.YT || playerRef.current || !mountRef.current) {
-      return;
-    }
-
-    const { Player, PlayerState } = window.YT;
-
-    const player = new Player(mountRef.current, {
-      host: "https://www.youtube-nocookie.com",
-      videoId: video.videoId,
-      playerVars: {
-        autoplay: 1,
-        mute: 1,
-        controls: 0,
-        modestbranding: 1,
-        rel: 0,
-        iv_load_policy: 3,
-        fs: 0,
-        loop: 1,
-        playlist: video.videoId,
-        playsinline: 1,
-        disablekb: 1,
-        start: video.start ?? 0,
-      },
-      events: {
-        onReady: (event) => {
-          event.target.mute();
-          event.target.playVideo();
-
-          const iframe = event.target.getIframe?.();
-          if (iframe) {
-            iframe.style.width = "100%";
-            iframe.style.height = "100%";
-            iframe.style.left = "0";
-            iframe.style.top = "0";
-            iframe.style.position = "absolute";
-            iframe.style.pointerEvents = "none";
-            iframe.style.objectFit = "cover";
-          }
-        },
-        onStateChange: (event) => {
-          if (event.data === PlayerState.PLAYING) {
-            setIsPlaying(true);
-            setShowPoster(false);
-          } else if (event.data === PlayerState.PAUSED) {
-            setIsPlaying(false);
-            setShowPoster(true);
-          } else if (event.data === PlayerState.ENDED) {
-            event.target.seekTo(video.start ?? 0, true);
-            setShowPoster(false);
-            event.target.playVideo();
-          }
-        },
-      },
-    });
-
-    playerRef.current = player;
-
-    return () => {
-      player.destroy();
-      playerRef.current = null;
-      setIsPlaying(false);
-      setShowPoster(true);
+function toEmbedUrl(input: string) {
+  try {
+    const url = new URL(input);
+    const params = new URLSearchParams();
+    const addStart = (t?: string | null) => {
+      if (!t) return;
+      const hms = /(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/;
+      let seconds = 0;
+      if (/^\d+$/.test(t)) seconds = parseInt(t, 10);
+      else {
+        const m = t.match(hms);
+        if (m) seconds = (parseInt(m[1] || "0") * 3600) + (parseInt(m[2] || "0") * 60) + parseInt(m[3] || "0");
+      }
+      if (seconds > 0) params.set("start", String(seconds));
     };
-  }, [apiReady, video.videoId, video.start]);
 
-  const togglePlayback = () => {
-    const player = playerRef.current;
-    if (!player) return;
-
-    if (isPlaying) {
-      player.pauseVideo();
-      setShowPoster(true);
-    } else {
-      player.playVideo();
-      setShowPoster(false);
+    let id = "";
+    if (url.hostname.includes("youtu.be")) {
+      id = url.pathname.split("/").filter(Boolean)[0] || "";
+      addStart(url.searchParams.get("t") || url.searchParams.get("start"));
+    } else if (url.hostname.includes("youtube.com")) {
+      if (url.pathname.startsWith("/watch")) {
+        id = url.searchParams.get("v") || "";
+        addStart(url.searchParams.get("t") || url.searchParams.get("start"));
+      } else if (url.pathname.startsWith("/shorts/")) {
+        id = url.pathname.split("/")[2] || "";
+        addStart(url.searchParams.get("t") || url.searchParams.get("start"));
+      } else if (url.pathname.startsWith("/embed/")) {
+        id = url.pathname.split("/")[2] || "";
+        addStart(url.searchParams.get("start") || url.searchParams.get("t"));
+      }
     }
-  };
 
+    if (!id) return input;
+    params.set("modestbranding", "1");
+    params.set("rel", "0");
+    params.set("playsinline", "1");
+    params.set("autoplay", "1");
+    params.set("mute", "1");
+    const qs = params.toString();
+    return `https://www.youtube.com/embed/${id}${qs ? `?${qs}` : ""}`;
+  } catch {
+    return input;
+  }
+}
+
+function VideoCard({ video }: { video: VideoItem }) {
   return (
-    <motion.div
-      variants={itemVariants}
-      className="flex w-full flex-col items-center"
-    >
-      <div className="group relative w-full overflow-hidden rounded-2xl bg-black shadow-lg shadow-primary/5">
+    <motion.div variants={itemVariants} className="flex w-full flex-col items-center">
+      <div className="relative w-full overflow-hidden rounded-2xl bg-black shadow-lg shadow-primary/5">
         <div className="relative aspect-video">
-          <div
-            className={`absolute inset-0 pointer-events-none transition-opacity duration-200 ${
-              showPoster ? "opacity-0" : "opacity-100"
-            }`}
-          >
-            <div
-              ref={mountRef}
-              className="h-full w-full"
-              aria-label={video.title}
-            />
-          </div>
-          {showPoster && (
-            <Image
-              src={`https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`}
-              alt={video.title}
-              fill
-              sizes="(min-width: 768px) 50vw, 100vw"
-              className="absolute inset-0 object-cover"
-            />
-          )}
+          <iframe
+            src={toEmbedUrl(video.url)}
+            title={video.title}
+            className="absolute inset-0 h-full w-full"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
         </div>
-        <button
-          type="button"
-          onClick={togglePlayback}
-          className="absolute inset-0 flex items-center justify-center focus-visible:outline-none"
-          aria-label={`${isPlaying ? "Pause" : "Play"} ${video.title}`}
-          aria-pressed={isPlaying}
-        >
-          <span
-            className={`flex size-14 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur transition-opacity duration-200 ${
-              isPlaying ? "opacity-0 group-hover:opacity-100" : "opacity-100"
-            }`}
-          >
-            {isPlaying ? (
-              <Pause className="size-6" />
-            ) : (
-              <Play className="size-6" />
-            )}
-          </span>
-        </button>
       </div>
       <div className="w-full -mt-4 px-5">
         <div className="mx-auto rounded-2xl border border-border/40 bg-primary/15 px-6 lg:py-3 py-2 text-center">
-          <h4 className="text-sm lg:text-xl mt-3 font-semibold text-primary">
-            {video.title}
-          </h4>
+          <h4 className="text-sm lg:text-xl mt-3 font-semibold text-primary">{video.title}</h4>
         </div>
       </div>
     </motion.div>
@@ -245,40 +120,6 @@ function VideoCard({
  * @returns The JSX section element containing the header and the animated video grid
  */
 export function VideoSection() {
-  const [apiReady, setApiReady] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    if (window.YT && window.YT.Player) {
-      setApiReady(true);
-      return;
-    }
-
-    const previousCallback = window.onYouTubeIframeAPIReady;
-    const readyCallback = () => {
-      previousCallback?.();
-      setApiReady(true);
-    };
-
-    window.onYouTubeIframeAPIReady = readyCallback;
-
-    const existingScript = document.getElementById("youtube-iframe-api");
-    if (!existingScript) {
-      const script = document.createElement("script");
-      script.id = "youtube-iframe-api";
-      script.src = "https://www.youtube.com/iframe_api";
-      script.async = true;
-      document.body.appendChild(script);
-    }
-
-    return () => {
-      if (window.onYouTubeIframeAPIReady === readyCallback) {
-        window.onYouTubeIframeAPIReady = previousCallback;
-      }
-    };
-  }, []);
-
   return (
     <section className="to-secondary/20 py-10 sm:py-12">
       <div className="container mx-auto px-4">
@@ -313,8 +154,8 @@ export function VideoSection() {
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
         >
-          {videos.map((video) => (
-            <VideoCard key={video.id} video={video} apiReady={apiReady} />
+          {videos.map((video, idx) => (
+            <VideoCard key={idx} video={video} />
           ))}
         </motion.div>
       </div>

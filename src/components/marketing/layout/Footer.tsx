@@ -17,7 +17,7 @@ const quickLinks = [
   { href: "/about-us", label: "About Us" },
   { href: "/shop", label: "Shop" },
   { href: "/amenities", label: "Amenities" },
-  { href: "/gallery", label: "Ashram’s Glimpse" },
+  { href: "/ashram-glimpse", label: "Ashram Glimpse" },
 ];
 
 type SocialLink = { href: string; icon: React.ComponentType<{ className?: string }> };
@@ -32,9 +32,9 @@ const socialLinks: SocialLink[] = [
 export function Footer() {
   return (
     <footer className="border-t shadow-md">
-      <div className="container mx-auto px-4 pt-16 pb-8">
+      <div className="container mx-auto px-4 pt-16 pb-5">
         {/* First Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 sm:grid-cols-2  lg:gap-10 gap-8 mb-5">
           {/* Column 1: Logo and Subtitle */}
           <div>
             <Link href="/" className="mb-4 inline-block">
@@ -110,7 +110,7 @@ export function Footer() {
               src="/qr-code-for-website.jpg"
               alt="Rishikesh Dham QR code"
               width={280}
-              height={400}
+              height={300}
               quality={100}
               className="w-full rounded-2xl object-contain"
             />
@@ -118,7 +118,7 @@ export function Footer() {
         </div>
 
         {/* Separator */}
-        <div className="border-t border-border/50 my-8"></div>
+        <div className="border-t border-border/50 pb-5"></div>
 
         {/* Second Row */}
         <div className="flex flex-col sm:flex-row items-center justify-between">

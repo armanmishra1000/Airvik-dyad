@@ -42,7 +42,7 @@ const galleryImages = [
     alt: "Evening Ganga Aarti ceremony.",
   },
   {
-    src: "/sunilbhgat.png",
+    src: "/swami.jpeg",
     alt: "Spiritual guide Sunil Bhagat (Swami).",
   },
   {
@@ -79,7 +79,7 @@ export function GalleryPageSection() {
   };
 
   return (
-    <section className="bg-background py-16 sm:py-20 lg:py-28">
+    <section className="bg-background py-12 md:py-20">
       <div className="container mx-auto px-4">
         <motion.div
           className="text-center mb-12 sm:mb-16"
@@ -88,12 +88,12 @@ export function GalleryPageSection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" as const }}
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight mb-4">
-            Visual Journey
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-tight mb-6">
+            Ashram Moments of Peace
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
-            A visual journey through the sacred spaces and moments at Sahajanand
-            Wellness.
+            Experience the serenity, devotion, and beauty of our Ashram through
+            these captured moments
           </p>
           <div className="flex justify-center">
             <Image
@@ -116,14 +116,14 @@ export function GalleryPageSection() {
             <motion.div
               key={index}
               variants={itemVariants}
-              className="bg-card border border-border/50 rounded-lg shadow-lg overflow-hidden group hover:shadow-xl transition-shadow duration-300"
+              className="bg-card border border-border/50 rounded-2xl shadow-lg overflow-hidden group hover:shadow-xl transition-shadow duration-300"
             >
               <div className="relative aspect-[4/3] w-full overflow-hidden">
                 <Image
                   src={image.src}
                   alt={image.alt}
                   fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="object-cover transition-transform duration-300 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
               </div>
