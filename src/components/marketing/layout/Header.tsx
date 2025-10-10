@@ -84,8 +84,15 @@ export function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const shouldStick = window.scrollY > 0;
-      setIsSticky(shouldStick);
-      updateMeasurements();
+
+      setIsSticky((prev) => {
+        if (prev === shouldStick) {
+          return prev;
+        }
+
+        updateMeasurements();
+        return shouldStick;
+      });
     };
 
     handleScroll();
@@ -100,7 +107,11 @@ export function Header() {
     updateMeasurements();
 
     if (typeof ResizeObserver === "undefined") {
-      return;
+      window.addEventListener("resize", updateMeasurements);
+
+      return () => {
+        window.removeEventListener("resize", updateMeasurements);
+      };
     }
 
     const navNode = headerRef.current;
