@@ -54,8 +54,8 @@ export const products: Product[] = [
     rating: 4.1,
   },
   {
-    id: 'swminarayan-sticker',
-    name: 'swminarayan book sticker',
+    id: 'swaminarayan-sticker',
+    name: 'Swaminarayan book sticker',
     price: '₹68',
     originalPrice: '₹100',
     imageSrc: '/s-4.jpg',
@@ -147,7 +147,7 @@ export const products: Product[] = [
     rating: 4.4,
   },
   {
-    id: 'meditation-bowl',
+    id: 'swaminarayan-murti',
     name: 'SrI Krishna CULTURE-New Big Sitting Swami Narayan Murti',
     price: '₹1000',
     imageSrc: '/s-14.jpg',
