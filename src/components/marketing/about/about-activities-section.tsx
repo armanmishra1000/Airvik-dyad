@@ -13,7 +13,7 @@ const activities = [
   {
     title: "Yoga & Meditation",
     description: "Daily sessions to harmonize mind, body, and soul.",
-    imageUrl: "/yoga-meditation.jpg",
+    imageUrl: "/yoga-meditation.png",
   },
   {
     title: "Veda-Pathshala",
@@ -62,30 +62,30 @@ export function AboutActivitiesSection() {
   };
 
   return (
-    <section className="py-12 md:py-20">
+    <section className="bg-background py-10 sm:py-12 overflow-hidden">
       <div className="container mx-auto px-4">
           {/* Section Title */}
           <motion.div
-            className="mx-auto max-w-7xl space-y-4 text-center"
+            className="text-center space-y-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <span className="text-xs font-semibold uppercase tracking-[0.32em] text-primary/80">
-              Community Offerings
+            <span className="text-sm font-semibold uppercase tracking-widest text-primary">
+              What's On
             </span>
             <h2 className="text-4xl font-serif font-bold leading-tight text-foreground md:text-5xl">
-              Our Sacred Activities
+              Daily Activities & Rituals
             </h2>
-            <p className="text-base text-muted-foreground md:text-lg">
-              Discover the daily practices and sacred rituals that nourish every visitor—from mindful gatherings to compassionate service.
+            <p className="text-base text-muted-foreground md:text-lg max-w-4xl mx-auto">
+              Discover simple daily practices and sacred rituals, from mindful gatherings to compassionate service, that nourish body, mind, and community.
             </p>
           </motion.div>
 
           {/* Activities Grid */}
           <motion.div
-            className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+            className="mt-4 lg:mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
