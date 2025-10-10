@@ -14,8 +14,8 @@ export function ProductCard({
   originalPrice,
 }: ProductCardProps) {
   return (
-    <div className="space-y-3">
-      <div className="group block overflow-hidden rounded-xl shadow-sm transition-shadow duration-300 hover:shadow-md">
+    <div className="group space-y-3">
+      <div className="block overflow-hidden rounded-xl shadow-sm transition-shadow duration-300 hover:shadow-md">
         <Image
           src={imageSrc}
           alt={name}
