@@ -44,7 +44,7 @@ export function Footer() {
                 width={360}
                 height={144}
                 quality={100}
-                className="h-24 w-auto"
+                className="lg:h-24 h-[70px] w-auto"
               />
             </Link>
             <p className="text-muted-foreground max-w-md">
@@ -55,7 +55,7 @@ export function Footer() {
 
           {/* Column 2: Contact Details */}
           <div>
-            <h3 className="text-xl font-serif font-bold text-foreground mb-6">
+            <h3 className="text-xl font-bold text-foreground mb-6">
               Contact Us
             </h3>
             <div className="space-y-3 text-muted-foreground">
@@ -85,7 +85,7 @@ export function Footer() {
 
           {/* Column 3: Links */}
           <div>
-            <h3 className="text-xl font-serif font-bold text-foreground mb-6">
+            <h3 className="text-xl font-bold text-foreground mb-6">
               Quick Links
             </h3>
             <ul className="space-y-3">
@@ -101,19 +101,18 @@ export function Footer() {
               ))}
             </ul>
           </div>
-
           {/* Column 4: QR Code */}
           <div className="flex flex-col items-start">
-            <h3 className="text-xl font-serif font-bold text-foreground mb-6">
+            <h3 className="text-xl font-bold text-foreground mb-6">
               Scan to Explore
             </h3>
             <Image
               src="/qr-code-for-website.jpg"
               alt="Rishikesh Dham QR code"
-              width={220}
-              height={320}
+              width={280}
+              height={400}
               quality={100}
-              className="w-full max-w-[240px] rounded-lg object-contain"
+              className="w-full rounded-2xl object-contain"
             />
           </div>
         </div>
