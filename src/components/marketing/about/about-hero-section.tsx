@@ -36,7 +36,7 @@ export function AboutHeroSection() {
           {/* Left Column: Main Content */}
           <motion.div
             variants={contentVariants}
-            className="space-y-4 order-2 lg:order-1"
+            className="space-y-4"
           >
             {/* Eyebrow */}
             <p className="text-sm font-semibold uppercase tracking-widest text-primary">
@@ -70,7 +70,7 @@ export function AboutHeroSection() {
           {/* Right Column: Image */}
           <motion.div
             variants={imageVariants}
-            className="relative order-1 lg:order-2"
+            className="relative"
           >
             <div className="relative rounded-xl overflow-hidden">
               <Image
