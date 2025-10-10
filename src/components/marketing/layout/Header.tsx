@@ -36,7 +36,7 @@ const navLinks = [
   },
   { href: "/shop", label: "Shop" },
   { href: "/amenities", label: "Amenities" },
-  { href: "/gallery", label: "Ashram’s Glimpse" },
+  { href: "/ashram-glimpse", label: "Ashram Glimpse" },
 ];
 
 type SocialLink = {
@@ -84,15 +84,8 @@ export function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const shouldStick = window.scrollY > 0;
-
-      setIsSticky((prev) => {
-        if (prev === shouldStick) {
-          return prev;
-        }
-
-        updateMeasurements();
-        return shouldStick;
-      });
+      setIsSticky(shouldStick);
+      updateMeasurements();
     };
 
     handleScroll();
@@ -107,11 +100,7 @@ export function Header() {
     updateMeasurements();
 
     if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateMeasurements);
-
-      return () => {
-        window.removeEventListener("resize", updateMeasurements);
-      };
+      return;
     }
 
     const navNode = headerRef.current;
