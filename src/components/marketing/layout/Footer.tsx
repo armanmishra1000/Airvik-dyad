@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { FaXTwitter } from "react-icons/fa6";
 
-
 const quickLinks = [
   { href: "/book", label: "Rooms" },
   { href: "/about-us", label: "About Us" },
@@ -20,7 +19,10 @@ const quickLinks = [
   { href: "/ashram-glimpse", label: "Ashram Glimpse" },
 ];
 
-type SocialLink = { href: string; icon: React.ComponentType<{ className?: string }> };
+type SocialLink = {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
 
 const socialLinks: SocialLink[] = [
   { href: "https://instagram.com/rishikeshdhamofficial", icon: Instagram },
@@ -32,9 +34,9 @@ const socialLinks: SocialLink[] = [
 export function Footer() {
   return (
     <footer className="border-t shadow-md">
-      <div className="container mx-auto px-4 pt-16 pb-8">
+      <div className="container mx-auto px-4 pt-16 pb-5">
         {/* First Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-8">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-4 lg:gap-12 mb-5">
           {/* Column 1: Logo and Subtitle */}
           <div>
             <Link href="/" className="mb-4 inline-block">
@@ -44,7 +46,7 @@ export function Footer() {
                 width={360}
                 height={144}
                 quality={100}
-                className="h-24 w-auto"
+                className="lg:h-24 h-[70px] w-auto"
               />
             </Link>
             <p className="text-muted-foreground max-w-md">
@@ -54,28 +56,28 @@ export function Footer() {
           </div>
 
           {/* Column 2: Contact Details */}
-          <div>
-            <h3 className="text-xl font-serif font-bold text-foreground mb-6">
+          <div className="min-w-0">
+            <h3 className="text-xl font-bold text-foreground mb-6">
               Contact Us
             </h3>
             <div className="space-y-3 text-muted-foreground">
               <a
                 href="mailto:ashram@swaminarayan.yoga"
-                className="flex items-center gap-3 hover:text-primary transition-colors"
+                className="flex min-w-0 items-start gap-3 hover:text-primary transition-colors"
               >
                 <Mail className="h-5 w-5 text-primary flex-shrink-0" />
-                <span>ashram@swaminarayan.yoga</span>
+                <span className="w-full break-all">ashram@swaminarayan.yoga</span>
               </a>
               <a
                 href="tel:+918511151708"
-                className="flex items-center gap-3 hover:text-primary transition-colors"
+                className="flex min-w-0 items-start gap-3 hover:text-primary transition-colors"
               >
                 <Phone className="h-5 w-5 text-primary flex-shrink-0" />
-                <span>+91 8511151708</span>
+                <span className="w-full break-all">+91 8511151708</span>
               </a>
-              <div className="flex items-start gap-3">
+              <div className="flex min-w-0 items-start gap-3">
                 <MapPin className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                <span>
+                <span className="w-full break-words">
                   Street No.13, Shisham Jhadi, Muni Ki Reti, Near Ganga Kinare,
                   Rishikesh, Uttarakhand
                 </span>
@@ -85,7 +87,7 @@ export function Footer() {
 
           {/* Column 3: Links */}
           <div>
-            <h3 className="text-xl font-serif font-bold text-foreground mb-6">
+            <h3 className="text-xl font-bold text-foreground mb-6">
               Quick Links
             </h3>
             <ul className="space-y-3">
@@ -101,25 +103,28 @@ export function Footer() {
               ))}
             </ul>
           </div>
-
           {/* Column 4: QR Code */}
-          <div className="flex flex-col items-start">
-            <h3 className="text-xl font-serif font-bold text-foreground mb-6">
-              Scan to Explore
-            </h3>
-            <Image
-              src="/qr-code-for-website.jpg"
-              alt="Rishikesh Dham QR code"
-              width={220}
-              height={320}
-              quality={100}
-              className="w-full max-w-[240px] rounded-lg object-contain"
-            />
+          <div>
+            <div className="flex flex-col lg:items-end">
+              <div className="w-3/5">
+                <h3 className="text-xl font-bold text-foreground mb-6 inline-block">
+                  Scan to Explore
+                </h3>
+                <Image
+                  src="/qr-code-for-website.jpg"
+                  alt="Rishikesh Dham QR code"
+                  width={280}
+                  height={300}
+                  quality={100}
+                  className="w-full rounded-lg object-contain"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Separator */}
-        <div className="border-t border-border/50 my-8"></div>
+        <div className="border-t border-border/50 pb-5"></div>
 
         {/* Second Row */}
         <div className="flex flex-col sm:flex-row items-center justify-between">
