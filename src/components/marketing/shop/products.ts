@@ -18,7 +18,7 @@ export type Product = {
 
 export const products: Product[] = [
   {
-    id: 'Rosary',
+    id: 'rosary',
     name: 'Swami Original Rosary Lal Chandan Mala',
     price: '₹233',
     originalPrice: '₹499',
@@ -30,7 +30,7 @@ export const products: Product[] = [
     rating: 4.6,
   },
   {
-    id: 'Tulsi-Mala',
+    id: 'tulsi-mala',
     name: 'Tulsi Mala Wood Chain',
     price: '₹79',
     originalPrice: '₹100',
@@ -42,7 +42,7 @@ export const products: Product[] = [
     rating: 4.3,
   },
   {
-    id: 'Swaminarayan-Keychain',
+    id: 'swaminarayan-keychain',
     name: 'Swaminarayan Keychain',
     price: '₹383',
     originalPrice: '₹999',
@@ -55,7 +55,7 @@ export const products: Product[] = [
   },
   {
     id: 'swaminarayan-sticker',
-    name: 'Swaminarayan book sticker',
+    name: 'Swaminarayan Book Sticker',
     price: '₹68',
     originalPrice: '₹100',
     imageSrc: '/s-4.jpg',
@@ -102,7 +102,7 @@ export const products: Product[] = [
   },
   {
     id: 'car-home-frame',
-    name: 'Dharma & Divine Grace home & Car Dashboard Frame ',
+    name: 'Dharma & Divine Grace Home & Car Dashboard Frame',
     price: '₹1999',
     imageSrc: '/s-8.webp',
     href: '/shop/cart',

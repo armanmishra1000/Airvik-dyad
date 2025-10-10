@@ -59,7 +59,7 @@ export default function ShopPage() {
     return sorted;
   }, [filters, sortBy]);
 
-  const itemsPerPage = 10;
+  const itemsPerPage = 15;
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);

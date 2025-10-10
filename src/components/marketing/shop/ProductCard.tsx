@@ -21,7 +21,7 @@ export function ProductCard({
           alt={name}
           width={600}
           height={600}
-          className="aspect-square lg:h-48 w-full rounded-xl object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+          className="aspect-square lg:h-64 w-full rounded-xl object-cover transition-transform duration-500 group-hover:scale-[1.02]"
           sizes="(min-width: 1280px) 280px, (min-width: 768px) 33vw, 100vw"
         />
       </div>
