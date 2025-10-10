@@ -17,7 +17,7 @@ const quickLinks = [
   { href: "/about-us", label: "About Us" },
   { href: "/shop", label: "Shop" },
   { href: "/amenities", label: "Amenities" },
-  { href: "/gallery", label: "Ashram’s Glimpse" },
+  { href: "/ashram-glimpse", label: "Ashram Glimpse" },
 ];
 
 type SocialLink = { href: string; icon: React.ComponentType<{ className?: string }> };
