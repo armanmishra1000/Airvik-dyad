@@ -5,6 +5,15 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
+/**
+ * Render a styled 404 Not Found page with an animated, centered panel and navigation actions.
+ *
+ * The page displays a full-screen background image with a translucent overlay, a backdrop-blurred content
+ * container showing a "Page Not Found" label, a "404 — Lost in Serenity" title, descriptive copy,
+ * and two call-to-action buttons for returning home or exploring the ashram glimpse.
+ *
+ * @returns A React element representing the Not Found page UI.
+ */
 export default function NotFound() {
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 text-foreground">
