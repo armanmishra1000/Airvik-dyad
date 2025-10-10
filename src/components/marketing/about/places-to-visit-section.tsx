@@ -1,16 +1,10 @@
 "use client";
 
-import React from "react";
 import Image from "next/image";
-import Autoplay from "embla-carousel-autoplay";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import Link from "next/link";
 import { motion } from "framer-motion";
+import type { Variants } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 const placesToVisit = [
   {
@@ -31,119 +25,102 @@ const placesToVisit = [
     description:
       "Iconic suspension bridges offering stunning views of the river and surrounding temples.",
   },
-  {
-    title: "Rafting in Rishikesh",
-    imageUrl: "/Rishikesh-rafting.jpg",
-    description:
-      "Experience the thrill of white-water rafting on the holy Ganges river.",
-  },
-  {
-    title: "Bungee Jumping",
-    imageUrl: "/bungee.webp",
-    description:
-      "Rishikesh is also known for its bungee jumping facility, which provides an adrenaline-pumping experience as you leap from a height and feel the rush of free fall.",
-  },
-  {
-    title: "Gathering at the Ghat",
-    imageUrl: "/gatherning-ghat.png",
-    description:
-      "Join pilgrims and locals for a spiritual gathering at the ghats during sunrise and sunset.",
-  },
-  {
-    title: "Mountain Escape",
-    imageUrl: "/Mountain Escape.jpg",
-    description:
-      "Explore the serene Himalayan foothills with treks to waterfalls and stunning viewpoints.",
-  },
 ];
 
-const FlippableCard = ({ place }: { place: (typeof placesToVisit)[0] }) => {
-  return (
-    <div className="group h-80 w-full [perspective:1000px]">
-      <div className="relative h-full w-full rounded-lg shadow-xl transition-all duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-        {/* Front Face */}
-        <div className="absolute inset-0 [backface-visibility:hidden]">
-          <Image
-            src={place.imageUrl}
-            alt={place.title}
-            fill
-            className="object-cover rounded-lg"
-          />
-          <div className="absolute inset-0 bg-black/40 rounded-lg"></div>
-          <div className="absolute bottom-0 left-0 p-6">
-            <h3 className="text-2xl font-serif font-bold text-white">
-              {place.title}
-            </h3>
-          </div>
-        </div>
-        {/* Back Face */}
-        <div className="absolute inset-0 h-full w-full rounded-lg bg-card text-center text-foreground [transform:rotateY(180deg)] [backface-visibility:hidden]">
-          <div className="flex min-h-full flex-col items-center justify-center p-6">
-            <h3 className="text-2xl font-serif font-bold">{place.title}</h3>
-            <p className="mt-2 text-base text-muted-foreground">
-              {place.description}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export function PlacesToVisitSection() {
-  const plugin = React.useRef(
-    Autoplay({ delay: 3000, stopOnInteraction: true })
-  );
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.12,
+      },
+    },
+  };
+
+  const itemVariants: Variants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+      },
+    },
+  };
 
   return (
-    <section className="bg-background py-16 lg:py-28 md:py-15">
+    <section className="bg-background py-10 sm:py-12 overflow-hidden">
       <div className="container mx-auto px-4">
+        {/* Section Title */}
         <motion.div
-          className="text-center mb-16"
+          className="text-center space-y-4"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight mb-4">
-            Explore the Wonders of Rishikesh
+          <span className="text-sm font-semibold uppercase tracking-widest text-primary">
+            Explore Rishikesh
+          </span>
+          <h2 className="text-4xl font-serif font-bold leading-tight text-foreground md:text-5xl">
+            Places to Visit
           </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Discover the spiritual and natural attractions that make Rishikesh a
-            world-renowned destination.
+          <p className="text-base text-muted-foreground md:text-lg max-w-4xl mx-auto">
+            Discover the spiritual and natural attractions that make Rishikesh a world-renowned destination.
           </p>
         </motion.div>
 
+        {/* Places - Circular Images */}
         <motion.div
-          className="relative w-full max-w-6xl mx-auto"
+          className="mt-12 flex flex-col sm:flex-row justify-center items-center gap-8 sm:gap-6 lg:gap-12"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          {placesToVisit.map((place) => (
+            <motion.div 
+              key={place.title} 
+              variants={itemVariants}
+              className="flex flex-col items-center max-w-xs"
+            >
+              {/* Circular Image */}
+              <div className="relative w-40 h-40 sm:w-44 sm:h-44 lg:w-52 lg:h-52 rounded-full overflow-hidden mb-4">
+                <Image
+                  src={place.imageUrl}
+                  alt={place.title}
+                  fill
+                  sizes="(min-width: 1024px) 208px, (min-width: 640px) 176px, 160px"
+                  className="object-cover"
+                />
+              </div>
+              
+              {/* Text Below */}
+              <div className="text-center">
+                <h3 className="text-xl font-serif font-bold text-foreground mb-2">
+                  {place.title}
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {place.description}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* View All Button */}
+        <motion.div
+          className="mt-8 text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.3 }}
         >
-          <Carousel
-            plugins={[plugin.current]}
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            className="w-full"
-            onMouseEnter={plugin.current.stop}
-            onMouseLeave={plugin.current.reset}
-          >
-            <CarouselContent className="-ml-8">
-              {placesToVisit.map((place, index) => (
-                <CarouselItem
-                  key={index}
-                  className="pl-8 md:basis-1/2 lg:basis-1/3"
-                >
-                  <FlippableCard place={place} />
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full h-10 w-10 lg:h-12 lg:w-12 bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground z-10" />
-            <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 rounded-full h-10 w-10 lg:h-12 lg:w-12 bg-card border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground z-10" />
-          </Carousel>
+          <Button asChild size="lg">
+            <Link href="/about-rishikesh">View All Places</Link>
+          </Button>
         </motion.div>
       </div>
     </section>
