@@ -33,7 +33,7 @@ export default function NotFound() {
           <span className="text-sm font-semibold uppercase tracking-[0.32em] text-primary">
             Page Not Found
           </span>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold md:text-6xl">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">
             404 — Lost in Serenity
           </h1>
           <p className="max-w-2xl text-base text-muted-foreground md:text-lg">
@@ -57,7 +57,7 @@ export default function NotFound() {
           <Button
             variant="outline"
             asChild
-            className="min-w-[160px] w-full border-primary/40 text-primary"
+            className="min-w-[160px] px-6 w-full border-primary/40 text-primary"
           >
             <Link href="/ashram-glimpse">Explore Ashram Glimpse</Link>
           </Button>
