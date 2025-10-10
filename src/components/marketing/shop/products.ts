@@ -113,7 +113,7 @@ export const products: Product[] = [
   },
   {
     id: 'mobile-stand',
-    name: ' Symbol Custmized Mobile Stand',
+    name: 'Symbol Customized Mobile Stand',
     price: '₹200',
     originalPrice: '₹300',
     imageSrc: '/s-9.jpg',
@@ -124,7 +124,7 @@ export const products: Product[] = [
     rating: 4.0,
   },
   {
-    id: 'tample',
+    id: 'temple',
     name: 'Brown Teak Wood Wooden Carved Temple',
     price: '₹5000',
     originalPrice: '₹6000',

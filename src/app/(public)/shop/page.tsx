@@ -123,7 +123,7 @@ export default function ShopPage() {
                   name={name}
                   price={price}
                   originalPrice={originalPrice}
-                  href={href}
+                  // href={href}
                 />
               ))
             ) : (
