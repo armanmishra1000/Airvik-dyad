@@ -1,0 +1,172 @@
+import { attributeOptions, categoryOptions } from './FiltersSheet';
+
+export type CategoryValue = (typeof categoryOptions)[number]['value'];
+export type AttributeValue = (typeof attributeOptions)[number]['value'];
+
+export type Product = {
+  id: string;
+  name: string;
+  imageSrc: string;
+  price: string;
+  priceValue: number;
+  originalPrice?: string;
+  href: string;
+  category: CategoryValue;
+  attributes: AttributeValue[];
+  rating: number;
+};
+
+export const products: Product[] = [
+  {
+    id: 'Rosary',
+    name: 'Swami Original Rosary Lal Chandan Mala',
+    price: '₹233',
+    originalPrice: '₹499',
+    imageSrc: '/s-1.webp',
+    href: '/shop/cart',
+    priceValue: 233,
+    category: 'wellness',
+    attributes: ['handcrafted', 'limited'],
+    rating: 4.6,
+  },
+  {
+    id: 'Tulsi-Mala',
+    name: 'Tulsi Mala Wood Chain',
+    price: '₹79',
+    originalPrice: '₹100',
+    imageSrc: '/s-2.jpg',
+    href: '/shop/cart',
+    priceValue: 79,
+    category: 'textiles',
+    attributes: ['organic-cotton', 'handcrafted'],
+    rating: 4.3,
+  },
+  {
+    id: 'Swaminarayan-Keychain',
+    name: 'Swaminarayan Keychain',
+    price: '₹383',
+    originalPrice: '₹999',
+    imageSrc: '/s-3.jpg',
+    href: '/shop/cart',
+    priceValue: 383,
+    category: 'gifts',
+    attributes: ['brass', 'limited'],
+    rating: 4.1,
+  },
+  {
+    id: 'swminarayan-sticker',
+    name: 'swminarayan book sticker',
+    price: '₹68',
+    originalPrice: '₹100',
+    imageSrc: '/s-4.jpg',
+    href: '/shop/cart',
+    priceValue: 68,
+    category: 'gifts',
+    attributes: ['limited'],
+    rating: 3.9,
+  },
+  {
+    id: 'Swaminarayan-Nameplate',
+    name: 'Swaminarayan Nameplate',
+    price: '₹3,200',
+    originalPrice: '₹3,750',
+    imageSrc: '/s-5.jpg',
+    href: '/shop/cart',
+    priceValue: 3200,
+    category: 'home-decor',
+    attributes: ['handcrafted', 'eco'],
+    rating: 4.7,
+  },
+  {
+    id: 'key-holder',
+    name: 'Name Shaped Mask Holder Wood Key Holder',
+    price: '₹299',
+    originalPrice: '₹599',
+    imageSrc: '/s-6.jpg',
+    href: '/shop/cart',
+    priceValue: 299,
+    category: 'home-decor',
+    attributes: ['handcrafted', 'eco'],
+    rating: 4.2,
+  },
+  {
+    id: 'car-frame',
+    name: 'Dharma & Divine Grace Car Dashboard Frame in 24K Gold Plated Foil',
+    price: '₹1599',
+    imageSrc: '/s-7.webp',
+    href: '/shop/cart',
+    priceValue: 1599,
+    category: 'gifts',
+    attributes: ['brass', 'limited'],
+    rating: 4.8,
+  },
+  {
+    id: 'car-home-frame',
+    name: 'Dharma & Divine Grace home & Car Dashboard Frame ',
+    price: '₹1999',
+    imageSrc: '/s-8.webp',
+    href: '/shop/cart',
+    priceValue: 1999,
+    category: 'gifts',
+    attributes: ['brass', 'handcrafted'],
+    rating: 4.5,
+  },
+  {
+    id: 'mobile-stand',
+    name: ' Symbol Custmized Mobile Stand',
+    price: '₹200',
+    originalPrice: '₹300',
+    imageSrc: '/s-9.jpg',
+    href: '/shop/cart',
+    priceValue: 200,
+    category: 'gifts',
+    attributes: ['handcrafted', 'eco'],
+    rating: 4.0,
+  },
+  {
+    id: 'tample',
+    name: 'Brown Teak Wood Wooden Carved Temple',
+    price: '₹5000',
+    originalPrice: '₹6000',
+    imageSrc: '/s-10.jpg',
+    href: '/shop/cart',
+    priceValue: 5000,
+    category: 'home-decor',
+    attributes: ['handcrafted', 'limited'],
+    rating: 4.9,
+  },
+  {
+    id: 'pooja-thali',
+    name: 'Pooja thai brass Thali',
+    price: '₹519',
+    imageSrc: '/s-11.jpg',
+    href: '/shop/cart',
+    priceValue: 519,
+    category: 'wellness',
+    attributes: ['brass', 'ayurvedic'],
+    rating: 4.4,
+  },
+  {
+    id: 'meditation-bowl',
+    name: 'SrI Krishna CULTURE-New Big Sitting Swami Narayan Murti',
+    price: '₹1000',
+    imageSrc: '/s-14.jpg',
+    href: '/shop/cart',
+    priceValue: 1000,
+    category: 'gifts',
+    attributes: ['handcrafted', 'limited'],
+    rating: 4.6,
+  },
+  {
+    id: 'nilkanth-varni',
+    name: 'Shri Nilkanth Varni murti',
+    price: '₹8,376',
+    originalPrice: '₹8,817',
+    imageSrc: '/s-15.webp',
+    href: '/shop/cart',
+    priceValue: 8376,
+    category: 'gifts',
+    attributes: ['handcrafted', 'limited'],
+    rating: 4.9,
+  },
+];
