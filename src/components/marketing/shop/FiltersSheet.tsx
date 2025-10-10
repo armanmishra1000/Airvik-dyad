@@ -120,7 +120,7 @@ export function FiltersSheet({
           Filters
         </Button>
       </SheetTrigger>
-      <SheetContent className="h-full w-full max-w-md overflow-y-auto px-6 py-8 sm:px-8">
+      <SheetContent className="flex h-full w-full max-w-md flex-col px-6 py-8 sm:px-8">
         <div className="space-y-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -198,16 +198,20 @@ export function FiltersSheet({
               ))}
             </ToggleGroup>
           </div>
-
-          <footer className="mt-6 flex gap-2">
-            <Button className="w-1/2" variant="ghost" onClick={onClearAll}>
+        </div>
+        <footer className="mt-auto flex flex-col gap-4 
+     pt-6">
+          <Separator className="border-border/50" />
+          <div className="flex gap-2">
+            <Button className="w-1/2" variant="ghost"
+              onClick={onClearAll}>
               Clear All
             </Button>
             <Button className="w-1/2" onClick={onApply}>
               Apply
             </Button>
-          </footer>
-        </div>
+          </div>
+        </footer>
       </SheetContent>
     </Sheet>
   );
