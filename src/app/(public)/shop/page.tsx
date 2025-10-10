@@ -114,7 +114,7 @@ export default function ShopPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 md:gap-4 lg:gap-6 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-5">
             {paginatedProducts.length > 0 ? (
               paginatedProducts.map(({ id, imageSrc, name, price, originalPrice, href }) => (
                 <ProductCard

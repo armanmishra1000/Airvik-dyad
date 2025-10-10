@@ -26,7 +26,7 @@ export function ProductCard({
         />
       </div>
       <div className="flex items-start justify-between gap-4">
-        <p className="text-base font-medium text-foreground transition-colors duration-200 group-hover:text-primary line-clamp-2">
+        <p className="text-base font-medium text-foreground transition-colors duration-200 line-clamp-2">
           {name}
         </p>
         <div className="text-right">
