@@ -50,14 +50,14 @@ export default function NotFound() {
         >
           <Button
             asChild
-            className="min-w-[160px] w-full bg-primary hover:bg-primary-hover"
+            className="min-w-[230px] w-full bg-primary hover:bg-primary-hover"
           >
             <Link href="/">Return Home</Link>
           </Button>
           <Button
             variant="outline"
             asChild
-            className="min-w-[160px] px-6 w-full border-primary/40 text-primary"
+            className="px-8 w-full border-primary/40 text-primary"
           >
             <Link href="/ashram-glimpse">Explore Ashram Glimpse</Link>
           </Button>
