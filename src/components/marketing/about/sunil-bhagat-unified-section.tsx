@@ -8,19 +8,19 @@ const tabs = [
   {
     id: "life",
     label: "Life",
-    title: "SwamiShri's Life",
+    title: "Swamiji's Life",
     image: "/about-img.png",
     content: (
       <>
         <p>
           Guiding the ashram&apos;s spiritual journey is{" "}
-          <span className="font-semibold text-foreground">Sunil Bhagat</span>, 
-          affectionately known as Swami. His profound wisdom and compassionate 
+          <span className="font-semibold text-foreground">Sunil Bhagatji</span>, 
+          affectionately known as Swamiji. His profound wisdom and compassionate 
           teachings inspire all who visit, making the ashram a beacon of peace 
           and service.
         </p>
         <p>
-          Swami&apos;s journey is one of deep devotion, dedicated to sharing 
+          Swamiji&apos;s journey is one of deep devotion, dedicated to sharing 
           timeless wisdom. He emphasizes love, compassion, and a balanced life, 
           helping seekers find inner peace and connect with their true selves.
         </p>
@@ -31,12 +31,12 @@ const tabs = [
   {
     id: "work",
     label: "Work",
-    title: "Swami's Work",
+    title: "Swamiji's Work",
     image: "/annakshetra.png",
     content: (
       <>
         <p>
-          Swami&apos;s work extends far beyond spiritual discourses, embodying 
+          Swamiji&apos;s work extends far beyond spiritual discourses, embodying 
           the principle of &apos;welfare for all&apos; in every action. He is the 
           guiding force behind the ashram&apos;s extensive charitable activities.
         </p>
@@ -55,7 +55,7 @@ const tabs = [
           </div>
         </div>
         <p>
-          Through his tireless efforts, Swami has cultivated a profound environment 
+          Through his tireless efforts, Swamiji has cultivated a profound environment 
           of selfless service (seva), inspiring all to participate in the ashram&apos;s mission.
         </p>
       </>
@@ -64,14 +64,14 @@ const tabs = [
   {
     id: "message",
     label: "Message",
-    title: "Swami's Message",
+    title: "Swamiji's Message",
     image: "/Message-img.png",
     content: (
       <>
         <p>
           Live with a steady purpose and let selfless service (karma yoga) be your 
           daily practice: be kind, work diligently, follow dharma, and help others 
-          without expectation — small acts of giving, honest effort, and joining in 
+          without expectation; small acts of giving, honest effort, and joining in 
           satsang, aarti, or community service will purify the heart, strengthen the 
           mind, and bring true, lasting happiness; remain humble, persistent, and 
           disciplined, and let your actions be your prayer.
@@ -109,11 +109,15 @@ export function SunilBhagatUnifiedSection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground">
-            Swami Sunil Bhagatji - Life & Service
+          {/* Eyebrow */}
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+            About Swamiji
+          </p>
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+            Swamiji Sunil Bhagat - Life & Service
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-4xl mx-auto">
-            Explore Swami Sunil Bhagat&apos;s journey and leadership, his humanitarian initiatives, daily teachings, and practical guidance in seva, dharma and community life that shape SahajAnand Wellness.
+          <p className="text-base text-muted-foreground md:text-lg max-w-4xl mx-auto">
+            Explore Swamiji Sunil Bhagat&apos;s journey and leadership, his humanitarian initiatives, daily teachings, and practical guidance in seva, dharma and community life that shape SahajAnand Wellness.
           </p>
         </motion.div>
 
