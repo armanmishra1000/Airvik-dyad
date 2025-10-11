@@ -150,10 +150,10 @@ export function DailyRhythmSection() {
                     {time}
                   </div>
                   {index < dailyRhythm.length - 1 && (
-                    <div className="hidden h-full w-px bg-border md:block" />
+                    <div className="h-full w-px bg-border block" />
                   )}
                 </div>
-                <div className="flex-1 rounded-3xl border border-border/50 bg-card/70 backdrop-blur-sm sm:p-6 p-4 shadow-lg shadow-primary/5 space-y-3">
+                <div className="flex-1 rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm sm:p-6 p-4 shadow-lg shadow-primary/5 space-y-3">
                   <div className="flex items-center gap-3 text-sm font-medium text-primary">
                     <Icon className="size-4" />
                     {title}

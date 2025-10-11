@@ -3,16 +3,17 @@
 import Image from "next/image";
 
 /**
- * Renders the amenities hero section with a full-bleed background image, headline, call-to-action, and an animated grid of highlight stats.
+ * Renders a static amenities hero with an image overlay, headline, and subtitle.
  *
- * @returns A JSX element containing the hero layout, overlay, CTA linking to /book, and animated statistic cards
+ * @returns The JSX element containing the hero layout.
  */
 export function AmenitiesHeroSection() {
+  const newLocal = "/suit-room.jpg";
   return (
     <section className="relative overflow-hidden bg-muted">
       <div className="absolute inset-0">
         <Image
-          src="/shajanad.png"
+          src={newLocal}
           alt="Handpicked pieces for mindful living"
           fill
           priority
