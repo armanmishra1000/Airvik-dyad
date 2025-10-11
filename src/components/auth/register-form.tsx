@@ -55,7 +55,7 @@ export function RegisterForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
       options: { data: { name: values.name, role_name: "Guest" } },
@@ -64,10 +64,13 @@ export function RegisterForm() {
     if (error) {
       toast.error("Registration failed", { description: error.message });
     } else {
-      toast.success("Check your email", {
-        description: "We sent you a confirmation link to complete signup.",
-      });
-      router.push("/login");
+      if (data.session) {
+        toast.success("Account created. Welcome!");
+        router.push("/profile");
+      } else {
+        toast.success("Account created.");
+        router.push("/login");
+      }
     }
     setIsLoading(false);
   }
