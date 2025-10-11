@@ -29,6 +29,15 @@ interface RoomTypeCardProps {
   hasSearched: boolean;
 }
 
+/**
+ * Renders a card summarizing a room type with image, price, amenities, and actions to view details or select the room.
+ *
+ * @param roomType - RoomType data used to populate the card (images, name, description, bed types, amenities, occupancy, id).
+ * @param onSelect - Callback invoked with `roomType` when the "Select Room" button is clicked.
+ * @param isSelectionComplete - When true, disables the "Select Room" button to prevent additional selection.
+ * @param hasSearched - Controls action display and amenity preview: when true shows the "Select Room" action, otherwise shows "View Details & Book" and amenity icons with tooltips.
+ * @returns A JSX element representing the room type card.
+ */
 export function RoomTypeCard({
   roomType,
   onSelect,

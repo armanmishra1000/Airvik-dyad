@@ -8,6 +8,12 @@ import { cn } from "@/lib/utils"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
+/**
+ * Render a styled DayPicker calendar with custom classes and chevron icons.
+ *
+ * @param showOutsideDays - When `true`, days from the previous and next months are rendered; when `false`, those days are hidden. If omitted, DayPicker's default behavior is used.
+ * @returns A DayPicker React element configured with the application's styling, classNames, and icon components.
+ */
 function Calendar({
   className,
   classNames,
