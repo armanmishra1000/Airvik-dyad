@@ -62,14 +62,20 @@ export function GuestFormDialog({
     try {
       if (isEditing && guest) {
         await updateGuest(guest.id, values);
+        form.reset({
+          firstName: values.firstName,
+          lastName: values.lastName,
+          email: values.email,
+          phone: values.phone,
+        });
       } else {
-        await addGuest(values);
+        const created = await addGuest(values);
+        form.reset({ firstName: "", lastName: "", email: "", phone: "" });
       }
-      
+
       toast.success(
         `Guest ${isEditing ? "updated" : "created"} successfully!`
       );
-      form.reset();
       setOpen(false);
     } catch (error) {
       toast.error("Failed to save guest", {
@@ -77,6 +83,20 @@ export function GuestFormDialog({
       });
     }
   }
+
+  React.useEffect(() => {
+    if (!open) return;
+    if (guest) {
+      form.reset({
+        firstName: guest.firstName || "",
+        lastName: guest.lastName || "",
+        email: guest.email || "",
+        phone: guest.phone || "",
+      });
+    } else {
+      form.reset({ firstName: "", lastName: "", email: "", phone: "" });
+    }
+  }, [guest?.id, open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

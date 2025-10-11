@@ -27,9 +27,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { useDataContext } from "@/context/data-context";
 
+const amountString = z
+  .string()
+  .trim()
+  .min(1, "Amount is required")
+  .refine(
+    (v) => /^(\d{1,3}(,\d{3})*|\d+)(\.\d+)?$/.test(v) || /^(\d+)?(\.\d+)$/.test(v),
+    "Amount must be a valid number"
+  )
+  .transform((v) => Number(v.replace(/,/g, "")))
+  .refine((n) => !Number.isNaN(n), "Amount must be a valid number")
+  .refine((n) => n > 0, "Amount must be greater than 0");
+
 const chargeSchema = z.object({
-  description: z.string().min(1, "Description is required."),
-  amount: z.coerce.number().min(0.01, "Amount must be greater than 0."),
+  description: z.string().trim().min(1, "Description is required."),
+  amount: amountString,
 });
 
 interface AddChargeDialogProps {
@@ -48,7 +60,7 @@ export function AddChargeDialog({
     resolver: zodResolver(chargeSchema),
     defaultValues: {
       description: "",
-      amount: 0,
+      amount: undefined as unknown as number,
     },
   });
 
@@ -91,7 +103,7 @@ export function AddChargeDialog({
                 <FormItem>
                   <FormLabel>Amount</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" {...field} />
+                    <Input type="text" inputMode="decimal" placeholder="0.00" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -18,16 +18,9 @@ SET search_path = 'public'
 AS $$
 DECLARE
   role_id_to_assign UUID;
-  provided_role_name TEXT;
 BEGIN
-  provided_role_name := new.raw_user_meta_data ->> 'role_name';
-  IF provided_role_name IS NOT NULL THEN
-    SELECT id INTO role_id_to_assign FROM public.roles WHERE name = provided_role_name;
-  END IF;
-
-  IF role_id_to_assign IS NULL THEN
-    SELECT id INTO role_id_to_assign FROM public.roles WHERE name = 'Guest';
-  END IF;
+  -- Do NOT trust client-provided role_name. Always default to Guest here.
+  SELECT id INTO role_id_to_assign FROM public.roles WHERE name = 'Guest';
 
   INSERT INTO public.profiles (id, name, role_id)
   VALUES (new.id, new.raw_user_meta_data ->> 'name', role_id_to_assign);

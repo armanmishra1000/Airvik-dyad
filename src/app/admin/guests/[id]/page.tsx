@@ -2,6 +2,7 @@
 
 import { useParams, notFound } from "next/navigation";
 import { useDataContext } from "@/context/data-context";
+import { AppSkeleton } from "@/components/layout/app-skeleton";
 import {
   Card,
   CardContent,
@@ -20,15 +21,19 @@ import {
 
 export default function GuestDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { guests, reservations, rooms } = useDataContext();
+  const { isLoading, guests, reservations, rooms } = useDataContext();
 
-  const guest = guests.find((g) => g.id === params.id);
+  if (isLoading) {
+    return <AppSkeleton />;
+  }
+  const list = guests ?? [];
+  const guest = list.find((g) => g.id === params.id);
 
   if (!guest) {
     notFound();
   }
 
-  const guestReservations = reservations
+  const guestReservations = (reservations ?? [])
     .filter((res) => res.guestId === guest.id)
     .map(res => {
         const room = rooms.find(r => r.id === res.roomId);

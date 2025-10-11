@@ -21,15 +21,18 @@ export function AdminForgotPasswordForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/resetpassword?from=admin` : undefined;
-    const { error } = await supabase.auth.resetPasswordForEmail(values.email, redirectTo ? { redirectTo } : undefined);
-    if (error) {
-      toast.error("Unable to send reset link", { description: error.message });
-    } else {
-      toast.success("Check your inbox", { description: "We’ve sent a reset link to your email." });
-      form.reset();
+    try {
+      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/resetpassword?from=admin` : undefined;
+      const { error } = await supabase.auth.resetPasswordForEmail(values.email, redirectTo ? { redirectTo } : undefined);
+      if (error) {
+        toast.error("Unable to send reset link", { description: error.message });
+      } else {
+        toast.success("Check your inbox", { description: "We’ve sent a reset link to your email." });
+        form.reset();
+      }
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }
 
   return (

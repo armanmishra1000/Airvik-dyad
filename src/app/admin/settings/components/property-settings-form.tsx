@@ -36,7 +36,15 @@ const propertySchema = z.object({
   email: z.string().email("Please enter a valid email."),
   logo_url: z.string().optional(),
   photos: z.string().optional(),
-  google_maps_url: z.string().url("Please enter a valid Google Maps embed URL."),
+  google_maps_url: z
+    .string()
+    .transform((v) => (v ?? "").trim())
+    .refine(
+      (v) => v === "" || /^https?:\/\//.test(v),
+      "Please enter a valid Google Maps embed URL."
+    )
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
 });
 
 export function PropertySettingsForm() {
@@ -74,6 +82,7 @@ export function PropertySettingsForm() {
       ...values,
       logo_url: values.logo_url || "",
       photos: values.photos ? values.photos.split(",").map(p => p.trim()) : [],
+      google_maps_url: values.google_maps_url?.trim() || undefined,
     };
     updateProperty(updatedData);
     toast.success("Property details updated successfully!");

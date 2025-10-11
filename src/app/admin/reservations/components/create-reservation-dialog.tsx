@@ -56,7 +56,7 @@ const reservationSchema = z.object({
     from: z.date({ required_error: "Check-in date is required." }),
     to: z.date({ required_error: "Check-out date is required." }),
   }),
-  roomIds: z.array(z.string()).min(1, "Please select at least one room."),
+  roomId: z.string().min(1, "Please select a room."),
   numberOfGuests: z.coerce
     .number()
     .min(1, "At least one guest is required."),
@@ -69,7 +69,7 @@ export function CreateReservationDialog() {
     resolver: zodResolver(reservationSchema),
     defaultValues: {
       numberOfGuests: 1,
-      roomIds: [],
+      roomId: "",
     },
   });
 
@@ -95,7 +95,7 @@ export function CreateReservationDialog() {
   }, [selectedDateRange, reservations, rooms]);
 
   React.useEffect(() => {
-    form.resetField("roomIds");
+    form.resetField("roomId");
   }, [selectedDateRange, form]);
 
   function onSubmit(values: z.infer<typeof reservationSchema>) {
@@ -104,7 +104,7 @@ export function CreateReservationDialog() {
 
     addReservation({
       guestId: values.guestId,
-      roomIds: values.roomIds,
+      roomIds: [values.roomId],
       ratePlanId: ratePlan.id,
       checkInDate: formatISO(values.dateRange.from, {
         representation: "date",
@@ -116,7 +116,7 @@ export function CreateReservationDialog() {
       source: 'reception',
     });
 
-    toast.success(`${values.roomIds.length} room(s) booked successfully!`);
+    toast.success(`Room booked successfully!`);
     form.reset();
     setOpen(false);
   }
@@ -214,8 +214,8 @@ export function CreateReservationDialog() {
             />
             <FormField
               control={form.control}
-              name="roomIds"
-              render={() => (
+              name="roomId"
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Available Rooms</FormLabel>
                   <ScrollArea className="h-44 w-full rounded-2xl border border-border/50 bg-card/80 shadow-sm">
@@ -224,35 +224,22 @@ export function CreateReservationDialog() {
                         availableRooms.map((room) => {
                           const roomType = roomTypes.find(rt => rt.id === room.roomTypeId);
                           return (
-                            <FormField
+                            <FormItem
                               key={room.id}
-                              control={form.control}
-                              name="roomIds"
-                              render={({ field }) => (
-                                <FormItem
-                                  key={room.id}
-                                  className="flex flex-row items-center gap-3 space-y-0 rounded-xl border border-border/40 bg-card/95 px-4 py-3 shadow-sm"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(room.id)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, room.id])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== room.id
-                                              )
-                                            );
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="text-sm font-medium">
-                                    Room {room.roomNumber} ({roomType?.name})
-                                  </FormLabel>
-                                </FormItem>
-                              )}
-                            />
+                              className="flex flex-row items-center gap-3 space-y-0 rounded-xl border border-border/40 bg-card/95 px-4 py-3 shadow-sm"
+                            >
+                              <FormControl>
+                                <input
+                                  type="radio"
+                                  className="h-4 w-4"
+                                  checked={field.value === room.id}
+                                  onChange={() => field.onChange(room.id)}
+                                />
+                              </FormControl>
+                              <FormLabel className="text-sm font-medium">
+                                Room {room.roomNumber} ({roomType?.name})
+                              </FormLabel>
+                            </FormItem>
                           );
                         })
                       ) : (

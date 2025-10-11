@@ -45,6 +45,13 @@ export function EditReservationDialog({ reservation, children }: { reservation: 
     },
   });
 
+  React.useEffect(() => {
+    form.reset({
+      numberOfGuests: reservation.numberOfGuests,
+      notes: reservation.notes ?? "",
+    });
+  }, [reservation.id, reservation.numberOfGuests, reservation.notes]);
+
   const onSubmit = async (values: z.infer<typeof schema>) => {
     try {
       await updateReservation(reservation.id, values);

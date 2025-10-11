@@ -100,7 +100,9 @@ export function UserLoginForm() {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="h-11 w-full">{isLoading ? "Signing in..." : "Sign in"}</Button>
+              <Button type="submit" className="h-11 w-full" disabled={isLoading} aria-busy={isLoading}>
+                {isLoading ? "Signing in..." : "Sign in"}
+              </Button>
             </form>
           </Form>
         </CardContent>

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { AppSkeleton } from "@/components/layout/app-skeleton";
 import { useSessionContext } from "@/context/session-context";
+import { ADMIN_ROLES } from "@/constants/roles";
 
 export default function AuthLayout({
   children,
@@ -15,7 +16,7 @@ export default function AuthLayout({
 
   React.useEffect(() => {
     if (!isLoading && session) {
-      const isAdmin = roleName === "Hotel Owner" || roleName === "Hotel Manager" || roleName === "Receptionist" || roleName === "Housekeeper";
+      const isAdmin = ADMIN_ROLES.includes((roleName ?? "") as any);
       router.push(isAdmin ? "/admin" : "/profile");
     }
   }, [session, roleName, isLoading, router]);
