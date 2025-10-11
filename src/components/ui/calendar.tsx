@@ -11,7 +11,7 @@ export type CalendarProps = React.ComponentProps<typeof DayPicker>
 function Calendar({
   className,
   classNames,
-  showOutsideDays = true,
+  showOutsideDays,
   ...props
 }: CalendarProps) {
   return (
@@ -48,7 +48,7 @@ function Calendar({
           "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
         day_today: "border border-primary/40 bg-primary/10 text-primary",
         day_outside:
-          "day-outside text-muted-foreground/70 aria-selected:bg-primary/5 aria-selected:text-muted-foreground",
+          "day-outside text-transparent pointer-events-none select-none opacity-0",
         day_disabled: "text-muted-foreground/50 opacity-60",
         day_range_middle:
           "aria-selected:bg-primary/10 aria-selected:text-primary",
