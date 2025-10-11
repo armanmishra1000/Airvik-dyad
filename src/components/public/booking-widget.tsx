@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Users, Bed, Minus, Plus, Building } from "lucide-react";
+import { Calendar as CalendarIcon, Users, Bed, Minus, Plus, Building, Search } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
 
 const searchSchema = z.object({
   dateRange: z.object({
@@ -35,6 +34,7 @@ const searchSchema = z.object({
   children: z.coerce.number().min(0),
   rooms: z.coerce.number().min(1, "At least one room is required."),
 });
+
 
 export type BookingSearchFormValues = z.infer<typeof searchSchema>;
 
@@ -54,6 +54,8 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  const popoverOffset = isMobile ? 12 : 40;
+
   const form = useForm<BookingSearchFormValues>({
     resolver: zodResolver(searchSchema),
     defaultValues: {
@@ -66,8 +68,8 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
   const { guests, children, rooms } = form.watch();
 
   return (
-    <Card className="w-full max-w-5xl mx-auto shadow-xl bg-gradient-to-br from-card via-card to-card/90 backdrop-blur-md border-border/20 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
+    <Card className="w-full bg-white max-w-5xl mx-auto backdrop-blur-md border-border/20 shadow-md">
+      <div className="absolute inset-0 pointer-events-none" />
       <CardContent className="relative p-8">
         <Form {...form}>
           <form
@@ -90,7 +92,7 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-full h-14 justify-start text-left font-normal text-base border-2 hover:border-primary/50 transition-all duration-300 bg-background/50",
+                            "w-full h-14 justify-start text-left font-normal text-base border hover:border-primary/50 transition-all duration-300 bg-background/50",
                             !field.value?.from && "text-muted-foreground"
                           )}
                         >
@@ -119,21 +121,25 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 shadow-2xl border-2" align="start">
-                      <div className="p-4 pb-3 bg-gradient-to-r from-primary/10 via-transparent to-primary/10">
-                        <div className="flex justify-between items-center gap-8">
+                    <PopoverContent
+                      side="bottom"
+                      align="center"
+                      sideOffset={popoverOffset}
+                      className="w-full max-w-[min(100vw-1.5rem,640px)] md:max-w-none border border-border/40 rounded-2xl bg-white shadow-xl px-4 py-4 md:px-5 md:py-4 max-h-[80vh] overflow-y-auto"
+                    >
+                      <div className="px-5 py-4 border-b border-border/30">
+                        <div className="flex gap-4 md:flex-row md:items-start md:justify-between text-sm">
                           <div className="flex-1">
-                            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Check-in</div>
-                            <div className="font-semibold text-base">
+                            <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-in</span>
+                            <span className="mt-1 block text-base font-medium text-foreground">
                               {field.value?.from ? format(field.value.from, "EEE, MMM d") : "Select date"}
-                            </div>
+                            </span>
                           </div>
-                          <div className="h-8 w-px bg-border" />
-                          <div className="flex-1">
-                            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">Check-out</div>
-                            <div className="font-semibold text-base">
+                          <div className="flex-1 text-right">
+                            <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-out</span>
+                            <span className="mt-1 block text-base font-medium text-foreground">
                               {field.value?.to ? format(field.value.to, "EEE, MMM d") : "Select date"}
-                            </div>
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -145,6 +151,7 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                         onSelect={handleDateSelect}
                         numberOfMonths={isMobile ? 1 : 2}
                         disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        showOutsideDays
                         modifiers={{
                           booked: [],
                         }}
@@ -154,28 +161,29 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                             opacity: 0.5,
                           },
                         }}
+                        className="pt-3 pb-4 md:pt-4 md:pb-5 px-1 md:px-5"
                         classNames={{
-                          months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                          months: "flex flex-col gap-6 sm:flex-row sm:gap-6",
                           month: "space-y-4",
-                          caption: "flex justify-center pt-1 relative items-center",
-                          caption_label: "text-sm font-medium",
-                          nav: "space-x-1 flex items-center",
-                          nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-                          nav_button_previous: "absolute left-1",
-                          nav_button_next: "absolute right-1",
-                          table: "w-full border-collapse space-y-1",
-                          head_row: "flex",
-                          head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-                          row: "flex w-full mt-2",
-                          cell: "text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
-                          day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground rounded-md",
-                          day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-md",
-                          day_today: "bg-accent text-accent-foreground font-bold rounded-md",
-                          day_outside: "text-muted-foreground opacity-50",
-                          day_disabled: "text-muted-foreground opacity-50",
-                          day_range_middle: "aria-selected:bg-primary/20 aria-selected:text-accent-foreground rounded-md",
-                          day_range_start: "aria-selected:bg-primary aria-selected:text-primary-foreground rounded-md",
-                          day_range_end: "aria-selected:bg-primary aria-selected:text-primary-foreground rounded-md",
+                          caption: "flex items-center justify-between",
+                          caption_label: "text-base font-semibold text-foreground",
+                          nav: "flex items-center gap-2",
+                          nav_button: "inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-white text-muted-foreground transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                          nav_button_previous: "order-1",
+                          nav_button_next: "order-2",
+                          table: "w-full border-collapse",
+                          head_row: "flex w-full",
+                          head_cell: "flex h-11 w-11 items-center justify-center text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground/70",
+                          row: "mt-1 flex w-full",
+                          cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20",
+                          day: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-transparent text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 focus-visible:border-primary/50 focus-visible:bg-primary/5 aria-selected:hover:bg-primary aria-selected:hover:border-primary",
+                          day_selected: "inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
+                          day_today: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-dashed border-border/60 text-foreground",
+                          day_range_start: "day-range-start inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
+                          day_range_end: "day-range-end inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
+                          day_range_middle: "day-range-middle inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-foreground aria-selected:!text-foreground border border-primary/20",
+                          day_outside: "pointer-events-none opacity-0 select-none",
+                          day_disabled: "opacity-40 text-muted-foreground hover:border-transparent hover:bg-transparent",
                           day_hidden: "invisible",
                         }}
                       />
@@ -191,7 +199,7 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
               <PopoverTrigger asChild>
                 <Button
                   variant={"outline"}
-                  className="w-full h-14 justify-start text-left font-normal text-base border-2 hover:border-primary/50 transition-all duration-300 bg-background/50"
+                  className="w-full h-14 justify-start text-left font-normal text-base border hover:border-primary/50 transition-all duration-300 bg-background/50 rounded-xl"
                 >
                   <div className="flex items-center w-full">
                     <Users className="mr-3 h-5 w-5 text-primary" />
@@ -204,79 +212,125 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                   </div>
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-80 shadow-2xl border-2">
-                <div className="grid gap-5">
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-base">Select Occupancy</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Adjust rooms and guests for your stay
-                    </p>
+              <PopoverContent
+                side="bottom"
+                sideOffset={popoverOffset}
+                align="center"
+                className="w-[min(90vw,420px)] sm:w-[380px] rounded-3xl border border-border/30 bg-white shadow-xl p-6 space-y-6"
+              >
+                <div className="space-y-1">
+                  <h4 className="text-lg font-semibold text-foreground">Select occupancy</h4>
+                  <p className="text-sm text-muted-foreground">Choose rooms and guests for your stay</p>
+                </div>
+                <div className="divide-y divide-border/20">
+                  <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+                    <div className="flex items-center gap-3">
+                      <div className="flex lg:h-10 lg:w-10 w-8 h-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Building className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <span className="block text-base font-medium text-foreground">Rooms</span>
+                        <span className="block text-xs text-muted-foreground">Number of rooms</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center lg:gap-3">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
+                        onClick={() => form.setValue("rooms", Math.max(1, rooms - 1))}
+                        type="button"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-9 text-center text-base font-semibold text-foreground">{rooms}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
+                        onClick={() => form.setValue("rooms", rooms + 1)}
+                        type="button"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                  <Separator className="bg-border/50" />
-                  <div className="space-y-5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Building className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <span className="font-medium">Rooms</span>
-                          <p className="text-xs text-muted-foreground">Number of rooms</p>
-                        </div>
+                  <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+                    <div className="flex items-center gap-3">
+                      <div className="flex lg:h-10 lg:w-10 w-8 h-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Users className="h-4 w-4" />
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("rooms", Math.max(1, rooms - 1))} type="button"><Minus className="h-3 w-3" /></Button>
-                        <span className="w-8 text-center font-semibold">{rooms}</span>
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("rooms", rooms + 1)} type="button"><Plus className="h-3 w-3" /></Button>
+                      <div>
+                        <span className="block text-base font-medium text-foreground">Adults</span>
+                        <span className="block text-xs text-muted-foreground">Ages 13 or above</span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Users className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <span className="font-medium">Adults</span>
-                          <p className="text-xs text-muted-foreground">Ages 13 or above</p>
-                        </div>
+                    <div className="flex items-center lg:gap-3">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
+                        onClick={() => form.setValue("guests", Math.max(1, guests - 1))}
+                        type="button"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-9 text-center text-base font-semibold text-foreground">{guests}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
+                        onClick={() => form.setValue("guests", guests + 1)}
+                        type="button"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+                    <div className="flex items-center gap-3">
+                      <div className="flex lg:h-10 lg:w-10 w-8 h-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Bed className="h-4 w-4" />
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("guests", Math.max(1, guests - 1))} type="button"><Minus className="h-3 w-3" /></Button>
-                        <span className="w-8 text-center font-semibold">{guests}</span>
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("guests", guests + 1)} type="button"><Plus className="h-3 w-3" /></Button>
+                      <div>
+                        <span className="block text-base font-medium text-foreground">Children</span>
+                        <span className="block text-xs text-muted-foreground">Ages 0 to 12</span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary/10 rounded-lg">
-                          <Bed className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <span className="font-medium">Children</span>
-                          <p className="text-xs text-muted-foreground">Ages 0 to 12</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("children", Math.max(0, children - 1))} type="button"><Minus className="h-3 w-3" /></Button>
-                        <span className="w-8 text-center font-semibold">{children}</span>
-                        <Button variant="outline" size="icon" className="h-8 w-8 rounded-full hover:bg-primary/10" onClick={() => form.setValue("children", children + 1)} type="button"><Plus className="h-3 w-3" /></Button>
-                      </div>
+                    <div className="flex items-center lg:gap-3">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
+                        onClick={() => form.setValue("children", Math.max(0, children - 1))}
+                        type="button"
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-9 text-center text-base font-semibold text-foreground">{children}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
+                        onClick={() => form.setValue("children", children + 1)}
+                        type="button"
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 </div>
               </PopoverContent>
             </Popover>
 
-            <Button 
-              type="submit" 
-              size="lg" 
-              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 border-0"
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-xl  border-0"
             >
               <div className="flex items-center justify-center gap-2">
+                <Search className="h-5 w-5 text-primary-foreground" />
                 <span>Search Availability</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
               </div>
             </Button>
           </form>
