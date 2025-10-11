@@ -31,7 +31,12 @@ const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
 });
 
-export function ForgotPasswordForm() {
+type ForgotPasswordFormProps = {
+  returnToLoginHref?: string;
+  resetRedirectPath?: string;
+};
+
+export function ForgotPasswordForm({ returnToLoginHref = "/login", resetRedirectPath = "/resetpassword" }: ForgotPasswordFormProps) {
   const [isLoading, setIsLoading] = React.useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -43,7 +48,7 @@ export function ForgotPasswordForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/resetpassword` : undefined;
+    const redirectTo = typeof window !== "undefined" ? `${window.location.origin}${resetRedirectPath}` : undefined;
     const { error } = await supabase.auth.resetPasswordForEmail(values.email, redirectTo ? { redirectTo } : undefined);
 
     if (error) {
@@ -115,7 +120,7 @@ export function ForgotPasswordForm() {
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Remembered your password?{" "}
         <Link
-          href="/login"
+          href={returnToLoginHref}
           className="font-medium text-primary underline underline-offset-4"
         >
           Return to sign in

@@ -1,5 +1,5 @@
-import { LoginForm } from "@/components/auth/login-form";
+import { AdminLogin } from "@/components/auth/admin/login";
 
 export default function AdminLoginPage() {
-  return <LoginForm redirectTo="/admin" />;
+  return <AdminLogin />;
 }

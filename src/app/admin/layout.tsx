@@ -6,8 +6,21 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/auth-context";
+import { AuthProvider } from "@/context/auth-context";
 
 export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AuthProvider>
+      <AdminLayoutInner>{children}</AdminLayoutInner>
+    </AuthProvider>
+  );
+}
+
+function AdminLayoutInner({
   children,
 }: {
   children: React.ReactNode;
@@ -47,11 +60,7 @@ export default function AdminLayout({
   }
 
   if (isAuthRoute) {
-    return (
-      <div className="min-h-screen bg-background grid place-items-center px-4">
-        <div className="w-full max-w-md">{children}</div>
-      </div>
-    );
+    return <div className="min-h-screen bg-background">{children}</div>;
   }
 
   return (

@@ -1,29 +1,28 @@
 "use client";
 
-import { useAuthContext } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { AppSkeleton } from "@/components/layout/app-skeleton";
+import { useSessionContext } from "@/context/session-context";
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { currentUser, userRole, isLoading } = useAuthContext();
+  const { session, isLoading, roleName } = useSessionContext();
   const router = useRouter();
 
   React.useEffect(() => {
-    if (!isLoading && currentUser) {
-      const roleName = userRole?.name;
+    if (!isLoading && session) {
       const isAdmin = roleName === "Hotel Owner" || roleName === "Hotel Manager" || roleName === "Receptionist" || roleName === "Housekeeper";
       router.push(isAdmin ? "/admin" : "/profile");
     }
-  }, [currentUser, userRole, isLoading, router]);
+  }, [session, roleName, isLoading, router]);
 
   // If a user is logged in, we are going to redirect.
   // Show a skeleton to prevent the login form from flashing.
-  if (currentUser) {
+  if (session) {
     return <AppSkeleton />;
   }
 
