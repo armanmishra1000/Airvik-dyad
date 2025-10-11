@@ -54,3 +54,4 @@ TEST_VERIFICATION_UpdateStatusDialog.md
 TEST_VERIFICATION_UserFormDialog.md
 TESTING_STRATEGY.md
 __tests__
+supabase/.temp/

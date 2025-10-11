@@ -31,16 +31,16 @@ import {
 import type { Permission } from "@/data/types";
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Dashboard", requiredPermission: "read:reservation" },
-  { href: "/reservations", icon: Calendar, label: "Reservations", requiredPermission: "read:reservation" },
-  { href: "/calendar", icon: Calendar, label: "Calendar", requiredPermission: "read:reservation" },
-  { href: "/housekeeping", icon: ClipboardList, label: "Housekeeping", requiredPermission: "read:room" },
-  { href: "/guests", icon: Users, label: "Guests", requiredPermission: "read:guest" },
-  { href: "/room-categories", icon: FolderOpen, label: "Room Categories", requiredPermission: "read:room_category" },
-  { href: "/room-types", icon: Layers, label: "Room Types", requiredPermission: "read:room_type" },
-  { href: "/rooms", icon: BedDouble, label: "Rooms", requiredPermission: "read:room" },
-  { href: "/rates", icon: DollarSign, label: "Rate Plans", requiredPermission: "read:rate_plan" },
-  { href: "/reports", icon: BarChart3, label: "Reports", requiredPermission: "read:report" },
+  { href: "/admin", icon: Home, label: "Dashboard", requiredPermission: "read:reservation" },
+  { href: "/admin/reservations", icon: Calendar, label: "Reservations", requiredPermission: "read:reservation" },
+  { href: "/admin/calendar", icon: Calendar, label: "Calendar", requiredPermission: "read:reservation" },
+  { href: "/admin/housekeeping", icon: ClipboardList, label: "Housekeeping", requiredPermission: "read:room" },
+  { href: "/admin/guests", icon: Users, label: "Guests", requiredPermission: "read:guest" },
+  { href: "/admin/room-categories", icon: FolderOpen, label: "Room Categories", requiredPermission: "read:room_category" },
+  { href: "/admin/room-types", icon: Layers, label: "Room Types", requiredPermission: "read:room_type" },
+  { href: "/admin/rooms", icon: BedDouble, label: "Rooms", requiredPermission: "read:room" },
+  { href: "/admin/rates", icon: DollarSign, label: "Rate Plans", requiredPermission: "read:rate_plan" },
+  { href: "/admin/reports", icon: BarChart3, label: "Reports", requiredPermission: "read:report" },
 ] satisfies Array<{
   href: string;
   icon: LucideIcon;
@@ -134,10 +134,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
-                    href="/settings"
+                    href="/admin/settings"
                     className={cn(
                       "flex h-11 w-11 items-center justify-center rounded-2xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                      pathname === "/settings" && "bg-primary/10 text-primary shadow-sm"
+                      pathname === "/admin/settings" && "bg-primary/10 text-primary shadow-sm"
                     )}
                   >
                     <Settings className="h-5 w-5" />
@@ -152,11 +152,11 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <Link
-                href="/settings"
+                  <Link
+                    href="/admin/settings"
                 className={cn(
                   "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-visible:outline-none",
-                  pathname === "/settings" && "bg-primary/10 text-primary shadow-sm"
+                  pathname === "/admin/settings" && "bg-primary/10 text-primary shadow-sm"
                 )}
               >
                 <Settings className="h-4 w-4" />
