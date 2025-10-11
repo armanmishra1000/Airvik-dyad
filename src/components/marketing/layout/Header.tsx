@@ -80,37 +80,37 @@ const socialLinks: SocialLink[] = [
 
 export function Header() {
   return (
-    <div className="sticky top-0 md:-top-12 z-[1001]">
-      {/* topbar content */}
-      <div className="hidden md:block border-b border-border bg-primary-hover/85 backdrop-blur-sm">
-        <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <p className="text-sm font-medium text-white/90">
-            Swaminarayan Ashram (Estd: 1987)
-          </p>
-          <div className="flex items-center space-x-4">
-            {socialLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/90"
-                aria-label={link.name}
-                title={link.name}
-              >
-                <link.icon
-                  className="size-5"
-                  aria-hidden="true"
-                  focusable="false"
-                />
-              </a>
-            ))}
+    <>
+      <header className="border-b border-border bg-white sticky top-0 z-40 w-full">
+        {/* topbar content */}
+        <div className="hidden md:block bg-primary-hover">
+          <div className="container mx-auto flex h-12 items-center justify-between px-4">
+            <p className="text-sm font-medium text-white/90">
+              Swaminarayan Ashram (Estd: 1987)
+            </p>
+            <div className="flex items-center space-x-4">
+              {socialLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/90"
+                  aria-label={link.name}
+                  title={link.name}
+                >
+                  <link.icon
+                    className="size-5"
+                    aria-hidden="true"
+                    focusable="false"
+                  />
+                </a>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Header */}
-      <header className="border-b border-border bg-white">
+        {/* Main Header */}
         <div className="container mx-auto flex h-20 items-center justify-between px-4 text-foreground xl:h-24">
           <Link href="/" className="flex items-center">
             <Image
@@ -180,7 +180,7 @@ export function Header() {
               </SheetTrigger>
               <SheetContent
                 side="right"
-                className="bg-background text-foreground z-[1002] w-full max-w-none border-none flex h-full flex-col"
+                className="bg-background text-foreground z-[1100] w-full max-w-none border-none flex h-full flex-col"
               >
                 <nav className="flex flex-1 flex-col space-y-2 mt-8">
                   {navLinks.map((link) =>
@@ -230,7 +230,7 @@ export function Header() {
           </div>
         </div>
       </header>
-    </div>
+    </>
   );
 }
 
