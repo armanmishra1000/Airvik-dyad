@@ -79,6 +79,14 @@ const dailyRhythm: RhythmItem[] = [
   },
 ];
 
+/**
+ * Renders an animated, responsive "daily rhythm" section showing a timed itinerary.
+ *
+ * Displays a header with title and subtitle, then a two-column (on medium+ screens) animated timeline of rhythm items.
+ * Each item shows a circular time badge, an optional connecting line, and a card with an icon, title, and description.
+ *
+ * @returns The rendered section element containing the animated daily rhythm schedule.
+ */
 export function DailyRhythmSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },

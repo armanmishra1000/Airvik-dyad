@@ -31,6 +31,14 @@ const socialLinks: SocialLink[] = [
   { href: "https://x.com/Rishikeshdham", icon: FaXTwitter },
 ];
 
+/**
+ * Site footer containing logo, contact information, quick navigation links, and social icons.
+ *
+ * Renders a branded footer with the organization logo and subtitle, contact methods (email, phone, address),
+ * a list of quick links, and social media links.
+ *
+ * @returns The footer React element
+ */
 export function Footer() {
   return (
     <footer className="border-t shadow-md">
