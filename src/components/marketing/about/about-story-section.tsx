@@ -78,7 +78,7 @@ export function AboutStorySection() {
                 </p>
 
                 <p>
-                  Our daily work includes the Annakshetra (free meals), the Gaushala (care for cows), and the Veda-Pathshala (Vedic teaching). You're welcome to visit and feel the calm and warmth of the ashram.
+                  Our daily work includes the Annakshetra (free meals), the Gaushala (care for cows), and the Veda-Pathshala (Vedic teaching). You&apos;re welcome to visit and feel the calm and warmth of the ashram.
                 </p>
               </div>
 

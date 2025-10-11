@@ -32,7 +32,11 @@ const formSchema = z.object({
   password: z.string().min(1, { message: "Password is required." }),
 });
 
-export function LoginForm() {
+type LoginFormProps = {
+  redirectTo?: string;
+};
+
+export function LoginForm({ redirectTo = "/dashboard" }: LoginFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -57,9 +61,9 @@ export function LoginForm() {
       });
     } else {
       toast.success("Login successful!", {
-        description: "Redirecting you to the dashboard...",
+        description: "Redirecting...",
       });
-      router.push("/dashboard");
+      router.push(redirectTo);
     }
     setIsLoading(false);
   }

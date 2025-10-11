@@ -73,7 +73,7 @@ export function AboutActivitiesSection() {
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <span className="text-sm font-semibold uppercase tracking-widest text-primary">
-              What's On
+              What&apos;s On
             </span>
             <h2 className="text-4xl font-serif font-bold leading-tight text-foreground md:text-5xl">
               Daily Activities & Rituals
