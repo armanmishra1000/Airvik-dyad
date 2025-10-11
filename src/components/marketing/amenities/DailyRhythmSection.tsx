@@ -2,7 +2,16 @@
 
 import { motion, type Variants } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
-import { Leaf, MoonStar, Sunrise, UtensilsCrossed } from "lucide-react";
+import {
+  BellRing,
+  Flame,
+  MoonStar,
+  Music,
+  Soup,
+  Sunrise,
+  UtensilsCrossed,
+  Wind,
+} from "lucide-react";
 
 type RhythmItem = {
   time: string;
@@ -13,35 +22,71 @@ type RhythmItem = {
 
 const dailyRhythm: RhythmItem[] = [
   {
-    time: "05:45",
-    title: "Sunrise Satsang",
+    time: "05:15",
+    title: "Morning Bell & Quiet Start",
     description:
-      "Begin with guided meditation, vedic chanting, and gentle breathwork to align your intentions with the day ahead.",
+      "The gentle bell rings to begin the day. Everyone wakes up peacefully and spends a few moments in silence.",
+    icon: BellRing,
+  },
+  {
+    time: "05:45",
+    title: "Sunrise Meditation",
+    description:
+      "Start the morning with guided meditation, soft chanting, and calm breathing as the sun rises.",
     icon: Sunrise,
   },
   {
-    time: "09:00",
-    title: "Holistic Nourishment",
+    time: "06:45",
+    title: "Pranayama by the Ganga",
     description:
-      "Sattvic breakfast paired with herbal tonics, followed by optional yoga therapy or personalised consultations.",
+      "Gentle yoga movements and breathing exercises beside the Ganga help refresh body and mind.",
+    icon: Wind,
+  },
+  {
+    time: "08:00",
+    title: "Morning Fire Prayer",
+    description:
+      "A small fire ceremony with mantra chanting and blessings to begin the day with good energy.",
+    icon: Flame,
+  },
+  {
+    time: "09:00",
+    title: "Sattvic Breakfast",
+    description:
+      "A healthy vegetarian breakfast with herbal tea and quiet time to relax after morning practice.",
     icon: UtensilsCrossed,
   },
   {
-    time: "15:30",
-    title: "Rest & Reflection",
+    time: "12:00",
+    title: "Ayurvedic Lunch",
     description:
-      "Afternoon tea at the herbal lounge, journaling corners, and mindful art sessions in the creative studio.",
-    icon: Leaf,
+      "A fresh, balanced lunch prepared with Ayurvedic recipes and a short breathing practice before eating.",
+    icon: Soup,
+  },
+  {
+    time: "18:00",
+    title: "Temple Prayer & Music",
+    description:
+      "Evening temple rituals with live devotional singing and peaceful prayer time.",
+    icon: Music,
   },
   {
     time: "19:15",
-    title: "Evening Aarti",
+    title: "Evening Aarti by the Ganga",
     description:
-      "Gather by the Ganges for the golden glow of diyas, sacred hymns, and a nourishing supper to conclude the day.",
+      "Gather by the river for evening aarti with diyas, chanting, and closing reflections for the day.",
     icon: MoonStar,
   },
 ];
 
+/**
+ * Renders an animated, responsive "daily rhythm" section showing a timed itinerary.
+ *
+ * Displays a header with title and subtitle, then a two-column (on medium+ screens) animated timeline of rhythm items.
+ * Each item shows a circular time badge, an optional connecting line, and a card with an icon, title, and description.
+ *
+ * @returns The rendered section element containing the animated daily rhythm schedule.
+ */
 export function DailyRhythmSection() {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -67,22 +112,25 @@ export function DailyRhythmSection() {
   };
 
   return (
-    <section className="py-10 md:py-12">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <section className="pb-10">
+      <div className="container mx-auto sm:px-6 px-4 space-y-12">
         <motion.div
-          className="max-w-2xl space-y-4"
+          className="space-y-4 text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h2 className="text-3xl sm:text-4xl">
-            A gentle cadence to anchor your stay
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground mb-2">
+            Daily Life at the Ashram
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground">
-            Every amenity interweaves with a mindful itinerary that guides you
-            from dawn to dusk with grace and intention.
-          </p>
+          <div className="flex justify-center">
+            <p className="text-base md:text-lg text-muted-foreground max-w-3xl">
+              From sunrise meditation to evening chants, each moment flows with
+              mindful intention guiding you to live in harmony with nature and
+              your inner self.
+            </p>
+          </div>
         </motion.div>
 
         <motion.div
@@ -100,16 +148,16 @@ export function DailyRhythmSection() {
                 className="relative flex gap-4"
               >
                 <div className="relative flex flex-col items-center">
-                  <div className="flex items-center justify-center h-14 w-14 flex-shrink-0 rounded-full border border-primary/40 bg-primary/10 text-primary font-semibold">
+                  <div className="flex items-center justify-center lg:size-14 size-12 flex-shrink-0 lg:text-sm text-xs rounded-full border border-primary/40 bg-primary/10 text-primary font-semibold">
                     {time}
                   </div>
                   {index < dailyRhythm.length - 1 && (
-                    <div className="hidden h-full w-px bg-border md:block" />
+                    <div className="h-full w-px bg-border block" />
                   )}
                 </div>
-                <div className="flex-1 rounded-3xl border border-border/50 bg-card/70 backdrop-blur-sm p-6 shadow-lg shadow-primary/5 space-y-3">
+                <div className="flex-1 rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm sm:p-6 p-4 shadow-lg shadow-primary/5 space-y-3">
                   <div className="flex items-center gap-3 text-sm font-medium text-primary">
-                    <Icon className="h-4 w-4" />
+                    <Icon className="size-4" />
                     {title}
                   </div>
                   <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
