@@ -40,7 +40,7 @@ const propertySchema = z.object({
     .string()
     .transform((v) => (v ?? "").trim())
     .refine(
-      (v) => v === "" || /^https?:\/\//.test(v),
+      (v) => v === "" || z.string().url().safeParse(v).success,
       "Please enter a valid Google Maps embed URL."
     )
     .transform((v) => (v === "" ? undefined : v))
@@ -81,7 +81,7 @@ export function PropertySettingsForm() {
     const updatedData = {
       ...values,
       logo_url: values.logo_url || "",
-      photos: values.photos ? values.photos.split(",").map(p => p.trim()) : [],
+      photos: values.photos ? values.photos.split(",").map(p => p.trim()).filter(Boolean) : [],
       google_maps_url: values.google_maps_url?.trim() || undefined,
     };
     updateProperty(updatedData);

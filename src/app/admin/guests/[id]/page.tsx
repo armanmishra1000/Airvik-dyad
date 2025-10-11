@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useParams, notFound } from "next/navigation";
@@ -36,7 +37,8 @@ export default function GuestDetailsPage() {
   const guestReservations = (reservations ?? [])
     .filter((res) => res.guestId === guest.id)
     .map(res => {
-        const room = rooms.find(r => r.id === res.roomId);
+        const roomsList = rooms ?? [];
+        const room = roomsList.find(r => r.id === res.roomId);
         return {
             ...res,
             roomNumber: room?.roomNumber || "N/A"

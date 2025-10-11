@@ -98,27 +98,31 @@ export function CreateReservationDialog() {
     form.resetField("roomId");
   }, [selectedDateRange, form]);
 
-  function onSubmit(values: z.infer<typeof reservationSchema>) {
+  async function onSubmit(values: z.infer<typeof reservationSchema>) {
     const ratePlan =
       ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
-
-    addReservation({
-      guestId: values.guestId,
-      roomIds: [values.roomId],
-      ratePlanId: ratePlan.id,
-      checkInDate: formatISO(values.dateRange.from, {
-        representation: "date",
-      }),
-      checkOutDate: formatISO(values.dateRange.to, { representation: "date" }),
-      numberOfGuests: values.numberOfGuests,
-      status: "Confirmed",
-      bookingDate: formatISO(new Date()),
-      source: 'reception',
-    });
-
-    toast.success(`Room booked successfully!`);
-    form.reset();
-    setOpen(false);
+    try {
+      await addReservation({
+        guestId: values.guestId,
+        roomIds: [values.roomId],
+        ratePlanId: ratePlan.id,
+        checkInDate: formatISO(values.dateRange.from, {
+          representation: "date",
+        }),
+        checkOutDate: formatISO(values.dateRange.to, { representation: "date" }),
+        numberOfGuests: values.numberOfGuests,
+        status: "Confirmed",
+        bookingDate: formatISO(new Date()),
+        source: 'reception',
+      });
+      toast.success(`Room booked successfully!`);
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      toast.error("Failed to create reservation", {
+        description: (error as Error).message,
+      });
+    }
   }
 
   return (
