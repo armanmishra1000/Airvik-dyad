@@ -58,7 +58,7 @@ export function RegisterForm() {
     const { error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
-      options: { data: { name: values.name } },
+      options: { data: { name: values.name, role_name: "Guest" } },
     });
 
     if (error) {

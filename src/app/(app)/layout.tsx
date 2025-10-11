@@ -13,19 +13,27 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
-  const { currentUser, isLoading } = useAuthContext();
+  const { currentUser, userRole, isLoading } = useAuthContext();
   const router = useRouter();
 
   React.useEffect(() => {
-    // Only check for redirection once the loading state is resolved
-    if (!isLoading && !currentUser) {
-      router.push("/login");
+    if (isLoading) return;
+    if (!currentUser) {
+      router.replace("/admin/login");
+      return;
     }
-  }, [currentUser, isLoading, router]);
+    const roleName = userRole?.name;
+    const allowed = roleName === "Hotel Owner" || roleName === "Hotel Manager" || roleName === "Receptionist" || roleName === "Housekeeper";
+    if (!allowed) {
+      router.replace("/profile");
+    }
+  }, [currentUser, userRole, isLoading, router]);
 
   // After loading, if there's still no user, the effect will redirect.
   // Return null to prevent flashing the layout for an unauthenticated user.
-  if (!currentUser) {
+  const roleName = userRole?.name;
+  const allowed = roleName === "Hotel Owner" || roleName === "Hotel Manager" || roleName === "Receptionist" || roleName === "Housekeeper";
+  if (!currentUser || !allowed) {
     return null;
   }
 
