@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface ActivityInfoCardProps {
@@ -29,18 +29,19 @@ export function ActivityInfoCard({
             alt={title}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            className="object-cover transition-transform duration-500 ease-out"
           />
         </div>
       </div>
-      <CardHeader className="space-y-2 px-4 pt-4 pb-0">
-        <CardTitle as="h3" className="text-2xl font-serif font-bold text-foreground">
+      
+      <div className="p-4 space-y-5">
+        <div className="text-xl font-serif font-medium text-primary">
           {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-grow text-base text-muted-foreground px-4 pb-4 mt-2">
-        <p>{description}</p>
-      </CardContent>
+        </div>
+        <div>
+          {description}
+        </div>
+      </div>
     </Card>
   );
 }
