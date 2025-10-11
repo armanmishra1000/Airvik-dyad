@@ -47,7 +47,7 @@ export function RishikeshExperienceSection() {
   };
 
   return (
-    <section className="relative py-10 sm:py-12">
+    <section className="relative py-10 sm:py-12" id="#rishikesh-story">
       <Image
         src="/rih.png"
         alt="Ganga river in Rishikesh"

@@ -2,7 +2,6 @@
 
 import {
   RishikeshHeroSection,
-  RishikeshStorySection,
   RishikeshExperienceSection,
   KeyAttractionsSection,
   MapSection
@@ -12,8 +11,6 @@ export default function AboutRishikeshPage() {
   return (
     <div className="bg-background text-foreground">
         <RishikeshHeroSection />
-        <RishikeshStorySection />
-        <RishikeshExperienceSection />
         <KeyAttractionsSection />
         <MapSection />
     </div>
