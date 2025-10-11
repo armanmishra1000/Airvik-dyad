@@ -44,6 +44,9 @@ const chargeSchema = z.object({
   amount: amountString,
 });
 
+type ChargeFormInput = z.input<typeof chargeSchema>;   // { amount: string; description: string }
+type ChargeFormOutput = z.output<typeof chargeSchema>; // { amount: number; description: string }
+
 interface AddChargeDialogProps {
   reservationId: string;
   children: React.ReactNode;
@@ -56,16 +59,17 @@ export function AddChargeDialog({
   const [open, setOpen] = React.useState(false);
   const { addFolioItem } = useDataContext();
 
-  const form = useForm<z.infer<typeof chargeSchema>>({
-    resolver: zodResolver(chargeSchema),
+  const form = useForm<ChargeFormInput>({
+    resolver: zodResolver(chargeSchema) as any,
     defaultValues: {
       description: "",
-      amount: undefined as unknown as number,
+      amount: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof chargeSchema>) {
-    addFolioItem(reservationId, values);
+  function onSubmit(values: ChargeFormInput) {
+    const parsed: ChargeFormOutput = chargeSchema.parse(values);
+    addFolioItem(reservationId, parsed);
     toast.success("Charge added successfully!");
     form.reset();
     setOpen(false);
