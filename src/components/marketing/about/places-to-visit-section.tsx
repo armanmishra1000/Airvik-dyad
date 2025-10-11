@@ -64,7 +64,7 @@ export function PlacesToVisitSection() {
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">
             Explore Rishikesh
           </span>
-          <h2 className="text-4xl font-serif font-bold leading-tight text-foreground md:text-5xl">
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
             Places to Visit
           </h2>
           <p className="text-base text-muted-foreground md:text-lg max-w-4xl mx-auto">

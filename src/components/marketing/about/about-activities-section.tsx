@@ -75,7 +75,7 @@ export function AboutActivitiesSection() {
             <span className="text-sm font-semibold uppercase tracking-widest text-primary">
               What's On
             </span>
-            <h2 className="text-4xl font-serif font-bold leading-tight text-foreground md:text-5xl">
+            <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
               Daily Activities & Rituals
             </h2>
             <p className="text-base text-muted-foreground md:text-lg max-w-4xl mx-auto">

@@ -10,7 +10,7 @@ export function AboutStorySection() {
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-6xl">
           <motion.div
-            className="text-center"
+            className="text-center space-y-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
@@ -19,10 +19,10 @@ export function AboutStorySection() {
             <span className="text-sm font-semibold uppercase tracking-widest text-primary">
               Our Heritage
             </span>
-            <h2 className="mt-4 text-4xl font-serif font-bold leading-tight text-foreground md:text-5xl">
+            <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
               Our Sacred Story
             </h2>
-            <p className="mt-4 text-base text-muted-foreground md:text-lg">
+            <p className="text-base text-muted-foreground md:text-lg">
               A peaceful ashram by the Ganges, guided by compassion and service.
             </p>
           </motion.div>
@@ -39,14 +39,14 @@ export function AboutStorySection() {
                 <div className="relative rounded-xl overflow-hidden">
                   <Image
                     src="/sunil-bhagat-ji.jpg"
-                    alt="Sunil Bhagat Ji (Swami), spiritual guide of Sahajanand Wellness"
+                    alt="Sunil Bhagat (Swamiji), spiritual guide of Sahajanand Wellness"
                     width={600}
                     height={400}
                     className="object-cover rounded-2xl w-full"
                   />
                 </div>
                 <figcaption className="text-sm text-muted-foreground">
-                  Sunil Bhagat Ji (Swami) welcoming visitors in the ashram courtyard.
+                  Swamiji Sunil Bhagat welcoming visitors in the ashram courtyard.
                 </figcaption>
               </figure>
             </motion.div>
@@ -72,7 +72,7 @@ export function AboutStorySection() {
                 <p>
                   Leading our spiritual life is
                   <span className="mx-1 font-semibold text-foreground">
-                    Sunil Bhagat Ji (Swami).
+                    Swamiji Sunil Bhagat.
                   </span>
                   His kind guidance and teachings gently inspire visitors and residents alike.
                 </p>
