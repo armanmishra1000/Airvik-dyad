@@ -7,6 +7,7 @@ export { SunilBhagatHeroSection } from "./sunil-bhagat-hero-section";
 export { SunilBhagatBioSection } from "./sunil-bhagat-bio-section";
 export { SunilBhagatWorkSection } from "./sunil-bhagat-work-section";
 export { SunilBhagatMessageSection } from "./sunil-bhagat-message-section";
+export { SunilBhagatUnifiedSection } from "./sunil-bhagat-unified-section";
 export { SwamiSpeechSection } from "./swami-speech-section";
 export { RishikeshHeroSection } from "./rishikesh-hero-section";
 export { RishikeshStorySection } from "./rishikesh-story-section";
