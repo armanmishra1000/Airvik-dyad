@@ -1,15 +1,13 @@
 import { AmenitiesHeroSection } from "@/components/marketing/amenities/HeroSection";
-import { SignatureAmenitiesSection } from "@/components/marketing/amenities/SignatureAmenitiesSection";
 import { DailyRhythmSection } from "@/components/marketing/amenities/DailyRhythmSection";
-import { ConciergeCtaSection } from "@/components/marketing/amenities/ConciergeCtaSection";
+import { EssentialAmenitiesGrid } from "@/components/marketing/amenities/EssentialAmenitiesGrid";
 
 export default function AmenitiesPage() {
   return (
     <div className="bg-background text-foreground">
       <AmenitiesHeroSection />
-      <SignatureAmenitiesSection />
+      <EssentialAmenitiesGrid />
       <DailyRhythmSection />
-      <ConciergeCtaSection />
     </div>
   );
 }
