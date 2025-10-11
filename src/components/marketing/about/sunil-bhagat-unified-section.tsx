@@ -2,14 +2,12 @@
 
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Heart, Users } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 const tabs = [
   {
     id: "life",
     label: "Life",
-    icon: Sparkles,
     title: "SwamiShri's Life",
     image: "/about-img.png",
     content: (
@@ -33,7 +31,6 @@ const tabs = [
   {
     id: "work",
     label: "Work",
-    icon: Users,
     title: "Swami's Work",
     image: "/annakshetra.png",
     content: (
@@ -45,14 +42,12 @@ const tabs = [
         </p>
         <div className="grid sm:grid-cols-2 gap-4 my-6">
           <div className="bg-muted/50 border border-border rounded-xl p-4">
-            <div className="text-3xl mb-2">🍲</div>
             <h4 className="font-semibold text-foreground mb-2">Annakshetra</h4>
             <p className="text-sm text-muted-foreground">
               Provides thousands of free meals daily to pilgrims and those in need.
             </p>
           </div>
           <div className="bg-muted/50 border border-border rounded-xl p-4">
-            <div className="text-3xl mb-2">🐄</div>
             <h4 className="font-semibold text-foreground mb-2">Gaushala</h4>
             <p className="text-sm text-muted-foreground">
               A sanctuary where sacred cows are honored and protected.
@@ -69,7 +64,6 @@ const tabs = [
   {
     id: "message",
     label: "Message",
-    icon: Heart,
     title: "Swami's Message",
     image: "/Message-img.png",
     content: (
@@ -82,26 +76,9 @@ const tabs = [
           mind, and bring true, lasting happiness; remain humble, persistent, and 
           disciplined, and let your actions be your prayer.
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
-          <div className="text-center p-3 bg-muted/50 border border-border rounded-xl">
-            <div className="text-2xl mb-1">🙏</div>
-            <div className="text-xs font-medium text-foreground">Dharma</div>
-          </div>
-          <div className="text-center p-3 bg-muted/50 border border-border rounded-xl">
-            <div className="text-2xl mb-1">❤️</div>
-            <div className="text-xs font-medium text-foreground">Compassion</div>
-          </div>
-          <div className="text-center p-3 bg-muted/50 border border-border rounded-xl">
-            <div className="text-2xl mb-1">🧘</div>
-            <div className="text-xs font-medium text-foreground">Seva</div>
-          </div>
-          <div className="text-center p-3 bg-muted/50 border border-border rounded-xl">
-            <div className="text-2xl mb-1">☮️</div>
-            <div className="text-xs font-medium text-foreground">Peace</div>
-          </div>
-        </div>
       </>
     ),
+    tags: ["Dharma", "Compassion", "Seva", "Peace"],
   },
 ];
 
@@ -149,9 +126,8 @@ export function SunilBhagatUnifiedSection() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mb-8 flex justify-center"
           >
-            <div className="overflow-x-auto scrollbar-hide flex bg-muted p-1.5 rounded-full w-full sm:w-auto">
+            <div className="overflow-x-auto scrollbar-hide flex bg-muted p-1.5 rounded-full w-full sm:w-[480px]">
               {tabs.map((tab) => {
-                const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 
                 return (
@@ -162,7 +138,7 @@ export function SunilBhagatUnifiedSection() {
                     }}
                     onClick={() => setActiveTab(tab.id)}
                     className={`
-                      relative px-6 sm:px-8 py-3 sm:py-4 rounded-full flex-1 sm:flex-initial
+                      relative px-6 sm:px-8 py-3 sm:py-4 rounded-full flex-1
                       font-semibold text-sm sm:text-base whitespace-nowrap
                       transition-colors duration-200 focus:outline-none
                       ${isActive ? "text-white" : "text-muted-foreground hover:text-foreground"}
@@ -175,8 +151,7 @@ export function SunilBhagatUnifiedSection() {
                         transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                       />
                     )}
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="relative z-10 flex items-center justify-center">
                       {tab.label}
                     </span>
                   </button>
@@ -185,31 +160,35 @@ export function SunilBhagatUnifiedSection() {
             </div>
           </motion.div>
           {/* Dynamic Tab Content - Redesigned */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="relative"
-            >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="relative"
+          >
+            <AnimatePresence mode="wait">
+              <div
+                key={activeTab}
+                className="relative"
+              >
               {/* Main Content Card */}
               <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-lg">
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
                   {/* Image Side with Overlay */}
                   <div className="relative h-[350px] sm:h-[450px] lg:h-auto lg:col-span-2 overflow-hidden group">
                     <motion.div
-                      initial={{ scale: 1.15, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
+                      key={`image-${activeTab}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
                       className="relative h-full"
                     >
                       <Image
                         src={currentTab.image}
                         alt={currentTab.title}
                         fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-1000"
+                        className="object-cover"
                         quality={90}
                         sizes="(max-width: 1024px) 100vw, 40vw"
                       />
@@ -250,18 +229,15 @@ export function SunilBhagatUnifiedSection() {
                           className="flex flex-wrap gap-3"
                         >
                           {currentTab.tags.map((tag, index) => (
-                            <motion.div
+                            <div
                               key={tag}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }}
                               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-background border border-primary/20 shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-300 group"
                             >
                               <span className="w-1.5 h-1.5 rounded-full bg-primary group-hover:scale-125 transition-transform duration-300" />
                               <span className="text-sm font-medium text-foreground/80 group-hover:text-foreground transition-colors">
                                 {tag}
                               </span>
-                            </motion.div>
+                            </div>
                           ))}
                         </motion.div>
                       )}
@@ -269,8 +245,9 @@ export function SunilBhagatUnifiedSection() {
                   </div>
                 </div>
               </div>
-            </motion.div>
-          </AnimatePresence>
+              </div>
+            </AnimatePresence>
+          </motion.div>
         </div>
       </div>
     </section>
