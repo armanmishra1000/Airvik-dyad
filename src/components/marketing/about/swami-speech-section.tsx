@@ -14,12 +14,12 @@ const otherVideos = [
 
 const YouTubeEmbed = ({
   videoId,
-  className,
+  className = "",
 }: {
   videoId: string;
   className?: string;
 }) => (
-  <div className={`aspect-video w-full ${className}`}>
+  <div className={`aspect-video w-full ${className}`.trim()}>
     <iframe
       src={`https://www.youtube.com/embed/${videoId}`}
       title="YouTube video player"
