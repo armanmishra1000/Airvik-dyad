@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { cn } from "@/lib/utils";
@@ -15,8 +15,11 @@ export default function AdminLayout({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const { currentUser, userRole, isLoading } = useAuthContext();
   const router = useRouter();
+  const pathname = usePathname();
+  const isAuthRoute = pathname === "/admin/login" || pathname === "/admin/forget-password";
 
   React.useEffect(() => {
+    if (isAuthRoute) return;
     if (isLoading) return;
     if (!currentUser) {
       router.replace("/admin/login");
@@ -39,8 +42,16 @@ export default function AdminLayout({
     roleName === "Hotel Manager" ||
     roleName === "Receptionist" ||
     roleName === "Housekeeper";
-  if (!currentUser || !allowed) {
+  if (!isAuthRoute && (!currentUser || !allowed)) {
     return null;
+  }
+
+  if (isAuthRoute) {
+    return (
+      <div className="min-h-screen bg-background grid place-items-center px-4">
+        <div className="w-full max-w-md">{children}</div>
+      </div>
+    );
   }
 
   return (
