@@ -10,15 +10,16 @@ export default function AuthLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { currentUser, isLoading } = useAuthContext();
+  const { currentUser, userRole, isLoading } = useAuthContext();
   const router = useRouter();
 
   React.useEffect(() => {
-    // If the auth state is loaded and a user exists, redirect them away from the auth pages.
     if (!isLoading && currentUser) {
-      router.push("/dashboard");
+      const roleName = userRole?.name;
+      const isAdmin = roleName === "Hotel Owner" || roleName === "Hotel Manager" || roleName === "Receptionist" || roleName === "Housekeeper";
+      router.push(isAdmin ? "/admin/dashboard" : "/profile");
     }
-  }, [currentUser, isLoading, router]);
+  }, [currentUser, userRole, isLoading, router]);
 
   // If a user is logged in, we are going to redirect.
   // Show a skeleton to prevent the login form from flashing.
