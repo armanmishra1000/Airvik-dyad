@@ -139,6 +139,7 @@ export default function RoomsPage() {
                       <RoomTypeCard
                         key={roomType.id}
                         roomType={roomType}
+                        price={roomType.price}
                         onSelect={handleSelectRoom}
                         isSelectionComplete={isSelectionComplete}
                         hasSearched={hasSearched}

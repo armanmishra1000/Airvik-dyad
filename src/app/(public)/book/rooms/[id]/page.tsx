@@ -858,6 +858,7 @@ export default function RoomDetailsPage() {
                 <RoomTypeCard
                   key={relatedRoomType.id}
                   roomType={relatedRoomType}
+                  price={relatedRoomType.price}
                   hasSearched={false}
                   onSelect={() => {}}
                   isSelectionComplete={false}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Users, Bed, Check } from "lucide-react";
+import { Users } from "lucide-react";
 import {
   Card,
   CardDescription,
@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -24,6 +23,7 @@ import { useDataContext } from "@/context/data-context";
 
 interface RoomTypeCardProps {
   roomType: RoomType;
+  price: number;
   onSelect: (roomType: RoomType) => void;
   isSelectionComplete: boolean;
   hasSearched: boolean;
@@ -31,6 +31,7 @@ interface RoomTypeCardProps {
 
 export function RoomTypeCard({
   roomType,
+  price,
   onSelect,
   isSelectionComplete,
   hasSearched,
@@ -41,6 +42,12 @@ export function RoomTypeCard({
   const resolvedAmenities = (roomType.amenities || [])
     .map((id) => allAmenities.find((a) => a.id === id))
     .filter((a): a is { id: string; name: string; icon: string } => !!a);
+
+  const formattedPrice = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(price);
 
   // Card view
   return (
@@ -77,14 +84,14 @@ export function RoomTypeCard({
       </CardHeader>
       <div className="flex flex-col flex-1 bg-white">
         <div className="flex flex-col flex-1 p-4 gap-2">
-          <div className="flex items-strat justify-between gap-4">
+          <div className="flex items-start justify-between gap-4">
             <CardTitle className="text-foreground font-serif text-base leading-tight line-clamp-2">
               <Link href={detailsLink} className="block leading-tight line-clamp-2 transition-colors">
                 {roomType.name}
               </Link>
             </CardTitle>
             <div className="text-right">
-              <div className="text-lg font-bold text-primary">₹3000</div>
+              <div className="text-lg font-bold text-primary">{formattedPrice}</div>
               <div className="text-xs text-muted-foreground">per night</div>
             </div>
           </div>

@@ -44,6 +44,7 @@ type DbRoomType = {
   description: string;
   max_occupancy: number;
   bed_types: string[];
+  price: number | null;
   amenities?: string[] | null;
   photos?: string[] | null;
   main_photo_url?: string | null;
@@ -168,6 +169,7 @@ export const fromDbRoomType = (dbRoomType: DbRoomType): RoomType => ({
   description: dbRoomType.description,
   maxOccupancy: dbRoomType.max_occupancy,
   bedTypes: dbRoomType.bed_types,
+  price: dbRoomType.price ?? 0,
   amenities: dbRoomType.amenities ?? [],
   photos: dbRoomType.photos ?? [],
   mainPhotoUrl: dbRoomType.main_photo_url ?? undefined,
@@ -319,6 +321,7 @@ export const upsertRoomType = (roomTypeData: RoomTypeUpsertInput) => {
     p_description: roomTypeData.description,
     p_max_occupancy: roomTypeData.maxOccupancy,
     p_bed_types: roomTypeData.bedTypes,
+    p_price: roomTypeData.price,
     p_photos: roomTypeData.photos,
     p_main_photo_url: roomTypeData.mainPhotoUrl,
     p_amenity_ids: roomTypeData.amenities,
