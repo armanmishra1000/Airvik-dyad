@@ -88,13 +88,13 @@ export function StickyBookingButton() {
         <PopoverTrigger asChild>
           <Button
             className={cn(
-              "flex h-auto w-auto items-center gap-2.5 rounded-l-xl rounded-r-none px-2.5 py-5 shadow-sm",
+              "h-auto w-auto rounded-l-xl rounded-r-none px-2.5 py-5 shadow-sm capitalize",
               isOpen && "shadow-2xl"
             )}
             aria-label="Open booking panel"
             style={{ writingMode: "vertical-rl" }}
           >
-            <span className="font-semibold">BOOK NOW</span>
+            book now
           </Button>
         </PopoverTrigger>
         <PopoverContent
