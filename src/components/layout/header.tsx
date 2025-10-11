@@ -25,7 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Permission } from "@/data/types";
 
 const navItems = [
-  { href: "/admin/dashboard", label: "Dashboard", requiredPermission: "read:reservation" },
+  { href: "/admin", label: "Dashboard", requiredPermission: "read:reservation" },
   { href: "/admin/reservations", label: "Reservations", requiredPermission: "read:reservation" },
   { href: "/admin/calendar", label: "Calendar", requiredPermission: "read:reservation" },
   { href: "/admin/housekeeping", label: "Housekeeping", requiredPermission: "read:room" },

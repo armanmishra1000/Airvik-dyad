@@ -17,7 +17,7 @@ export default function AuthLayout({
     if (!isLoading && currentUser) {
       const roleName = userRole?.name;
       const isAdmin = roleName === "Hotel Owner" || roleName === "Hotel Manager" || roleName === "Receptionist" || roleName === "Housekeeper";
-      router.push(isAdmin ? "/admin/dashboard" : "/profile");
+      router.push(isAdmin ? "/admin" : "/profile");
     }
   }, [currentUser, userRole, isLoading, router]);
 

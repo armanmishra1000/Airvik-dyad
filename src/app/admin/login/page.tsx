@@ -1,5 +1,5 @@
 import { LoginForm } from "@/components/auth/login-form";
 
 export default function AdminLoginPage() {
-  return <LoginForm redirectTo="/admin/dashboard" />;
+  return <LoginForm redirectTo="/admin" />;
 }

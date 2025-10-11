@@ -31,7 +31,7 @@ import {
 import type { Permission } from "@/data/types";
 
 const navItems = [
-  { href: "/admin/dashboard", icon: Home, label: "Dashboard", requiredPermission: "read:reservation" },
+  { href: "/admin", icon: Home, label: "Dashboard", requiredPermission: "read:reservation" },
   { href: "/admin/reservations", icon: Calendar, label: "Reservations", requiredPermission: "read:reservation" },
   { href: "/admin/calendar", icon: Calendar, label: "Calendar", requiredPermission: "read:reservation" },
   { href: "/admin/housekeeping", icon: ClipboardList, label: "Housekeeping", requiredPermission: "read:room" },

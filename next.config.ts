@@ -34,7 +34,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      { source: "/dashboard", destination: "/admin/dashboard", permanent: false },
+      { source: "/dashboard", destination: "/admin", permanent: false },
       { source: "/reservations", destination: "/admin/reservations", permanent: false },
       { source: "/reservations/:id", destination: "/admin/reservations/:id", permanent: false },
       { source: "/calendar", destination: "/admin/calendar", permanent: false },
