@@ -67,7 +67,7 @@ export function KeyAttractionsSection() {
   };
 
   return (
-    <section className="bg-muted/50 py-10 lg:py-28 md:py-18" >
+    <section className="bg-muted/50 py-10 lg:py-28 md:py-18" id="rishikesh-story" >
       <div className="container mx-auto px-4">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-16"

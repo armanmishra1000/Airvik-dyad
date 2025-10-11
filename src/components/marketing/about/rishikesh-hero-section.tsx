@@ -38,7 +38,7 @@ export function RishikeshHeroSection() {
               About Rishikesh
             </p>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
+            <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
               The Spiritual Gateway to the Himalayas
             </h1>
 
