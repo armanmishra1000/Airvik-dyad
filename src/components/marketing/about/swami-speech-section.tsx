@@ -85,7 +85,7 @@ export function SwamiSpeechSection() {
 
               {/* Right Side - Video */}
               <div className="order-2">
-                <div className="rounded-2xl overflow-hidden shadow-lg border border-border h-[250px] sm:h-[300px] md:h-[350px] lg:h-[400px] xl:h-[450px]">
+                <div className="rounded-2xl overflow-hidden shadow-lg border border-border h-full">
                   <YouTubeEmbed
                     videoId={mainVideoId}
                     className="h-full"
