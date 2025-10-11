@@ -115,20 +115,22 @@ export function DailyRhythmSection() {
     <section className="pb-10">
       <div className="container mx-auto sm:px-6 px-4 space-y-12">
         <motion.div
-          className="xl:max-w-2xl space-y-4"
+          className="space-y-4 text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h2 className="sm:text-3xl text-2xl lg:text-4xl">
-            The Sacred Flow of a Day at the Ashram
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground mb-2">
+            Daily Life at the Ashram
           </h2>
-          <p className="text-base md:text-lg text-muted-foreground">
-            From sunrise meditation to evening chants, each moment flows with
-            mindful intention guiding you to live in harmony with nature and
-            your inner self.
-          </p>
+          <div className="flex justify-center">
+            <p className="text-base md:text-lg text-muted-foreground max-w-3xl">
+              From sunrise meditation to evening chants, each moment flows with
+              mindful intention guiding you to live in harmony with nature and
+              your inner self.
+            </p>
+          </div>
         </motion.div>
 
         <motion.div
