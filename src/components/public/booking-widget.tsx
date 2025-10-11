@@ -42,6 +42,15 @@ interface BookingWidgetProps {
   onSearch: (values: BookingSearchFormValues) => void;
 }
 
+/**
+ * Render a hotel booking search widget with a date range picker, occupancy controls, and a submit action.
+ *
+ * The component manages responsive behavior (mobile vs desktop) for popover offsets and calendar months, validates form input
+ * against the `searchSchema`, and invokes the provided `onSearch` callback with validated booking search values on submit.
+ *
+ * @param onSearch - Callback invoked with the validated booking search values when the form is submitted
+ * @returns A React element containing the booking widget UI
+ */
 export function BookingWidget({ onSearch }: BookingWidgetProps) {
   const [isMobile, setIsMobile] = React.useState(false);
   

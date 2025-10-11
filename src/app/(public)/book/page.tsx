@@ -14,6 +14,13 @@ import { BookingSummary } from "@/components/public/booking-summary";
 import type { RoomType } from "@/data/types";
 import { TriangleAlert } from "lucide-react";
 
+/**
+ * Page component that provides a booking search widget, lists room types, and manages room selection for a booking flow.
+ *
+ * Renders a booking search form, shows either all room types or available room types after a search, displays loading and empty states, allows selecting/removing rooms up to the requested count, and surfaces a booking summary when selections exist.
+ *
+ * @returns The React element for the Rooms page.
+ */
 export default function RoomsPage() {
   const { roomTypes, isLoading: isInitialLoading } = useDataContext();
   const {
