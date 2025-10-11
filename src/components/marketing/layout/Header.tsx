@@ -180,7 +180,7 @@ export function Header() {
               </SheetTrigger>
               <SheetContent
                 side="right"
-                className="bg-background text-foreground z-[1002] w-full max-w-none border-none flex h-full flex-col"
+                className="bg-background text-foreground z-[1100] w-full max-w-none border-none flex h-full flex-col"
               >
                 <nav className="flex flex-1 flex-col space-y-2 mt-8">
                   {navLinks.map((link) =>
