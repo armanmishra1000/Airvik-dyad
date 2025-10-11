@@ -88,8 +88,7 @@ export function StickyBookingButton() {
         <PopoverTrigger asChild>
           <Button
             className={cn(
-              "flex h-auto w-auto items-center gap-2.5 rounded-l-xl rounded-r-none p-4 text-sm shadow-lg hover:shadow-xl transition-all duration-300",
-              "bg-gradient-to-b from-primary to-primary/90 hover:from-primary hover:to-primary",
+              "flex h-auto w-auto items-center gap-2.5 rounded-l-xl rounded-r-none px-2.5 py-5 shadow-sm",
               isOpen && "shadow-2xl"
             )}
             aria-label="Open booking panel"
