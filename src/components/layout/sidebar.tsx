@@ -134,7 +134,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
-                    href="/settings"
+                    href="/admin/settings"
                     className={cn(
                       "flex h-11 w-11 items-center justify-center rounded-2xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                       pathname === "/admin/settings" && "bg-primary/10 text-primary shadow-sm"
