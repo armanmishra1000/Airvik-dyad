@@ -2,7 +2,6 @@
 
 import {
   RishikeshHeroSection,
-  RishikeshExperienceSection,
   KeyAttractionsSection,
   MapSection
 } from "@/components/marketing/about";

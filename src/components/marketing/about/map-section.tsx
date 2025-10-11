@@ -5,21 +5,24 @@ import { motion } from "framer-motion";
 
 export function MapSection() {
   return (
-    <section className="bg-background py-10 lg:py-28 md:py-18">
+    <section className="bg-background py-10 sm:py-12">
       <div className="container mx-auto px-4">
         <motion.div
-          className="text-center max-w-4xl mx-auto mb-16"
+          className="max-w-4xl mx-auto mb-10 space-y-5 lg:text-center "
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight">
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+            Visit Us in Rishikesh
+          </p>
+          <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
             Find Us in Rishikesh SahajAnand Wellness
-          </h2>
+          </h1>
         </motion.div>
         <motion.div
-          className="overflow-hidden rounded-lg shadow-xl"
+          className="overflow-hidden rounded-2xl shadow-xl"
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, amount: 0.2 }}

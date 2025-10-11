@@ -88,48 +88,46 @@ export function StickyBookingButton() {
         <PopoverTrigger asChild>
           <Button
             className={cn(
-              "flex h-auto w-auto items-center gap-2.5 rounded-l-xl rounded-r-none p-4 text-base shadow-lg hover:shadow-xl transition-all duration-300",
-              "bg-gradient-to-b from-primary to-primary/90 hover:from-primary hover:to-primary",
+              "h-auto w-auto rounded-l-xl rounded-r-none px-2.5 py-5 shadow-sm capitalize",
               isOpen && "shadow-2xl"
             )}
             aria-label="Open booking panel"
             style={{ writingMode: "vertical-rl" }}
           >
-            <CalendarCheck className="h-5 w-5 rotate-90" />
-            <span className="tracking-[0.2em] font-semibold">BOOK NOW</span>
+            book now
           </Button>
         </PopoverTrigger>
         <PopoverContent
           side="left"
           align="center"
           sideOffset={12}
-          className="w-[min(90vw,420px)] z-[1003] p-0 shadow-2xl border-border/30 bg-background rounded-xl"
+          className="w-[min(90vw,360px)] z-[1003] p-0 shadow-2xl border-border/30 bg-background rounded-xl"
         >
-          <div>
-            <div className="p-4 border-b border-border/50">
+          <div className="flex flex-col max-h-[min(80vh,600px)]">
+            <div className="p-4 border-b border-border/50 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-lg bg-primary/10">
                   <CalendarCheck className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-serif font-bold text-foreground">
+                  <h3 className="text-lg font-serif font-bold text-foreground">
                     Book Your Stay
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">
+                  <p className="text-sm text-muted-foreground">
                     Choose your perfect room
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-4">
+            <div className="p-4 overflow-y-auto flex-1">
               <div className="space-y-1.5">
                 {rooms.map((room, index) => (
                   <React.Fragment key={room.name}>
                     <Link
                       href={room.href}
                       onClick={() => setIsOpen(false)}
-                      className="group flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-primary/5 border border-transparent hover:border-primary/40 transition-all duration-200"
+                      className="group flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-primary/5 border border-transparent hover:border-primary/40 transition-all duration-200 outline-none focus:outline-none focus-visible:outline-none"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="bg-primary/10 text-primary p-2.5 rounded-lg flex-shrink-0">
@@ -154,7 +152,7 @@ export function StickyBookingButton() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-border/50">
+            <div className="p-4 border-t border-border/50 flex-shrink-0">
               <Button 
                 asChild 
                 size="lg" 

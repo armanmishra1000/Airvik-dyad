@@ -8,37 +8,37 @@ const attractions = [
   {
     title: "Triveni Ghat",
     description:
-      "The largest and most sacred bathing ghat in Rishikesh, famous for its mesmerizing evening Ganga Aarti ceremony where thousands of lamps are floated on the river.",
+      "The holiest bathing ghat in Rishikesh, known for its peaceful Ganga Aarti and sacred vibe.",
     imageUrl: "/triveni-ghat-rishikesh-uttarakhand.jpg",
   },
   {
     title: "Ram Jhula / Lakshman Jhula",
     description:
-      "Iconic suspension bridges offering breathtaking panoramic views of the Ganga and the surrounding temples. A walk across is a quintessential Rishikesh experience.",
+      "Famous suspension bridges offering stunning Ganga views and a classic Rishikesh walk.",
     imageUrl: "/ram-lkshmanjula.webp",
   },
   {
     title: "Bungee Jumping",
     description:
-      "Rishikesh is also known for its bungee jumping facility, which provides an adrenaline-pumping experience as you leap from a height and feel the rush of free fall.",
+      "Experience an adrenaline rush as you leap from great heights into nature’s beauty.",
     imageUrl: "/bungee.webp",
   },
   {
     title: "Ganga Aarti",
     description:
-      "Witness the divine evening worship on the banks of the holy Ganga, a truly mesmerizing and spiritual experience.",
+      "Witness the divine evening prayers on the banks of the Ganga — a soulful experience.",
     imageUrl: "/rishikesh-ganga-aarti-.png",
   },
   {
     title: "Adventure Spots",
     description:
-      "For thrill-seekers, Rishikesh is a hub for adventure sports like white-water rafting, bungee jumping, and kayaking in the holy Ganges.",
+      "Enjoy thrilling adventures like rafting, bungee jumping, and kayaking in Rishikesh.",
     imageUrl: "/Rishikesh-rafting.jpg",
   },
   {
     title: "Mountain Escapes",
     description:
-      "Explore the serene Himalayan foothills with treks to hidden waterfalls, ancient caves like Vashishta Gufa, and viewpoints offering stunning sunrise vistas.",
+      "Explore peaceful hills, hidden waterfalls, and sunrise views in the Himalayas.",
     imageUrl: "/Mountain Escape.jpg",
   },
 ];
@@ -67,22 +67,30 @@ export function KeyAttractionsSection() {
   };
 
   return (
-    <section className="bg-muted/50 py-10 lg:py-28 md:py-18" id="rishikesh-story" >
+    <section className="py-10 sm:py-12" id="rishikesh-experience">
       <div className="container mx-auto px-4">
         <motion.div
-          className="text-center max-w-4xl mx-auto mb-16"
+          className="mx-auto max-w-3xl lg:text-center space-y-4"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight">
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+            Discover Rishikesh
+          </p>
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
             Key Experiences & Attractions
           </h2>
+          <p className="text-base text-muted-foreground md:text-lg">
+            A curated selection of calm spaces, sacred rituals, and uplifting
+            adventures to help you experience the heart of Rishikesh at your own
+            pace.
+          </p>
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto mt-10"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"

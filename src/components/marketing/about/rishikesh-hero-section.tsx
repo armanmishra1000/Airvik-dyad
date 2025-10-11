@@ -52,7 +52,7 @@ export function RishikeshHeroSection() {
             </p>
             <div>
               <Button asChild size="lg">
-                <Link href="#rishikesh-story">
+                <Link href="#rishikesh-experience">
                   Explore the Spirit of Rishikesh
                 </Link>
               </Button>
