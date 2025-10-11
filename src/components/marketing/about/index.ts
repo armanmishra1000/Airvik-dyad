@@ -1,7 +1,6 @@
 export { AboutHeroSection } from "./about-hero-section";
 export { AboutStorySection } from "./about-story-section";
 export { AboutActivitiesSection } from "./about-activities-section";
-export { AshramFacilitiesCircleSection } from "./ashram-facilities-circle-section";
 export { PlacesToVisitSection } from "./places-to-visit-section";
 export { ActivityInfoCard } from "./activity-info-card";
 export { SunilBhagatHeroSection } from "./sunil-bhagat-hero-section";

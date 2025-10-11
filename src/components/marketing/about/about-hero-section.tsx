@@ -54,16 +54,10 @@ export function AboutHeroSection() {
             </p>
 
             {/* CTA */}
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div>
               <Button asChild size="lg">
                 <Link href="#our-story">Explore Our Story</Link>
               </Button>
-              <Link
-                href="/sunil-bhagat"
-                className="text-base font-medium text-primary hover:underline underline-offset-4 focus-visible:outline-none"
-              >
-                Meet Our Guide →
-              </Link>
             </div>
           </motion.div>
 
