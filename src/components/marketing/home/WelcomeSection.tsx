@@ -126,7 +126,8 @@ export function WelcomeSection() {
                 </div>
                 
                 <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-                  A Sacred Space for <br />the Welfare of All
+                  <span className="block sm:inline lg:block">A Sacred Space for</span>
+                  <span className="sm:inline lg:block"> the Welfare of All</span>
                 </h2>
 
                 <p className="text-base text-muted-foreground md:text-lg">

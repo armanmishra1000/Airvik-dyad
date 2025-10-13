@@ -72,18 +72,19 @@ export function GallerySection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <div className="flex items-center justify-center gap-4">
-            <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-              Glimpses of Serenity
-            </h2>
+          <div className="flex justify-center">
             <Image
               src="/om.png"
               alt="Sahajanand Wellness"
               width={40}
               height={40}
-              className="object-contain"
+              quality={100}
+              className="w-10 h-10 object-contain"
             />
           </div>
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+            Glimpses of Serenity
+          </h2>
           <p className="text-base text-muted-foreground md:text-lg max-w-3xl mx-auto">
             A visual journey through the sacred spaces and moments at Sahajanand
             Wellness.

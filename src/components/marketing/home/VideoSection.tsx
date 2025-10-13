@@ -130,18 +130,19 @@ export function VideoSection() {
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <div className="flex items-center justify-center gap-4">
-            <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-              Visual Journey
-            </h2>
+          <div className="flex justify-center">
             <Image
               src="/swami-img-removebg-preview.png"
               alt="Meditation symbol"
               width={40}
               height={40}
-              className="object-contain"
+              quality={100}
+              className="w-10 h-10 object-contain"
             />
           </div>
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+            Visual Journey
+          </h2>
           <p className="text-base text-muted-foreground md:text-lg max-w-3xl mx-auto">
             Experience the calm of the Ganga and the devotion of the evening Aarti.
           </p>

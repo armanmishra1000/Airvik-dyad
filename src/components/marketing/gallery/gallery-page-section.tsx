@@ -89,7 +89,8 @@ export function GalleryPageSection() {
           transition={{ duration: 0.6, ease: "easeOut" as const }}
         >
           <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-            Ashram Moments <br className="block sm:hidden"/> of Peace
+            <span className="block sm:inline">Ashram Moments</span>
+            <span className="sm:inline"> of Peace</span>
           </h1>
           <p className="text-base text-muted-foreground md:text-lg max-w-xl mx-auto">
             Experience the serenity, devotion, and beauty of our Ashram through

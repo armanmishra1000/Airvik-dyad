@@ -45,7 +45,8 @@ export function AboutHeroSection() {
 
             {/* Headline */}
             <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-              A Trust for Service, <br />Learning & Shelter
+              <span className="block sm:inline lg:block">A Trust for Service,</span>
+              <span className="sm:inline lg:block"> Learning & Shelter</span>
             </h1>
 
             {/* Body Copy */}
