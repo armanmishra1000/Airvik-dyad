@@ -72,7 +72,7 @@ export function EssentialAmenitiesGrid() {
                     src={image}
                     alt={alt ?? label}
                     width={60}
-                    height={0}
+                    height={60}
                     className="size-8 object-cover sm:size-10"
                   />
                 </div>

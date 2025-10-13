@@ -29,16 +29,16 @@ const dailyRhythm: RhythmItem[] = [
   },
   {
     time: "07:00",
-    title: "breakfast",
+    title: "Breakfast",
     description:
-      "A healthy vegetarian breakfast with herbal tea — a quiet for time to relax after morning yoga.",
+      "A healthy vegetarian breakfast with herbal tea — a quiet time to relax after morning yoga.",
     icon: UtensilsCrossed,
   },
   {
     time: "08:00",
     title: "Morning Hawan",
     description:
-      "A simple fire ritual with chanting for peace off, positivity, and a fresh start to your day.",
+      "A simple fire ritual with chanting for peace, positivity, and a fresh start to your day.",
     icon: Flame,
   },
   {

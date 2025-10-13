@@ -8,12 +8,13 @@ import Image from "next/image";
  * @returns The JSX element containing the hero layout.
  */
 export function AmenitiesHeroSection() {
-  const newLocal = "/Standard-Room.png";
+  const heroImagePath = "/Standard-Room.png";
+  
   return (
     <section className="relative overflow-hidden bg-muted">
       <div className="absolute inset-0">
         <Image
-          src={newLocal}
+          src={heroImagePath}
           alt="Handpicked pieces for mindful living"
           fill
           priority
