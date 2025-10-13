@@ -95,10 +95,9 @@ export function Header() {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/90"
+                  className="text-white/90 focus-visible:outline-none"
                   aria-label={link.name}
                   title={link.name}
-                  tabIndex={-1}
                 >
                   <link.icon
                     className="size-5"
@@ -113,7 +112,7 @@ export function Header() {
 
         {/* Main Header */}
         <div className="container mx-auto flex h-20 items-center justify-between px-4 text-foreground xl:h-24">
-          <Link href="/" className="flex items-center" tabIndex={-1}>
+          <Link href="/" className="flex items-center focus-visible:outline-none">
             <Image
               src="/logo.png"
               alt="SahajAnand Wellness Logo"
@@ -131,7 +130,7 @@ export function Header() {
                   <NavigationMenuItem key={link.label}>
                     {link.subLinks ? (
                       <>
-                        <NavigationMenuTrigger className="relative inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover bg-transparent hover:bg-primary/15 hover:text-primary data-[state=open]:bg-primary/15 data-[state=open]:text-primary after:absolute after:left-0 after:right-0 after:-bottom-5 after:h-3 after:content-['']" tabIndex={-1}>
+                        <NavigationMenuTrigger className="relative inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover bg-transparent hover:bg-primary/15 hover:text-primary focus-visible:outline-none data-[state=open]:bg-primary/15 data-[state=open]:text-primary after:absolute after:left-0 after:right-0 after:-bottom-5 after:h-3 after:content-['']">
                           {link.label}
                         </NavigationMenuTrigger>
                         <NavigationMenuContent>
@@ -150,8 +149,7 @@ export function Header() {
                       <NavigationMenuLink asChild>
                         <Link
                           href={link.href || "#"}
-                          className="inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover bg-transparent hover:bg-primary/15 hover:text-primary"
-                          tabIndex={-1}
+                          className="inline-flex items-center rounded-2xl px-4 py-2 text-lg font-medium text-primary-hover bg-transparent hover:bg-primary/15 hover:text-primary focus-visible:outline-none"
                         >
                           {link.label}
                         </Link>
@@ -175,8 +173,7 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-primary-hover"
-                  tabIndex={-1}
+                  className="text-primary-hover focus-visible:outline-none"
                 >
                   <Menu className="h-6 w-6" />
                 </Button>
@@ -189,7 +186,7 @@ export function Header() {
                   {navLinks.map((link) =>
                     link.subLinks ? (
                       <Collapsible key={link.label} className="w-full">
-                        <CollapsibleTrigger className="flex justify-between items-center w-full text-lg font-medium hover:text-primary py-2 [&[data-state=open]>svg]:rotate-180" tabIndex={-1}>
+                        <CollapsibleTrigger className="flex justify-between items-center w-full text-lg font-medium hover:text-primary py-2 focus-visible:outline-none [&[data-state=open]>svg]:rotate-180">
                           {link.label}
                           <ChevronDown className="h-5 w-5 transition-transform" />
                         </CollapsibleTrigger>
@@ -199,8 +196,7 @@ export function Header() {
                               <SheetClose asChild key={subLink.label}>
                                 <Link
                                   href={subLink.href}
-                                  className="block text-base text-muted-foreground hover:text-primary"
-                                  tabIndex={-1}
+                                  className="block text-base text-muted-foreground hover:text-primary focus-visible:outline-none"
                                 >
                                   {subLink.label}
                                 </Link>
@@ -213,8 +209,7 @@ export function Header() {
                       <SheetClose asChild key={link.label}>
                         <Link
                           href={link.href}
-                          className="text-lg font-medium hover:text-primary py-2"
-                          tabIndex={-1}
+                          className="text-lg font-medium hover:text-primary py-2 focus-visible:outline-none"
                         >
                           {link.label}
                         </Link>
@@ -249,10 +244,9 @@ const ListItem = React.forwardRef<
         <Link
           ref={ref}
           className={cn(
-            "block select-none rounded-2xl px-4 py-3 leading-none no-underline outline-none hover:bg-primary/15 hover:text-primary",
+            "block select-none rounded-2xl px-4 py-3 leading-none no-underline outline-none hover:bg-primary/15 hover:text-primary focus-visible:outline-none",
             className
           )}
-          tabIndex={-1}
           {...props}
         >
           <div className="text-base leading-none text-primary-hover hover:text-primary">
