@@ -128,12 +128,14 @@ This document tracks only the sections where specific changes need to be made.
 ### GalleryPageSection
 **File:** `src/components/marketing/gallery/gallery-page-section.tsx`
 
-- [ ] **Layout and Styling Updates**
+- [x] **Layout and Styling Updates**
+  - Line 82: Replace `py-12 md:py-20` with `py-10 sm:py-12` on `<section>` tag
   - Line 85: Remove `mb-12 sm:mb-16` and add `space-y-4`
-  - Line 92: In `<h2>` tag, add heading style: `2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground`
+  - Line 91: In `<h2>` tag, add heading style: `2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground`
+  - Line 92: Wrap text: `Ashram Moments <br className="block sm:hidden"/> of Peace`
   - Line 94: In `<p>` tag, add style: `text-base text-muted-foreground md:text-lg max-w-xl mx-auto`
-  - Remove lines 98 to 106
-  - Line 109: Add `mt-12`
+  - Remove decorative om.png image (lines 98-106)
+  - Line 100: Add `mt-12` to grid container
 
 ### ShopPage
 **File:** `src/app/(public)/shop/page.tsx`

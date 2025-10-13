@@ -79,34 +79,25 @@ export function GalleryPageSection() {
   };
 
   return (
-    <section className="bg-background py-12 md:py-20">
+    <section className="bg-background py-10 sm:py-12">
       <div className="container mx-auto px-4">
         <motion.div
-          className="text-center mb-12 sm:mb-16"
+          className="text-center space-y-4"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" as const }}
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-tight mb-6">
-            Ashram Moments of Peace
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+            Ashram Moments <br className="block sm:hidden"/> of Peace
           </h2>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-base text-muted-foreground md:text-lg max-w-xl mx-auto">
             Experience the serenity, devotion, and beauty of our Ashram through
             these captured moments
           </p>
-          <div className="flex justify-center">
-            <Image
-              src="/om.png"
-              alt="Sahajanand Wellness"
-              width={40}
-              height={40}
-              className="mt-4 sm:mt-6 object-contain"
-            />
-          </div>
         </motion.div>
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mt-12"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
