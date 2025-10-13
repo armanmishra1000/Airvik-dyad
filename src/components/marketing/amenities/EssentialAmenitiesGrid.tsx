@@ -26,6 +26,14 @@ const meals = [
   { time: "7–8 PM", label: "Dinner" },
 ];
 
+/**
+ * Render a responsive, animated grid of essential amenities with a Satvik Bhojan panel.
+ *
+ * Displays amenity cards (image + label) in a responsive grid that animates into view,
+ * alongside an animated aside that describes "Satvik Bhojan" and lists daily meals.
+ *
+ * @returns A JSX.Element containing the animated amenities grid and the Satvik Bhojan aside.
+ */
 export function EssentialAmenitiesGrid() {
   const gridVariants: Variants = {
     hidden: { opacity: 0 },
