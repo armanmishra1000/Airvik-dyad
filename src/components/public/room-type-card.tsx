@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Users } from "lucide-react";
@@ -10,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -43,18 +43,57 @@ export function RoomTypeCard({
     .map((id) => allAmenities.find((a) => a.id === id))
     .filter((a): a is { id: string; name: string; icon: string } => !!a);
 
+  const truncatedName = roomType.name
+    .split(/\s+/)
+    .slice(0, 5)
+    .join(" ");
+
   const formattedPrice = new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(price);
 
+  const isSelectable = hasSearched && !isSelectionComplete;
+
+  const handleCardClick = () => {
+    if (isSelectable) {
+      onSelect(roomType);
+    }
+  };
+
+  const handleCardKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!isSelectable) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect(roomType);
+    }
+  };
+
+  const handleLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isSelectable) {
+      event.stopPropagation();
+    }
+  };
+
   // Card view
   return (
-    <Card className="flex flex-col border border-border/40 bg-transparent  duration-300 group overflow-hidden rounded-2xl shadow-lg">
+    <Card
+      className={`flex flex-col border border-border/40 bg-transparent duration-300 group overflow-hidden rounded-2xl shadow-lg ${
+        isSelectable ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60" : ""
+      }`}
+      role={isSelectable ? "button" : undefined}
+      tabIndex={isSelectable ? 0 : undefined}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+    >
       <CardHeader className="p-0">
-        <Link href={detailsLink} className="block">
-          <div className="relative h-48 md:h-52 overflow-hidden">
+        <Link
+          href={detailsLink}
+          className="block"
+          onClick={handleLinkClick}
+        >
+          <div className="relative h-32 md:h-40 overflow-hidden">
             <Image
               src={
                 roomType.mainPhotoUrl ||
@@ -83,20 +122,23 @@ export function RoomTypeCard({
         </Link>
       </CardHeader>
       <div className="flex flex-col flex-1 bg-white">
-        <div className="flex flex-col flex-1 p-4 gap-2">
+        <div className="flex flex-col p-4 pb-2 gap-1">
           <div className="flex items-start justify-between gap-4">
-            <CardTitle className="text-foreground font-serif text-base leading-tight line-clamp-2">
-              <Link href={detailsLink} className="block leading-tight line-clamp-2 transition-colors">
-                {roomType.name}
+            <CardTitle className="text-foreground font-serif text-sm leading-tight line-clamp-2">
+              <Link
+                href={detailsLink}
+                className="block leading-tight line-clamp-2 transition-colors"
+                onClick={handleLinkClick}
+              >
+                {truncatedName}
               </Link>
             </CardTitle>
-            <div className="text-right">
-              <div className="text-lg font-bold text-primary">{formattedPrice}</div>
-              <div className="text-xs text-muted-foreground">per night</div>
-            </div>
           </div>
           <CardDescription className="text-sm text-muted-foreground truncate">
-            {roomType.description}
+            {roomType.description
+              .split(/\s+/)
+              .slice(0, 8)
+              .join(" ")}
           </CardDescription>
           {/* <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
@@ -110,17 +152,17 @@ export function RoomTypeCard({
             </div> */}
 
         </div>
-        <CardFooter className="flex-col items-stretch gap-2 px-4 pb-4 pt-0 bg-white">
+        <CardFooter className="flex-col items-stretch gap-1 px-4 pb-4 pt-0 bg-white">
           {!hasSearched && resolvedAmenities.length > 0 && (
             <TooltipProvider delayDuration={0}>
               <div className="flex gap-4 justify-between">
-                <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   {/* <div className="flex items-center gap-1.5"> */}
-                  <Users className="h-4 w-4 text-primary/60" />
+                  <Users className="h-4 w-4" />
                   <span>Up to {roomType.maxOccupancy} guests</span>
                   {/* </div> */}
                 </div>
-                <div className="flex flex-wrap gap-5 mt-2 mb-2">
+                <div className="flex gap-4">
                   {resolvedAmenities.slice(0, 3).map((amenity) => (
                     <Tooltip key={amenity.id}>
                       <TooltipTrigger asChild>
@@ -140,15 +182,16 @@ export function RoomTypeCard({
               </div>
             </TooltipProvider>
           )}
-          {hasSearched ? (
-            <Button onClick={() => onSelect(roomType)} disabled={isSelectionComplete} size="lg" className="w-full">
-              Select Room
-            </Button>
-          ) : (
-            <Button asChild size="lg" className="w-full">
-              <Link href={detailsLink}>View Details & Book</Link>
-            </Button>
+          {(hasSearched || resolvedAmenities.length === 0) && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span>Up to {roomType.maxOccupancy} guests</span>
+            </div>
           )}
+          <div className="flex items-center pt-1 gap-1">
+            <div className="text-sm font-bold">{formattedPrice}</div>
+            <div className="text-sm text-muted-foreground">for per night</div>
+          </div>
         </CardFooter>
       </div>
     </Card>
