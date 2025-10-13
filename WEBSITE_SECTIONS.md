@@ -122,6 +122,7 @@ This document tracks only the sections where specific changes need to be made.
 **File:** `src/components/marketing/about/map-section.tsx`
 
 - [x] **Heading Text Wrap**
+  - Line 20: Change `<h1>` tag to `<h2>` tag
   - Line 21: Wrap text like this: `Find Us in Rishikesh <br/>SahajAnand Wellness`
 
 ### GalleryPageSection
