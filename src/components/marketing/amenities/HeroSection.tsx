@@ -8,7 +8,7 @@ import Image from "next/image";
  * @returns The JSX element containing the hero layout.
  */
 export function AmenitiesHeroSection() {
-  const newLocal = "/suit-room.jpg";
+  const newLocal = "/Standard-Room.png";
   return (
     <section className="relative overflow-hidden bg-muted">
       <div className="absolute inset-0">
@@ -22,11 +22,11 @@ export function AmenitiesHeroSection() {
         />
       </div>
       <div className="absolute inset-0 bg-black/45" />
-      <div className="relative z-10">
-        <div className="container mx-auto flex flex-col items-center gap-4 px-4 py-24 text-center text-white md:px-6 md:py-32">
-          <h1 className="text-3xl sm:text-4xl font-semibold lg:text-5xl">
+      <div className="container mx-auto relative px-4 md:px-6 z-10">
+        <div className="flex flex-col items-center gap-4 py-24 text-center text-white md:py-32">
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold">
             Peaceful Comforts
-          </h1>
+          </h2>
           <p className="text-base text-white/80 md:text-lg max-w-3xl">
             Find peace and comfort in our sacred spaces and mindful facilities.
           </p>
