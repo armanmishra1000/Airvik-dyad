@@ -9,12 +9,12 @@ This document tracks only the sections where specific changes need to be made.
 ### WelcomeSection
 **File:** `src/components/marketing/home/WelcomeSection.tsx`
 
-- [ ] **Main Heading Update**
+- [x] **Main Heading Update**
   - Update heading text to wrap after "for": "A Sacred Space for <br />the Welfare of All"
   - Apply new heading style: `2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground`
   - Remove old style: `text-4xl md:text-5xl font-bold font-serif text-foreground`
   
-- [ ] **Ashram Activities Section**
+- [x] **Ashram Activities Section**
   - Change `h3` tag to `h2` tag for "Our Sacred Activities" heading
   - Apply heading style: `2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground`
   - Remove old style: `text-4xl md:text-5xl font-bold font-serif text-foreground mb-2`
@@ -23,17 +23,17 @@ This document tracks only the sections where specific changes need to be made.
   - Remove `mb-2` from parent div of the logo image
   - Remove `mt-10` from logo image className
   
-- [ ] **Spacing Updates (Line 164)**
+- [x] **Spacing Updates (Line 164)**
   - Add `space-y-4` to the text-center container
   - Remove `mb-16` from the same container
   
-- [ ] **Grid Spacing (Line 189)**
+- [x] **Grid Spacing (Line 189)**
   - Add `mt-12` to the activities grid container
 
 ### GallerySection
 **File:** `src/components/marketing/home/GallerySection.tsx`
 
-- [ ] **Layout and Styling Updates**
+- [x] **Layout and Styling Updates**
   - Line 66: Apply `py-10 sm:py-12` to the `<section>` tag
   - Line 69: Remove `mb-16` and add `space-y-4`
   - Add a parent `<div>` with `className="flex items-center justify-center gap-4"`
