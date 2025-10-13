@@ -84,7 +84,7 @@ This document tracks only the sections where specific changes need to be made.
 **File:** `src/components/marketing/about/about-hero-section.tsx`
 
 - [x] **Heading Updates**
-  - Line 47: Replace `<h1>` tag with `<h2>` tag
+  - Line 47: Use `<h1>` tag (changed from h2 to h1)
   - Wrap text after "A Trust for Service," to a new line
 
 ### AboutActivitiesSection
@@ -103,6 +103,7 @@ This document tracks only the sections where specific changes need to be made.
 **File:** `src/components/marketing/about/sunil-bhagat-unified-section.tsx`
 
 - [x] **Heading Text Wrap**
+  - Line 116: Use `<h1>` tag (changed from h2 to h1)
   - Line 117: Wrap text like this: `Swamiji Sunil Bhagat <br className="sm:hidden block"/> - Life & Service`
 
 ### SwamiSpeechSection
@@ -115,7 +116,7 @@ This document tracks only the sections where specific changes need to be made.
 **File:** `src/components/marketing/about/rishikesh-hero-section.tsx`
 
 - [x] **Heading Updates**
-  - Line 41: Change `<h1>` tag to `<h2>` tag
+  - Line 41: Use `<h1>` tag (kept as h1)
   - Line 42: Wrap text like this: `The Spiritual Gateway <br/> to the Himalayas`
 
 ### MapSection
@@ -131,7 +132,7 @@ This document tracks only the sections where specific changes need to be made.
 - [x] **Layout and Styling Updates**
   - Line 82: Replace `py-12 md:py-20` with `py-10 sm:py-12` on `<section>` tag
   - Line 85: Remove `mb-12 sm:mb-16` and add `space-y-4`
-  - Line 91: In `<h2>` tag, add heading style: `2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground`
+  - Line 91: Use `<h1>` tag (changed from h2 to h1) with heading style: `2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground`
   - Line 92: Wrap text: `Ashram Moments <br className="block sm:hidden"/> of Peace`
   - Line 94: In `<p>` tag, add style: `text-base text-muted-foreground md:text-lg max-w-xl mx-auto`
   - Remove decorative om.png image (lines 98-106)

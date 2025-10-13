@@ -44,9 +44,9 @@ export function AboutHeroSection() {
             </p>
 
             {/* Headline */}
-            <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+            <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
               A Trust for Service, <br />Learning & Shelter
-            </h2>
+            </h1>
 
             {/* Body Copy */}
             <p className="text-base text-muted-foreground md:text-lg">

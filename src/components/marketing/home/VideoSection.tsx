@@ -143,8 +143,7 @@ export function VideoSection() {
             />
           </div>
           <p className="text-base text-muted-foreground md:text-lg max-w-3xl mx-auto">
-            Immerse yourself in the sights and sounds of Sahajanand Wellness,
-            from the tranquil banks of the Ganga to the vibrant evening Aarti.
+            Experience the tranquil banks of the Ganga and the vibrant evening Aarti.
           </p>
         </motion.div>
         <motion.div
