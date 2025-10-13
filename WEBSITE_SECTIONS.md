@@ -90,7 +90,7 @@ This document tracks only the sections where specific changes need to be made.
 ### AboutActivitiesSection
 **File:** `src/components/marketing/about/about-activities-section.tsx`
 
-- [ ] **Max Width Update**
+- [x] **Max Width Update**
   - Line 81: Replace `max-w-4xl` with `max-w-3xl`
 
 ### PlacesToVisitSection
