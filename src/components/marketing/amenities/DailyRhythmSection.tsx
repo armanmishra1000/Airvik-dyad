@@ -3,14 +3,14 @@
 import { motion, type Variants } from "framer-motion";
 import {
   Flame,
-  MoonStar,
-  Music,
   Soup,
   UtensilsCrossed,
-  Wind,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { GrYoga } from "react-icons/gr";
+import { TbCandle } from "react-icons/tb";
+import { BiBowlRice } from "react-icons/bi";
+
 
 type RhythmItem = {
   time: string;
@@ -53,14 +53,14 @@ const dailyRhythm: RhythmItem[] = [
     title: "Ganga Aarti + Meditation",
     description:
       "Evening by the Ganga with devotional songs, meditation, and serene spiritual prayers.",
-    icon: Music,
+    icon: TbCandle,
   },
   {
     time: "19:00",
     title: "Dinner",
     description:
       "Enjoy a peaceful soulful dinner with soft chants and gentle lights at the ashram.",
-    icon: MoonStar,
+    icon: BiBowlRice ,
   },
 ];
 
@@ -157,8 +157,22 @@ export function DailyRhythmSection() {
                     variants={itemVariants}
                     className="relative flex gap-4"
                   >
-                    <div className="flex flex-col items-center self-stretch">
-                      <div className="flex items-center justify-center size-12 flex-shrink-0 text-xs rounded-full border border-primary/40 bg-primary/10 text-primary font-semibold">
+                    <div className="relative flex z-10 flex-col items-center self-stretch">
+                      {index === 0 && (
+                        <>
+                          <span className="absolute left-1/2 -top-5 h-5 w-px -translate-x-1/2 bg-primary/30" />
+                        </>
+                      )}
+                      {sectionTitle && (
+                        <div className="absolute left-5 -top-1 -translate-y-1/2 flex pb-8 items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-primary/50" />
+                          <span className="h-px w-6 bg-primary/50" />
+                          <span className="inline-flex whitespace-nowrap items-center rounded-full border border-primary/40 bg-card/70 px-3 py-1 text-xs font-semibold  tracking-wide text-primary">
+                            {sectionTitle}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-center size-12 flex-shrink-0 text-xs rounded-full border border-primary/50 bg-primary/10 text-primary font-semibold">
                         {time}
                       </div>
                       {!isLastItem && (
@@ -168,19 +182,16 @@ export function DailyRhythmSection() {
                         </>
                       )}
                     </div>
-                    <div className="flex-1 rounded-2xl border mb-5 border-border/50 bg-card/70 backdrop-blur-sm p-4 shadow-lg shadow-primary/5 space-y-3">
-                      {sectionTitle && (
-                        <span className="text-xs font-semibold text-right uppercase tracking-wide text-primary">
-                          {sectionTitle}
-                        </span>
-                      )}
-                      <div className="flex items-center gap-3 text-sm font-medium text-primary">
-                        <Icon className="size-4" />
-                        {itemTitle}
+                    <div className="flex-1 space-y-2">
+                      <div className="rounded-2xl border mb-10 border-border/50 bg-card/70 backdrop-blur-sm p-4 shadow-lg shadow-primary/5 space-y-3">
+                        <div className="flex items-center gap-3 text-sm font-medium text-primary">
+                          <Icon className="size-4" />
+                          {itemTitle}
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {description}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {description}
-                      </p>
                     </div>
                   </motion.div>
                 );

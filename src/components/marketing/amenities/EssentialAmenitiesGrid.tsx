@@ -11,9 +11,7 @@ type Amenity = {
 
 const amenities: Amenity[] = [
   { label: "WiFi", image: "/icons/wifi.svg" },
-  { label: "Common Area", image: "/icons/Common-Area.svg" },
   { label: "Geyser", image: "/icons/Geyser.svg" },
-  { label: "Satvik Bhojan", image: "/icons/bhojan.svg" },
   { label: "Air Conditioner", image: "/icons/AC.svg" },
   { label: "Front Desk", image: "/icons/Front-Desk.svg" },
   { label: "Towels", image: "/icons/Towels.svg" },
