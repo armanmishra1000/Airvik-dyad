@@ -68,8 +68,8 @@ This document tracks only the sections where specific changes need to be made.
 ### TestimonialSection
 **File:** `src/components/marketing/home/TestimonialSection.tsx`
 
-- [ ] **Layout and Styling Updates**
-  - Line 74: Replace `mb-16` with `mb-12` and add `space-y-4`
+- [x] **Layout and Styling Updates**
+  - Line 74: Replace `mb-16` with `mb-6 lg:mb-12` and add `space-y-4`
   - Line 80: In `<h2>` tag, add style: `2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground`
   - Line 83: In `<p>` tag, add style: `text-base text-muted-foreground md:text-lg max-w-3xl mx-auto`
 
