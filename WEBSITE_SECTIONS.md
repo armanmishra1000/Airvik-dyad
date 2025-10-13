@@ -83,7 +83,7 @@ This document tracks only the sections where specific changes need to be made.
 ### AboutHeroSection
 **File:** `src/components/marketing/about/about-hero-section.tsx`
 
-- [ ] **Heading Updates**
+- [x] **Heading Updates**
   - Line 47: Replace `<h1>` tag with `<h2>` tag
   - Wrap text after "A Trust for Service," to a new line
 
