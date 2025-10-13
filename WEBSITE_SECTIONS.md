@@ -114,7 +114,7 @@ This document tracks only the sections where specific changes need to be made.
 ### RishikeshHeroSection
 **File:** `src/components/marketing/about/rishikesh-hero-section.tsx`
 
-- [ ] **Heading Updates**
+- [x] **Heading Updates**
   - Line 41: Change `<h1>` tag to `<h2>` tag
   - Line 42: Wrap text like this: `The Spiritual Gateway <br/> to the Himalayas`
 

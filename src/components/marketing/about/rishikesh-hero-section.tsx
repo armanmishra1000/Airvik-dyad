@@ -38,9 +38,9 @@ export function RishikeshHeroSection() {
               About Rishikesh
             </p>
 
-            <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-              The Spiritual Gateway to the Himalayas
-            </h1>
+            <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+              The Spiritual Gateway <br/> to the Himalayas
+            </h2>
 
             <p className="text-base text-muted-foreground md:text-lg">
               Nestled along the sacred Ganga River, Rishikesh is a timeless
