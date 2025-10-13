@@ -12,7 +12,6 @@ import {
   MapPin,
   Star,
   Share2,
-  MoreHorizontal,
   ArrowLeft,
   Clock,
   ParkingCircle,
@@ -20,11 +19,12 @@ import {
   ChevronDown,
   Building,
   Users,
-  Wifi,
-  Shield,
-  CheckCircle,
+  Grid,
+  Minus,
+  Plus,
   Sparkles,
   Baby,
+  X,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,20 +34,19 @@ import { format, formatISO, eachDayOfInterval, parseISO, parse, addDays, isFrida
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/shared/icon";
 import type { IconName } from "@/lib/icons";
 import { RoomTypeCard } from "@/components/public/room-type-card";
 import { RoomDetailsSkeleton } from "@/components/public/room-details-skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
   AccordionContent,
@@ -109,6 +108,92 @@ export default function RoomDetailsPage() {
     React.useState(false);
   const [isDatesPopoverOpen, setIsDatesPopoverOpen] = React.useState(false);
   const [isGuestsPopoverOpen, setIsGuestsPopoverOpen] = React.useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = React.useState(false);
+  const [mobileCarouselApi, setMobileCarouselApi] = React.useState<CarouselApi | null>(null);
+  const [mobileSlideIndex, setMobileSlideIndex] = React.useState(0);
+  const [isMobileViewport, setIsMobileViewport] = React.useState(false);
+  const [shareCopied, setShareCopied] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!mobileCarouselApi) return;
+
+    const handleSelect = () => {
+      setMobileSlideIndex(mobileCarouselApi.selectedScrollSnap());
+    };
+
+    handleSelect();
+    mobileCarouselApi.on("select", handleSelect);
+
+    return () => {
+      mobileCarouselApi.off("select", handleSelect);
+    };
+  }, [mobileCarouselApi]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const updateViewport = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+
+    return () => {
+      window.removeEventListener("resize", updateViewport);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!shareCopied) return;
+
+    const timeout = window.setTimeout(() => setShareCopied(false), 2000);
+    return () => window.clearTimeout(timeout);
+  }, [shareCopied]);
+
+  React.useEffect(() => {
+    if (!isGalleryOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isGalleryOpen]);
+
+  const handleShare = React.useCallback(async () => {
+    if (typeof window === "undefined") return;
+
+    const shareData = {
+      title: roomType?.name ?? "Room details",
+      text: roomType?.description ?? "",
+      url: window.location.href,
+    };
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (error) {
+        if ((error as DOMException)?.name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(window.location.href);
+        setShareCopied(true);
+        return;
+      }
+    } catch {
+      // Ignore clipboard errors and fall back to manual copy prompt
+    }
+
+    window.prompt("Copy this link", window.location.href);
+  }, [roomType?.description, roomType?.name]);
 
   const standardRatePlan =
     ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
@@ -117,12 +202,12 @@ export default function RoomDetailsPage() {
   const getNextWeekend = () => {
     const today = new Date();
     let nextFriday = today;
-    
+
     // Find next Friday
     while (!isFriday(nextFriday) || nextFriday <= today) {
       nextFriday = addDays(nextFriday, 1);
     }
-    
+
     const nextSunday = addDays(nextFriday, 2);
     return { from: nextFriday, to: nextSunday };
   };
@@ -139,9 +224,9 @@ export default function RoomDetailsPage() {
       dateRange:
         searchParams.get("from") && searchParams.get("to")
           ? {
-              from: parse(searchParams.get("from")!, "yyyy-MM-dd", new Date()),
-              to: parse(searchParams.get("to")!, "yyyy-MM-dd", new Date()),
-            }
+            from: parse(searchParams.get("from")!, "yyyy-MM-dd", new Date()),
+            to: parse(searchParams.get("to")!, "yyyy-MM-dd", new Date()),
+          }
           : getNextWeekend(),
       specialRequests: "",
     },
@@ -151,11 +236,7 @@ export default function RoomDetailsPage() {
 
   const photosToShow = React.useMemo(() => {
     if (!roomType || !roomType.photos || roomType.photos.length === 0) {
-      return [
-        "/room-placeholder.svg",
-        "/room-placeholder.svg",
-        "/room-placeholder.svg",
-      ];
+      return Array(5).fill("/room-placeholder.svg");
     }
     const sortedPhotos = [...roomType.photos];
     if (roomType.mainPhotoUrl) {
@@ -166,7 +247,7 @@ export default function RoomDetailsPage() {
       }
     }
     const paddedPhotos = [...sortedPhotos];
-    while (paddedPhotos.length < 3) {
+    while (paddedPhotos.length < 5) {
       paddedPhotos.push("/room-placeholder.svg");
     }
     return paddedPhotos;
@@ -216,6 +297,10 @@ export default function RoomDetailsPage() {
     notFound();
   }
 
+  const galleryPhotos =
+    roomType.photos && roomType.photos.length > 0
+      ? roomType.photos
+      : photosToShow;
   const relatedRoomTypes = roomTypes.filter((rt) => rt.id !== roomType.id);
 
   function onSubmit(values: BookingFormValues) {
@@ -227,11 +312,11 @@ export default function RoomDetailsPage() {
       children: values.children.toString(),
       rooms: "1", // This page books one room at a time
     });
-    
+
     if (values.specialRequests) {
       query.set("specialRequests", values.specialRequests);
     }
-    
+
     router.push(`/book/review?${query.toString()}`);
   }
 
@@ -242,7 +327,7 @@ export default function RoomDetailsPage() {
       : description;
 
   // Calculate pricing based on selected dates
-  const nightCount = dateRange?.from && dateRange?.to 
+  const nightCount = dateRange?.from && dateRange?.to
     ? differenceInDays(dateRange.to, dateRange.from)
     : 2;
   const nightlyRate = standardRatePlan?.price || 3000;
@@ -253,7 +338,7 @@ export default function RoomDetailsPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Summary Section */}
-      <div className="bg-white border-b">
+      {/* <div className="bg-white border-b">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row justify-between items-start gap-8">
             <div className="flex-1">
@@ -290,7 +375,7 @@ export default function RoomDetailsPage() {
                 </Badge>
               </div>
             </div>
-            
+
             <div className="lg:text-right bg-gray-50 rounded-xl p-6 min-w-[280px]">
               <div className="mb-4">
                 <span className="text-sm text-gray-500 block">from</span>
@@ -299,8 +384,8 @@ export default function RoomDetailsPage() {
                 </div>
                 <span className="text-sm text-gray-500">per night</span>
               </div>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="w-full bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3 text-base"
                 onClick={() => {
                   const bookingSection = document.getElementById('booking-form');
@@ -313,8 +398,8 @@ export default function RoomDetailsPage() {
             </div>
           </div>
         </div>
-      </div>
-      
+      </div> */}
+
       <div className="container mx-auto p-4 sm:px-6 lg:px-8 py-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-1 text-sm font-medium">
@@ -326,50 +411,75 @@ export default function RoomDetailsPage() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                {roomType.name}
+              </h1>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleShare}
+            >
               <Share2 className="h-4 w-4" />
+              <span className="sr-only">Share room details</span>
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
+            {shareCopied && (
+              <span className="text-xs font-semibold text-muted-foreground">
+                Link copied
+              </span>
+            )}
           </div>
         </div>
 
         {/* Image Gallery */}
         <div className="mb-8">
           {/* Desktop Grid Gallery */}
-          <div className="hidden md:grid md:grid-cols-4 md:grid-rows-2 gap-2 h-[80vh] max-h-[500px] overflow-hidden">
-            <div className="md:col-span-2 md:row-span-2 relative">
+          <div className="hidden md:grid grid-cols-[2fr_1fr_1fr] grid-rows-2 gap-3 rounded-3xl overflow-hidden relative h-[360px]">
+            <div className="row-span-2">
               <img
                 src={photosToShow[0]}
                 alt={`${roomType.name} photo 1`}
-                className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                className="h-full w-full object-cover"
               />
             </div>
-            <div className="md:col-span-2 relative">
-              <img
-                src={photosToShow[1]}
-                alt={`${roomType.name} photo 2`}
-                className="absolute inset-0 w-full h-full object-cover rounded-lg"
-              />
+            <div className="col-span-2 grid grid-cols-2 gap-3">
+              {photosToShow.slice(1, 3).map((photo, index) => (
+                <img
+                  key={`top-${index}`}
+                  src={photo}
+                  alt={`${roomType.name} photo ${index + 2}`}
+                  className="h-[174px] w-full object-cover rounded-2xl"
+                />
+              ))}
             </div>
-            <div className="md:col-span-2 relative">
-              <img
-                src={photosToShow[2]}
-                alt={`${roomType.name} photo 3`}
-                className="absolute inset-0 w-full h-full object-cover rounded-lg"
-              />
+            <div className="col-span-2 grid grid-cols-2 gap-3">
+              {photosToShow.slice(3, 5).map((photo, index) => (
+                <img
+                  key={`bottom-${index}`}
+                  src={photo}
+                  alt={`${roomType.name} photo ${index + 4}`}
+                  className="h-[174px] w-full object-cover rounded-2xl"
+                />
+              ))}
             </div>
+            <button
+              type="button"
+              className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-medium shadow-lg"
+              onClick={() => setIsGalleryOpen(true)}
+            >
+              <Grid className="h-4 w-4" />
+              Show all photos
+            </button>
           </div>
 
           {/* Mobile Carousel */}
           <div className="md:hidden">
             <div className="relative group">
-              <Carousel className="w-full">
+              <Carousel className="w-full" setApi={setMobileCarouselApi}>
                 <CarouselContent>
-                  {photosToShow.map((photo, index) => (
+                  {galleryPhotos.map((photo, index) => (
                     <CarouselItem key={index}>
                       <div className="aspect-video relative rounded-lg overflow-hidden">
                         <img
@@ -382,6 +492,24 @@ export default function RoomDetailsPage() {
                   ))}
                 </CarouselContent>
               </Carousel>
+              {galleryPhotos.length > 0 && (
+                <div className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white md:hidden">
+                  {mobileSlideIndex + 1} / {galleryPhotos.length}
+                </div>
+              )}
+              {galleryPhotos.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 md:hidden">
+                  {galleryPhotos.map((_, dotIndex) => (
+                    <span
+                      key={dotIndex}
+                      className={cn(
+                        "h-2 w-2 rounded-full bg-white/40 transition",
+                        mobileSlideIndex === dotIndex && "bg-white"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -389,13 +517,17 @@ export default function RoomDetailsPage() {
         <div className="grid lg:grid-cols-5 gap-x-12">
           <div className="lg:col-span-3 space-y-8">
             <div>
-              <h1 className="sm:text-3xl text-2xl lg:text-4xl font-bold font-serif text-foreground">
+              <h1 className="sm:text-2xl text-2xl lg:text-3xl font-bold font-serif text-foreground">
                 {roomType.name}
               </h1>
               <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
                 <div className="flex items-center gap-1.5">
                   <MapPin className="h-4 w-4" />
                   <span>Rishikesh, Uttarakhand</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span>Up to {roomType.maxOccupancy} guests</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
@@ -419,13 +551,15 @@ export default function RoomDetailsPage() {
               )}
             </p>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border">
+            <div className="border-t border-border my-6" />
+
+            <div className="bg-white ">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Amenities</h2>
               <div className="space-y-6">
                 {/* Essential Amenities */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Essentials</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {/* <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Essentials</h3> */}
+                  <div className="grid grid-cols-2 gap-4">
                     {roomType.amenities.filter(amenityId => {
                       const amenity = allAmenities.find((a) => a.id === amenityId);
                       return amenity && ['Free Wi-Fi', 'Wifi', 'Air Conditioning', 'Air Conditioner', 'Ensuite Bathroom', 'Bathroom'].includes(amenity.name);
@@ -434,12 +568,10 @@ export default function RoomDetailsPage() {
                       if (!amenity) return null;
                       return (
                         <div key={amenity.id} className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Icon
-                              name={amenityIcons[amenity.name] || amenity.icon}
-                              className="h-5 w-5 text-primary"
-                            />
-                          </div>
+                          <Icon
+                            name={amenityIcons[amenity.name] || amenity.icon}
+                            className="h-5 w-5 text-gray-700"
+                          />
                           <span className="text-sm font-medium text-gray-700">{amenity.name}</span>
                         </div>
                       );
@@ -448,9 +580,9 @@ export default function RoomDetailsPage() {
                 </div>
 
                 {/* Comfort Amenities */}
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Comfort</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="mt-0 !mt-4">
+                  {/* <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Comfort</h3> */}
+                  <div className="grid grid-cols-2 gap-4">
                     {roomType.amenities.filter(amenityId => {
                       const amenity = allAmenities.find((a) => a.id === amenityId);
                       return amenity && !['Free Wi-Fi', 'Wifi', 'Air Conditioning', 'Air Conditioner', 'Ensuite Bathroom', 'Bathroom'].includes(amenity.name);
@@ -459,12 +591,10 @@ export default function RoomDetailsPage() {
                       if (!amenity) return null;
                       return (
                         <div key={amenity.id} className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                            <Icon
-                              name={amenityIcons[amenity.name] || amenity.icon}
-                              className="h-5 w-5 text-gray-600"
-                            />
-                          </div>
+                          <Icon
+                            name={amenityIcons[amenity.name] || amenity.icon}
+                            className="h-5 w-5 text-gray-700"
+                          />
                           <span className="text-sm font-medium text-gray-700">{amenity.name}</span>
                         </div>
                       );
@@ -473,14 +603,15 @@ export default function RoomDetailsPage() {
                 </div>
               </div>
             </div>
+            <div className="border-t border-border my-6" />
 
-            <div className="bg-white rounded-xl p-6 shadow-sm border">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Ashram Rules</h2>
-              <Accordion type="single" collapsible className="w-full">
+            <div className="bg-white">
+              <h2 className="text-2xl font-bold text-gray-900 ">Ashram Rules</h2>
+              <Accordion type="single" collapsible className="w-full p-4">
                 <AccordionItem value="checkin" className="border-b">
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-3">
-                      <Clock className="h-5 w-5 text-primary" />
+                      <Clock className="h-5 w-5 " />
                       <span className="text-left font-medium">Check-in & Check-out</span>
                     </div>
                   </AccordionTrigger>
@@ -504,7 +635,7 @@ export default function RoomDetailsPage() {
                 <AccordionItem value="age" className="border-b">
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-3">
-                      <Info className="h-5 w-5 text-primary" />
+                      <Info className="h-5 w-5" />
                       <span className="text-left font-medium">Age & ID Requirements</span>
                     </div>
                   </AccordionTrigger>
@@ -519,7 +650,7 @@ export default function RoomDetailsPage() {
                 <AccordionItem value="parking" className="border-b">
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-3">
-                      <ParkingCircle className="h-5 w-5 text-primary" />
+                      <ParkingCircle className="h-5 w-5" />
                       <span className="text-left font-medium">Parking & Transportation</span>
                     </div>
                   </AccordionTrigger>
@@ -535,253 +666,273 @@ export default function RoomDetailsPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-2 mt-8 lg:mt-0" id="booking-form">
-            <Card className="sticky top-32 shadow-xl border-0">
-              <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-t-xl pb-6">
+          <div
+            className={cn(
+              "lg:col-span-2 mt-8 lg:mt-0 lg:self-start",
+              isGalleryOpen && "pointer-events-none opacity-0"
+            )}
+            id="booking-form"
+          >
+            <Card className="sticky top-32 rounded-xl shadow-xl bg-white">
+              <CardHeader className="p-6 pb-4 border-b border-border/50">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">from</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold text-gray-900">₹{nightlyRate.toLocaleString()}</span>
-                      <span className="text-gray-500 font-normal">/night</span>
+                  <div className="space-y-2">
+                    {/* <p className="text-xs uppercase tracking-wide text-muted-foreground">From</p> */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl font-semibold text-foreground">₹{nightlyRate.toLocaleString()}</span>
+                      <span className="lg:text-lg text-sm text-muted-foreground">for per night</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1 text-yellow-500">
+                  <div className="text-right space-y-1">
+                    <div className="flex items-center justify-end gap-1 text-yellow-500">
                       <Star className="h-4 w-4 fill-current" />
-                      <span className="font-bold text-gray-900">4.8</span>
+                      <span className="font-semibold text-foreground">4.8</span>
                     </div>
-                    <p className="text-xs text-gray-500">127 reviews</p>
+                    <p className="text-xs text-muted-foreground">127 reviews</p>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-6">
+
+              <CardContent className="p-6 space-y-6">
                 <Form {...form}>
                   <form
                     onSubmit={form.handleSubmit(onSubmit)}
                     className="space-y-6"
                   >
-                    <div className="border rounded-lg divide-y divide-border">
-                      <FormField
-                        control={form.control}
-                        name="dateRange"
-                        render={({ field }) => (
-                          <FormItem>
-                            <Popover
-                              open={isDatesPopoverOpen}
-                              onOpenChange={setIsDatesPopoverOpen}
-                            >
-                              <PopoverTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="flex items-center justify-between w-full p-3 text-left"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                                    <div>
-                                      <label className="text-xs text-muted-foreground">
-                                        Dates
-                                      </label>
-                                      <div className="text-sm font-medium">
-                                        {field.value?.from && field.value.to ? (
-                                          <>
-                                            {format(
-                                              field.value.from,
-                                              "EEE, dd MMM yyyy"
-                                            )}{" "}
-                                            →{" "}
-                                            {format(
-                                              field.value.to,
-                                              "EEE, dd MMM yyyy"
-                                            )}
-                                          </>
-                                        ) : (
-                                          <span>Select your dates</span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <ChevronDown
-                                    className={cn(
-                                      "size-5 text-muted-foreground transition-transform",
-                                      isDatesPopoverOpen && "rotate-180"
-                                    )}
-                                  />
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                className="w-auto p-0"
-                                align="start"
-                              >
-                                <Calendar
-                                  initialFocus
-                                  mode="range"
-                                  defaultMonth={field.value?.from}
-                                  selected={{
-                                    from: field.value?.from,
-                                    to: field.value?.to,
-                                  }}
-                                  onSelect={field.onChange}
-                                  numberOfMonths={2}
-                                  disabled={disabledDates}
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage className="pl-2" />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="grid grid-cols-2 gap-0 divide-x">
+                    <div className="rounded-xl border border-border/50 bg-white overflow-hidden">
+                      <div className="border-b">
                         <FormField
                           control={form.control}
-                          name="guests"
+                          name="dateRange"
                           render={({ field }) => (
                             <FormItem>
                               <Popover
-                                open={isGuestsPopoverOpen}
-                                onOpenChange={setIsGuestsPopoverOpen}
+                                open={isDatesPopoverOpen}
+                                onOpenChange={setIsDatesPopoverOpen}
                               >
                                 <PopoverTrigger asChild>
-                                  <button
-                                    type="button"
-                                    className="flex items-center justify-between w-full p-3 text-left"
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <Users className="h-5 w-5 text-muted-foreground" />
-                                      <div>
-                                        <label className="text-xs text-muted-foreground">
-                                          Guests
-                                        </label>
-                                        <div className="text-sm font-medium">
-                                          {field.value} Adult{field.value > 1 ? "s" : ""}
-                                          {form.watch("children") > 0 && `, ${form.watch("children")} Child${form.watch("children") > 1 ? "ren" : ""}`}
+                                  <FormControl>
+                                    <button
+                                      type="button"
+                                      className="w-full px-4 py-4 flex  gap-3 bg-transparent  md:flex-row md:items-center md:justify-between md:text-left"
+                                    >
+                                      <div className="flex items-center gap-3 justify-center md:justify-start">
+                                        <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+                                        <div className="flex flex-col text-start md:text-left">
+                                          <span className="text-xs uppercase tracking-wide text-muted-foreground">Dates</span>
+                                          {field.value?.from ? (
+                                            field.value?.to ? (
+                                              <span className="text-sm font-medium">
+                                                {format(field.value.from, "MMM dd, yyyy")} → {format(field.value.to, "MMM dd, yyyy")}
+                                              </span>
+                                            ) : (
+                                              <span className="text-sm font-medium text-muted-foreground">
+                                                {format(field.value.from, "MMM dd, yyyy")}
+                                              </span>
+                                            )
+                                          ) : (
+                                            <span className="text-sm font-medium text-muted-foreground/70">
+                                              Add your travel dates
+                                            </span>
+                                          )}
                                         </div>
                                       </div>
-                                    </div>
-                                    <ChevronDown
-                                      className={cn(
-                                        "size-5 text-muted-foreground transition-transform",
-                                        isGuestsPopoverOpen && "rotate-180"
-                                      )}
-                                    />
-                                  </button>
+                                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                                    </button>
+                                  </FormControl>
                                 </PopoverTrigger>
                                 <PopoverContent
-                                  className="w-80 p-6"
-                                  align="end"
+                                  align="center"
+                                  sideOffset={16}
+                                  className="w-[min(90vw,640px)] md:w-full md:max-w-none rounded-2xl border border-border/30 bg-white shadow-xl px-4 py-4 md:px-5 md:py-4 max-h-[80vh] overflow-y-auto"
                                 >
-                                  <div className="space-y-6">
-                                    <div className="space-y-2">
-                                      <div className="flex items-center justify-between">
-                                        <div>
-                                          <p className="font-medium">Adults</p>
-                                          <p className="text-xs text-gray-500">Ages 13 or above</p>
+                                  <Calendar
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={field.value?.from ?? new Date()}
+                                    selected={{
+                                      from: field.value?.from,
+                                      to: field.value?.to,
+                                    }}
+                                    onSelect={field.onChange}
+                                    numberOfMonths={isMobileViewport ? 1 : 2}
+                                    disabled={disabledDates}
+                                    className="pt-3 pb-4 md:pt-4 md:pb-5 px-1 md:px-5"
+                                    classNames={{
+                                      months: "flex flex-col gap-6 sm:flex-row sm:gap-6",
+                                      month: "space-y-4",
+                                      caption: "flex items-center justify-between",
+                                      caption_label: "text-base font-semibold text-foreground",
+                                      nav: "flex items-center gap-2",
+                                      nav_button: "inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-white text-muted-foreground transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                                      nav_button_previous: "order-1",
+                                      nav_button_next: "order-2",
+                                      table: "w-full border-collapse",
+                                      head_row: "flex w-full",
+                                      head_cell: "flex h-11 w-11 items-center justify-center text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground/70",
+                                      row: "mt-1 flex w-full",
+                                      cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20",
+                                      day: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-transparent text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 focus-visible:border-primary/50 focus-visible:bg-primary/5 aria-selected:hover:bg-primary aria-selected:hover:border-primary",
+                                      day_selected: "inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
+                                      day_today: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-dashed border-border/60 text-foreground",
+                                      day_range_start: "inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
+                                      day_range_end: "inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
+                                      day_range_middle: "inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-foreground aria-selected:!text-foreground border border-primary/20",
+                                      day_outside: "pointer-events-none opacity-0 select-none",
+                                      day_disabled: "opacity-40 text-muted-foreground hover:border-transparent hover:bg-transparent",
+                                      day_hidden: "invisible",
+                                    }}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage className="px-4 pt-1" />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="flex divide-x flex-col md:flex-row lg:flex-row">
+                        <FormField
+                          control={form.control}
+                          name="guests"
+                          render={({ field: guestsField }) => {
+                            const childrenCount = form.watch("children");
+                            const totalGuests = guestsField.value + childrenCount;
+                            return (
+                              <FormItem className="flex-1">
+                                <Popover
+                                  open={isGuestsPopoverOpen}
+                                  onOpenChange={setIsGuestsPopoverOpen}
+                                >
+                                  <PopoverTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="w-full px-4 py-4 flex justify-between gap-3 bg-transparent  md:flex-row md:items-center md:justify-between md:text-left"
+                                    >
+                                      <div className="flex items-center gap-3 justify-start md:justify-start">
+                                        <Users className="h-5 w-5 text-muted-foreground" />
+                                        <div className="flex flex-col text-start md:text-left">
+                                          <span className="text-xs uppercase tracking-wide text-[#8C7E6E]">Guests</span>
+                                          <span className="text-sm font-medium text-[#3D372F]">
+                                            1 room, {totalGuests} guest{totalGuests !== 1 ? "s" : ""}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                                    </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent
+                                    align="center"
+                                    className="w-[min(90vw,420px)] sm:w-[380px] rounded-3xl border border-border/30 bg-white shadow-xl p-6 space-y-6"
+                                  >
+                                    <div className="space-y-1">
+                                      <h4 className="text-lg font-semibold text-foreground">Select occupancy</h4>
+                                      <p className="text-sm text-muted-foreground">Choose guests for this stay</p>
+                                    </div>
+                                    <div className="divide-y divide-border/20">
+                                      <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+                                        <div className="flex items-center gap-3">
+                                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                            <Users className="h-4 w-4" />
+                                          </div>
+                                          <div>
+                                            <span className="block text-base font-medium text-foreground">Adults</span>
+                                            <span className="block text-xs text-muted-foreground">Ages 13 or above</span>
+                                          </div>
                                         </div>
                                         <div className="flex items-center gap-3">
                                           <Button
                                             type="button"
-                                            variant="outline"
+                                            variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 rounded-full"
-                                            onClick={() =>
-                                              field.onChange(Math.max(1, field.value - 1))
-                                            }
-                                            disabled={field.value <= 1}
+                                            className="h-9 w-9 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
+                                            onClick={() => guestsField.onChange(Math.max(1, guestsField.value - 1))}
+                                            disabled={guestsField.value <= 1}
                                           >
-                                            <span className="text-lg">−</span>
+                                            <Minus className="h-3 w-3" />
                                           </Button>
-                                          <span className="w-8 text-center font-medium">
-                                            {field.value}
+                                          <span className="w-9 text-center text-base font-semibold text-foreground">
+                                            {guestsField.value}
                                           </span>
                                           <Button
                                             type="button"
-                                            variant="outline"
+                                            variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 rounded-full"
+                                            className="h-9 w-9 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
                                             onClick={() =>
-                                              field.onChange(Math.min(roomType.maxOccupancy, field.value + 1))
+                                              guestsField.onChange(
+                                                Math.min(roomType.maxOccupancy, guestsField.value + 1)
+                                              )
                                             }
-                                            disabled={field.value >= roomType.maxOccupancy}
+                                            disabled={guestsField.value >= roomType.maxOccupancy}
                                           >
-                                            <span className="text-lg">+</span>
+                                            <Plus className="h-3 w-3" />
                                           </Button>
                                         </div>
                                       </div>
-                                    </div>
-                                    <FormField
-                                      control={form.control}
-                                      name="children"
-                                      render={({ field: childField }) => (
-                                        <div className="space-y-2">
-                                          <div className="flex items-center justify-between">
-                                            <div>
-                                              <p className="font-medium flex items-center gap-2">
-                                                Children
-                                                <Baby className="h-4 w-4 text-gray-400" />
-                                              </p>
-                                              <p className="text-xs text-gray-500">Ages 0-12</p>
+                                      <FormField
+                                        control={form.control}
+                                        name="children"
+                                        render={({ field: childField }) => (
+                                          <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
+                                            <div className="flex items-center gap-3">
+                                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                                <Baby className="h-4 w-4" />
+                                              </div>
+                                              <div>
+                                                <span className="block text-base font-medium text-foreground">Children</span>
+                                                <span className="block text-xs text-muted-foreground">Ages 0-12</span>
+                                              </div>
                                             </div>
                                             <div className="flex items-center gap-3">
                                               <Button
                                                 type="button"
-                                                variant="outline"
+                                                variant="ghost"
                                                 size="icon"
-                                                className="h-8 w-8 rounded-full"
-                                                onClick={() =>
-                                                  childField.onChange(Math.max(0, childField.value - 1))
-                                                }
+                                                className="h-9 w-9 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
+                                                onClick={() => childField.onChange(Math.max(0, childField.value - 1))}
                                                 disabled={childField.value <= 0}
                                               >
-                                                <span className="text-lg">−</span>
+                                                <Minus className="h-3 w-3" />
                                               </Button>
-                                              <span className="w-8 text-center font-medium">
+                                              <span className="w-9 text-center text-base font-semibold text-foreground">
                                                 {childField.value}
                                               </span>
                                               <Button
                                                 type="button"
-                                                variant="outline"
+                                                variant="ghost"
                                                 size="icon"
-                                                className="h-8 w-8 rounded-full"
-                                                onClick={() =>
-                                                  childField.onChange(childField.value + 1)
-                                                }
-                                                disabled={(field.value + childField.value) >= roomType.maxOccupancy}
+                                                className="h-9 w-9 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
+                                                onClick={() => childField.onChange(childField.value + 1)}
+                                                disabled={(guestsField.value + childField.value) >= roomType.maxOccupancy}
                                               >
-                                                <span className="text-lg">+</span>
+                                                <Plus className="h-3 w-3" />
                                               </Button>
                                             </div>
                                           </div>
-                                        </div>
-                                      )}
-                                    />
-                                  </div>
-                                  <div className="mt-4 pt-4 border-t">
-                                    <p className="text-xs text-gray-500">
-                                      This room can accommodate a maximum of {roomType.maxOccupancy} guests
-                                    </p>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage className="px-3 pb-2" />
-                            </FormItem>
-                          )}
+                                        )}
+                                      />
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage className="sr-only" />
+                              </FormItem>
+                            );
+                          }}
                         />
-                        <div className="p-3">
+                        <div className="flex flex-1 items-center justify-between px-4 py-4 border-t md:border-t-0 lg:border-t-0">
                           <div className="flex items-center gap-3">
                             <Building className="h-5 w-5 text-muted-foreground" />
                             <div>
-                              <label className="text-xs text-muted-foreground">
-                                Rooms
-                              </label>
-                              <div className="text-sm font-medium">
-                                1 Room
-                              </div>
+                              <span className="text-xs uppercase tracking-wide text-muted-foreground">Rooms</span>
+                              <span className="text-sm font-medium block">1 Room</span>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                    
+
+                    <div className="border-t border-border/50" />
+
                     {/* Special Requests */}
                     <FormField
                       control={form.control}
@@ -789,44 +940,48 @@ export default function RoomDetailsPage() {
                       render={({ field }) => (
                         <FormItem>
                           <div className="space-y-2">
-                            <label className="text-sm font-medium flex items-center gap-2">
+                            <label className="text-sm font-medium text-foreground flex items-center gap-2">
                               Special Requests
-                              <span className="text-xs text-gray-500">(Optional)</span>
+                              <span className="text-xs text-muted-foreground">(Optional)</span>
                             </label>
                             <textarea
                               {...field}
                               placeholder="Any special requests or requirements?"
-                              className="w-full min-h-[80px] p-3 border rounded-lg resize-none text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                              className="w-full min-h-[80px] p-3 border border-border/50 rounded-xl resize-none text-sm focus:ring-1 focus:ring-primary focus:border-primary bg-white focus-visible:outline-none"
                             />
                           </div>
                         </FormItem>
                       )}
                     />
 
+                    <div className="border-t border-border/50" />
+
                     {/* Pricing Breakdown */}
                     {dateRange?.from && dateRange?.to && (
-                      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                      <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">₹{nightlyRate.toLocaleString()} × {nightCount} nights</span>
-                          <span className="font-medium">₹{totalPrice.toLocaleString()}</span>
+                          <span className="text-muted-foreground">₹{nightlyRate.toLocaleString()} × {nightCount} nights</span>
+                          <span className="font-medium text-foreground">₹{totalPrice.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Taxes & fees</span>
-                          <span className="font-medium">₹{Math.round(taxesAndFees).toLocaleString()}</span>
+                          <span className="text-muted-foreground">Taxes & fees</span>
+                          <span className="font-medium text-foreground">₹{Math.round(taxesAndFees).toLocaleString()}</span>
                         </div>
-                        <div className="border-t my-2" />
-                        <div className="flex justify-between">
-                          <span className="font-semibold">Total</span>
+                        <div className="border-t border-border/50" />
+                        <div className="flex justify-between items-start">
+                          <span className="font-semibold text-foreground">Total</span>
                           <div className="text-right">
-                            <span className="text-2xl font-bold text-primary">₹{Math.round(grandTotal).toLocaleString()}</span>
-                            <p className="text-xs text-gray-500">Inclusive of all taxes</p>
+                            <span className="text-2xl font-semibold text-primary">₹{Math.round(grandTotal).toLocaleString()}</span>
+                            <p className="text-xs text-muted-foreground">Inclusive of all taxes</p>
                           </div>
                         </div>
                       </div>
                     )}
 
+                    <div className="border-t border-border/50" />
+
                     <Button
-                      className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 text-white"
+                      className="w-full h-12 text-base font-semibold rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white"
                       type="submit"
                       disabled={!dateRange?.from || !dateRange?.to}
                     >
@@ -839,8 +994,8 @@ export default function RoomDetailsPage() {
                         </>
                       )}
                     </Button>
-                    
-                    <p className="text-xs text-center text-gray-500">
+
+                    <p className="text-xs text-center text-muted-foreground">
                       You won&apos;t be charged yet. Review before payment.
                     </p>
                   </form>
@@ -853,14 +1008,14 @@ export default function RoomDetailsPage() {
         {relatedRoomTypes.length > 0 && (
           <div className="mt-16">
             <h2 className="text-3xl font-bold font-serif text-foreground mb-8">Related Rooms</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {relatedRoomTypes.slice(0, 3).map((relatedRoomType) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedRoomTypes.slice(0, 4).map((relatedRoomType) => (
                 <RoomTypeCard
                   key={relatedRoomType.id}
                   roomType={relatedRoomType}
                   price={relatedRoomType.price}
                   hasSearched={false}
-                  onSelect={() => {}}
+                  onSelect={() => { }}
                   isSelectionComplete={false}
                 />
               ))}
@@ -868,6 +1023,48 @@ export default function RoomDetailsPage() {
           </div>
         )}
       </div>
+
+      {isGalleryOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-6">
+            <div className="relative w-full max-w-5xl">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-900 shadow-lg hover:bg-white"
+                onClick={() => setIsGalleryOpen(false)}
+              >
+                <X className="h-5 w-5" />
+                <span className="sr-only">Close gallery</span>
+              </Button>
+              <Carousel className="relative w-full" opts={{ loop: true }}>
+                <CarouselContent>
+                  {galleryPhotos.map((photo, index) => (
+                    <CarouselItem key={index}>
+                      <div className="relative aspect-video overflow-hidden rounded-3xl bg-black">
+                        <img
+                          src={photo}
+                          alt={`${roomType.name} gallery photo ${index + 1}`}
+                          className="absolute inset-0 h-full w-full object-cover"
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious
+                  variant="secondary"
+                  className="hidden md:flex !left-[-56px] top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-900 shadow-lg hover:bg-white"
+                />
+                <CarouselNext
+                  variant="secondary"
+                  className="hidden md:flex !right-[-56px] top-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center rounded-full bg-white/90 text-gray-900 shadow-lg hover:bg-white"
+                />
+              </Carousel>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
