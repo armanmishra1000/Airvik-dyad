@@ -19,8 +19,9 @@ This document tracks only the sections where specific changes need to be made.
   - Apply heading style: `2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground`
   - Remove old style: `text-4xl md:text-5xl font-bold font-serif text-foreground mb-2`
   - Update description paragraph style to: `text-base text-muted-foreground md:text-lg`
-  - Add `max-w-3xl mx-auto` to description paragraph
+  - Add `max-w-xl mx-auto` to description paragraph
   - Remove `mb-2` from parent div of the logo image
+  - Remove `mt-10` from logo image className
   
 - [ ] **Spacing Updates (Line 164)**
   - Add `space-y-4` to the text-center container
