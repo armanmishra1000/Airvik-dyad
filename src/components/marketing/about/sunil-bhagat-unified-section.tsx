@@ -114,7 +114,7 @@ export function SunilBhagatUnifiedSection() {
             About Swamiji
           </p>
           <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-            Swamiji Sunil Bhagat - Life & Service
+            Swamiji Sunil Bhagat <br className="sm:hidden block"/> - Life & Service
           </h2>
           <p className="text-base text-muted-foreground md:text-lg max-w-4xl mx-auto">
             Explore Swamiji Sunil Bhagat&apos;s journey and leadership, his humanitarian initiatives, daily teachings, and practical guidance in seva, dharma and community life that shape SahajAnand Wellness.

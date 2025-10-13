@@ -102,7 +102,7 @@ This document tracks only the sections where specific changes need to be made.
 ### SunilBhagatUnifiedSection
 **File:** `src/components/marketing/about/sunil-bhagat-unified-section.tsx`
 
-- [ ] **Heading Text Wrap**
+- [x] **Heading Text Wrap**
   - Line 117: Wrap text like this: `Swamiji Sunil Bhagat <br className="sm:hidden block"/> - Life & Service`
 
 ### SwamiSpeechSection
