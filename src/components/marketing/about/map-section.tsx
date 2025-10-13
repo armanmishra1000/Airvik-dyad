@@ -18,7 +18,7 @@ export function MapSection() {
             Visit Us in Rishikesh
           </p>
           <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-            Find Us in Rishikesh SahajAnand Wellness
+            Find Us in Rishikesh <br/>SahajAnand Wellness
           </h1>
         </motion.div>
         <motion.div

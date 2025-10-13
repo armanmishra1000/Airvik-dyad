@@ -121,7 +121,7 @@ This document tracks only the sections where specific changes need to be made.
 ### MapSection
 **File:** `src/components/marketing/about/map-section.tsx`
 
-- [ ] **Heading Text Wrap**
+- [x] **Heading Text Wrap**
   - Line 21: Wrap text like this: `Find Us in Rishikesh <br/>SahajAnand Wellness`
 
 ### GalleryPageSection
