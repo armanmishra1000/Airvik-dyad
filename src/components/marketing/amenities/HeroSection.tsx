@@ -25,9 +25,9 @@ export function AmenitiesHeroSection() {
       <div className="absolute inset-0 bg-black/45" />
       <div className="container mx-auto relative px-4 md:px-6 z-10">
         <div className="flex flex-col items-center gap-4 py-24 text-center text-white md:py-32">
-          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold">
+          <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold">
             Peaceful Comforts
-          </h2>
+          </h1>
           <p className="text-base text-white/80 md:text-lg max-w-3xl">
             Find peace and comfort in our sacred spaces and mindful facilities.
           </p>

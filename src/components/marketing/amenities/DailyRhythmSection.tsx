@@ -169,11 +169,11 @@ export function DailyRhythmSection() {
                       )}
                     </div>
                     <div className="flex-1 rounded-2xl border mb-5 border-border/50 bg-card/70 backdrop-blur-sm p-4 shadow-lg shadow-primary/5 space-y-3">
-                      {/* {sectionTitle && (
-                      <span className="text-xs font-semibold text-right uppercase tracking-wide text-primary">
-                        {sectionTitle}
-                      </span>
-                    // )} */}
+                      {sectionTitle && (
+                        <span className="text-xs font-semibold text-right uppercase tracking-wide text-primary">
+                          {sectionTitle}
+                        </span>
+                      )}
                       <div className="flex items-center gap-3 text-sm font-medium text-primary">
                         <Icon className="size-4" />
                         {itemTitle}
