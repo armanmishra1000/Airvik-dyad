@@ -31,7 +31,7 @@ const dailyRhythm: RhythmItem[] = [
     time: "07:00",
     title: "Breakfast",
     description:
-      "A healthy vegetarian breakfast with herbal tea — a quiet time to relax after morning yoga.",
+      "Begin your day with a pure vegetarian breakfast and calm moments in the ashram.",
     icon: UtensilsCrossed,
   },
   {
@@ -45,21 +45,21 @@ const dailyRhythm: RhythmItem[] = [
     time: "12:00",
     title: "Lunch",
     description:
-      "A light, healthy lunch made with Ayurvedic ingredients and a short breathing practice before eating.",
+      "A light, healthy meal prepared with fresh ingredients a short breathing practice before eating.",
     icon: Soup,
   },
   {
     time: "18:00",
     title: "Ganga Aarti + Meditation",
     description:
-      "Divine Evening Bliss: Evening rituals by the Ganga with devotional songs, meditation, and peaceful prayers.",
+      "Evening by the Ganga with devotional songs, meditation, and serene spiritual prayers.",
     icon: Music,
   },
   {
     time: "19:00",
     title: "Dinner",
     description:
-      "Enjoy dinner by the river with soft chants, light lamps, and a calm atmosphere to end your day.",
+      "Enjoy a peaceful soulful dinner with soft chants and gentle lights at the ashram.",
     icon: MoonStar,
   },
 ];
