@@ -96,7 +96,7 @@ This document tracks only the sections where specific changes need to be made.
 ### PlacesToVisitSection
 **File:** `src/components/marketing/about/places-to-visit-section.tsx`
 
-- [ ] **Max Width Update**
+- [x] **Max Width Update**
   - Line 70: Replace `max-w-4xl` with `max-w-xl`
 
 ### SunilBhagatUnifiedSection
