@@ -58,10 +58,10 @@ This document tracks only the sections where specific changes need to be made.
 ### RoomsShowcaseSection
 **File:** `src/components/marketing/home/RoomsShowcaseSection.tsx`
 
-- [ ] **Layout and Styling Updates**
+- [x] **Layout and Styling Updates**
   - Line 158: In `<section>` tag, remove `py-20` and add `py-10 sm:py-12`
-  - After line 159: Add new `<div>` with `className="space-y-4"` to contain the `<h2>` and `<p>` tags
-  - For `<h2>` tag: Add `2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground text-center`
+  - After line 159: Add new `<div>` with `className="space-y-4 text-center"` to contain the `<h2>` and `<p>` tags
+  - For `<h2>` tag: Add `2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground`
   - For `<p>` tag: Add `text-base text-muted-foreground md:text-lg max-w-3xl mx-auto`
   - Remove `mt-12` from `relative mt-12 lg:hidden`
 
