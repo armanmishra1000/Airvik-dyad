@@ -53,7 +53,7 @@ export function SwamiSpeechSection() {
                     Spiritual Teachings
                   </p>
                   <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-                    Swamiji&apos;s Teachings & the Daily Ganga Aarti
+                    Swamiji&apos;s Teachings & <br/> the Daily Ganga Aarti
                   </h2>
                   <p className="text-base text-muted-foreground md:text-lg">
                     Explore the enlightening discourses of Swamiji Sunil Bhagat and join the evening Ganga Aarti, a living Vedic ritual of light, chant and collective prayer that he leads with devotees and visitors at sunset on the ghats. Recordings and livestreams of the ceremony are available on the RishikeshDham YouTube channel.

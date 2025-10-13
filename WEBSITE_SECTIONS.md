@@ -108,7 +108,7 @@ This document tracks only the sections where specific changes need to be made.
 ### SwamiSpeechSection
 **File:** `src/components/marketing/about/swami-speech-section.tsx`
 
-- [ ] **Heading Text Wrap**
+- [x] **Heading Text Wrap**
   - Line 56: Wrap text like this: `Swamiji&apos;s Teachings & <br/> the Daily Ganga Aarti`
 
 ### RishikeshHeroSection
