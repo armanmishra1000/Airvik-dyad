@@ -19,7 +19,7 @@ import {
   ChevronDown,
   Building,
   Users,
-  Grid,
+  Images,
   Minus,
   Plus,
   Sparkles,
@@ -441,7 +441,7 @@ export default function RoomDetailsPage() {
               <img
                 src={photosToShow[0]}
                 alt={`${roomType.name} photo 1`}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover rounded-xl"
               />
             </div>
             <div className="col-span-2 grid grid-cols-2 gap-3">
@@ -466,10 +466,10 @@ export default function RoomDetailsPage() {
             </div>
             <button
               type="button"
-              className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-medium shadow-lg"
+              className="absolute bottom-4 right-4 flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium shadow-lg"
               onClick={() => setIsGalleryOpen(true)}
             >
-              <Grid className="h-4 w-4" />
+              <Images className="h-4 w-4" />
               Show all photos
             </button>
           </div>
@@ -1025,14 +1025,14 @@ export default function RoomDetailsPage() {
       </div>
 
       {isGalleryOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm overflow-y-auto">
+        <div className="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-6">
             <div className="relative w-full max-w-5xl">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-900 shadow-lg hover:bg-white"
+                className="fixed top-6 right-6 z-[130] flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-gray-900 shadow-lg hover:bg-white"
                 onClick={() => setIsGalleryOpen(false)}
               >
                 <X className="h-5 w-5" />
@@ -1042,7 +1042,7 @@ export default function RoomDetailsPage() {
                 <CarouselContent>
                   {galleryPhotos.map((photo, index) => (
                     <CarouselItem key={index}>
-                      <div className="relative aspect-video overflow-hidden rounded-3xl bg-black">
+                      <div className="relative aspect-video w-full md:w-[90%] lg:w-full mx-auto overflow-hidden rounded-3xl bg-black">
                         <img
                           src={photo}
                           alt={`${roomType.name} gallery photo ${index + 1}`}
