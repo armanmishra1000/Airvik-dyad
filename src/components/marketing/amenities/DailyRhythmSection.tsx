@@ -60,7 +60,7 @@ const dailyRhythm: RhythmItem[] = [
     title: "Dinner",
     description:
       "Enjoy a peaceful soulful dinner with soft chants and gentle lights at the ashram.",
-    icon: BiBowlRice ,
+    icon: BiBowlRice,
   },
 ];
 

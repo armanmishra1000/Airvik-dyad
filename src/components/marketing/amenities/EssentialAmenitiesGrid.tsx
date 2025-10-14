@@ -3,13 +3,13 @@
 import { motion, type Variants } from "framer-motion";
 import Image from "next/image";
 
-type Amenity = {
+type LocalAmenity = {
   label: string;
   image: string;
   alt?: string;
 };
 
-const amenities: Amenity[] = [
+const amenities: LocalAmenity[] = [
   { label: "WiFi", image: "/icons/wifi.svg" },
   { label: "Geyser", image: "/icons/Geyser.svg" },
   { label: "Air Conditioner", image: "/icons/AC.svg" },
@@ -69,9 +69,9 @@ export function EssentialAmenitiesGrid() {
                   <Image
                     src={image}
                     alt={alt ?? label}
-                    width={60}
-                    height={60}
-                    className="size-8 object-cover sm:size-10"
+                    width={40}
+                    height={40}
+                    className="size-8 object-contain sm:size-10"
                   />
                 </div>
                 <span className="mt-3 text-sm font-semibold text-foreground sm:text-base">
@@ -89,7 +89,7 @@ export function EssentialAmenitiesGrid() {
           >
             <div>
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-xl font-semibold text-foreground sm:text-2xl">
+                <h3 className="text-lg font-semibold text-foreground sm:text-2xl">
                   Satvik Bhojan
                 </h3>
                 <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
