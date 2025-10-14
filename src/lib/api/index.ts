@@ -13,7 +13,6 @@ import type {
   FolioItem,
   ReservationStatus,
 } from "@/data/types";
-import type { PricingMatrixRow } from "@/data/pricing";
 
 type DbGuest = {
   id: string;
@@ -374,7 +373,7 @@ export const getPricingMatrix = (
   from: string,
   to: string
 ) =>
-  supabase.rpc<PricingMatrixRow[]>(
+  supabase.rpc(
     'get_pricing_matrix',
     {
       p_room_type_ids: roomTypeIds,
