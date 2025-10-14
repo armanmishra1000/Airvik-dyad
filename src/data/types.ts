@@ -114,6 +114,13 @@ export interface RatePlanSeason {
   updated_at?: string;
 }
 
+export interface RatePlanClosedDate {
+  id: string;
+  rate_plan_season_id: string;
+  closed_date: string;
+  created_at?: string;
+}
+
 export interface Guest {
   id: string;
   firstName: string;

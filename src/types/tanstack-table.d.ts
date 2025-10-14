@@ -1,6 +1,9 @@
 import { RowData } from '@tanstack/react-table'
 import { Permission, RoomRatePlan, RatePlanSeason, RoomType } from '@/data/types'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFunction = (...args: any[]) => any
+
 // This declaration merges with the original TanStack Table definition
 // to add our custom meta properties. By making them optional, we can
 // provide only the ones we need for each specific table instance.
@@ -11,6 +14,7 @@ declare module '@tanstack/react-table' {
       openCancelDialog?: (reservation: TData) => void
       openDeleteDialog?: (item: TData) => void
       openAssignDialog?: (item: TData) => void
+      openOverrideDialog?: AnyFunction
       hasPermission?: (permission: Permission) => boolean
       roomRatePlans?: RoomRatePlan[]
       ratePlanSeasons?: RatePlanSeason[]

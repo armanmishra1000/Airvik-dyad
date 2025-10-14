@@ -6,22 +6,19 @@ import { useAuthContext } from "@/context/auth-context";
 import { columns } from "./components/columns";
 import { RatePlansDataTable } from "./components/data-table";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { AssignRatePlanDialog } from "./components/assign-rate-plan-dialog";
+import { SeasonOverrideDialog } from "./components/season-override-dialog";
 import { toast } from "sonner";
-import type { RatePlan } from "@/data/types";
+import type { RatePlan, RatePlanSeason } from "@/data/types";
 
 export default function RatesPage() {
   const { ratePlans } = useDataContext();
   const { hasPermission } = useAuthContext();
   const [selectedRatePlan, setSelectedRatePlan] = React.useState<RatePlan | null>(null);
-  const [showOverrideDialog, setShowOverrideDialog] = React.useState(false);
+  const [selectedSeasonOverride, setSelectedSeasonOverride] = React.useState<{
+    ratePlan: RatePlan;
+    season?: RatePlanSeason;
+  } | null>(null);
 
   const handleAssignToRooms = (ratePlan?: RatePlan) => {
     if (ratePlans.length === 0) {
@@ -32,9 +29,15 @@ export default function RatesPage() {
     setSelectedRatePlan(ratePlan || ratePlans[0]);
   };
 
-  const handleAddOverride = () => {
-    setShowOverrideDialog(true);
-    toast.info("Override feature coming in Epic C");
+  const handleAddOverride = (ratePlan?: RatePlan, season?: RatePlanSeason) => {
+    if (ratePlans.length === 0) {
+      toast.error("Please create a rate plan first");
+      return;
+    }
+    setSelectedSeasonOverride({
+      ratePlan: ratePlan || ratePlans[0],
+      season,
+    });
   };
 
   return (
@@ -52,7 +55,7 @@ export default function RatesPage() {
               <Button variant="outline" onClick={() => handleAssignToRooms()}>
                 Assign to Rooms
               </Button>
-              <Button variant="outline" onClick={handleAddOverride}>
+              <Button variant="outline" onClick={() => handleAddOverride()}>
                 Add Override
               </Button>
             </>
@@ -63,6 +66,7 @@ export default function RatesPage() {
         columns={columns} 
         data={ratePlans}
         onOpenAssignDialog={handleAssignToRooms}
+        onOpenOverrideDialog={handleAddOverride}
       />
 
       {/* Assignment Dialog (Epic B) */}
@@ -74,19 +78,15 @@ export default function RatesPage() {
         />
       )}
 
-      {/* Placeholder dialog for Epic C */}
-      <Dialog open={showOverrideDialog} onOpenChange={setShowOverrideDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Seasonal Override</DialogTitle>
-            <DialogDescription>
-              This feature will be available in Epic C. You&apos;ll be able to create
-              seasonal price overrides with date ranges, min/max stay rules, and
-              CTA/CTD toggles.
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+      {/* Seasonal Override Dialog (Epic C) */}
+      {selectedSeasonOverride && (
+        <SeasonOverrideDialog
+          ratePlan={selectedSeasonOverride.ratePlan}
+          season={selectedSeasonOverride.season}
+          open={!!selectedSeasonOverride}
+          onOpenChange={(open) => !open && setSelectedSeasonOverride(null)}
+        />
+      )}
     </div>
   );
 }

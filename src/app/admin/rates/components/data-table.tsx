@@ -32,10 +32,12 @@ export function RatePlansDataTable<TData extends RatePlan, TValue>({
   columns,
   data,
   onOpenAssignDialog,
+  onOpenOverrideDialog,
 }: {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   onOpenAssignDialog?: (ratePlan: TData) => void
+  onOpenOverrideDialog?: (ratePlan: TData, season?: any) => void
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
@@ -71,6 +73,7 @@ export function RatePlansDataTable<TData extends RatePlan, TValue>({
         setItemToDelete(item)
       },
       openAssignDialog: onOpenAssignDialog,
+      openOverrideDialog: onOpenOverrideDialog,
       hasPermission,
       roomRatePlans,
       ratePlanSeasons,

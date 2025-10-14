@@ -88,6 +88,7 @@ import type {
   RatePlan,
   RoomRatePlan,
   RatePlanSeason,
+  RatePlanClosedDate,
   Property,
   User,
   Role,
@@ -113,6 +114,7 @@ interface DataContextType {
   ratePlans: RatePlan[];
   roomRatePlans: RoomRatePlan[];
   ratePlanSeasons: RatePlanSeason[];
+  ratePlanClosedDates: RatePlanClosedDate[];
   users: User[];
   roles: Role[];
   amenities: Amenity[];
@@ -167,6 +169,11 @@ interface DataContextType {
   addRoomRatePlan: (mapping: Omit<RoomRatePlan, "id" | "created_at" | "updated_at">) => Promise<void>;
   updateRoomRatePlan: (id: string, mapping: Partial<Omit<RoomRatePlan, "id" | "created_at" | "updated_at">>) => Promise<void>;
   deleteRoomRatePlan: (id: string) => Promise<boolean>;
+  addRatePlanSeason: (season: Omit<RatePlanSeason, "id" | "created_at" | "updated_at">) => Promise<void>;
+  updateRatePlanSeason: (id: string, season: Partial<Omit<RatePlanSeason, "id" | "created_at" | "updated_at">>) => Promise<void>;
+  deleteRatePlanSeason: (id: string) => Promise<boolean>;
+  addRatePlanClosedDate: (closedDate: Omit<RatePlanClosedDate, "id" | "created_at">) => Promise<void>;
+  deleteRatePlanClosedDate: (id: string) => Promise<boolean>;
   addRole: (role: Omit<Role, "id">) => void;
   updateRole: (roleId: string, updatedData: Partial<Omit<Role, "id">>) => void;
   deleteRole: (roleId: string) => Promise<boolean>;

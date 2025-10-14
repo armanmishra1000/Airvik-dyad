@@ -498,3 +498,133 @@ export const getRatePlanSeasons = async (ratePlanId?: string) => {
     return { data: [], error: null };
   }
 };
+
+// Type for creating a new rate plan season
+type CreateRatePlanSeasonPayload = {
+  rate_plan_id: string;
+  room_type_id: string;
+  start_date: string;
+  end_date: string;
+  price_override?: number;
+  min_stay?: number;
+  max_stay?: number;
+  closed_to_arrival?: boolean;
+  closed_to_departure?: boolean;
+};
+
+// Type for updating an existing rate plan season
+type UpdateRatePlanSeasonPayload = {
+  id: string;
+  start_date: string;
+  end_date: string;
+  price_override?: number;
+  min_stay?: number;
+  max_stay?: number;
+  closed_to_arrival?: boolean;
+  closed_to_departure?: boolean;
+};
+
+// Discriminated union for upsert operation
+type UpsertRatePlanSeasonPayload = CreateRatePlanSeasonPayload | UpdateRatePlanSeasonPayload;
+
+export const upsertRatePlanSeason = async (season: UpsertRatePlanSeasonPayload) => {
+  try {
+    if ('id' in season) {
+      // Update existing season
+      const { data, error } = await supabase
+        .from('rate_plan_seasons')
+        .update({
+          start_date: season.start_date,
+          end_date: season.end_date,
+          price_override: season.price_override,
+          min_stay: season.min_stay,
+          max_stay: season.max_stay,
+          closed_to_arrival: season.closed_to_arrival,
+          closed_to_departure: season.closed_to_departure,
+        })
+        .eq('id', season.id)
+        .select()
+        .single();
+      return { data, error };
+    } else {
+      // Insert new season
+      const { data, error } = await supabase
+        .from('rate_plan_seasons')
+        .insert([{
+          rate_plan_id: season.rate_plan_id,
+          room_type_id: season.room_type_id,
+          start_date: season.start_date,
+          end_date: season.end_date,
+          price_override: season.price_override,
+          min_stay: season.min_stay,
+          max_stay: season.max_stay,
+          closed_to_arrival: season.closed_to_arrival ?? false,
+          closed_to_departure: season.closed_to_departure ?? false,
+        }])
+        .select()
+        .single();
+      return { data, error };
+    }
+  } catch (error) {
+    console.warn('rate_plan_seasons table operation failed:', error);
+    return { data: null, error };
+  }
+};
+
+export const deleteRatePlanSeason = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('rate_plan_seasons')
+      .delete()
+      .eq('id', id);
+    return { error };
+  } catch (error) {
+    console.warn('rate_plan_seasons delete failed:', error);
+    return { error };
+  }
+};
+
+// Rate Plan Closed Dates (Milestone 2 - Pricing Management)
+export const getRatePlanClosedDates = async (seasonId?: string) => {
+  try {
+    let query = supabase.from('rate_plan_closed_dates').select('*');
+    if (seasonId) {
+      query = query.eq('rate_plan_season_id', seasonId);
+    }
+    const { data, error } = await query;
+    return { data: data || [], error };
+  } catch (error) {
+    console.warn('rate_plan_closed_dates table not available:', error);
+    return { data: [], error: null };
+  }
+};
+
+export const addRatePlanClosedDate = async (closedDate: {
+  rate_plan_season_id: string;
+  closed_date: string;
+}) => {
+  try {
+    const { data, error } = await supabase
+      .from('rate_plan_closed_dates')
+      .insert([closedDate])
+      .select()
+      .single();
+    return { data, error };
+  } catch (error) {
+    console.warn('rate_plan_closed_dates insert failed:', error);
+    return { data: null, error };
+  }
+};
+
+export const deleteRatePlanClosedDate = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('rate_plan_closed_dates')
+      .delete()
+      .eq('id', id);
+    return { error };
+  } catch (error) {
+    console.warn('rate_plan_closed_dates delete failed:', error);
+    return { error };
+  }
+};

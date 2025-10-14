@@ -334,6 +334,7 @@ import type {
   RatePlan,
   RoomRatePlan,
   RatePlanSeason,
+  RatePlanClosedDate,
   Property,
   User,
   Role,
@@ -387,6 +388,7 @@ export function useAppData() {
   const [ratePlans, setRatePlans] = React.useState<RatePlan[]>([]);
   const [roomRatePlans, setRoomRatePlans] = React.useState<RoomRatePlan[]>([]);
   const [ratePlanSeasons, setRatePlanSeasons] = React.useState<RatePlanSeason[]>([]);
+  const [ratePlanClosedDates, setRatePlanClosedDates] = React.useState<RatePlanClosedDate[]>([]);
   const [users, setUsers] = React.useState<User[]>([]);
   const [roles, setRoles] = React.useState<Role[]>([]);
   const [amenities, setAmenities] = React.useState<Amenity[]>([]);
@@ -400,7 +402,7 @@ export function useAppData() {
       const [
         propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
         rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes, housekeepingAssignmentsRes,
-        roomTypeAmenitiesRes, roomRatePlansRes, ratePlanSeasonsRes
+        roomTypeAmenitiesRes, roomRatePlansRes, ratePlanSeasonsRes, ratePlanClosedDatesRes
       ] = await Promise.all([
         api.getProperty(),
         api.getReservations(),
@@ -417,7 +419,8 @@ export function useAppData() {
         authUser ? api.getHousekeepingAssignments() : Promise.resolve({ data: [] }),
         api.getRoomTypeAmenities(),
         api.getRoomRatePlans(),
-        api.getRatePlanSeasons()
+        api.getRatePlanSeasons(),
+        api.getRatePlanClosedDates()
       ]);
 
       if (propertyRes.data) setProperty(propertyRes.data);
@@ -454,6 +457,7 @@ export function useAppData() {
       setRoomCategories(roomCategoriesRes.data || []);
       setRoomRatePlans(roomRatePlansRes.data || []);
       setRatePlanSeasons(ratePlanSeasonsRes.data || []);
+      setRatePlanClosedDates(ratePlanClosedDatesRes.data || []);
 
     } catch (error) {
       console.error("Failed to load app data:", error);
@@ -683,6 +687,87 @@ export function useAppData() {
     return true;
   };
 
+  const addRatePlanSeason = async (season: Omit<RatePlanSeason, "id" | "created_at" | "updated_at">) => {
+    const createPayload: {
+      rate_plan_id: string;
+      room_type_id: string;
+      start_date: string;
+      end_date: string;
+      price_override?: number;
+      min_stay?: number;
+      max_stay?: number;
+      closed_to_arrival?: boolean;
+      closed_to_departure?: boolean;
+    } = {
+      rate_plan_id: season.rate_plan_id,
+      room_type_id: season.room_type_id,
+      start_date: season.start_date,
+      end_date: season.end_date,
+      price_override: season.price_override,
+      min_stay: season.min_stay,
+      max_stay: season.max_stay,
+      closed_to_arrival: season.closed_to_arrival,
+      closed_to_departure: season.closed_to_departure,
+    };
+
+    const { data, error } = await api.upsertRatePlanSeason(createPayload);
+    if (error) throw error;
+    setRatePlanSeasons(prev => [...prev, data]);
+  };
+
+  const updateRatePlanSeason = async (id: string, season: Partial<Omit<RatePlanSeason, "id" | "created_at" | "updated_at">>) => {
+    const existingSeason = ratePlanSeasons.find(s => s.id === id);
+    if (!existingSeason) {
+      throw new Error(`Rate plan season with id ${id} not found`);
+    }
+
+    const updatePayload: {
+      id: string;
+      start_date: string;
+      end_date: string;
+      price_override?: number;
+      min_stay?: number;
+      max_stay?: number;
+      closed_to_arrival?: boolean;
+      closed_to_departure?: boolean;
+    } = {
+      id,
+      start_date: season.start_date ?? existingSeason.start_date,
+      end_date: season.end_date ?? existingSeason.end_date,
+      price_override: season.price_override ?? existingSeason.price_override,
+      min_stay: season.min_stay ?? existingSeason.min_stay,
+      max_stay: season.max_stay ?? existingSeason.max_stay,
+      closed_to_arrival: season.closed_to_arrival ?? existingSeason.closed_to_arrival,
+      closed_to_departure: season.closed_to_departure ?? existingSeason.closed_to_departure,
+    };
+
+    const { data, error } = await api.upsertRatePlanSeason(updatePayload);
+    if (error) throw error;
+    setRatePlanSeasons(prev => prev.map(s => s.id === id ? data : s));
+  };
+
+  const deleteRatePlanSeason = async (id: string) => {
+    const { error } = await api.deleteRatePlanSeason(id);
+    if (error) { console.error(error); return false; }
+    setRatePlanSeasons(prev => prev.filter(s => s.id !== id));
+    // Also delete associated closed dates
+    setRatePlanClosedDates(prev => prev.filter(cd => cd.rate_plan_season_id !== id));
+    return true;
+  };
+
+  const addRatePlanClosedDate = async (closedDate: Omit<RatePlanClosedDate, "id" | "created_at">) => {
+    const { data, error } = await api.addRatePlanClosedDate(closedDate);
+    if (error) throw error;
+    setRatePlanClosedDates(prev => [...prev, data]);
+  };
+
+  const deleteRatePlanClosedDate = async (id: string) => {
+    const { error } = await api.deleteRatePlanClosedDate(id);
+    if (error) { console.error(error); return false; }
+    setRatePlanClosedDates(prev => prev.filter(cd => cd.id !== id));
+    return true;
+  };
+
   const addRole = async (roleData: Omit<Role, "id">) => {
     const { data, error } = await api.addRole(roleData);
     if (error) throw error;
@@ -782,10 +867,10 @@ export function useAppData() {
 
   return {
     isLoading,
-    property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, roomRatePlans, ratePlanSeasons, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
+    property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, roomRatePlans, ratePlanSeasons, ratePlanClosedDates, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
     updateProperty, addGuest, deleteGuest, addReservation, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
-    deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRoomRatePlan, updateRoomRatePlan, deleteRoomRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
+    deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRoomRatePlan, updateRoomRatePlan, deleteRoomRatePlan, addRatePlanSeason, updateRatePlanSeason, deleteRatePlanSeason, addRatePlanClosedDate, deleteRatePlanClosedDate, addRole, updateRole, deleteRole, updateUser, deleteUser,
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout: setDashboardLayout,
   };
 }

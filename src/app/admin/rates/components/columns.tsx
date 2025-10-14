@@ -98,10 +98,23 @@ export const columns: ColumnDef<RatePlan>[] = [
       }
       
       const nextSeason = futureSeasons[0]
+      
+      const handleClick = () => {
+        table.options.meta?.openOverrideDialog?.(ratePlan, nextSeason)
+      }
+      
       try {
         const startDate = format(parseISO(nextSeason.start_date), "MMM d")
         const endDate = format(parseISO(nextSeason.end_date), "MMM d")
-        return <Badge variant="secondary">{`${startDate} - ${endDate}`}</Badge>
+        return (
+          <Badge 
+            variant="secondary"
+            className="cursor-pointer hover:bg-secondary/80"
+            onClick={handleClick}
+          >
+            {`${startDate} - ${endDate}`}
+          </Badge>
+        )
       } catch {
         return <Badge variant="outline">Invalid date</Badge>
       }
