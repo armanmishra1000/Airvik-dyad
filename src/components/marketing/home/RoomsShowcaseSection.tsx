@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useDataContext } from "@/context/data-context";
+import type { RoomType } from "@/data/types";
 import {
   Card,
   CardContent,
@@ -96,6 +97,7 @@ export function RoomsShowcaseSection() {
     "VidhyaDan",
   ];
 
+  const placeholderImage = "/room-placeholder.svg";
   const fallbackImages: Record<string, string> = {
     annadaan: "/annakshetra.png",
     "sant bhojan donation": "/Dining Hall.png",
@@ -103,56 +105,52 @@ export function RoomsShowcaseSection() {
     vidhyadan: "/gallery-room-05-2-1.png",
   };
 
+  const toDisplayRoom = (roomType: RoomType) => {
+    const normalizedKey = normalizeName(roomType.name);
+    const imageUrl =
+      roomType.mainPhotoUrl ??
+      roomType.photos?.[0] ??
+      fallbackImages[normalizedKey] ??
+      placeholderImage;
+
+    const amenityRecords: AmenityDisplay[] = (roomType.amenities ?? [])
+      .map((amenityId) => amenities?.find((amenity) => amenity.id === amenityId))
+      .filter((amenity): amenity is NonNullable<typeof amenity> => Boolean(amenity))
+      .slice(0, 3)
+      .map((amenity) => {
+        const key = normalizeAmenityName(amenity.name);
+        const directMatch = amenityIconMap[amenity.name];
+        const normalizedMatch = Object.entries(amenityIconMap).find(
+          ([label]) => normalizeAmenityName(label) === key
+        )?.[1];
+        const iconName = directMatch ?? normalizedMatch ?? amenity.icon ?? "HelpCircle";
+
+        return { ...amenity, iconName };
+      });
+
+    return {
+      id: roomType.id,
+      name: roomType.name,
+      description: roomType.description ?? "",
+      imageUrl,
+      amenities: amenityRecords,
+    };
+  };
+
   const featuredRoomTypes = featuredOrder
-    .map((name) => {
-      const match = roomTypes?.find(
-        (roomType) => normalizeName(roomType.name) === normalizeName(name)
-      );
+    .map((name) => roomTypes?.find((roomType) => normalizeName(roomType.name) === normalizeName(name)))
+    .filter((roomType): roomType is RoomType => Boolean(roomType))
+    .map(toDisplayRoom);
 
-      if (!match) {
-        return null;
-      }
+  const fallbackRoomTypes = (roomTypes ?? [])
+    .filter(
+      (roomType) =>
+        !featuredOrder.some((name) => normalizeName(roomType.name) === normalizeName(name))
+    )
+    .slice(0, 4)
+    .map(toDisplayRoom);
 
-      const normalizedKey = normalizeName(name);
-      const imageUrl =
-        match.mainPhotoUrl ??
-        match.photos?.[0] ??
-        fallbackImages[normalizedKey] ??
-        "";
-
-      const amenityRecords = match.amenities
-        ?.map((amenityId) =>
-          amenities?.find((amenity) => amenity.id === amenityId)
-        )
-        .filter((amenity): amenity is NonNullable<typeof amenity> => Boolean(amenity))
-        .slice(0, 3)
-        .map((amenity) => {
-          const key = normalizeAmenityName(amenity.name);
-          const directMatch = amenityIconMap[amenity.name];
-          const normalizedMatch = Object.entries(amenityIconMap).find(
-            ([label]) => normalizeAmenityName(label) === key
-          )?.[1];
-          const iconName =
-            directMatch ??
-            normalizedMatch ??
-            amenity.icon ??
-            "HelpCircle";
-
-          return {
-            ...amenity,
-            iconName,
-          };
-        });
-
-      return {
-        id: match.id,
-        name: match.name,
-        description: match.description ?? "",
-        imageUrl,
-        amenities: amenityRecords ?? [],
-      };
-    })
-    .filter((room): room is NonNullable<typeof room> => Boolean(room));
+  const roomsToDisplay = featuredRoomTypes.length > 0 ? featuredRoomTypes : fallbackRoomTypes;
 
   return (
     <section className="bg-background py-10 sm:py-12">
@@ -169,7 +167,7 @@ export function RoomsShowcaseSection() {
         <div className="relative lg:hidden">
           <Carousel opts={{ align: "start", loop: true }} className="w-full">
             <CarouselContent className="-ml-4">
-              {featuredRoomTypes.map((room) => (
+              {roomsToDisplay.map((room) => (
                 <CarouselItem
                     key={room.id}
                     className="pl-4 basis-full sm:basis-3/4 md:basis-1/2 lg:basis-1/3"
@@ -195,7 +193,7 @@ export function RoomsShowcaseSection() {
                             {room.description}
                           </CardDescription>
                           <AmenityIcons
-                            amenities={room.amenities as AmenityDisplay[]}
+                            amenities={room.amenities}
                             gapClass="gap-2"
                           />
                           <Button asChild className="mt-auto w-full bg-primary hover:bg-primary-hover">
@@ -213,7 +211,7 @@ export function RoomsShowcaseSection() {
         </div>
         <div className="relative mt-12 hidden lg:block">
           <div className="grid grid-cols-4 gap-6">
-            {featuredRoomTypes.map((room) => (
+            {roomsToDisplay.map((room) => (
               <div key={room.id} className="h-full">
                 <Card className="flex h-full flex-col overflow-hidden bg-card rounded-2xl">
                   <div className="relative aspect-[3/2] w-full h-40">
@@ -235,7 +233,7 @@ export function RoomsShowcaseSection() {
                       {room.description}
                     </CardDescription>
                     <AmenityIcons
-                      amenities={room.amenities as AmenityDisplay[]}
+                      amenities={room.amenities}
                       gapClass="gap-2"
                     />
                     <Button asChild className="mt-auto w-full bg-primary hover:bg-primary-hover">

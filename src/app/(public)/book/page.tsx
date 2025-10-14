@@ -94,7 +94,7 @@ export default function RoomsPage() {
                 <Button 
                   variant="outline" 
                   onClick={handleClearSearch} 
-                  className="h-11 px-4 border-border/40 bg-background/50 hover:bg-background hover:border-border transition-all duration-200"
+                  className="h-11 px-4 shadow-sm hover:border-primary/40 hover:bg-primary/5 rounded-xl border-border/60 bg-background"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -107,7 +107,7 @@ export default function RoomsPage() {
           </div>
 
           {showLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className=" border rounded-lg">
                   <Skeleton className="h-60 w-full rounded-lg" />
@@ -128,17 +128,18 @@ export default function RoomsPage() {
               {roomsToDisplay && roomsToDisplay.length > 0 ? (
                 <>
                   {hasSearched && hasNoInventory && (
-                    <div className="mb-6 p-4 bg-amber-100 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900 rounded-lg">
-                      <p className="text-amber-900 dark:text-amber-100">
+                    <div className="mb-6 p-3 bg-amber-100 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900 rounded-xl">
+                      <p className="text-amber-900 dark:text-amber-100 text-sm">
                         <strong>Note:</strong> Room inventory is not fully configured. Showing available room types based on occupancy requirements. Please contact us for exact availability.
                       </p>
                     </div>
                   )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
                     {roomsToDisplay.map((roomType) => (
                       <RoomTypeCard
                         key={roomType.id}
                         roomType={roomType}
+                        price={roomType.price}
                         onSelect={handleSelectRoom}
                         isSelectionComplete={isSelectionComplete}
                         hasSearched={hasSearched}
@@ -149,7 +150,7 @@ export default function RoomsPage() {
                 </>
               ) : (
                 /* No Rooms Found */
-                <div className="py-16 border rounded-lg bg-muted/40">
+                <div className="py-16 border border-border/50 rounded-lg bg-white shadow-sm rounded-lg">
                   <div className="flex flex-col items-center justify-center space-y-4">
                     <div className="bg-primary md:size-14 size-12 rounded-full flex items-center justify-center">
                       <TriangleAlert className="text-primary-foreground sm:size-8 size-6" />

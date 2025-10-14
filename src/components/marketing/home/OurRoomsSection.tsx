@@ -48,6 +48,7 @@ export function OurRoomsSection() {
                   <RoomTypeCard
                     key={roomType.id}
                     roomType={roomType}
+                    price={roomType.price}
                     hasSearched={false}
                     onSelect={() => {}}
                     isSelectionComplete={false}

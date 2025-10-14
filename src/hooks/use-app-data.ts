@@ -561,6 +561,7 @@ export function useAppData() {
       description: updatedData.description ?? existingRoomType.description,
       maxOccupancy: updatedData.maxOccupancy ?? existingRoomType.maxOccupancy,
       bedTypes: updatedData.bedTypes ?? existingRoomType.bedTypes,
+      price: updatedData.price ?? existingRoomType.price,
       photos: updatedData.photos ?? existingRoomType.photos,
       mainPhotoUrl: updatedData.mainPhotoUrl ?? existingRoomType.mainPhotoUrl,
       amenities: updatedData.amenities ?? existingRoomType.amenities,

@@ -57,6 +57,7 @@ export interface RoomType {
   description: string;
   maxOccupancy: number;
   bedTypes: string[];
+  price: number;
   amenities: string[]; // Array of Amenity IDs
   photos: string[];
   mainPhotoUrl?: string;

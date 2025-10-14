@@ -36,6 +36,7 @@ const roomTypeSchema = z.object({
   description: z.string().optional(),
   maxOccupancy: z.coerce.number().min(1, "Max occupancy must be at least 1."),
   bedTypes: z.string().min(1, "Please enter at least one bed type."),
+  price: z.coerce.number().min(0, "Price must be zero or higher."),
   amenities: z.array(z.string()).optional(),
   photos: z.array(z.string()).optional(),
   mainPhotoUrl: z.string().optional(),
@@ -61,6 +62,7 @@ export function RoomTypeFormDialog({
       description: roomType?.description || "",
       maxOccupancy: roomType?.maxOccupancy || 1,
       bedTypes: roomType?.bedTypes.join(", ") || "",
+      price: roomType?.price ?? 0,
       amenities: roomType?.amenities || [],
       photos: roomType?.photos || [],
       mainPhotoUrl: roomType?.mainPhotoUrl || "",
@@ -72,6 +74,7 @@ export function RoomTypeFormDialog({
       ...values,
       description: values.description || "",
       bedTypes: values.bedTypes.split(",").map((s) => s.trim()),
+      price: values.price,
       amenities: values.amenities || [],
       photos: values.photos || [],
       mainPhotoUrl: values.mainPhotoUrl || values.photos?.[0] || "",
@@ -160,6 +163,19 @@ export function RoomTypeFormDialog({
                   <FormLabel>Bed Types</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., 1 King, 1 Sofa Bed" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price (per night)</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={0} step="1" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
