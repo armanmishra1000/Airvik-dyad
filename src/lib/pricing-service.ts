@@ -44,6 +44,36 @@ export function computeTotal(items: NightlyItem[]) {
   return items.reduce((sum, item) => sum + Number(item.nightly_rate || 0), 0);
 }
 
+type StayViolationMessageInput =
+  | { type: "cta"; date: string }
+  | { type: "ctd"; date: string }
+  | { type: "closed"; date: string }
+  | { type: "min_stay"; date: string; requiredNights: number }
+  | { type: "max_stay"; date: string; maxNights: number };
+
+function buildStayViolationMessage(input: StayViolationMessageInput): string {
+  switch (input.type) {
+    case "cta":
+      return `Arrival not allowed on ${input.date} (CTA)`;
+    case "ctd":
+      return `Departure not allowed on ${input.date} (CTD)`;
+    case "closed":
+      return `Stay not allowed on ${input.date} (Closed)`;
+    case "min_stay":
+      return `Minimum stay of ${input.requiredNights} night(s) required for ${input.date} (Min stay)`;
+    case "max_stay":
+      return `Maximum stay of ${input.maxNights} night(s) exceeded on ${input.date} (Max stay)`;
+    default: {
+      const exhaustiveCheck: never = input;
+      throw new Error(
+        `[pricing-service] Unsupported stay violation type: ${JSON.stringify(
+          exhaustiveCheck
+        )}`
+      );
+    }
+  }
+}
+
 export function validateStay(
   items: NightlyItem[],
   checkIn: string,
@@ -68,14 +98,20 @@ export function validateStay(
 
   for (const nightly of sortedItems) {
     if (nightly.closed) {
-      messages.add(`Closed on ${nightly.day}`);
+      messages.add(
+        buildStayViolationMessage({ type: "closed", date: nightly.day })
+      );
     }
     if (
       typeof nightly.min_stay === "number" &&
       nightly.min_stay > stayLength
     ) {
       messages.add(
-        `Minimum stay ${nightly.min_stay} night(s) required for ${nightly.day}`
+        buildStayViolationMessage({
+          type: "min_stay",
+          date: nightly.day,
+          requiredNights: nightly.min_stay,
+        })
       );
     }
     if (
@@ -83,7 +119,11 @@ export function validateStay(
       stayLength > nightly.max_stay
     ) {
       messages.add(
-        `Maximum stay ${nightly.max_stay} night(s) exceeded on ${nightly.day}`
+        buildStayViolationMessage({
+          type: "max_stay",
+          date: nightly.day,
+          maxNights: nightly.max_stay,
+        })
       );
     }
   }
@@ -92,7 +132,9 @@ export function validateStay(
     (item) => parseISO(item.day).getTime() === checkInDate.getTime()
   );
   if (arrivalItem?.cta) {
-    messages.add(`Arrival not allowed on ${arrivalItem.day} (CTA)`);
+    messages.add(
+      buildStayViolationMessage({ type: "cta", date: arrivalItem.day })
+    );
   }
 
   const departureReference = addDays(checkOutDate, -1);
@@ -100,7 +142,9 @@ export function validateStay(
     (item) => parseISO(item.day).getTime() === departureReference.getTime()
   );
   if (departureItem?.ctd) {
-    messages.add(`Departure not allowed on ${formattedCheckout} (CTD)`);
+    messages.add(
+      buildStayViolationMessage({ type: "ctd", date: formattedCheckout })
+    );
   }
 
   return Array.from(messages);
