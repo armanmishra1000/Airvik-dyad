@@ -418,15 +418,27 @@ export const getRoomRatePlans = async () => {
   }
 };
 
-export const upsertRoomRatePlan = async (mapping: {
-  id?: string;
+// Type for creating a new room rate plan mapping
+type CreateRoomRatePlanPayload = {
   room_type_id: string;
   rate_plan_id: string;
   base_price: number;
   is_primary: boolean;
-}) => {
+};
+
+// Type for updating an existing room rate plan mapping
+type UpdateRoomRatePlanPayload = {
+  id: string;
+  base_price: number;
+  is_primary: boolean;
+};
+
+// Discriminated union for upsert operation
+type UpsertRoomRatePlanPayload = CreateRoomRatePlanPayload | UpdateRoomRatePlanPayload;
+
+export const upsertRoomRatePlan = async (mapping: UpsertRoomRatePlanPayload) => {
   try {
-    if (mapping.id) {
+    if ('id' in mapping) {
       // Update existing mapping
       const { data, error } = await supabase
         .from('room_rate_plans')

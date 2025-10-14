@@ -654,7 +654,24 @@ export function useAppData() {
   };
 
   const updateRoomRatePlan = async (id: string, mapping: Partial<Omit<RoomRatePlan, "id" | "created_at" | "updated_at">>) => {
-    const { data, error } = await api.upsertRoomRatePlan({ id, ...mapping } as any);
+    // Get the existing room rate plan to fill in any missing required fields
+    const existingRrp = roomRatePlans.find(rrp => rrp.id === id);
+    if (!existingRrp) {
+      throw new Error(`Room rate plan with id ${id} not found`);
+    }
+
+    // Construct properly typed update payload
+    const updatePayload: {
+      id: string;
+      base_price: number;
+      is_primary: boolean;
+    } = {
+      id,
+      base_price: mapping.base_price ?? existingRrp.base_price,
+      is_primary: mapping.is_primary ?? existingRrp.is_primary,
+    };
+
+    const { data, error } = await api.upsertRoomRatePlan(updatePayload);
     if (error) throw error;
     setRoomRatePlans(prev => prev.map(rrp => rrp.id === id ? data : rrp));
   };
