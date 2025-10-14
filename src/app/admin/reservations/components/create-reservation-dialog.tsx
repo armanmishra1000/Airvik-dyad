@@ -10,7 +10,7 @@ import {
   parseISO,
   areIntervalsOverlapping,
 } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -45,10 +45,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useDataContext } from "@/context/data-context";
+import { priceStay, type PricingResult } from "@/lib/pricing-service";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 const reservationSchema = z.object({
   guestId: z.string({ required_error: "Please select a guest." }),
@@ -74,6 +77,36 @@ export function CreateReservationDialog() {
   });
 
   const selectedDateRange = form.watch("dateRange");
+  const selectedRoomId = form.watch("roomId");
+
+  const resolvedRatePlan = React.useMemo(() => {
+    return (
+      ratePlans.find((rp) => rp.name === "Standard Rate") ?? ratePlans[0] ?? null
+    );
+  }, [ratePlans]);
+
+  type PricingState =
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "error"; error: string }
+    | {
+        status: "success";
+        data: PricingResult;
+        roomTypeId: string;
+        ratePlanId: string;
+      };
+
+  const [pricingState, setPricingState] = React.useState<PricingState>({ status: "idle" });
+
+  const formattedDateRange = React.useMemo(() => {
+    if (!selectedDateRange?.from || !selectedDateRange?.to) {
+      return null;
+    }
+    return {
+      from: format(selectedDateRange.from, "yyyy-MM-dd"),
+      to: format(selectedDateRange.to, "yyyy-MM-dd"),
+    };
+  }, [selectedDateRange]);
 
   const availableRooms = React.useMemo(() => {
     if (!selectedDateRange?.from || !selectedDateRange?.to) {
@@ -98,9 +131,104 @@ export function CreateReservationDialog() {
     form.resetField("roomId");
   }, [selectedDateRange, form]);
 
+  React.useEffect(() => {
+    if (!selectedRoomId || !formattedDateRange) {
+      setPricingState({ status: "idle" });
+      return;
+    }
+
+    const room = rooms.find((r) => r.id === selectedRoomId);
+    if (!room) {
+      setPricingState({ status: "error", error: "Selected room not found." });
+      return;
+    }
+
+    const roomType = roomTypes.find((rt) => rt.id === room.roomTypeId);
+    if (!roomType) {
+      setPricingState({ status: "error", error: "Room type not found for selected room." });
+      return;
+    }
+
+    if (!resolvedRatePlan) {
+      setPricingState({ status: "error", error: "No rate plan available." });
+      return;
+    }
+
+    const { from, to } = formattedDateRange;
+    if (from >= to) {
+      setPricingState({ status: "error", error: "Check-out must be after check-in." });
+      return;
+    }
+
+    let isCancelled = false;
+    setPricingState({ status: "loading" });
+
+    priceStay(roomType.id, resolvedRatePlan.id, from, to)
+      .then((result) => {
+        if (isCancelled) return;
+        setPricingState({
+          status: "success",
+          data: result,
+          roomTypeId: roomType.id,
+          ratePlanId: resolvedRatePlan.id,
+        });
+      })
+      .catch((error) => {
+        if (isCancelled) return;
+        setPricingState({
+          status: "error",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to retrieve nightly pricing.",
+        });
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [formattedDateRange, resolvedRatePlan, rooms, roomTypes, selectedRoomId]);
+
+  const pricingViolations =
+    pricingState.status === "success" ? pricingState.data.violations : [];
+  const pricingTotal =
+    pricingState.status === "success" ? pricingState.data.total : null;
+
   async function onSubmit(values: z.infer<typeof reservationSchema>) {
     const ratePlan =
       ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
+
+    if (!ratePlan) {
+      toast.error("No rate plan available for reservation.");
+      return;
+    }
+
+    if (pricingState.status === "loading") {
+      toast.error("Pricing still being calculated. Please wait.");
+      return;
+    }
+
+    if (pricingState.status === "error") {
+      toast.error("Pricing unavailable", {
+        description: pricingState.error,
+      });
+      return;
+    }
+
+    if (pricingState.status !== "success") {
+      toast.error(
+        "Select a room and valid dates to calculate pricing before saving."
+      );
+      return;
+    }
+
+    if (pricingState.data.violations.length > 0) {
+      toast.error("Stay violates pricing rules", {
+        description: pricingState.data.violations.join("\n"),
+      });
+      return;
+    }
+
     try {
       await addReservation({
         guestId: values.guestId,
@@ -114,6 +242,7 @@ export function CreateReservationDialog() {
         status: "Confirmed",
         bookingDate: formatISO(new Date()),
         source: 'reception',
+        computedTotal: pricingState.data.total,
       });
       toast.success(`Room booked successfully!`);
       form.reset();
@@ -270,8 +399,96 @@ export function CreateReservationDialog() {
                 </FormItem>
               )}
             />
+            <Separator />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Pricing Preview</p>
+                {pricingTotal !== null && (
+                  <span className="text-sm font-semibold">
+                    ${pricingTotal.toFixed(2)}
+                  </span>
+                )}
+              </div>
+              {pricingState.status === "idle" && (
+                <p className="text-sm text-muted-foreground">
+                  Select a room and date range to calculate nightly pricing.
+                </p>
+              )}
+              {pricingState.status === "loading" && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Calculating nightly pricing...
+                </div>
+              )}
+              {pricingState.status === "error" && (
+                <Alert variant="destructive">
+                  <AlertTitle>Pricing unavailable</AlertTitle>
+                  <AlertDescription>{pricingState.error}</AlertDescription>
+                </Alert>
+              )}
+              {pricingState.status === "success" && (
+                <div className="space-y-3">
+                  {pricingViolations.length > 0 && (
+                    <Alert variant="destructive">
+                      <AlertTitle>Stay not allowed</AlertTitle>
+                      <AlertDescription className="space-y-1 text-sm">
+                        {pricingViolations.map((violation) => (
+                          <p key={violation}>{violation}</p>
+                        ))}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  <div className="space-y-2">
+                    {pricingState.data.items.map((night) => (
+                      <div
+                        key={night.day}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/40 bg-card/80 px-3 py-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium">
+                            {format(parseISO(night.day), "MMM d, yyyy")}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ${Number(night.nightly_rate).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1">
+                          {night.closed && (
+                            <Badge variant="destructive">Closed</Badge>
+                          )}
+                          {night.cta && <Badge>CTA</Badge>}
+                          {night.ctd && <Badge>CTD</Badge>}
+                          {typeof night.min_stay === "number" && (
+                            <Badge variant="outline">Min {night.min_stay}</Badge>
+                          )}
+                          {typeof night.max_stay === "number" && (
+                            <Badge variant="outline">Max {night.max_stay}</Badge>
+                          )}
+                          {!night.closed &&
+                            !night.cta &&
+                            !night.ctd &&
+                            typeof night.min_stay !== "number" &&
+                            typeof night.max_stay !== "number" && (
+                              <span className="text-[0.65rem] text-muted-foreground">
+                                No restrictions
+                              </span>
+                            )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <DialogFooter className="border-t border-border/40 pt-4 sm:justify-end">
-              <Button type="submit">Save Reservation</Button>
+              <Button
+                type="submit"
+                disabled={
+                  pricingState.status !== "success" || pricingViolations.length > 0
+                }
+              >
+                Save Reservation
+              </Button>
             </DialogFooter>
           </form>
         </Form>

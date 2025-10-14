@@ -340,6 +340,7 @@ import type {
   DashboardComponentId,
 } from "@/data/types";
 import { differenceInDays } from "date-fns";
+import { priceStay } from "@/lib/pricing-service";
 
 type FolioItemRecord = FolioItem & { reservation_id: string };
 type RoomTypeAmenityRecord = { room_type_id: string; amenity_id: string };
@@ -355,6 +356,7 @@ type CreateReservationPayload = {
   notes?: string;
   bookingDate: string;
   source: Reservation["source"];
+  computedTotal?: number;
 };
 
 type UserProfileUpdate = Partial<Pick<User, "name" | "roleId">>;
@@ -371,6 +373,10 @@ const defaultProperty: Property = {
   timezone: "America/New_York",
   currency: "USD",
 };
+
+const ADVANCED_PRICING_ENABLED =
+  (process.env.NEXT_PUBLIC_FEATURE_ADVANCED_PRICING ?? "").toLowerCase() ===
+  "true";
 
 export function useAppData() {
   const { session } = useSessionContext();
@@ -487,7 +493,7 @@ export function useAppData() {
   };
 
   const addReservation = async (payload: CreateReservationPayload) => {
-    const { roomIds, ...reservationDetails } = payload;
+    const { roomIds, computedTotal, ...reservationDetails } = payload;
     const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     const ratePlan = ratePlans.find(rp => rp.id === reservationDetails.ratePlanId);
@@ -495,7 +501,39 @@ export function useAppData() {
       throw new Error("Rate plan not found for reservation.");
     }
     const nights = differenceInDays(new Date(reservationDetails.checkOutDate), new Date(reservationDetails.checkInDate));
-    const totalAmount = nights * ratePlan.price;
+    let totalAmount: number | null = null;
+
+    if (ADVANCED_PRICING_ENABLED) {
+      if (typeof computedTotal === "number" && Number.isFinite(computedTotal)) {
+        totalAmount = computedTotal;
+      } else {
+        try {
+          const totals = await Promise.all(
+            roomIds.map(async (roomId) => {
+              const room = rooms.find((roomItem) => roomItem.id === roomId);
+              if (!room) {
+                throw new Error(`Room ${roomId} not found while computing pricing.`);
+              }
+              const result = await priceStay(
+                room.roomTypeId,
+                reservationDetails.ratePlanId,
+                reservationDetails.checkInDate,
+                reservationDetails.checkOutDate
+              );
+              return result.total;
+            })
+          );
+          totalAmount = totals.reduce((sum, value) => sum + value, 0);
+        } catch (error) {
+          console.warn("[useAppData] Failed to compute pricing via pricing-service, falling back to flat calculation.", error);
+          totalAmount = null;
+        }
+      }
+    }
+
+    if (totalAmount === null) {
+      totalAmount = nights * ratePlan.price;
+    }
 
     const newReservationsData = roomIds.map((roomId) => ({
       booking_id: bookingId,
