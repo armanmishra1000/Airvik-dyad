@@ -320,7 +320,7 @@
 "use client";
 
 import * as React from "react";
-import { useAuthContext } from "@/context/auth-context";
+import { useSessionContext } from "@/context/session-context";
 import * as api from "@/lib/api";
 import type {
   Reservation,
@@ -373,7 +373,8 @@ const defaultProperty: Property = {
 };
 
 export function useAppData() {
-  const { authUser } = useAuthContext();
+  const { session } = useSessionContext();
+  const authUser = session?.user ?? null;
   const [isLoading, setIsLoading] = React.useState(true);
   const [property, setProperty] = React.useState<Property>(defaultProperty);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);

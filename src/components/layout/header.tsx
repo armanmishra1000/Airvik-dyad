@@ -25,12 +25,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Permission } from "@/data/types";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", requiredPermission: "read:reservation" },
-  { href: "/reservations", label: "Reservations", requiredPermission: "read:reservation" },
-  { href: "/calendar", label: "Calendar", requiredPermission: "read:reservation" },
-  { href: "/housekeeping", label: "Housekeeping", requiredPermission: "read:room" },
-  { href: "/guests", label: "Guests", requiredPermission: "read:guest" },
-  { href: "/reports", label: "Reports", requiredPermission: "read:report" },
+  { href: "/admin", label: "Dashboard", requiredPermission: "read:reservation" },
+  { href: "/admin/reservations", label: "Reservations", requiredPermission: "read:reservation" },
+  { href: "/admin/calendar", label: "Calendar", requiredPermission: "read:reservation" },
+  { href: "/admin/housekeeping", label: "Housekeeping", requiredPermission: "read:room" },
+  { href: "/admin/guests", label: "Guests", requiredPermission: "read:guest" },
+  { href: "/admin/reports", label: "Reports", requiredPermission: "read:report" },
 ] satisfies Array<{ href: string; label: string; requiredPermission: Permission }>;
 
 export function Header() {
@@ -45,7 +45,7 @@ export function Header() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/admin/login");
   };
 
   return (

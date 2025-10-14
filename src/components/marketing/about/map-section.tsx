@@ -17,9 +17,10 @@ export function MapSection() {
           <p className="text-sm font-semibold uppercase tracking-widest text-primary">
             Visit Us in Rishikesh
           </p>
-          <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-            Find Us in Rishikesh SahajAnand Wellness
-          </h1>
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+            <span className="block">Find Us in Rishikesh</span>
+            <span className="block">SahajAnand Wellness</span>
+          </h2>
         </motion.div>
         <motion.div
           className="overflow-hidden rounded-2xl shadow-xl"

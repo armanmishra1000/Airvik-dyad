@@ -73,12 +73,12 @@ export function AboutActivitiesSection() {
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <span className="text-sm font-semibold uppercase tracking-widest text-primary">
-              What's On
+              What&apos;s On
             </span>
             <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
               Daily Activities & Rituals
             </h2>
-            <p className="text-base text-muted-foreground md:text-lg max-w-4xl mx-auto">
+            <p className="text-base text-muted-foreground md:text-lg max-w-3xl mx-auto">
               Discover simple daily practices and sacred rituals, from mindful gatherings to compassionate service, that nourish body, mind, and community.
             </p>
           </motion.div>

@@ -63,34 +63,35 @@ export function GallerySection() {
   };
 
   return (
-    <section className="bg-background py-20 sm:py-28">
+    <section className="bg-background py-10 sm:py-12">
       <div className="container mx-auto px-4">
         <motion.div
-          className="text-center mb-16"
+          className="text-center space-y-4"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground leading-tight mb-4">
-            Glimpses of Serenity
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            A visual journey through the sacred spaces and moments at Sahajanand
-            Wellness.
-          </p>
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center">
             <Image
               src="/om.png"
               alt="Sahajanand Wellness"
               width={40}
               height={40}
-              className="mt-6 object-contain"
-            ></Image>
+              quality={100}
+              className="w-10 h-10 object-contain"
+            />
           </div>
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+            Glimpses of Serenity
+          </h2>
+          <p className="text-base text-muted-foreground md:text-lg max-w-3xl mx-auto">
+            A visual journey through the sacred spaces and moments at Sahajanand
+            Wellness.
+          </p>
         </motion.div>
         <motion.div
-          className="grid grid-cols-2 md:grid-cols-4 auto-rows-[250px] gap-4 max-w-7xl mx-auto"
+          className="grid grid-cols-2 md:grid-cols-4 auto-rows-[250px] gap-4 mt-12"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
