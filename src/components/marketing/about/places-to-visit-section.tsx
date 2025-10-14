@@ -67,7 +67,7 @@ export function PlacesToVisitSection() {
           <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
             Places to Visit
           </h2>
-          <p className="text-base text-muted-foreground md:text-lg max-w-4xl mx-auto">
+          <p className="text-base text-muted-foreground md:text-lg max-w-xl mx-auto">
             Discover the spiritual and natural attractions that make Rishikesh a world-renowned destination.
           </p>
         </motion.div>

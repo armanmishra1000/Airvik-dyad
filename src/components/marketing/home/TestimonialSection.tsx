@@ -71,16 +71,16 @@ export function TestimonialSection() {
     <section className="bg-background py-10 sm:py-12">
       <div className="container mx-auto px-4">
         <motion.div
-          className="text-center mb-16"
+          className="text-center mb-6 lg:mb-12 space-y-4"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold  text-foreground leading-tight mb-4">
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
             Stories of Stillness
           </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-base text-muted-foreground md:text-lg max-w-3xl mx-auto">
             Heartfelt reflections from those who have experienced the serenity
             of our ashram.
           </p>

@@ -125,8 +125,9 @@ export function WelcomeSection() {
                   </span>
                 </div>
                 
-                <h2 className="text-4xl md:text-5xl font-bold font-serif text-foreground">
-                  A Sacred Space for the Welfare of All
+                <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+                  <span className="block sm:inline lg:block">A Sacred Space for</span>
+                  <span className="sm:inline lg:block"> the Welfare of All</span>
                 </h2>
 
                 <p className="text-base text-muted-foreground md:text-lg">
@@ -161,32 +162,32 @@ export function WelcomeSection() {
       <section className="bg-gradient-to-b from-background to-secondary/60 py-10 sm:py-12">
         <div className="container mx-auto px-4">
           <motion.div
-            className="text-center mb-16"
+            className="text-center space-y-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
-            <div className="flex justify-center mb-2">
+            <div className="flex justify-center">
               <Image
                 src="/swaminarayan-logo-1.png"
                 alt="Sahajanand Wellness"
                 width={40}
                 height={40}
                 quality={100}
-                className="w-10 h-10 mt-10 object-contain"
+                className="w-10 h-10 object-contain"
               />
             </div>
-            <h3 className="text-4xl md:text-5xl font-bold font-serif text-foreground mb-2">
+            <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
               Our Sacred Activities
-            </h3>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            </h2>
+            <p className="text-base text-muted-foreground md:text-lg max-w-xl mx-auto">
               At the heart of our ashram are activities dedicated to service,
               learning, and spiritual growth.
             </p>
           </motion.div>
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"

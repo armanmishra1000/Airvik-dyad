@@ -39,7 +39,8 @@ export function RishikeshHeroSection() {
             </p>
 
             <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
-              The Spiritual Gateway to the Himalayas
+              <span className="block sm:inline lg:block">The Spiritual Gateway</span>
+              <span className="sm:inline lg:block"> to the Himalayas</span>
             </h1>
 
             <p className="text-base text-muted-foreground md:text-lg">

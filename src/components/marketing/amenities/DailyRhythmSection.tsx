@@ -160,25 +160,25 @@ export function DailyRhythmSection() {
                     <div className="relative flex z-10 flex-col items-center self-stretch">
                       {index === 0 && (
                         <>
-                          <span className="absolute left-1/2 -top-5 h-5 w-px -translate-x-1/2 bg-primary/30" />
+                          <span className="absolute left-1/2 -top-5 h-5 w-px -translate-x-1/2 bg-primary/80" />
                         </>
                       )}
                       {sectionTitle && (
                         <div className="absolute left-5 -top-1 -translate-y-1/2 flex pb-8 items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-primary/50" />
-                          <span className="h-px w-6 bg-primary/50" />
+                          <span className="h-2 w-2 rounded-full bg-primary/80" />
+                          <span className="h-px w-6 bg-primary/80" />
                           <span className="inline-flex whitespace-nowrap items-center rounded-full border border-primary/40 bg-card/70 px-3 py-1 text-xs font-semibold  tracking-wide text-primary">
                             {sectionTitle}
                           </span>
                         </div>
                       )}
-                      <div className="flex items-center justify-center size-12 flex-shrink-0 text-xs rounded-full border border-primary/50 bg-primary/10 text-primary font-semibold">
+                      <div className="flex items-center justify-center size-12 flex-shrink-0 text-xs rounded-full border border-primary/80 bg-primary/10 text-primary font-semibold">
                         {time}
                       </div>
                       {!isLastItem && (
                         <>
-                          <span className="flex-1 w-px border border-primary/30" />
-                          <span className="h-6 w-px border border-primary/30" />
+                          <span className="flex-1 w-px border border-primary/80" />
+                          <span className="h-6 w-px border border-primary/80" />
                         </>
                       )}
                     </div>
@@ -223,11 +223,11 @@ export function DailyRhythmSection() {
                         className="relative flex gap-4"
                       >
                         <div className="relative flex flex-col items-center">
-                          <div className="flex items-center justify-center lg:size-14 size-12 flex-shrink-0 lg:text-sm text-xs rounded-full border border-primary/40 bg-primary/10 text-primary font-semibold">
+                          <div className="flex items-center justify-center lg:size-14 size-12 flex-shrink-0 lg:text-sm text-xs rounded-full border border-primary/80 bg-primary/10 text-primary font-semibold">
                             {time}
                           </div>
                           {index < items.length - 1 && (
-                            <div className="h-full w-px border border-primary/30" />
+                            <div className="h-full w-px border border-primary/80" />
                           )}
                         </div>
                         <div className="flex-1 rounded-2xl border lg:mb-8 mb-5 border-border/50 bg-card/70 backdrop-blur-sm sm:p-6 p-4 shadow-lg shadow-primary/5 space-y-3">

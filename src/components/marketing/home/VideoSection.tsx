@@ -121,34 +121,34 @@ function VideoCard({ video }: { video: VideoItem }) {
  */
 export function VideoSection() {
   return (
-    <section className="to-secondary/20 py-10 sm:py-12">
+    <section className="py-10 sm:py-12">
       <div className="container mx-auto px-4">
         <motion.div
-          className="mb-16 text-center"
+          className="text-center space-y-4"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
         >
-          <div className="mb-4 flex items-center justify-center">
-            <h3 className="mr-4 text-4xl font-bold text-foreground md:text-5xl">
-              Visual Journey
-            </h3>
+          <div className="flex justify-center">
             <Image
               src="/swami-img-removebg-preview.png"
               alt="Meditation symbol"
               width={40}
               height={40}
-              className="object-contain"
+              quality={100}
+              className="w-10 h-10 object-contain"
             />
           </div>
-          <p className="mx-auto max-w-3xl text-lg text-muted-foreground">
-            Immerse yourself in the sights and sounds of Sahajanand Wellness,
-            from the tranquil banks of the Ganga to the vibrant evening Aarti.
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+            Visual Journey
+          </h2>
+          <p className="text-base text-muted-foreground md:text-lg max-w-3xl mx-auto">
+            Experience the calm of the Ganga and the devotion of the evening Aarti.
           </p>
         </motion.div>
         <motion.div
-          className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12"
+          className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12 mt-12"
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
