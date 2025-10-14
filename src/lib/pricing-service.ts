@@ -127,13 +127,30 @@ async function buildFallbackItems(
     .single();
 
   if (error) {
-    console.warn(
-      "[pricing-service] Failed to fetch rate plan price for fallback.",
-      error
+    throw new Error(
+      `[pricing-service] Failed to fetch rate plan price for fallback (roomType: ${roomTypeId}, ratePlan: ${ratePlanId}). Supabase error: ${error.message}${
+        error.details ? ` | details: ${error.details}` : ""
+      }`
     );
   }
 
-  const nightlyRate = Number(data?.price ?? 0);
+  const price = data?.price;
+  if (price === null || typeof price === "undefined") {
+    throw new Error(
+      `[pricing-service] Missing rate plan price for fallback (roomType: ${roomTypeId}, ratePlan: ${ratePlanId}). Payload: ${JSON.stringify(
+        data
+      )}`
+    );
+  }
+
+  const nightlyRate = Number(price);
+  if (Number.isNaN(nightlyRate)) {
+    throw new Error(
+      `[pricing-service] Non-numeric rate plan price for fallback (roomType: ${roomTypeId}, ratePlan: ${ratePlanId}). Received: ${String(
+        price
+      )}`
+    );
+  }
   const days = eachDayOfInterval({
     start: checkInDate,
     end: addDays(checkOutDate, -1),
@@ -241,19 +258,16 @@ export async function priceStay(
     return { items, total, violations };
   } catch (err) {
     console.warn(
-      "[pricing-service] Unexpected error while pricing stay, using fallback.",
+      "[pricing-service] Unexpected error while pricing stay.",
       err
     );
-    const fallbackItems = await buildFallbackItems(
-      roomTypeId,
-      ratePlanId,
-      from,
-      to
+    if (err instanceof Error) {
+      throw err;
+    }
+    throw new Error(
+      `[pricing-service] Unexpected non-error thrown while pricing stay for roomType ${roomTypeId} and ratePlan ${ratePlanId}: ${String(
+        err
+      )}`
     );
-    return {
-      items: fallbackItems,
-      total: computeTotal(fallbackItems),
-      violations: [],
-    };
   }
 }
