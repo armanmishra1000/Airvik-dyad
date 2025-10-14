@@ -141,8 +141,8 @@ export function SeasonOverrideDialog({
       const seasonData = {
         rate_plan_id: ratePlan.id,
         room_type_id: values.room_type_id,
-        start_date: values.date_range.from.toISOString().split('T')[0],
-        end_date: values.date_range.to.toISOString().split('T')[0],
+        start_date: format(values.date_range.from, 'yyyy-MM-dd'),
+        end_date: format(values.date_range.to, 'yyyy-MM-dd'),
         price_override: values.price_override ? Number(values.price_override) : undefined,
         min_stay: values.min_stay ? Number(values.min_stay) : undefined,
         max_stay: values.max_stay ? Number(values.max_stay) : undefined,
@@ -169,7 +169,7 @@ export function SeasonOverrideDialog({
 
       // Handle closed dates
       const newClosedDates = values.closed_dates || [];
-      const newClosedDateStrings = newClosedDates.map(d => d.toISOString().split('T')[0]);
+      const newClosedDateStrings = newClosedDates.map(d => format(d, 'yyyy-MM-dd'));
       const existingClosedDateStrings = existingClosedDates.map(cd => cd.closed_date);
 
       // Delete removed dates
