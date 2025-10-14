@@ -26,13 +26,20 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserProfile } from "@/lib/api";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
 
-export function LoginForm() {
+type LoginFormProps = {
+  redirectTo?: string;
+  forgotPasswordHref?: string;
+  allowedRoleNames?: string[];
+};
+
+export function LoginForm({ redirectTo = "/dashboard", forgotPasswordHref = "/forgot-password", allowedRoleNames }: LoginFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
 
@@ -46,7 +53,7 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
     });
@@ -56,10 +63,30 @@ export function LoginForm() {
         description: error.message,
       });
     } else {
-      toast.success("Login successful!", {
-        description: "Redirecting you to the dashboard...",
-      });
-      router.push("/dashboard");
+      let roleName: string | null = null;
+      const user = data.user ?? (await supabase.auth.getUser()).data.user;
+      const metaRole = (user?.user_metadata as any)?.role_name;
+      roleName = typeof metaRole === "string" ? metaRole : null;
+      if (!roleName && user?.id) {
+        try {
+          const { data: profile } = await getUserProfile(user.id);
+          roleName = (profile?.roles as any)?.name ?? null;
+        } catch {
+          // ignore
+        }
+      }
+
+      if (allowedRoleNames && roleName && !allowedRoleNames.includes(roleName)) {
+        await supabase.auth.signOut();
+        toast.error("You cannot sign in here.", {
+          description: "Use the appropriate portal for your role.",
+        });
+      } else {
+        toast.success("Login successful!", {
+          description: "Redirecting...",
+        });
+        router.push(redirectTo);
+      }
     }
     setIsLoading(false);
   }
@@ -113,7 +140,7 @@ export function LoginForm() {
                     </FormControl>
                     <div className="mt-2 text-right">
                       <Link
-                        href="/forgot-password"
+                        href={forgotPasswordHref}
                         className="text-sm font-medium text-primary underline underline-offset-4"
                       >
                         Forgot password?

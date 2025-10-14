@@ -3,7 +3,7 @@ import { Inter, Source_Serif_4, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/context/auth-context";
+import { SessionProvider } from "@/context/session-context";
 import { DataProvider } from "@/context/data-context";
 import { StickyBookingButton } from "@/components/sticky-booking-button";
 
@@ -43,13 +43,13 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <AuthProvider>
+          <SessionProvider>
             <DataProvider>
               {children}
               <StickyBookingButton />
               <Toaster />
             </DataProvider>
-          </AuthProvider>
+          </SessionProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -43,17 +43,7 @@ export function StickyBookingButton() {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const isAdminRoute = React.useMemo(() => {
-    return pathname?.startsWith("/dashboard") || 
-           pathname?.startsWith("/calendar") ||
-           pathname?.startsWith("/guests") ||
-           pathname?.startsWith("/rooms") ||
-           pathname?.startsWith("/room-types") ||
-           pathname?.startsWith("/room-categories") ||
-           pathname?.startsWith("/rates") ||
-           pathname?.startsWith("/housekeeping") ||
-           pathname?.startsWith("/reports") ||
-           pathname?.startsWith("/reservations") ||
-           pathname?.startsWith("/settings");
+    return pathname?.startsWith("/admin");
   }, [pathname]);
 
   const rooms = React.useMemo(() => {
