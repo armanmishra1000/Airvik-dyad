@@ -47,7 +47,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-4 lg:gap-12 mb-5">
           {/* Column 1: Logo and Subtitle */}
           <div>
-            <Link href="/" className="mb-4 inline-block">
+            <Link href="/" className="mb-4 inline-block focus-visible:outline-none">
               <Image
                 src="/logo.png"
                 alt="SahajAnand Wellness Logo"
@@ -71,14 +71,14 @@ export function Footer() {
             <div className="space-y-3 text-muted-foreground">
               <a
                 href="mailto:ashram@swaminarayan.yoga"
-                className="flex min-w-0 items-start gap-3 hover:text-primary transition-colors"
+                className="flex min-w-0 items-start gap-3 hover:text-primary transition-colors focus-visible:outline-none"
               >
                 <Mail className="h-5 w-5 text-primary flex-shrink-0" />
                 <span className="w-full break-all">ashram@swaminarayan.yoga</span>
               </a>
               <a
                 href="tel:+918511151708"
-                className="flex min-w-0 items-start gap-3 hover:text-primary transition-colors"
+                className="flex min-w-0 items-start gap-3 hover:text-primary transition-colors focus-visible:outline-none"
               >
                 <Phone className="h-5 w-5 text-primary flex-shrink-0" />
                 <span className="w-full break-all">+91 8511151708</span>
@@ -103,7 +103,7 @@ export function Footer() {
                 <li key={link.label}>
                   <Link
                     href={link.href}
-                    className="text-muted-foreground hover:text-primary transition-colors"
+                    className="text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none"
                   >
                     {link.label}
                   </Link>
@@ -146,7 +146,7 @@ export function Footer() {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none"
               >
                 <link.icon className="h-5 w-5" />
               </a>

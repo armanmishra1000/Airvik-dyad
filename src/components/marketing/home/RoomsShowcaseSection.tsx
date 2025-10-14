@@ -155,16 +155,18 @@ export function RoomsShowcaseSection() {
     .filter((room): room is NonNullable<typeof room> => Boolean(room));
 
   return (
-    <section className="bg-background py-20">
+    <section className="bg-background py-10 sm:py-12">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl sm:text-5xl font-bold font-serif text-center text-foreground">
-          Your Sacred Stay
-        </h2>
-        <p className="mt-4 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+        <div className="space-y-4 text-center">
+          <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
+            Your Sacred Stay
+          </h2>
+          <p className="text-base text-muted-foreground md:text-lg max-w-3xl mx-auto">
           Sanctified spaces for every devotee’s stay.
-        </p>
+          </p>
+        </div>
 
-        <div className="relative mt-12 lg:hidden">
+        <div className="relative lg:hidden">
           <Carousel opts={{ align: "start", loop: true }} className="w-full">
             <CarouselContent className="-ml-4">
               {featuredRoomTypes.map((room) => (

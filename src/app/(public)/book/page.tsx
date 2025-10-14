@@ -71,10 +71,10 @@ export default function RoomsPage() {
       <section className="relative py-12 md:py-16 bg-gradient-to-b from-primary/5 via-muted/20 to-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight font-serif mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <h1 className="2xl:text-5xl md:text-4xl text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               Find Your Perfect Stay
             </h1>
-            <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
+            <p className="text-base text-muted-foreground md:text-lg max-w-lg lg:max-w-4xl mx-auto">
               Discover peace and tranquility at Sahajanand Ashram. Search for your ideal accommodation.
             </p>
           </div>
