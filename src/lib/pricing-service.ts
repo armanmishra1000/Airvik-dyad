@@ -28,6 +28,14 @@ export interface PricingResult {
   violations: string[];
 }
 
+/**
+ * Fetches pricing matrix rows for the specified room type IDs and date range using the `get_pricing_matrix` RPC.
+ *
+ * @param roomTypeIds - Array of room type IDs to include in the query
+ * @param from - Start date (inclusive) in YYYY-MM-DD format
+ * @param to - End date (exclusive) in YYYY-MM-DD format
+ * @returns The RPC response containing pricing matrix rows for the specified room types and date range
+ */
 export async function getPricingMatrix(
   roomTypeIds: string[],
   from: string,
@@ -40,10 +48,26 @@ export async function getPricingMatrix(
   });
 }
 
+/**
+ * Calculate the total nightly rate for a collection of nightly items.
+ *
+ * Missing or falsy `nightly_rate` values are treated as 0 when summing.
+ *
+ * @param items - Array of nightly pricing items to sum
+ * @returns The total sum of `nightly_rate` across `items`
+ */
 export function computeTotal(items: NightlyItem[]) {
   return items.reduce((sum, item) => sum + Number(item.nightly_rate || 0), 0);
 }
 
+/**
+ * Validates a proposed stay against nightly constraints and availability.
+ *
+ * @param items - Nightly pricing items covering the stay period
+ * @param checkIn - Check-in date as an ISO date string (e.g., "2025-10-14")
+ * @param checkOut - Check-out date as an ISO date string (e.g., "2025-10-15")
+ * @returns An array of violation messages produced by validation; empty if no violations
+ */
 export function validateStay(
   items: NightlyItem[],
   checkIn: string,
@@ -105,6 +129,13 @@ export function validateStay(
   return Array.from(messages);
 }
 
+/**
+ * Constructs fallback nightly items for each night in the given interval using the rate plan's price.
+ *
+ * @param from - Check-in date as an ISO 8601 string (inclusive)
+ * @param to - Check-out date as an ISO 8601 string (exclusive)
+ * @returns An array of `NightlyItem` objects, one per night between `from` (inclusive) and `to` (exclusive). Each item uses the fetched rate plan price (or `0` if unavailable) and has `min_stay`, `max_stay`, `cta`, and `ctd` set to `null`, and `closed` set to `false`. Returns an empty array if `to` is not after `from`.
+ */
 async function buildFallbackItems(
   roomTypeId: string,
   ratePlanId: string,
@@ -151,6 +182,17 @@ async function buildFallbackItems(
   }));
 }
 
+/**
+ * Produces nightly pricing, total cost, and any stay constraint violations for a room and rate plan over a date range.
+ *
+ * Builds a list of nightly items for each night between `from` (inclusive) and `to` (exclusive), calculates the summed total nightly rate, and returns any validation messages that apply to the requested stay.
+ *
+ * @param roomTypeId - Identifier of the room type to price
+ * @param ratePlanId - Identifier of the rate plan to price
+ * @param from - Check-in date as an ISO 8601 date string (inclusive)
+ * @param to - Check-out date as an ISO 8601 date string (exclusive)
+ * @returns A PricingResult containing `items` (nightly entries for the stay), `total` (sum of nightly_rate across items), and `violations` (validation messages). If `to` is not after `from`, `items` will be empty, `total` will be 0, and `violations` will include an error about the check-out date.
+ */
 export async function priceStay(
   roomTypeId: string,
   ratePlanId: string,
