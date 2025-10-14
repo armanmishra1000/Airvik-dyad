@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Loader2, Trash2, X } from "lucide-react";
-import { differenceInDays, format, parseISO } from "date-fns";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,7 +48,8 @@ export function BookingSummary({
   const checkOutDate = dateRange?.to ?? null;
   const shouldHideSummary = selection.length === 0 || !checkInDate || !checkOutDate;
 
-  const nights = checkInDate && checkOutDate ? differenceInDays(checkOutDate, checkInDate) : 0;
+  const nights =
+    checkInDate && checkOutDate ? differenceInCalendarDays(checkOutDate, checkInDate) : 0;
   const checkIn = React.useMemo(
     () => (checkInDate ? format(checkInDate, "yyyy-MM-dd") : null),
     [checkInDate]
@@ -239,8 +240,9 @@ export function BookingSummary({
     () =>
       selection.reduce((sum, roomType) => {
         const result = pricingByRoomType[roomType.id];
-        if (result?.data?.total) {
-          return sum + result.data.total;
+        const total = result?.data?.total;
+        if (typeof total === "number") {
+          return sum + total;
         }
         return sum;
       }, 0),
