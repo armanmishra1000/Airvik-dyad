@@ -13,6 +13,7 @@ import type {
   FolioItem,
   ReservationStatus,
 } from "@/data/types";
+import type { PricingMatrixRow } from "@/data/pricing";
 
 type DbGuest = {
   id: string;
@@ -368,6 +369,19 @@ export const getRatePlans = () => supabase.from('rate_plans').select('*');
 export const addRatePlan = (ratePlanData: Omit<RatePlan, "id">) => supabase.from('rate_plans').insert([ratePlanData]).select().single();
 export const updateRatePlan = (id: string, updatedData: Partial<RatePlan>) => supabase.from('rate_plans').update(updatedData).eq('id', id).select().single();
 export const deleteRatePlan = (id: string) => supabase.from('rate_plans').delete().eq('id', id);
+export const getPricingMatrix = (
+  roomTypeIds: string[],
+  from: string,
+  to: string
+) =>
+  supabase.rpc<PricingMatrixRow[]>(
+    'get_pricing_matrix',
+    {
+      p_room_type_ids: roomTypeIds,
+      p_start: from,
+      p_end: to,
+    }
+  );
 
 // Roles
 export const getRoles = () => supabase.from('roles').select('*');
