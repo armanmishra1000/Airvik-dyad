@@ -37,7 +37,7 @@ export function RatePlansDataTable<TData extends RatePlan, TValue>({
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
-  const { deleteRatePlan } = useDataContext()
+  const { deleteRatePlan, roomRatePlans, ratePlanSeasons, roomTypes } = useDataContext()
   const { hasPermission } = useAuthContext()
 
   const handleDeleteConfirm = async () => {
@@ -69,6 +69,9 @@ export function RatePlansDataTable<TData extends RatePlan, TValue>({
         setItemToDelete(item)
       },
       hasPermission,
+      roomRatePlans,
+      ratePlanSeasons,
+      roomTypes,
     },
   })
 

@@ -89,6 +89,31 @@ export interface RatePlan {
   };
 }
 
+export interface RoomRatePlan {
+  id: string;
+  room_type_id: string;
+  rate_plan_id: string;
+  base_price: number;
+  is_primary: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface RatePlanSeason {
+  id: string;
+  rate_plan_id: string;
+  room_type_id: string;
+  start_date: string;
+  end_date: string;
+  price_override?: number;
+  min_stay?: number;
+  max_stay?: number;
+  closed_to_arrival?: boolean;
+  closed_to_departure?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Guest {
   id: string;
   firstName: string;

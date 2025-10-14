@@ -332,6 +332,8 @@ import type {
   RoomType,
   RoomCategory,
   RatePlan,
+  RoomRatePlan,
+  RatePlanSeason,
   Property,
   User,
   Role,
@@ -383,6 +385,8 @@ export function useAppData() {
   const [roomTypes, setRoomTypes] = React.useState<RoomType[]>([]);
   const [roomCategories, setRoomCategories] = React.useState<RoomCategory[]>([]);
   const [ratePlans, setRatePlans] = React.useState<RatePlan[]>([]);
+  const [roomRatePlans, setRoomRatePlans] = React.useState<RoomRatePlan[]>([]);
+  const [ratePlanSeasons, setRatePlanSeasons] = React.useState<RatePlanSeason[]>([]);
   const [users, setUsers] = React.useState<User[]>([]);
   const [roles, setRoles] = React.useState<Role[]>([]);
   const [amenities, setAmenities] = React.useState<Amenity[]>([]);
@@ -396,7 +400,7 @@ export function useAppData() {
       const [
         propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
         rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes, housekeepingAssignmentsRes,
-        roomTypeAmenitiesRes
+        roomTypeAmenitiesRes, roomRatePlansRes, ratePlanSeasonsRes
       ] = await Promise.all([
         api.getProperty(),
         api.getReservations(),
@@ -411,7 +415,9 @@ export function useAppData() {
         api.getFolioItems(),
         authUser ? api.getUsers() : Promise.resolve({ data: [] }),
         authUser ? api.getHousekeepingAssignments() : Promise.resolve({ data: [] }),
-        api.getRoomTypeAmenities()
+        api.getRoomTypeAmenities(),
+        api.getRoomRatePlans(),
+        api.getRatePlanSeasons()
       ]);
 
       if (propertyRes.data) setProperty(propertyRes.data);
@@ -446,6 +452,8 @@ export function useAppData() {
       });
       setRoomTypes(roomTypesData);
       setRoomCategories(roomCategoriesRes.data || []);
+      setRoomRatePlans(roomRatePlansRes.data || []);
+      setRatePlanSeasons(ratePlanSeasonsRes.data || []);
 
     } catch (error) {
       console.error("Failed to load app data:", error);
@@ -738,7 +746,7 @@ export function useAppData() {
 
   return {
     isLoading,
-    property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
+    property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, roomRatePlans, ratePlanSeasons, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
     updateProperty, addGuest, deleteGuest, addReservation, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,

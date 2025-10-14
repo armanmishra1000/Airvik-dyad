@@ -405,3 +405,31 @@ export const deleteStickyNote = (id: string) => supabase.from('sticky_notes').de
 
 // Housekeeping
 export const getHousekeepingAssignments = () => supabase.from('housekeeping_assignments').select('*');
+
+// Room Rate Plans (Milestone 2 - Pricing Management)
+export const getRoomRatePlans = async () => {
+  try {
+    const { data, error } = await supabase.from('room_rate_plans').select('*');
+    return { data: data || [], error };
+  } catch (error) {
+    // Table might not exist yet (Milestone 1 pending)
+    console.warn('room_rate_plans table not available:', error);
+    return { data: [], error: null };
+  }
+};
+
+// Rate Plan Seasons (Milestone 2 - Pricing Management)
+export const getRatePlanSeasons = async (ratePlanId?: string) => {
+  try {
+    let query = supabase.from('rate_plan_seasons').select('*');
+    if (ratePlanId) {
+      query = query.eq('rate_plan_id', ratePlanId);
+    }
+    const { data, error } = await query;
+    return { data: data || [], error };
+  } catch (error) {
+    // Table might not exist yet (Milestone 1 pending)
+    console.warn('rate_plan_seasons table not available:', error);
+    return { data: [], error: null };
+  }
+};

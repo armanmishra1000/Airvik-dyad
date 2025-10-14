@@ -1,5 +1,5 @@
 import { RowData } from '@tanstack/react-table'
-import { Permission } from '@/data/types'
+import { Permission, RoomRatePlan, RatePlanSeason, RoomType } from '@/data/types'
 
 // This declaration merges with the original TanStack Table definition
 // to add our custom meta properties. By making them optional, we can
@@ -11,5 +11,8 @@ declare module '@tanstack/react-table' {
       openCancelDialog?: (reservation: TData) => void
       openDeleteDialog?: (item: TData) => void
       hasPermission?: (permission: Permission) => boolean
+      roomRatePlans?: RoomRatePlan[]
+      ratePlanSeasons?: RatePlanSeason[]
+      roomTypes?: RoomType[]
     }
 }

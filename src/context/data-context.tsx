@@ -86,6 +86,8 @@ import type {
   RoomType,
   RoomCategory,
   RatePlan,
+  RoomRatePlan,
+  RatePlanSeason,
   Property,
   User,
   Role,
@@ -109,6 +111,8 @@ interface DataContextType {
   roomTypes: RoomType[];
   roomCategories: RoomCategory[];
   ratePlans: RatePlan[];
+  roomRatePlans: RoomRatePlan[];
+  ratePlanSeasons: RatePlanSeason[];
   users: User[];
   roles: Role[];
   amenities: Amenity[];
