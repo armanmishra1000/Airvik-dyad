@@ -13,17 +13,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AssignRatePlanDialog } from "./components/assign-rate-plan-dialog";
 import { toast } from "sonner";
+import type { RatePlan } from "@/data/types";
 
 export default function RatesPage() {
   const { ratePlans } = useDataContext();
   const { hasPermission } = useAuthContext();
-  const [showAssignDialog, setShowAssignDialog] = React.useState(false);
+  const [selectedRatePlan, setSelectedRatePlan] = React.useState<RatePlan | null>(null);
   const [showOverrideDialog, setShowOverrideDialog] = React.useState(false);
 
-  const handleAssignToRooms = () => {
-    setShowAssignDialog(true);
-    toast.info("Assignment feature coming in Epic B");
+  const handleAssignToRooms = (ratePlan?: RatePlan) => {
+    if (ratePlans.length === 0) {
+      toast.error("Please create a rate plan first");
+      return;
+    }
+    // Use provided rate plan or default to first one
+    setSelectedRatePlan(ratePlan || ratePlans[0]);
   };
 
   const handleAddOverride = () => {
@@ -43,7 +49,7 @@ export default function RatesPage() {
         <div className="flex items-center gap-3">
           {hasPermission("update:rate_plan") && (
             <>
-              <Button variant="outline" onClick={handleAssignToRooms}>
+              <Button variant="outline" onClick={() => handleAssignToRooms()}>
                 Assign to Rooms
               </Button>
               <Button variant="outline" onClick={handleAddOverride}>
@@ -53,22 +59,22 @@ export default function RatesPage() {
           )}
         </div>
       </div>
-      <RatePlansDataTable columns={columns} data={ratePlans} />
+      <RatePlansDataTable 
+        columns={columns} 
+        data={ratePlans}
+        onOpenAssignDialog={handleAssignToRooms}
+      />
 
-      {/* Placeholder dialogs for Epic B & C */}
-      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Assign Rate Plan to Rooms</DialogTitle>
-            <DialogDescription>
-              This feature will be available in Epic B. You&apos;ll be able to map
-              rate plans to specific room types and set base prices for each
-              assignment.
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+      {/* Assignment Dialog (Epic B) */}
+      {selectedRatePlan && (
+        <AssignRatePlanDialog
+          ratePlan={selectedRatePlan}
+          open={!!selectedRatePlan}
+          onOpenChange={(open) => !open && setSelectedRatePlan(null)}
+        />
+      )}
 
+      {/* Placeholder dialog for Epic C */}
       <Dialog open={showOverrideDialog} onOpenChange={setShowOverrideDialog}>
         <DialogContent>
           <DialogHeader>

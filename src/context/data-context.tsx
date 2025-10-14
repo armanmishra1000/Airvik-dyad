@@ -164,6 +164,9 @@ interface DataContextType {
     updatedData: Partial<Omit<RatePlan, "id">>
   ) => void;
   deleteRatePlan: (ratePlanId: string) => Promise<boolean>;
+  addRoomRatePlan: (mapping: Omit<RoomRatePlan, "id" | "created_at" | "updated_at">) => Promise<void>;
+  updateRoomRatePlan: (id: string, mapping: Partial<Omit<RoomRatePlan, "id" | "created_at" | "updated_at">>) => Promise<void>;
+  deleteRoomRatePlan: (id: string) => Promise<boolean>;
   addRole: (role: Omit<Role, "id">) => void;
   updateRole: (roleId: string, updatedData: Partial<Omit<Role, "id">>) => void;
   deleteRole: (roleId: string) => Promise<boolean>;

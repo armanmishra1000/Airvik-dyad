@@ -60,7 +60,19 @@ export const columns: ColumnDef<RatePlan>[] = [
         ? `${primaryRoomType.name} (primary)${count > 1 ? ` +${count - 1}` : ""}`
         : `${count} room${count > 1 ? "s" : ""}`
       
-      return <Badge variant="secondary">{text}</Badge>
+      const handleClick = () => {
+        table.options.meta?.openAssignDialog?.(ratePlan)
+      }
+      
+      return (
+        <Badge 
+          variant="secondary" 
+          className="cursor-pointer hover:bg-secondary/80"
+          onClick={handleClick}
+        >
+          {text}
+        </Badge>
+      )
     },
   },
   {

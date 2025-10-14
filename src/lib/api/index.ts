@@ -418,6 +418,59 @@ export const getRoomRatePlans = async () => {
   }
 };
 
+export const upsertRoomRatePlan = async (mapping: {
+  id?: string;
+  room_type_id: string;
+  rate_plan_id: string;
+  base_price: number;
+  is_primary: boolean;
+}) => {
+  try {
+    if (mapping.id) {
+      // Update existing mapping
+      const { data, error } = await supabase
+        .from('room_rate_plans')
+        .update({
+          base_price: mapping.base_price,
+          is_primary: mapping.is_primary,
+        })
+        .eq('id', mapping.id)
+        .select()
+        .single();
+      return { data, error };
+    } else {
+      // Insert new mapping
+      const { data, error } = await supabase
+        .from('room_rate_plans')
+        .insert([{
+          room_type_id: mapping.room_type_id,
+          rate_plan_id: mapping.rate_plan_id,
+          base_price: mapping.base_price,
+          is_primary: mapping.is_primary,
+        }])
+        .select()
+        .single();
+      return { data, error };
+    }
+  } catch (error) {
+    console.warn('room_rate_plans table operation failed:', error);
+    return { data: null, error };
+  }
+};
+
+export const deleteRoomRatePlan = async (id: string) => {
+  try {
+    const { error } = await supabase
+      .from('room_rate_plans')
+      .delete()
+      .eq('id', id);
+    return { error };
+  } catch (error) {
+    console.warn('room_rate_plans delete failed:', error);
+    return { error };
+  }
+};
+
 // Rate Plan Seasons (Milestone 2 - Pricing Management)
 export const getRatePlanSeasons = async (ratePlanId?: string) => {
   try {

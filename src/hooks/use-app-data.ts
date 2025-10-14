@@ -647,6 +647,25 @@ export function useAppData() {
     return true;
   };
 
+  const addRoomRatePlan = async (mapping: Omit<RoomRatePlan, "id" | "created_at" | "updated_at">) => {
+    const { data, error } = await api.upsertRoomRatePlan(mapping);
+    if (error) throw error;
+    setRoomRatePlans(prev => [...prev, data]);
+  };
+
+  const updateRoomRatePlan = async (id: string, mapping: Partial<Omit<RoomRatePlan, "id" | "created_at" | "updated_at">>) => {
+    const { data, error } = await api.upsertRoomRatePlan({ id, ...mapping } as any);
+    if (error) throw error;
+    setRoomRatePlans(prev => prev.map(rrp => rrp.id === id ? data : rrp));
+  };
+
+  const deleteRoomRatePlan = async (id: string) => {
+    const { error } = await api.deleteRoomRatePlan(id);
+    if (error) { console.error(error); return false; }
+    setRoomRatePlans(prev => prev.filter(rrp => rrp.id !== id));
+    return true;
+  };
+
   const addRole = async (roleData: Omit<Role, "id">) => {
     const { data, error } = await api.addRole(roleData);
     if (error) throw error;
@@ -749,7 +768,7 @@ export function useAppData() {
     property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, roomRatePlans, ratePlanSeasons, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
     updateProperty, addGuest, deleteGuest, addReservation, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
-    deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
+    deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRoomRatePlan, updateRoomRatePlan, deleteRoomRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout: setDashboardLayout,
   };
 }

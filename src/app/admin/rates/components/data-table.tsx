@@ -31,9 +31,11 @@ import type { RatePlan } from "@/data/types"
 export function RatePlansDataTable<TData extends RatePlan, TValue>({
   columns,
   data,
+  onOpenAssignDialog,
 }: {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  onOpenAssignDialog?: (ratePlan: TData) => void
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
@@ -68,6 +70,7 @@ export function RatePlansDataTable<TData extends RatePlan, TValue>({
       openDeleteDialog: (item: TData) => {
         setItemToDelete(item)
       },
+      openAssignDialog: onOpenAssignDialog,
       hasPermission,
       roomRatePlans,
       ratePlanSeasons,
