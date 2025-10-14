@@ -131,7 +131,11 @@ CREATE INDEX rate_plan_closed_dates_room_type_id_closed_on_idx
 DO $$
 DECLARE
   has_room_type_price BOOLEAN;
-  price_expression TEXT;
+  has_rate_plan_price BOOLEAN;
+  base_price_expression TEXT;
+  room_type_price_expr TEXT := 'NULL::numeric(10,2)';
+  rate_plan_price_expr TEXT := 'NULL::numeric(10,2)';
+  rate_plan_select_suffix TEXT := ', NULL::numeric(10,2) AS price';
 BEGIN
   SELECT EXISTS (
     SELECT 1
@@ -143,10 +147,24 @@ BEGIN
   INTO has_room_type_price;
 
   IF has_room_type_price THEN
-    price_expression := 'COALESCE(rt.price, rp.price, 0)';
-  ELSE
-    price_expression := 'COALESCE(rp.price, 0)';
+    room_type_price_expr := 'rt.price::numeric(10,2)';
   END IF;
+
+  SELECT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'rate_plans'
+      AND column_name = 'price'
+  )
+  INTO has_rate_plan_price;
+
+  IF has_rate_plan_price THEN
+    rate_plan_price_expr := 'rp.price::numeric(10,2)';
+    rate_plan_select_suffix := ', price';
+  END IF;
+
+  base_price_expression := format('COALESCE(%s, %s, 0)', room_type_price_expr, rate_plan_price_expr);
 
   EXECUTE format(
     $f$
@@ -154,10 +172,10 @@ BEGIN
     SELECT rt.id,
            rp.id,
            true,
-           %s
+           %1$s
     FROM public.room_types AS rt
     CROSS JOIN LATERAL (
-      SELECT id, price
+      SELECT id%2$s
       FROM public.rate_plans
       ORDER BY created_at, id
       LIMIT 1
@@ -168,7 +186,8 @@ BEGIN
       WHERE existing.room_type_id = rt.id
     );
     $f$,
-    price_expression
+    base_price_expression,
+    rate_plan_select_suffix
   );
 
   -- Normalize primary flags so the earliest assignment per room type is marked primary.
