@@ -64,6 +64,7 @@ export function validateStay(
     0,
     differenceInCalendarDays(checkOutDate, checkInDate)
   );
+  const formattedCheckout = format(checkOutDate, "yyyy-MM-dd");
 
   for (const nightly of sortedItems) {
     if (nightly.closed) {
@@ -99,7 +100,7 @@ export function validateStay(
     (item) => parseISO(item.day).getTime() === departureReference.getTime()
   );
   if (departureItem?.ctd) {
-    messages.add(`Departure not allowed on ${departureItem.day} (CTD)`);
+    messages.add(`Departure not allowed on ${formattedCheckout} (CTD)`);
   }
 
   return Array.from(messages);
@@ -227,8 +228,8 @@ export async function priceStay(
           typeof row.max_stay === "number" && !Number.isNaN(row.max_stay)
             ? row.max_stay
             : null,
-        cta: typeof row.cta === "boolean" ? row.cta : row.cta ?? null,
-        ctd: typeof row.ctd === "boolean" ? row.ctd : row.ctd ?? null,
+        cta: typeof row.cta === "boolean" ? row.cta : null,
+        ctd: typeof row.ctd === "boolean" ? row.ctd : null,
       }))
       .sort((a: NightlyItem, b: NightlyItem) =>
         compareAsc(parseISO(a.day), parseISO(b.day))
