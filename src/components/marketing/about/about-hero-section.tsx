@@ -69,7 +69,7 @@ export function AboutHeroSection() {
           >
             <div className="relative rounded-xl overflow-hidden">
               <Image
-                src="/rishikesh-ahsram.png"
+                src="/rishikesh-ahsram.jpeg"
                 alt="Sahajanand Wellness Ashram"
                 width={600}
                 height={400}
