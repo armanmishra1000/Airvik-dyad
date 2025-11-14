@@ -374,7 +374,7 @@ const defaultProperty: Property = {
 
 export function useAppData() {
   const { session } = useSessionContext();
-  const authUser = session?.user ?? null;
+  const userId = session?.user?.id ?? null;
   const [isLoading, setIsLoading] = React.useState(true);
   const [property, setProperty] = React.useState<Property>(defaultProperty);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
@@ -400,17 +400,17 @@ export function useAppData() {
       ] = await Promise.all([
         api.getProperty(),
         api.getReservations(),
-        authUser ? api.getGuests() : Promise.resolve({ data: [] }),
+        userId ? api.getGuests() : Promise.resolve({ data: [] }),
         api.getRooms(),
         api.getRoomTypes(),
         api.getRoomCategories(),
         api.getRatePlans(),
-        authUser ? api.getRoles() : Promise.resolve({ data: [] }),
+        userId ? api.getRoles() : Promise.resolve({ data: [] }),
         api.getAmenities(),
-        authUser ? api.getStickyNotes(authUser.id) : Promise.resolve({ data: [] }),
+        userId ? api.getStickyNotes(userId) : Promise.resolve({ data: [] }),
         api.getFolioItems(),
-        authUser ? api.getUsers() : Promise.resolve({ data: [] }),
-        authUser ? api.getHousekeepingAssignments() : Promise.resolve({ data: [] }),
+        userId ? api.getUsers() : Promise.resolve({ data: [] }),
+        userId ? api.getHousekeepingAssignments() : Promise.resolve({ data: [] }),
         api.getRoomTypeAmenities()
       ]);
 
@@ -452,7 +452,7 @@ export function useAppData() {
     } finally {
       setIsLoading(false);
     }
-  }, [authUser]);
+  }, [userId]);
 
   React.useEffect(() => {
     fetchData();
@@ -676,11 +676,11 @@ export function useAppData() {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, name: data.name, roleId: data.role_id } : u));
   };
 
-  const deleteUser = async (userId: string) => {
-    if (authUser?.id === userId) return false;
-    const { error } = await api.deleteAuthUser(userId);
+  const deleteUser = async (userIdToDelete: string) => {
+    if (userId === userIdToDelete) return false;
+    const { error } = await api.deleteAuthUser(userIdToDelete);
     if (error) { console.error(error); return false; }
-    setUsers(prev => prev.filter(u => u.id !== userId));
+    setUsers(prev => prev.filter(u => u.id !== userIdToDelete));
     return true;
   };
 
@@ -710,7 +710,8 @@ export function useAppData() {
   };
 
   const addStickyNote = async (noteData: Omit<StickyNote, "id" | "createdAt">) => {
-    const { data, error } = await api.addStickyNote({ ...noteData, user_id: authUser!.id });
+    if (!userId) throw new Error("User must be authenticated to add sticky notes");
+    const { data, error } = await api.addStickyNote({ ...noteData, user_id: userId });
     if (error) throw error;
     setStickyNotes(prev => [...prev, data]);
   };
