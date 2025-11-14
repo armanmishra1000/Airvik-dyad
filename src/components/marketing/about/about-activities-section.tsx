@@ -13,7 +13,7 @@ const activities = [
   {
     title: "Yoga & Meditation",
     description: "Daily sessions to harmonize mind, body, and soul.",
-    imageUrl: "/yoga-meditation.png",
+    imageUrl: "/sunil-bhagat-yoga.jpeg",
   },
   {
     title: "Veda-Pathshala",
@@ -28,7 +28,7 @@ const activities = [
   {
     title: "Ganga Aarti",
     description: "Experience the divine evening worship on our private ghat.",
-    imageUrl: "/ganga-arti.jpg",
+    imageUrl: "/ganga-aarti.jpeg",
   },
   {
     title: "Havan",

@@ -19,9 +19,9 @@ const amenities: LocalAmenity[] = [
 ];
 
 const meals = [
-  { time: "7–8 AM", label: "Breakfast" },
-  { time: "12–1 PM", label: "Lunch" },
-  { time: "7–8 PM", label: "Dinner" },
+  { time: "7:00–9:00 AM", label: "Breakfast" },
+  { time: "12:30–2:00 PM", label: "Lunch" },
+  { time: "7:00–9:00 PM", label: "Dinner" },
 ];
 
 export function EssentialAmenitiesGrid() {
@@ -90,14 +90,15 @@ export function EssentialAmenitiesGrid() {
             <div>
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-lg font-semibold text-foreground sm:text-2xl">
-                  Satvik Bhojan
+                  Satvik Bhojan Free with Rooms
                 </h3>
                 <span className="rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
                   Free
                 </span>
               </div>
               <p className="mt-3 text-sm text-muted-foreground sm:text-base">
-                Nourishing vegetarian meals prepared with sattvic ingredients served fresh daily.
+                Nourishing vegetarian meals prepared with sattvic ingredients
+                served fresh daily.
               </p>
             </div>
             <div className="mt-6 grid gap-3 sm:mt-8">

@@ -105,7 +105,7 @@ export function WelcomeSection() {
               className="order-2 lg:order-1"
             >
               <Image
-                src="/gangadhat.png"
+                src="/rishikesh-ahsram.jpeg"
                 alt="Sahajanand Wellness Ashram in Rishikesh"
                 width={700}
                 height={500}

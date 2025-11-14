@@ -38,7 +38,7 @@ export function AboutStorySection() {
               <figure className="flex flex-col space-y-4">
                 <div className="relative rounded-xl overflow-hidden">
                   <Image
-                    src="/sunil-bhagat-ji.jpg"
+                    src="/sunil-bhagat.jpeg"
                     alt="Sunil Bhagat (Swamiji), spiritual guide of Sahajanand Wellness"
                     width={600}
                     height={400}

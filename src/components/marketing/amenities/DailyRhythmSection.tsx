@@ -1,16 +1,13 @@
 "use client";
 
 import { motion, type Variants } from "framer-motion";
-import {
-  Flame,
-  Soup,
-  UtensilsCrossed,
-} from "lucide-react";
+import { Flame, Soup, UtensilsCrossed } from "lucide-react";
 import type { ComponentType } from "react";
 import { GrYoga } from "react-icons/gr";
 import { TbCandle } from "react-icons/tb";
 import { BiBowlRice } from "react-icons/bi";
-
+import { GiPartyPopper } from "react-icons/gi";
+import { FiClock } from "react-icons/fi";
 
 type RhythmItem = {
   time: string;
@@ -42,6 +39,13 @@ const dailyRhythm: RhythmItem[] = [
     icon: Flame,
   },
   {
+    time: "10:00",
+    title: "Free Time",
+    description:
+      "Relax, reflect, and enjoy peaceful moments to refresh your mind and body.",
+    icon: FiClock,
+  },
+  {
     time: "12:00",
     title: "Lunch",
     description:
@@ -57,6 +61,13 @@ const dailyRhythm: RhythmItem[] = [
   },
   {
     time: "19:00",
+    title: "Raas Garba",
+    description:
+      "Joyful Raas Garba with rhythmic claps and devotional energy by the Ganga.",
+    icon: GiPartyPopper,
+  },
+  {
+    time: "20:00",
     title: "Dinner",
     description:
       "Enjoy a peaceful soulful dinner with soft chants and gentle lights at the ashram.",
@@ -64,8 +75,8 @@ const dailyRhythm: RhythmItem[] = [
   },
 ];
 
-const MORNING_TIMES = new Set(["06:00", "07:00", "08:00"]);
-const AFTERNOON_TIMES = new Set(["12:00", "18:00", "19:00"]);
+const MORNING_TIMES = new Set(["06:00", "07:00", "08:00" , "10:00"]);
+const AFTERNOON_TIMES = new Set(["12:00", "18:00", "19:00", "20:00"]);
 
 const rhythmGroups: { title: string; items: RhythmItem[] }[] = [
   {

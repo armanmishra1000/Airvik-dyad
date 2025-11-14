@@ -14,7 +14,7 @@ const galleryImages = [
     alt: "Exterior view of a temple at Sahajanand Wellness.",
   },
   {
-    src: "/rishikesh-ahsram.png",
+    src: "/rishikesh-ahsram.jpeg",
     alt: "Front view of the Sahajanand Wellness ashram building.",
   },
   {
