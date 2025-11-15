@@ -136,7 +136,21 @@ function BookingReviewContent() {
     },
   });
 
-
+  // Calculate nightly rate with proper fallbacks
+  const nightlyRate = React.useMemo(() => {
+    // Priority 1: Use rate plan price
+    if (ratePlan?.price && ratePlan.price > 0) {
+      return ratePlan.price;
+    }
+    
+    // Priority 2: Use room type price (from first selected room)
+    if (selectedRoomTypes.length > 0 && selectedRoomTypes[0]?.price > 0) {
+      return selectedRoomTypes[0].price;
+    }
+    
+    // Priority 3: Default fallback (matches single room page default)
+    return 3000;
+  }, [ratePlan, selectedRoomTypes]);
 
   // Validate query parameters and date range
   const { hasValidParams, hasValidDates, fromDate, toDate, nights } = React.useMemo(() => {
@@ -232,7 +246,9 @@ function BookingReviewContent() {
   }
 
   // At this point, fromDate, toDate, and nights are guaranteed to be valid
-  const totalCost = selectedRoomTypes.length * nights * (ratePlan?.price || 0);
+  const totalCost = selectedRoomTypes.length * nights * nightlyRate;
+  const taxesAndFees = totalCost * 0.18; // 18% taxes (matches single room page)
+  const grandTotal = totalCost + taxesAndFees;
   const firstRoomType = selectedRoomTypes[0];
 
   // Helper function to format card number with spaces
@@ -430,27 +446,25 @@ function BookingReviewContent() {
             <CardHeader>
               <CardTitle className="text-xl">Your total</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-sm">
-                <p className="font-semibold mb-2">Price details</p>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    {nights} night{nights > 1 ? "s" : ""} x $
-                    {ratePlan?.price.toFixed(2)}
-                  </span>
-                  <span className="font-medium">
-                    ${(nights * (ratePlan?.price || 0)).toFixed(2)}
-                  </span>
+            <CardContent>
+              <div className="space-y-3 p-4 bg-orange-50 rounded-xl">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">₹{nightlyRate.toLocaleString('en-IN')} × {nights} night{nights > 1 ? 's' : ''}</span>
+                  <span className="font-medium text-gray-900">₹{totalCost.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between mt-1">
-                  <span className="text-muted-foreground">Free</span>
-                  <span className="font-medium">$0</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Taxes & fees</span>
+                  <span className="font-medium text-gray-900">₹{Math.round(taxesAndFees).toLocaleString('en-IN')}</span>
                 </div>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-bold text-lg">
-                <span>Total (INR)</span>
-                <span>${totalCost.toFixed(2)}</span>
+                <div className="border-t border-gray-200 pt-3 mt-3">
+                  <div className="flex justify-between items-start">
+                    <span className="font-semibold text-gray-900">Total</span>
+                    <div className="text-right">
+                      <span className="text-2xl font-bold text-primary">₹{Math.round(grandTotal).toLocaleString('en-IN')}</span>
+                      <p className="text-xs text-gray-500">Inclusive of all taxes</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -713,9 +727,9 @@ function BookingReviewContent() {
                         Processing...
                       </>
                     ) : paymentMethod === "card" ? (
-                      `Confirm & Pay ₹${totalCost.toLocaleString()}`
+                      `Confirm & Pay ₹${Math.round(grandTotal).toLocaleString('en-IN')}`
                     ) : (
-                      `Confirm Booking - Pay ₹${totalCost.toLocaleString()} at Property`
+                      `Confirm Booking - Pay ₹${Math.round(grandTotal).toLocaleString('en-IN')} at Property`
                     )}
                   </Button>
                   

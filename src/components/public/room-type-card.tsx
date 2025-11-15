@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Users } from "lucide-react";
+import { format } from "date-fns";
 import {
   Card,
   CardDescription,
@@ -20,6 +21,7 @@ import {
 import type { RoomType } from "@/data/types";
 import { Icon } from "@/components/shared/icon";
 import { useDataContext } from "@/context/data-context";
+import type { BookingSearchFormValues } from "./booking-widget";
 
 interface RoomTypeCardProps {
   roomType: RoomType;
@@ -27,6 +29,7 @@ interface RoomTypeCardProps {
   onSelect: (roomType: RoomType) => void;
   isSelectionComplete: boolean;
   hasSearched: boolean;
+  searchValues?: BookingSearchFormValues | null;
 }
 
 export function RoomTypeCard({
@@ -35,9 +38,26 @@ export function RoomTypeCard({
   onSelect,
   isSelectionComplete,
   hasSearched,
+  searchValues,
 }: RoomTypeCardProps) {
-  const detailsLink = `/book/rooms/${roomType.id}`;
   const { amenities: allAmenities } = useDataContext();
+
+  const detailsLink = React.useMemo(() => {
+    const baseUrl = `/book/rooms/${roomType.id}`;
+    
+    if (hasSearched && searchValues?.dateRange?.from && searchValues?.dateRange?.to) {
+      const params = new URLSearchParams({
+        from: format(searchValues.dateRange.from, "yyyy-MM-dd"),
+        to: format(searchValues.dateRange.to, "yyyy-MM-dd"),
+        guests: searchValues.guests.toString(),
+        children: searchValues.children.toString(),
+        rooms: searchValues.rooms.toString(),
+      });
+      return `${baseUrl}?${params.toString()}`;
+    }
+    
+    return baseUrl;
+  }, [roomType.id, hasSearched, searchValues]);
 
   const resolvedAmenities = (roomType.amenities || [])
     .map((id) => allAmenities.find((a) => a.id === id))
@@ -153,7 +173,7 @@ export function RoomTypeCard({
 
         </div>
         <CardFooter className="flex-col items-stretch gap-1 px-4 pb-4 pt-0 bg-white">
-          {!hasSearched && resolvedAmenities.length > 0 && (
+          {resolvedAmenities.length > 0 && (
             <TooltipProvider delayDuration={0}>
               <div className="flex gap-4 justify-between">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -182,7 +202,7 @@ export function RoomTypeCard({
               </div>
             </TooltipProvider>
           )}
-          {(hasSearched || resolvedAmenities.length === 0) && (
+          {resolvedAmenities.length === 0 && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
               <span>Up to {roomType.maxOccupancy} guests</span>
