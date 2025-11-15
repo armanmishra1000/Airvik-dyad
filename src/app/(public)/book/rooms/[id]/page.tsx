@@ -203,6 +203,22 @@ export default function RoomDetailsPage() {
     return [{ before: new Date() }, ...fullyBookedDates];
   }, [roomType, reservations, rooms]);
 
+  // Calculate nightly rate with consistent pricing (matches book page)
+  const nightlyRate = React.useMemo(() => {
+    // Priority 1: Use room type price (matches book page display)
+    if (roomType?.price && roomType.price > 0) {
+      return roomType.price;
+    }
+    
+    // Priority 2: Use rate plan price
+    if (standardRatePlan?.price && standardRatePlan.price > 0) {
+      return standardRatePlan.price;
+    }
+    
+    // Priority 3: Default fallback
+    return 3000;
+  }, [roomType, standardRatePlan]);
+
   // Show loading skeleton while data is loading
   if (isLoading) {
     return <RoomDetailsSkeleton />;
@@ -241,22 +257,6 @@ export default function RoomDetailsPage() {
   const nightCount = dateRange?.from && dateRange?.to 
     ? differenceInDays(dateRange.to, dateRange.from)
     : 2;
-  
-  // Calculate nightly rate with consistent pricing (matches book page)
-  const nightlyRate = React.useMemo(() => {
-    // Priority 1: Use room type price (matches book page display)
-    if (roomType?.price && roomType.price > 0) {
-      return roomType.price;
-    }
-    
-    // Priority 2: Use rate plan price
-    if (standardRatePlan?.price && standardRatePlan.price > 0) {
-      return standardRatePlan.price;
-    }
-    
-    // Priority 3: Default fallback
-    return 3000;
-  }, [roomType, standardRatePlan]);
   
   const totalPrice = nightlyRate * nightCount;
   const taxesAndFees = totalPrice * 0.18; // 18% taxes
