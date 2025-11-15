@@ -44,6 +44,7 @@ interface BookingWidgetProps {
 
 export function BookingWidget({ onSearch }: BookingWidgetProps) {
   const [isMobile, setIsMobile] = React.useState(false);
+  const [datePopoverOpen, setDatePopoverOpen] = React.useState(false);
   
   React.useEffect(() => {
     const checkMobile = () => {
@@ -82,11 +83,14 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
               render={({ field }) => {
                 const handleDateSelect = (range: DateRange | undefined) => {
                   field.onChange(range);
+                  if (range?.from && range?.to) {
+                    setDatePopoverOpen(false);
+                  }
                 };
                 
                 return (
                 <FormItem>
-                  <Popover>
+                  <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button

@@ -295,6 +295,7 @@ export function RoomDetailsClientPage({
                       </FormItem>
                     )}
                   />
+                  {/* dates widget */}
                   <FormField
                     control={form.control}
                     name="dateRange"

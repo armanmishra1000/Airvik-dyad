@@ -182,6 +182,7 @@ export default function RoomsPage() {
                         onSelect={handleSelectRoom}
                         isSelectionComplete={isSelectionComplete}
                         hasSearched={hasSearched}
+                        searchValues={searchValues}
                       />
                     ))}
                   </div>
