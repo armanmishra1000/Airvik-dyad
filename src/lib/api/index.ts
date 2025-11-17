@@ -108,6 +108,20 @@ type DbReservationInsert = ReservationUpdatePayload & {
   source: Reservation["source"];
 };
 
+type CreateReservationsArgs = {
+  p_booking_id: string;
+  p_guest_id: string;
+  p_room_ids: string[];
+  p_rate_plan_id: string;
+  p_check_in_date: string;
+  p_check_out_date: string;
+  p_number_of_guests: number;
+  p_status: ReservationStatus;
+  p_notes?: string | null;
+  p_booking_date?: string | null;
+  p_source?: Reservation["source"] | null;
+};
+
 type RoomTypeAmenityRow = {
   amenity_id: string;
   room_type_id: string;
@@ -308,6 +322,19 @@ export const addReservation = async (reservationsData: DbReservationInsert[]) =>
   if (error || !data) return { data, error, ...rest };
   const typedData = data as DbReservation[];
   return { data: typedData.map(fromDbReservation), error, ...rest };
+};
+
+export const createReservationsWithTotal = async (
+  args: CreateReservationsArgs
+): Promise<{ data: Reservation[]; error: PostgrestError | null }> => {
+  const { data, error } = await supabase.rpc('create_reservations_with_total', args);
+
+  if (error || !data) {
+    return { data: [], error: error ?? null };
+  }
+
+  const typedData = data as DbReservation[];
+  return { data: typedData.map(fromDbReservation), error: null };
 };
 export const updateReservation = async (id: string, updatedData: Partial<Reservation>) => {
     const { data, error, ...rest } = await supabase.from('reservations').update(toDbReservation(updatedData)).eq('id', id).select().single();
