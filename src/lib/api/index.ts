@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { PostgrestError } from "@supabase/supabase-js";
 import type {
   Property,
   Guest,
@@ -25,6 +26,13 @@ type DbGuest = {
 type GuestUpdatePayload = Partial<
   Pick<DbGuest, "first_name" | "last_name" | "email" | "phone">
 >;
+
+type GetOrCreateGuestArgs = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+};
 
 type DbRoom = {
   id: string;
@@ -253,6 +261,26 @@ export const getGuests = async () => {
     const { data, error, ...rest } = await supabase.from('guests').select('*');
     if (error || !data) return { data, error, ...rest };
     return { data: data.map(fromDbGuest), error, ...rest };
+};
+export const getOrCreateGuestByEmail = async (
+  args: GetOrCreateGuestArgs
+): Promise<{ data: Guest | null; error: PostgrestError | null }> => {
+  const { data, error } = await supabase.rpc('get_or_create_guest', {
+    p_first_name: args.firstName,
+    p_last_name: args.lastName,
+    p_email: args.email,
+    p_phone: args.phone,
+  });
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  if (!data) {
+    return { data: null, error: null };
+  }
+
+  return { data: fromDbGuest(data as DbGuest), error: null };
 };
 export const addGuest = async (guestData: Omit<Guest, "id">) => {
     const { data, error, ...rest } = await supabase.from('guests').insert([toDbGuest(guestData)]).select().single();
