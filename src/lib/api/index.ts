@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { PostgrestError } from "@supabase/supabase-js";
 import type {
   Property,
   Guest,
@@ -25,6 +26,13 @@ type DbGuest = {
 type GuestUpdatePayload = Partial<
   Pick<DbGuest, "first_name" | "last_name" | "email" | "phone">
 >;
+
+type GetOrCreateGuestArgs = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+};
 
 type DbRoom = {
   id: string;
@@ -100,6 +108,20 @@ type DbReservationInsert = ReservationUpdatePayload & {
   source: Reservation["source"];
 };
 
+type CreateReservationsArgs = {
+  p_booking_id: string;           // text - keep as string
+  p_guest_id: string;             // uuid - validate UUID format
+  p_room_ids: string[];           // uuid[] - validate UUID format
+  p_rate_plan_id: string;         // uuid - validate UUID format
+  p_check_in_date: string;        // date - convert to YYYY-MM-DD
+  p_check_out_date: string;       // date - convert to YYYY-MM-DD
+  p_number_of_guests: number;
+  p_status: ReservationStatus;
+  p_notes?: string | null;
+  p_booking_date?: string | null; // timestamptz - convert to ISO 8601
+  p_source?: Reservation["source"] | null;
+};
+
 type RoomTypeAmenityRow = {
   amenity_id: string;
   room_type_id: string;
@@ -126,6 +148,32 @@ type UpdateUserProfilePayload = Partial<{
   name: string;
   roleId: string;
 }>;
+
+// --- Validation Helpers ---
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const validateUUID = (value: string, fieldName: string): void => {
+  if (!UUID_REGEX.test(value)) {
+    throw new Error(`Invalid UUID format for ${fieldName}: ${value}`);
+  }
+};
+
+const formatDateForPostgres = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid date: ${dateStr}`);
+  }
+  return date.toISOString().split('T')[0]; // YYYY-MM-DD
+};
+
+const formatTimestampForPostgres = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid timestamp: ${dateStr}`);
+  }
+  return date.toISOString(); // Full ISO 8601 with timezone
+};
 
 // --- Data Transformation Helpers ---
 
@@ -254,6 +302,31 @@ export const getGuests = async () => {
     if (error || !data) return { data, error, ...rest };
     return { data: data.map(fromDbGuest), error, ...rest };
 };
+export const getGuestById = async (id: string) => {
+    const { data, error, ...rest } = await supabase.from('guests').select('*').eq('id', id).single();
+    if (error || !data) return { data: null, error, ...rest };
+    return { data: fromDbGuest(data), error, ...rest };
+};
+export const getOrCreateGuestByEmail = async (
+  args: GetOrCreateGuestArgs
+): Promise<{ data: Guest | null; error: PostgrestError | null }> => {
+  const { data, error } = await supabase.rpc('get_or_create_guest', {
+    p_first_name: args.firstName,
+    p_last_name: args.lastName,
+    p_email: args.email,
+    p_phone: args.phone,
+  });
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  if (!data) {
+    return { data: null, error: null };
+  }
+
+  return { data: fromDbGuest(data as DbGuest), error: null };
+};
 export const addGuest = async (guestData: Omit<Guest, "id">) => {
     const { data, error, ...rest } = await supabase.from('guests').insert([toDbGuest(guestData)]).select().single();
     if (error || !data) return { data, error, ...rest };
@@ -280,6 +353,35 @@ export const addReservation = async (reservationsData: DbReservationInsert[]) =>
   if (error || !data) return { data, error, ...rest };
   const typedData = data as DbReservation[];
   return { data: typedData.map(fromDbReservation), error, ...rest };
+};
+
+export const createReservationsWithTotal = async (
+  args: CreateReservationsArgs
+): Promise<{ data: Reservation[]; error: PostgrestError | null }> => {
+  // Validate UUIDs
+  validateUUID(args.p_guest_id, 'p_guest_id');
+  validateUUID(args.p_rate_plan_id, 'p_rate_plan_id');
+  args.p_room_ids.forEach((id, idx) => validateUUID(id, `p_room_ids[${idx}]`));
+
+  // Format dates and timestamps
+  const validatedArgs = {
+    ...args,
+    p_check_in_date: formatDateForPostgres(args.p_check_in_date),
+    p_check_out_date: formatDateForPostgres(args.p_check_out_date),
+    p_booking_date: args.p_booking_date 
+      ? formatTimestampForPostgres(args.p_booking_date)
+      : null,
+    p_source: args.p_source ?? 'website',
+  };
+
+  const { data, error } = await supabase.rpc('create_reservations_with_total', validatedArgs);
+
+  if (error || !data) {
+    return { data: [], error: error ?? null };
+  }
+
+  const typedData = data as DbReservation[];
+  return { data: typedData.map(fromDbReservation), error: null };
 };
 export const updateReservation = async (id: string, updatedData: Partial<Reservation>) => {
     const { data, error, ...rest } = await supabase.from('reservations').update(toDbReservation(updatedData)).eq('id', id).select().single();

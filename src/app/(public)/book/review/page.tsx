@@ -16,6 +16,7 @@ import Image from "next/image";
 import { ThumbsUp, Loader2 } from "lucide-react";
 
 import { useDataContext } from "@/context/data-context";
+import { getOrCreateGuestByEmail } from "@/lib/api";
 import { BookingReviewSkeleton } from "@/components/public/booking-review-skeleton";
 import { InlineAlert } from "@/components/public/inline-alert";
 import { PaymentTrustBadges } from "@/components/public/payment-trust-badges";
@@ -77,6 +78,37 @@ const paymentSchema = z.object({
   }
 );
 
+const DEFAULT_BOOKING_ERROR_MESSAGE =
+  "An unexpected error occurred. Please try again or contact support.";
+
+const toErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message || DEFAULT_BOOKING_ERROR_MESSAGE;
+  }
+
+  if (typeof error === "object" && error !== null) {
+    const normalized = error as Record<string, unknown>;
+    const candidateKeys: Array<keyof typeof normalized> = [
+      "message",
+      "details",
+      "hint",
+    ];
+
+    for (const key of candidateKeys) {
+      const value = normalized[key];
+      if (typeof value === "string" && value.trim().length > 0) {
+        return value;
+      }
+    }
+  }
+
+  if (typeof error === "string" && error.trim().length > 0) {
+    return error;
+  }
+
+  return DEFAULT_BOOKING_ERROR_MESSAGE;
+};
+
 function BookingReviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -85,7 +117,6 @@ function BookingReviewContent() {
     roomTypes,
     rooms,
     reservations,
-    addGuest,
     addReservation,
     ratePlans,
     isLoading,
@@ -311,15 +342,19 @@ function BookingReviewContent() {
         return;
       }
 
-      const newGuest = await addGuest({
+      const { data: guest, error: guestError } = await getOrCreateGuestByEmail({
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
         phone: values.phone,
       });
 
+      if (guestError || !guest) {
+        throw guestError ?? new Error("Could not get or create guest record.");
+      }
+
       const newReservations = await addReservation({
-        guestId: newGuest.id,
+        guestId: guest.id,
         roomIds: assignedRoomIds,
         ratePlanId: ratePlan.id,
         checkInDate: bookingDetails.from!,
@@ -334,10 +369,7 @@ function BookingReviewContent() {
       // Redirect to the confirmation page of the first reservation in the group
       router.push(`/book/confirmation/${newReservations[0].id}`);
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "An unexpected error occurred. Please try again or contact support.";
+      const errorMessage = toErrorMessage(error);
       
       console.error("Booking failed:", error);
       
