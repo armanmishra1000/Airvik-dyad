@@ -17,9 +17,10 @@ security definer
 set search_path = public
 as $$
 declare
-  v_nights int;
-  v_rate   numeric(10, 2);
-  v_total  numeric(10, 2);
+  v_nights   int;
+  v_rate     numeric(10, 2);
+  v_fallback numeric(10, 2);
+  v_total    numeric(10, 2);
 begin
   if array_length(p_room_ids, 1) is null then
     raise exception 'room_ids array cannot be empty' using errcode = '22023';
@@ -27,9 +28,23 @@ begin
 
   v_nights := greatest(p_check_out_date - p_check_in_date, 1);
 
+  -- Priority 1: Rate plan price
   select price into v_rate from public.rate_plans where id = p_rate_plan_id;
+  
+  -- Priority 2: Room type price (from first room)
   if v_rate is null or v_rate <= 0 then
-    v_rate := 3000;
+    select rt.price
+    into v_fallback
+    from public.rooms r
+    join public.room_types rt on rt.id = r.room_type_id
+    where r.id = p_room_ids[1];
+
+    if v_fallback is not null and v_fallback > 0 then
+      v_rate := v_fallback;
+    else
+      -- Priority 3: Default fallback
+      v_rate := 3000;
+    end if;
   end if;
 
   v_total := v_nights * v_rate;
