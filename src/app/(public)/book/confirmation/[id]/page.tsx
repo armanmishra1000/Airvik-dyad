@@ -231,6 +231,7 @@
 
 "use client";
 
+import * as React from "react";
 import { useParams, notFound } from "next/navigation";
 import { format, parseISO, differenceInDays } from "date-fns";
 import {
@@ -241,13 +242,15 @@ import {
   User,
   BedDouble,
   CalendarDays,
-  DollarSign,
+  IndianRupee,
   Copy,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
 import { useDataContext } from "@/context/data-context";
+import { getGuestById } from "@/lib/api";
+import type { Guest } from "@/data/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -260,21 +263,70 @@ import { Separator } from "@/components/ui/separator";
 
 export default function BookingConfirmationPage() {
   const params = useParams<{ id: string }>();
-  const { property, reservations, guests, rooms, roomTypes } = useDataContext();
+  const { property, reservations, guests, rooms, roomTypes, ratePlans } = useDataContext();
+  const [guestData, setGuestData] = React.useState<Guest | null>(null);
+  const [isLoadingGuest, setIsLoadingGuest] = React.useState(false);
 
   const reservation = reservations.find((r) => r.id === params.id);
+  const guestFromContext = reservation ? guests.find((g) => g.id === reservation.guestId) : undefined;
+  const guest = guestData || guestFromContext;
+  
+  // Get room and room type data before early return
+  const room = reservation ? rooms.find((r) => r.id === reservation.roomId) : undefined;
+  const roomType = room ? roomTypes.find((rt) => rt.id === room.roomTypeId) : undefined;
+  
+  // Calculate nightly rate with proper fallbacks (matching review page logic)
+  const nightlyRate = React.useMemo(() => {
+    if (!reservation) return 3000;
+    
+    // Priority 1: Use rate plan price
+    if (ratePlans.length > 0) {
+      const ratePlan = ratePlans.find((rp) => rp.id === reservation.ratePlanId);
+      if (ratePlan?.price && ratePlan.price > 0) {
+        return ratePlan.price;
+      }
+    }
+    
+    // Priority 2: Use room type price
+    if (roomType?.price && roomType.price > 0) {
+      return roomType.price;
+    }
+    
+    // Priority 3: Default fallback (matches single room page default)
+    return 3000;
+  }, [ratePlans, reservation, roomType]);
+
+  // Calculate prices matching review page logic
+  const nights = reservation ? differenceInDays(
+    parseISO(reservation.checkOutDate),
+    parseISO(reservation.checkInDate)
+  ) : 0;
+  const totalCost = nights * nightlyRate;
+  const taxesAndFees = totalCost * 0.18;
+  const grandTotal = totalCost + taxesAndFees;
+  
+  // Fetch guest directly if not in context
+  React.useEffect(() => {
+    if (reservation && !guestFromContext && reservation.guestId && !guestData && !isLoadingGuest) {
+      setIsLoadingGuest(true);
+      getGuestById(reservation.guestId)
+        .then(({ data }) => {
+          if (data) {
+            setGuestData(data);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to fetch guest:", error);
+        })
+        .finally(() => {
+          setIsLoadingGuest(false);
+        });
+    }
+  }, [reservation, guestFromContext, guestData, isLoadingGuest]);
 
   if (!reservation) {
     return notFound();
   }
-
-  const guest = guests.find((g) => g.id === reservation.guestId);
-  const room = rooms.find((r) => r.id === reservation.roomId);
-  const roomType = roomTypes.find((rt) => rt.id === room?.roomTypeId);
-  const nights = differenceInDays(
-    parseISO(reservation.checkOutDate),
-    parseISO(reservation.checkInDate)
-  );
 
   const handleCopyToClipboard = () => {
     navigator.clipboard.writeText(reservation.id);
@@ -380,16 +432,29 @@ export default function BookingConfirmationPage() {
                   </div>
                   <Separator className="my-6" />
                   <div>
-                    <h4 className="font-semibold mb-2 flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-primary" />
-                      Total Price
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <IndianRupee className="h-4 w-4 text-primary" />
+                      Your total price
                     </h4>
-                    <p className="text-2xl font-bold">
-                      ${reservation.totalAmount.toFixed(2)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      For {nights} night(s)
-                    </p>
+                    <div className="space-y-3 p-4 bg-orange-50 rounded-xl">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">₹{nightlyRate.toLocaleString('en-IN')} × {nights} night{nights > 1 ? 's' : ''}</span>
+                        <span className="font-medium text-gray-900">₹{totalCost.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Taxes & fees</span>
+                        <span className="font-medium text-gray-900">₹{Math.round(taxesAndFees).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="border-t border-gray-200 pt-3 mt-3">
+                        <div className="flex justify-between items-start">
+                          <span className="font-semibold text-gray-900">Total</span>
+                          <div className="text-right">
+                            <span className="text-2xl font-bold text-primary">₹{Math.round(grandTotal).toLocaleString('en-IN')}</span>
+                            <p className="text-xs text-gray-500">Inclusive of all taxes</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

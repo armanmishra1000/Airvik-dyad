@@ -276,6 +276,11 @@ export const getGuests = async () => {
     if (error || !data) return { data, error, ...rest };
     return { data: data.map(fromDbGuest), error, ...rest };
 };
+export const getGuestById = async (id: string) => {
+    const { data, error, ...rest } = await supabase.from('guests').select('*').eq('id', id).single();
+    if (error || !data) return { data: null, error, ...rest };
+    return { data: fromDbGuest(data), error, ...rest };
+};
 export const getOrCreateGuestByEmail = async (
   args: GetOrCreateGuestArgs
 ): Promise<{ data: Guest | null; error: PostgrestError | null }> => {

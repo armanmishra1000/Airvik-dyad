@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, IndianRupee } from "lucide-react";
 import { differenceInDays, format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,26 @@ export function BookingSummary({
   const nights = differenceInDays(dateRange.to, dateRange.from);
   const ratePlan =
     ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
-  const totalCost = selection.length * nights * (ratePlan?.price || 0);
+  
+  // Calculate cost per room using actual room type prices with fallbacks
+  const costs = selection.map((roomType) => {
+    // Priority 1: Rate plan price
+    if (ratePlan?.price && ratePlan.price > 0) {
+      return nights * ratePlan.price;
+    }
+    
+    // Priority 2: Room type price
+    if (roomType.price > 0) {
+      return nights * roomType.price;
+    }
+    
+    // Priority 3: Default fallback
+    return nights * 3000;
+  });
+  
+  const totalCost = costs.reduce((sum, cost) => sum + cost, 0);
+  const taxesAndFees = Math.round(totalCost * 0.18);
+  const grandTotal = totalCost + taxesAndFees;
 
   const handleProceed = () => {
     const query = new URLSearchParams();
@@ -71,7 +90,7 @@ export function BookingSummary({
               >
                 <span>{roomType.name}</span>
                 <div className="flex items-center gap-2">
-                  <span>${(nights * (ratePlan?.price || 0)).toFixed(2)}</span>
+                  <span>₹{costs[index].toLocaleString('en-IN')}</span>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -91,9 +110,23 @@ export function BookingSummary({
             </p>
             <p>{nights} night(s)</p>
           </div>
-          <div className="flex justify-between font-bold text-lg">
-            <span>Total</span>
-            <span>${totalCost.toFixed(2)}</span>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Subtotal</span>
+              <span className="text-gray-900">₹{totalCost.toLocaleString('en-IN')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Taxes & fees (18%)</span>
+              <span className="text-gray-900">₹{taxesAndFees.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+          <Separator />
+          <div className="flex justify-between items-center font-bold text-lg">
+            <span>Grand Total</span>
+            <div className="flex items-center gap-1">
+              <IndianRupee className="h-5 w-5" />
+              <span>{grandTotal.toLocaleString('en-IN')}</span>
+            </div>
           </div>
           <Button
             className="w-full"
