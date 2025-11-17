@@ -339,7 +339,6 @@ import type {
   StickyNote,
   DashboardComponentId,
 } from "@/data/types";
-import { differenceInDays } from "date-fns";
 
 type FolioItemRecord = FolioItem & { reservation_id: string };
 type RoomTypeAmenityRecord = { room_type_id: string; amenity_id: string };
@@ -490,32 +489,28 @@ export function useAppData() {
     const { roomIds, ...reservationDetails } = payload;
     const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-    const ratePlan = ratePlans.find(rp => rp.id === reservationDetails.ratePlanId);
-    if (!ratePlan) {
+    const ratePlanExists = ratePlans.some((rp) => rp.id === reservationDetails.ratePlanId);
+    if (!ratePlanExists) {
       throw new Error("Rate plan not found for reservation.");
     }
-    const nights = differenceInDays(new Date(reservationDetails.checkOutDate), new Date(reservationDetails.checkInDate));
-    const totalAmount = nights * ratePlan.price;
 
-    const newReservationsData = roomIds.map((roomId) => ({
-      booking_id: bookingId,
-      guest_id: reservationDetails.guestId,
-      room_id: roomId,
-      rate_plan_id: reservationDetails.ratePlanId,
-      check_in_date: reservationDetails.checkInDate,
-      check_out_date: reservationDetails.checkOutDate,
-      number_of_guests: reservationDetails.numberOfGuests,
-      status: reservationDetails.status,
-      notes: reservationDetails.notes,
-      total_amount: totalAmount,
-      booking_date: reservationDetails.bookingDate,
-      source: reservationDetails.source,
-    }));
+    const { data, error } = await api.createReservationsWithTotal({
+      p_booking_id: bookingId,
+      p_guest_id: reservationDetails.guestId,
+      p_room_ids: roomIds,
+      p_rate_plan_id: reservationDetails.ratePlanId,
+      p_check_in_date: reservationDetails.checkInDate,
+      p_check_out_date: reservationDetails.checkOutDate,
+      p_number_of_guests: reservationDetails.numberOfGuests,
+      p_status: reservationDetails.status,
+      p_notes: reservationDetails.notes ?? null,
+      p_booking_date: reservationDetails.bookingDate,
+      p_source: reservationDetails.source,
+    });
 
-    const { data, error } = await api.addReservation(newReservationsData);
     if (error) throw error;
 
-    const reservationsWithEmptyFolio = data.map(r => ({ ...r, folio: [] }));
+    const reservationsWithEmptyFolio = data.map((r) => ({ ...r, folio: [] }));
     setReservations(prev => [...prev, ...reservationsWithEmptyFolio]);
     return reservationsWithEmptyFolio;
   };
