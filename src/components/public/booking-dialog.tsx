@@ -34,8 +34,20 @@ import { Calendar } from "@/components/ui/calendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import type { BookingSearchFormValues } from "./booking-widget";
+import type { EnhancedBookingSearchFormValues } from "./booking-widget";
 import { useAvailabilitySearch } from "@/hooks/use-availability-search";
+import type { RoomOccupancy } from "@/data/types";
+
+// Legacy type for backward compatibility in this dialog
+type BookingSearchFormValues = {
+  dateRange: {
+    from?: Date;
+    to?: Date;
+  } | undefined;
+  guests: number;
+  children: number;
+  rooms: number;
+};
 
 const searchSchema = z.object({
   dateRange: z.object({
@@ -73,7 +85,23 @@ export function BookingDialog({
 
   const runSearch = React.useCallback(
     (values: BookingSearchFormValues) => {
-      search(values.dateRange, values.guests, values.children, values.rooms);
+      // Don't search if dateRange is undefined or missing required properties
+      if (!values.dateRange || !values.dateRange.from || !values.dateRange.to) return;
+      
+      // Transform legacy values to RoomOccupancy format
+      const roomOccupancies: RoomOccupancy[] = Array.from({ length: values.rooms }, () => ({
+        adults: Math.floor(values.guests / values.rooms) + (values.guests % values.rooms > 0 ? 1 : 0),
+        children: Math.floor(values.children / values.rooms)
+      }));
+      
+      // Ensure we have at least one room with correct guest distribution
+      if (roomOccupancies.length > 0) {
+        roomOccupancies[0].adults = values.guests - (roomOccupancies.length - 1) * Math.floor(values.guests / roomOccupancies.length);
+        roomOccupancies[0].children = values.children - (roomOccupancies.length - 1) * Math.floor(values.children / roomOccupancies.length);
+      }
+      
+      // Cast to DateRange type as we've verified required properties
+      search(values.dateRange as { from: Date; to: Date }, roomOccupancies);
     },
     [search]
   );

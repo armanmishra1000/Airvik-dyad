@@ -21,7 +21,18 @@ import {
 import type { RoomType } from "@/data/types";
 import { Icon } from "@/components/shared/icon";
 import { useDataContext } from "@/context/data-context";
-import type { BookingSearchFormValues } from "./booking-widget";
+import type { EnhancedBookingSearchFormValues } from "./booking-widget";
+
+// Legacy type for backward compatibility
+type BookingSearchFormValues = {
+  dateRange: {
+    from?: Date;
+    to?: Date;
+  } | undefined;
+  guests: number;
+  children: number;
+  rooms: number;
+};
 
 interface RoomTypeCardProps {
   roomType: RoomType;
@@ -29,7 +40,7 @@ interface RoomTypeCardProps {
   onSelect: (roomType: RoomType) => void;
   isSelectionComplete: boolean;
   hasSearched: boolean;
-  searchValues?: BookingSearchFormValues | null;
+  searchValues?: BookingSearchFormValues | EnhancedBookingSearchFormValues | null;
 }
 
 export function RoomTypeCard({
@@ -46,12 +57,33 @@ export function RoomTypeCard({
     const baseUrl = `/book/rooms/${roomType.id}`;
     
     if (hasSearched && searchValues?.dateRange?.from && searchValues?.dateRange?.to) {
+      // Check if we're dealing with enhanced or legacy search values
+      const isEnhanced = 'roomOccupancies' in searchValues;
+      
+      let guests: number;
+      let children: number;
+      let rooms: number;
+      
+      if (isEnhanced) {
+        // Calculate totals from roomOccupancies array
+        const enhancedValues = searchValues as EnhancedBookingSearchFormValues;
+        rooms = enhancedValues.roomOccupancies.length;
+        guests = enhancedValues.roomOccupancies.reduce((sum, occ) => sum + occ.adults, 0);
+        children = enhancedValues.roomOccupancies.reduce((sum, occ) => sum + occ.children, 0);
+      } else {
+        // Use legacy values directly
+        const legacyValues = searchValues as BookingSearchFormValues;
+        guests = legacyValues.guests;
+        children = legacyValues.children;
+        rooms = legacyValues.rooms;
+      }
+      
       const params = new URLSearchParams({
         from: format(searchValues.dateRange.from, "yyyy-MM-dd"),
         to: format(searchValues.dateRange.to, "yyyy-MM-dd"),
-        guests: searchValues.guests.toString(),
-        children: searchValues.children.toString(),
-        rooms: searchValues.rooms.toString(),
+        guests: guests.toString(),
+        children: children.toString(),
+        rooms: rooms.toString(),
       });
       return `${baseUrl}?${params.toString()}`;
     }

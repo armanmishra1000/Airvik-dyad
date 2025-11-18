@@ -25,26 +25,36 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
-const searchSchema = z.object({
+const enhancedSearchSchema = z.object({
   dateRange: z.object({
     from: z.date({ required_error: "Check-in date is required." }),
     to: z.date({ required_error: "Check-out date is required." }),
   }),
-  guests: z.coerce.number().min(1, "At least one adult is required."),
-  children: z.coerce.number().min(0),
-  rooms: z.coerce.number().min(1, "At least one room is required."),
+  roomOccupancies: z.array(
+    z.object({
+      adults: z.coerce.number().min(1, "At least one adult is required."),
+      children: z.coerce.number().min(0),
+    })
+  ).min(1, "At least one room is required."),
 });
 
 
-export type BookingSearchFormValues = z.infer<typeof searchSchema>;
+export type EnhancedBookingSearchFormValues = z.infer<typeof enhancedSearchSchema>;
 
 interface BookingWidgetProps {
-  onSearch: (values: BookingSearchFormValues) => void;
+  onSearch: (values: EnhancedBookingSearchFormValues) => void;
+  isLoading?: boolean;
 }
 
-export function BookingWidget({ onSearch }: BookingWidgetProps) {
+export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProps) {
   const [isMobile, setIsMobile] = React.useState(false);
   const [datePopoverOpen, setDatePopoverOpen] = React.useState(false);
+  const [guestsPopoverOpen, setGuestsPopoverOpen] = React.useState(false);
+  
+  // Simple state for UI display
+  const [totalGuests, setTotalGuests] = React.useState(2);
+  const [totalChildren, setTotalChildren] = React.useState(0);
+  const [totalRooms, setTotalRooms] = React.useState(1);
   
   React.useEffect(() => {
     const checkMobile = () => {
@@ -57,16 +67,50 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
 
   const popoverOffset = isMobile ? 12 : 40;
 
-  const form = useForm<BookingSearchFormValues>({
-    resolver: zodResolver(searchSchema),
+  const form = useForm<EnhancedBookingSearchFormValues>({
+    resolver: zodResolver(enhancedSearchSchema),
     defaultValues: {
-      guests: 2,
-      children: 0,
-      rooms: 1,
+      dateRange: {
+        from: undefined,
+        to: undefined,
+      },
+      roomOccupancies: [{ adults: 2, children: 0 }],
     },
   });
 
-  const { guests, children, rooms } = form.watch();
+  const roomOccupancies = form.watch("roomOccupancies");
+  
+  // Helper function to distribute guests across rooms
+  const updateRoomOccupancies = React.useCallback((guests: number, children: number, rooms: number) => {
+    const adultsPerRoom = Math.floor(guests / rooms);
+    const extraAdults = guests % rooms;
+    const childrenPerRoom = Math.floor(children / rooms);
+    const extraChildren = children % rooms;
+    
+    const newRoomOccupancies = Array.from({ length: rooms }, (_, index) => ({
+      adults: adultsPerRoom + (index < extraAdults ? 1 : 0),
+      children: childrenPerRoom + (index < extraChildren ? 1 : 0),
+    }));
+    
+    form.setValue("roomOccupancies", newRoomOccupancies);
+  }, [form]);
+  
+  // Update roomOccupancies when simple values change
+  React.useEffect(() => {
+    updateRoomOccupancies(totalGuests, totalChildren, totalRooms);
+  }, [totalGuests, totalChildren, totalRooms, updateRoomOccupancies]);
+  
+  // Initialize simple values from roomOccupancies
+  React.useEffect(() => {
+    if (roomOccupancies.length > 0) {
+      const guests = roomOccupancies.reduce((sum, room) => sum + room.adults, 0);
+      const children = roomOccupancies.reduce((sum, room) => sum + room.children, 0);
+      const rooms = roomOccupancies.length;
+      setTotalGuests(guests);
+      setTotalChildren(children);
+      setTotalRooms(rooms);
+    }
+  }, []);
 
   return (
     <Card className="w-full bg-white max-w-5xl mx-auto backdrop-blur-md border-border/20 shadow-md">
@@ -198,144 +242,149 @@ export function BookingWidget({ onSearch }: BookingWidgetProps) {
                 );
               }}
             />
-            
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className="w-full h-14 justify-start text-left font-normal text-base border hover:border-primary/50 transition-all duration-300 bg-background/50 rounded-xl"
-                >
-                  <div className="flex items-center w-full">
-                    <Users className="mr-3 h-5 w-5 text-primary" />
-                    <div className="flex flex-col items-start">
-                      <span className="text-xs text-muted-foreground">Guests & Rooms</span>
-                      <span className="text-sm font-medium">
-                        {rooms} room{rooms > 1 && 's'}, {guests + children} guest{(guests + children) > 1 && 's'}
-                      </span>
-                    </div>
-                  </div>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                side="bottom"
-                sideOffset={popoverOffset}
-                align="center"
-                className="w-[min(90vw,420px)] sm:w-[380px] rounded-3xl border border-border/30 bg-white shadow-xl p-6 space-y-6"
-              >
-                <div className="space-y-1">
-                  <h4 className="text-lg font-semibold text-foreground">Select occupancy</h4>
-                  <p className="text-sm text-muted-foreground">Choose rooms and guests for your stay</p>
-                </div>
-                <div className="divide-y divide-border/20">
-                  <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                    <div className="flex items-center gap-3">
-                      <div className="flex lg:h-10 lg:w-10 w-8 h-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <Building className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <span className="block text-base font-medium text-foreground">Rooms</span>
-                        <span className="block text-xs text-muted-foreground">Number of rooms</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center lg:gap-3">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                        onClick={() => form.setValue("rooms", Math.max(1, rooms - 1))}
-                        type="button"
+            {/* Guests & Rooms Configuration */}
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="roomOccupancies"
+                render={() => (
+                  <FormItem>
+                    <Popover open={guestsPopoverOpen} onOpenChange={setGuestsPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className="w-full h-14 justify-start text-left font-normal text-base border hover:border-primary/50 transition-all duration-300 bg-background/50"
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center">
+                                <Users className="mr-3 h-5 w-5 text-primary" />
+                                <div className="flex flex-col items-start">
+                                  <span className="text-xs text-muted-foreground">Guests & Rooms</span>
+                                  <span className="text-sm font-medium">
+                                    {totalGuests} {totalGuests === 1 ? 'Guest' : 'Guests'}{totalChildren > 0 ? `, ${totalChildren} ${totalChildren === 1 ? 'Child' : 'Children'}` : ''}, {totalRooms} {totalRooms === 1 ? 'Room' : 'Rooms'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        side="bottom"
+                        align="center"
+                        sideOffset={popoverOffset}
+                        className="w-full max-w-[min(100vw-1.5rem,360px)] md:max-w-360 border border-border/40 rounded-2xl bg-white shadow-xl px-5 py-5"
                       >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-9 text-center text-base font-semibold text-foreground">{rooms}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                        onClick={() => form.setValue("rooms", rooms + 1)}
-                        type="button"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                    <div className="flex items-center gap-3">
-                      <div className="flex lg:h-10 lg:w-10 w-8 h-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <Users className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <span className="block text-base font-medium text-foreground">Adults</span>
-                        <span className="block text-xs text-muted-foreground">Ages 13 or above</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center lg:gap-3">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                        onClick={() => form.setValue("guests", Math.max(1, guests - 1))}
-                        type="button"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-9 text-center text-base font-semibold text-foreground">{guests}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                        onClick={() => form.setValue("guests", guests + 1)}
-                        type="button"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
-                    <div className="flex items-center gap-3">
-                      <div className="flex lg:h-10 lg:w-10 w-8 h-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                        <Bed className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <span className="block text-base font-medium text-foreground">Children</span>
-                        <span className="block text-xs text-muted-foreground">Ages 0 to 12</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center lg:gap-3">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                        onClick={() => form.setValue("children", Math.max(0, children - 1))}
-                        type="button"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-9 text-center text-base font-semibold text-foreground">{children}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                        onClick={() => form.setValue("children", children + 1)}
-                        type="button"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                        <div className="space-y-5">
+                            {/* Rooms */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-foreground">Rooms</div>
+                              <div className="text-sm text-muted-foreground">Number of rooms</div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => setTotalRooms(Math.max(1, totalRooms - 1))}
+                                disabled={totalRooms <= 1}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <span className="w-8 text-center font-medium">{totalRooms}</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => setTotalRooms(totalRooms + 1)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
 
-            <Button
-              type="submit"
+                          {/* Adults */}
+                          <div className="flex items-center justify-between gap-5">
+                            <div>
+                              <div className="font-medium text-foreground">Adults</div>
+                              <div className="text-sm text-muted-foreground">Ages 13 or above</div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => setTotalGuests(Math.max(1, totalGuests - 1))}
+                                disabled={totalGuests <= 1}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <span className="w-8 text-center font-medium">{totalGuests}</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => setTotalGuests(totalGuests + 1)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {/* Children */}
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-foreground">Children</div>
+                              <div className="text-sm text-muted-foreground">Ages 2-12</div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => setTotalChildren(Math.max(0, totalChildren - 1))}
+                                disabled={totalChildren <= 0}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <span className="w-8 text-center font-medium">{totalChildren}</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => setTotalChildren(totalChildren + 1)}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                        
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage className="pl-2" />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full" 
               size="lg"
-              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-xl  border-0"
+              disabled={isLoading || !form.watch("dateRange.from") || !form.watch("dateRange.to")}
             >
-              <div className="flex items-center justify-center gap-2">
-                <Search className="h-5 w-5 text-primary-foreground" />
-                <span>Search Availability</span>
-              </div>
+              <Search className="h-5 w-5 mr-2" />
+              {isLoading ? "Searching..." : "Search Availability"}
             </Button>
           </form>
         </Form>

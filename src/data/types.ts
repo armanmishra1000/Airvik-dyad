@@ -51,13 +51,17 @@ export interface Amenity {
   icon: string; // lucide-react icon name
 }
 
+// Enhanced room type with new fields
 export interface RoomType {
   id: string;
   name: string;
   description: string;
   maxOccupancy: number;
+  minOccupancy?: number; // Minimum guests required
+  maxChildren?: number; // Maximum children allowed
   bedTypes: string[];
   price: number;
+  categoryId?: string; // Optional category filter
   amenities: string[]; // Array of Amenity IDs
   photos: string[];
   mainPhotoUrl?: string;
@@ -67,6 +71,44 @@ export interface RoomCategory {
   id: string;
   name: string;
   description: string;
+}
+
+// Booking restrictions
+export interface BookingRestriction {
+  id: string;
+  name: string;
+  restrictionType: 'min_stay' | 'checkin_days' | 'season';
+  value: {
+    minNights?: number;
+    allowedDays?: number[];
+    seasonalPrice?: number;
+  };
+  startDate?: string;
+  endDate?: string;
+  roomTypeId?: string;
+}
+
+// Room occupancy configuration
+export interface RoomOccupancy {
+  adults: number;
+  children: number;
+}
+
+// Booking search parameters
+export interface BookingSearchParams {
+  dateRange: {
+    from: Date;
+    to: Date;
+  };
+  roomOccupancies: RoomOccupancy[];
+  categoryIds?: string[];
+}
+
+// Booking validation result
+export interface BookingValidation {
+  isValid: boolean;
+  message?: string;
+  restrictions?: string[];
 }
 
 export type RoomStatus = "Clean" | "Dirty" | "Inspected" | "Maintenance";

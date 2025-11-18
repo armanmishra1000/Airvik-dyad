@@ -507,3 +507,33 @@ export const deleteStickyNote = (id: string) => supabase.from('sticky_notes').de
 
 // Housekeeping
 export const getHousekeepingAssignments = () => supabase.from('housekeeping_assignments').select('*');
+
+// Booking Restrictions
+export const getBookingRestrictions = async () => {
+  const { data, error } = await supabase
+    .from('booking_restrictions')
+    .select('*')
+    .order('created_at');
+  
+  if (error) throw error;
+  return data || [];
+};
+
+export const validateBookingRequest = async (
+  checkIn: string,
+  checkOut: string,
+  roomId: string,
+  adults: number,
+  children: number = 0
+) => {
+  const { data, error } = await supabase.rpc('validate_booking_request', {
+    p_check_in: checkIn,
+    p_check_out: checkOut,
+    p_room_id: roomId,
+    p_adults: adults,
+    p_children: children
+  });
+  
+  if (error) throw error;
+  return data as { isValid: boolean; message?: string };
+};

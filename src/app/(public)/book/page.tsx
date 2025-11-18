@@ -4,7 +4,7 @@ import * as React from "react";
 import { RoomTypeCard } from "@/components/public/room-type-card";
 import {
   BookingWidget,
-  type BookingSearchFormValues,
+  type EnhancedBookingSearchFormValues,
 } from "@/components/public/booking-widget";
 import { useAvailabilitySearch } from "@/hooks/use-availability-search";
 import { useDataContext } from "@/context/data-context";
@@ -25,11 +25,11 @@ export default function RoomsPage() {
   } = useAvailabilitySearch();
   const [hasSearched, setHasSearched] = React.useState(false);
   const [searchValues, setSearchValues] =
-    React.useState<BookingSearchFormValues | null>(null);
+    React.useState<EnhancedBookingSearchFormValues | null>(null);
   const [selection, setSelection] = React.useState<RoomType[]>([]);
 
-  const handleSearch = (values: BookingSearchFormValues) => {
-    search(values.dateRange, values.guests, values.children, values.rooms);
+  const handleSearch = (values: EnhancedBookingSearchFormValues) => {
+    search(values.dateRange, values.roomOccupancies);
     setHasSearched(true);
     setSearchValues(values);
     setSelection([]); // Clear previous selection on new search
@@ -43,8 +43,13 @@ export default function RoomsPage() {
   };
 
   const handleSelectRoom = (roomType: RoomType) => {
-    if (searchValues && selection.length < searchValues.rooms) {
-      setSelection((prev) => [...prev, roomType]);
+    if (searchValues) {
+      // Calculate number of rooms based on roomOccupancies
+      const roomCount = searchValues.roomOccupancies.length;
+      
+      if (selection.length < roomCount) {
+        setSelection((prev) => [...prev, roomType]);
+      }
     }
   };
 
@@ -58,7 +63,7 @@ export default function RoomsPage() {
 
   const roomsToDisplay = hasSearched ? availableRoomTypes : roomTypes;
   const isSelectionComplete = searchValues
-    ? selection.length >= searchValues.rooms
+    ? selection.length >= searchValues.roomOccupancies.length
     : false;
 
   const showLoading = isInitialLoading || isSearching;
