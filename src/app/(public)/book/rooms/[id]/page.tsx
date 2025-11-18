@@ -31,7 +31,14 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format, formatISO, eachDayOfInterval, parseISO, parse, differenceInDays } from "date-fns";
+import {
+  format,
+  formatISO,
+  eachDayOfInterval,
+  parseISO,
+  parse,
+  differenceInDays,
+} from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,7 +49,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/shared/icon";
@@ -56,6 +67,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { ShareDialog } from "@/components/public/share-dialog";
 
 const bookingSchema = z.object({
   dateRange: z
@@ -113,6 +125,8 @@ export default function RoomDetailsPage() {
   const [isDatesPopoverOpen, setIsDatesPopoverOpen] = React.useState(false);
   const [isGuestsPopoverOpen, setIsGuestsPopoverOpen] = React.useState(false);
   const [isRoomsPopoverOpen, setIsRoomsPopoverOpen] = React.useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = React.useState(false);
+  const [shareUrl, setShareUrl] = React.useState("");
 
   const standardRatePlan =
     ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
@@ -126,9 +140,7 @@ export default function RoomDetailsPage() {
       children: searchParams.get("children")
         ? Number(searchParams.get("children"))
         : 0,
-      rooms: searchParams.get("rooms")
-        ? Number(searchParams.get("rooms"))
-        : 1,
+      rooms: searchParams.get("rooms") ? Number(searchParams.get("rooms")) : 1,
       dateRange:
         searchParams.get("from") && searchParams.get("to")
           ? {
@@ -144,6 +156,13 @@ export default function RoomDetailsPage() {
   const guestsCount = form.watch("guests");
   const childrenCount = form.watch("children");
   const roomsCount = form.watch("rooms");
+
+  // Get current URL for sharing (client-side only)
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setShareUrl(window.location.href);
+    }
+  }, []);
 
   const photosToShow = React.useMemo(() => {
     if (!roomType || !roomType.photos || roomType.photos.length === 0) {
@@ -209,12 +228,12 @@ export default function RoomDetailsPage() {
     if (roomType?.price && roomType.price > 0) {
       return roomType.price;
     }
-    
+
     // Priority 2: Use rate plan price
     if (standardRatePlan?.price && standardRatePlan.price > 0) {
       return standardRatePlan.price;
     }
-    
+
     // Priority 3: Default fallback
     return 3000;
   }, [roomType, standardRatePlan]);
@@ -239,11 +258,11 @@ export default function RoomDetailsPage() {
       children: values.children.toString(),
       rooms: values.rooms.toString(),
     });
-    
+
     if (values.specialRequests) {
       query.set("specialRequests", values.specialRequests);
     }
-    
+
     router.push(`/book/review?${query.toString()}`);
   }
 
@@ -254,10 +273,11 @@ export default function RoomDetailsPage() {
       : description;
 
   // Calculate pricing based on selected dates
-  const nightCount = dateRange?.from && dateRange?.to 
-    ? differenceInDays(dateRange.to, dateRange.from)
-    : 2;
-  
+  const nightCount =
+    dateRange?.from && dateRange?.to
+      ? differenceInDays(dateRange.to, dateRange.from)
+      : 2;
+
   const totalPrice = nightlyRate * nightCount;
   const taxesAndFees = totalPrice * 0.18; // 18% taxes
   const grandTotal = totalPrice + taxesAndFees;
@@ -265,21 +285,26 @@ export default function RoomDetailsPage() {
   const newLocal = "container mx-auto p-4 py-6";
   return (
     <div className="min-h-screen">
-      {/* Hero Summary Section */}   
+      {/* Hero Summary Section */}
       <div className={newLocal}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-1 text-sm font-medium">
             <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">
-                {roomType.name}
-              </h1>
+              {roomType.name}
+            </h1>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setIsShareDialogOpen(true)}
+            >
               <Share2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            {/* <Button variant="ghost" size="icon" className="h-8 w-8">
               <MoreHorizontal className="h-4 w-4" />
-            </Button>
+            </Button> */}
           </div>
         </div>
 
@@ -345,14 +370,16 @@ export default function RoomDetailsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-gray-400" />
-                  <span className="text-gray-700">Up to {roomType.maxOccupancy} guests</span>
+                  <span className="text-gray-700">
+                    Up to {roomType.maxOccupancy} guests
+                  </span>
                 </div>
               </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                  <span className="font-semibold text-gray-900">4.8</span>
-                  <span className="text-gray-500">(127 reviews)</span>
-                </div>
+              <div className="flex items-center gap-2 mt-2">
+                <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                <span className="font-semibold text-gray-900">4.8</span>
+                <span className="text-gray-500">(127 reviews)</span>
+              </div>
             </div>
 
             <p className="text-muted-foreground leading-relaxed">
@@ -371,79 +398,137 @@ export default function RoomDetailsPage() {
             </p>
 
             <div className="bg-white rounded-xl p-6 shadow-sm border">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Amenities</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-8">
+                Amenities
+              </h2>
               <div className="space-y-6">
                 {/* Essential Amenities */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Essentials</h3>
+                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
+                    Essentials
+                  </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {roomType.amenities.filter(amenityId => {
-                      const amenity = allAmenities.find((a) => a.id === amenityId);
-                      return amenity && ['Free Wi-Fi', 'Wifi', 'Air Conditioning', 'Air Conditioner', 'Ensuite Bathroom', 'Bathroom'].includes(amenity.name);
-                    }).map((amenityId) => {
-                      const amenity = allAmenities.find((a) => a.id === amenityId);
-                      if (!amenity) return null;
-                      return (
-                        <div key={amenity.id} className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Icon
-                              name={amenityIcons[amenity.name] || amenity.icon}
-                              className="h-5 w-5 text-primary"
-                            />
+                    {roomType.amenities
+                      .filter((amenityId) => {
+                        const amenity = allAmenities.find(
+                          (a) => a.id === amenityId
+                        );
+                        return (
+                          amenity &&
+                          [
+                            "Free Wi-Fi",
+                            "Wifi",
+                            "Air Conditioning",
+                            "Air Conditioner",
+                            "Ensuite Bathroom",
+                            "Bathroom",
+                          ].includes(amenity.name)
+                        );
+                      })
+                      .map((amenityId) => {
+                        const amenity = allAmenities.find(
+                          (a) => a.id === amenityId
+                        );
+                        if (!amenity) return null;
+                        return (
+                          <div
+                            key={amenity.id}
+                            className="flex items-center gap-3"
+                          >
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <Icon
+                                name={
+                                  amenityIcons[amenity.name] || amenity.icon
+                                }
+                                className="h-5 w-5 text-primary"
+                              />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700">
+                              {amenity.name}
+                            </span>
                           </div>
-                          <span className="text-sm font-medium text-gray-700">{amenity.name}</span>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </div>
 
                 {/* Comfort Amenities */}
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">Comfort</h3>
+                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
+                    Comfort
+                  </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {roomType.amenities.filter(amenityId => {
-                      const amenity = allAmenities.find((a) => a.id === amenityId);
-                      return amenity && !['Free Wi-Fi', 'Wifi', 'Air Conditioning', 'Air Conditioner', 'Ensuite Bathroom', 'Bathroom'].includes(amenity.name);
-                    }).map((amenityId) => {
-                      const amenity = allAmenities.find((a) => a.id === amenityId);
-                      if (!amenity) return null;
-                      return (
-                        <div key={amenity.id} className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Icon
-                              name={amenityIcons[amenity.name] || amenity.icon}
-                              className="h-5 w-5 text-primary"
-                            />
+                    {roomType.amenities
+                      .filter((amenityId) => {
+                        const amenity = allAmenities.find(
+                          (a) => a.id === amenityId
+                        );
+                        return (
+                          amenity &&
+                          ![
+                            "Free Wi-Fi",
+                            "Wifi",
+                            "Air Conditioning",
+                            "Air Conditioner",
+                            "Ensuite Bathroom",
+                            "Bathroom",
+                          ].includes(amenity.name)
+                        );
+                      })
+                      .map((amenityId) => {
+                        const amenity = allAmenities.find(
+                          (a) => a.id === amenityId
+                        );
+                        if (!amenity) return null;
+                        return (
+                          <div
+                            key={amenity.id}
+                            className="flex items-center gap-3"
+                          >
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <Icon
+                                name={
+                                  amenityIcons[amenity.name] || amenity.icon
+                                }
+                                className="h-5 w-5 text-primary"
+                              />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700">
+                              {amenity.name}
+                            </span>
                           </div>
-                          <span className="text-sm font-medium text-gray-700">{amenity.name}</span>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm border">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Ashram Rules</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Ashram Rules
+              </h2>
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="checkin" className="border-b">
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-3">
                       <Clock className="h-5 w-5 text-primary" />
-                      <span className="text-left font-medium">Check-in & Check-out</span>
+                      <span className="text-left font-medium">
+                        Check-in & Check-out
+                      </span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-4">
                     <div className="space-y-3 pl-8">
                       <div className="text-sm">
                         <span className="text-gray-600">Check-in:</span>
-                        <span className="ml-2 font-medium">3:00 PM - 11:00 PM</span>
+                        <span className="ml-2 font-medium">12:00 PM</span>
                       </div>
                       <div className="text-sm">
                         <span className="text-gray-600">Check-out:</span>
-                        <span className="ml-2 font-medium">Before 12:00 PM</span>
+                        <span className="ml-2 font-medium">
+                          Before 10:00 AM
+                        </span>
                       </div>
                       <div className="text-sm text-gray-500">
                         Late check-out may be available upon request
@@ -456,13 +541,17 @@ export default function RoomDetailsPage() {
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-3">
                       <Info className="h-5 w-5 text-primary" />
-                      <span className="text-left font-medium">Age & ID Requirements</span>
+                      <span className="text-left font-medium">
+                        Age & ID Requirements
+                      </span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-4">
                     <div className="space-y-3 pl-8 text-sm text-gray-600">
                       <p>Minimum age to check-in: 17 years</p>
-                      <p>Valid government-issued photo ID required at check-in</p>
+                      <p>
+                        Valid government-issued photo ID required at check-in
+                      </p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -471,7 +560,9 @@ export default function RoomDetailsPage() {
                   <AccordionTrigger className="hover:no-underline py-4">
                     <div className="flex items-center gap-3">
                       <ParkingCircle className="h-5 w-5 text-primary" />
-                      <span className="text-left font-medium">Parking & Transportation</span>
+                      <span className="text-left font-medium">
+                        Parking & Transportation
+                      </span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-4">
@@ -487,12 +578,17 @@ export default function RoomDetailsPage() {
           </div>
 
           {/* booking section */}
-          <div className="lg:col-span-2 mt-8 lg:mt-0 shadow-lg rounded-xl border border-gray-100" id="booking-form">
+          <div
+            className="lg:col-span-2 mt-8 lg:mt-0 shadow-lg rounded-xl border border-gray-100"
+            id="booking-form"
+          >
             <Card className="sticky top-32 bg-white border-0 overflow-hidden p-6">
               <div className="p-6 bg-orange-50 rounded-xl">
                 <p className="text-sm text-gray-600 mb-1">from</p>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-gray-900">₹{nightlyRate.toLocaleString()}</span>
+                  <span className="text-3xl font-bold text-gray-900">
+                    ₹{nightlyRate.toLocaleString()}
+                  </span>
                   <span className="text-gray-600">/night</span>
                 </div>
               </div>
@@ -513,101 +609,134 @@ export default function RoomDetailsPage() {
                               setIsDatesPopoverOpen(false);
                             }
                           };
-                          
+
                           return (
-                          <FormItem>
-                            <Popover
-                              open={isDatesPopoverOpen}
-                              onOpenChange={setIsDatesPopoverOpen}
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  className={cn(
-                                    "w-full justify-start text-left font-normal border-0 border-b rounded-none p-4 h-auto hover:bg-transparent",
-                                    !field.value?.from && "text-muted-foreground"
-                                  )}
+                            <FormItem>
+                              <Popover
+                                open={isDatesPopoverOpen}
+                                onOpenChange={setIsDatesPopoverOpen}
+                              >
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className={cn(
+                                      "w-full justify-start text-left font-normal border-0 border-b rounded-none p-4 h-auto hover:bg-transparent",
+                                      !field.value?.from &&
+                                        "text-muted-foreground"
+                                    )}
+                                  >
+                                    <div className="flex items-center w-full">
+                                      <CalendarIcon className="mr-3 h-5 w-5 text-primary" />
+                                      <div className="flex-1">
+                                        <div className="text-xs text-gray-600 mb-1">
+                                          Check-in → Check-out
+                                        </div>
+                                        <div className="text-sm font-medium text-gray-900">
+                                          {field.value?.from && field.value?.to
+                                            ? `${format(
+                                                field.value.from,
+                                                "MMM dd"
+                                              )} - ${format(
+                                                field.value.to,
+                                                "MMM dd, yyyy"
+                                              )}`
+                                            : "Nov 15 - Nov 17, 2025"}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  side="bottom"
+                                  align="center"
+                                  sideOffset={12}
+                                  className="w-full max-w-[min(100vw-1.5rem,640px)] md:max-w-none border border-border/40 rounded-2xl bg-white shadow-xl px-4 py-4 md:px-5 md:py-4 max-h-[80vh] overflow-y-auto"
                                 >
-                                  <div className="flex items-center w-full">
-                                    <CalendarIcon className="mr-3 h-5 w-5 text-primary" />
-                                    <div className="flex-1">
-                                      <div className="text-xs text-gray-600 mb-1">Check-in → Check-out</div>
-                                      <div className="text-sm font-medium text-gray-900">
-                                        {field.value?.from && field.value?.to ? (
-                                          `${format(field.value.from, "MMM dd")} - ${format(field.value.to, "MMM dd, yyyy")}`
-                                        ) : (
-                                          "Nov 15 - Nov 17, 2025"
-                                        )}
+                                  <div className="px-5 py-4 border-b border-border/30">
+                                    <div className="flex gap-4 md:flex-row md:items-start md:justify-between text-sm">
+                                      <div className="flex-1">
+                                        <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
+                                          Check-in
+                                        </span>
+                                        <span className="mt-1 block text-base font-medium text-foreground">
+                                          {field.value?.from
+                                            ? format(
+                                                field.value.from,
+                                                "EEE, MMM d"
+                                              )
+                                            : "Select date"}
+                                        </span>
+                                      </div>
+                                      <div className="flex-1 text-right">
+                                        <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
+                                          Check-out
+                                        </span>
+                                        <span className="mt-1 block text-base font-medium text-foreground">
+                                          {field.value?.to
+                                            ? format(
+                                                field.value.to,
+                                                "EEE, MMM d"
+                                              )
+                                            : "Select date"}
+                                        </span>
                                       </div>
                                     </div>
                                   </div>
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                side="bottom"
-                                align="center"
-                                sideOffset={12}
-                                className="w-full max-w-[min(100vw-1.5rem,640px)] md:max-w-none border border-border/40 rounded-2xl bg-white shadow-xl px-4 py-4 md:px-5 md:py-4 max-h-[80vh] overflow-y-auto"
-                              >
-                                <div className="px-5 py-4 border-b border-border/30">
-                                  <div className="flex gap-4 md:flex-row md:items-start md:justify-between text-sm">
-                                    <div className="flex-1">
-                                      <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-in</span>
-                                      <span className="mt-1 block text-base font-medium text-foreground">
-                                        {field.value?.from ? format(field.value.from, "EEE, MMM d") : "Select date"}
-                                      </span>
-                                    </div>
-                                    <div className="flex-1 text-right">
-                                      <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-out</span>
-                                      <span className="mt-1 block text-base font-medium text-foreground">
-                                        {field.value?.to ? format(field.value.to, "EEE, MMM d") : "Select date"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <Calendar
-                                  initialFocus
-                                  mode="range"
-                                  defaultMonth={field.value?.from}
-                                  selected={{
-                                    from: field.value?.from,
-                                    to: field.value?.to,
-                                  }}
-                                  onSelect={handleDateSelect}
-                                  numberOfMonths={2}
-                                  disabled={disabledDates}
-                                  showOutsideDays
-                                  className="pt-3 pb-4 md:pt-4 md:pb-5 px-1 md:px-5"
-                                  classNames={{
-                                    months: "flex flex-col gap-6 sm:flex-row sm:gap-6",
-                                    month: "space-y-4",
-                                    caption: "flex items-center justify-between",
-                                    caption_label: "text-base font-semibold text-foreground",
-                                    nav: "flex items-center gap-2",
-                                    nav_button: "inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-white text-muted-foreground transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-                                    nav_button_previous: "order-1",
-                                    nav_button_next: "order-2",
-                                    table: "w-full border-collapse",
-                                    head_row: "flex w-full",
-                                    head_cell: "flex h-11 w-11 items-center justify-center text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground/70",
-                                    row: "mt-1 flex w-full",
-                                    cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20",
-                                    day: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-transparent text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 focus-visible:border-primary/50 focus-visible:bg-primary/5 aria-selected:hover:bg-primary aria-selected:hover:border-primary",
-                                    day_selected: "inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
-                                    day_today: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-dashed border-border/60 text-foreground",
-                                    day_range_start: "day-range-start inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
-                                    day_range_end: "day-range-end inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
-                                    day_range_middle: "day-range-middle inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-foreground aria-selected:!text-foreground border border-primary/20",
-                                    day_outside: "pointer-events-none opacity-0 select-none",
-                                    day_disabled: "opacity-40 text-muted-foreground hover:border-transparent hover:bg-transparent",
-                                    day_hidden: "invisible",
-                                  }}
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            <FormMessage className="pl-2" />
-                          </FormItem>
+                                  <Calendar
+                                    initialFocus
+                                    mode="range"
+                                    defaultMonth={field.value?.from}
+                                    selected={{
+                                      from: field.value?.from,
+                                      to: field.value?.to,
+                                    }}
+                                    onSelect={handleDateSelect}
+                                    numberOfMonths={2}
+                                    disabled={disabledDates}
+                                    showOutsideDays
+                                    className="pt-3 pb-4 md:pt-4 md:pb-5 px-1 md:px-5"
+                                    classNames={{
+                                      months:
+                                        "flex flex-col gap-6 sm:flex-row sm:gap-6",
+                                      month: "space-y-4",
+                                      caption:
+                                        "flex items-center justify-between",
+                                      caption_label:
+                                        "text-base font-semibold text-foreground",
+                                      nav: "flex items-center gap-2",
+                                      nav_button:
+                                        "inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-white text-muted-foreground transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+                                      nav_button_previous: "order-1",
+                                      nav_button_next: "order-2",
+                                      table: "w-full border-collapse",
+                                      head_row: "flex w-full",
+                                      head_cell:
+                                        "flex h-11 w-11 items-center justify-center text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground/70",
+                                      row: "mt-1 flex w-full",
+                                      cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20",
+                                      day: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-transparent text-sm font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 focus-visible:border-primary/50 focus-visible:bg-primary/5 aria-selected:hover:bg-primary aria-selected:hover:border-primary",
+                                      day_selected:
+                                        "inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
+                                      day_today:
+                                        "inline-flex h-11 w-11 items-center justify-center rounded-full border border-dashed border-border/60 text-foreground",
+                                      day_range_start:
+                                        "day-range-start inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
+                                      day_range_end:
+                                        "day-range-end inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground border border-primary",
+                                      day_range_middle:
+                                        "day-range-middle inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-foreground aria-selected:!text-foreground border border-primary/20",
+                                      day_outside:
+                                        "pointer-events-none opacity-0 select-none",
+                                      day_disabled:
+                                        "opacity-40 text-muted-foreground hover:border-transparent hover:bg-transparent",
+                                      day_hidden: "invisible",
+                                    }}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage className="pl-2" />
+                            </FormItem>
                           );
                         }}
                       />
@@ -634,7 +763,10 @@ export default function RoomDetailsPage() {
                                           Guests
                                         </div>
                                         <div className="text-sm font-medium text-gray-900">
-                                          {guestsCount + childrenCount} guest{(guestsCount + childrenCount) > 1 ? 's' : ''}
+                                          {guestsCount + childrenCount} guest
+                                          {guestsCount + childrenCount > 1
+                                            ? "s"
+                                            : ""}
                                         </div>
                                       </div>
                                     </div>
@@ -653,8 +785,12 @@ export default function RoomDetailsPage() {
                                   className="w-[min(90vw,420px)] sm:w-[380px] rounded-3xl border border-border/30 bg-white shadow-xl p-6 space-y-6"
                                 >
                                   <div className="space-y-1">
-                                    <h4 className="text-lg font-semibold text-foreground">Select guests</h4>
-                                    <p className="text-sm text-muted-foreground">Choose number of adults and children</p>
+                                    <h4 className="text-lg font-semibold text-foreground">
+                                      Select guests
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      Choose number of adults and children
+                                    </p>
                                   </div>
                                   <div className="divide-y divide-border/20">
                                     <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
@@ -663,8 +799,12 @@ export default function RoomDetailsPage() {
                                           <Users className="h-4 w-4" />
                                         </div>
                                         <div>
-                                          <span className="block text-base font-medium text-foreground">Adults</span>
-                                          <span className="block text-xs text-muted-foreground">Ages 13 or above</span>
+                                          <span className="block text-base font-medium text-foreground">
+                                            Adults
+                                          </span>
+                                          <span className="block text-xs text-muted-foreground">
+                                            Ages 13 or above
+                                          </span>
                                         </div>
                                       </div>
                                       <div className="flex items-center lg:gap-3">
@@ -672,19 +812,38 @@ export default function RoomDetailsPage() {
                                           variant="ghost"
                                           size="icon"
                                           className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                                          onClick={() => form.setValue("guests", Math.max(1, guestsCount - 1))}
+                                          onClick={() =>
+                                            form.setValue(
+                                              "guests",
+                                              Math.max(1, guestsCount - 1)
+                                            )
+                                          }
                                           type="button"
                                         >
                                           <Minus className="h-3 w-3" />
                                         </Button>
-                                        <span className="w-9 text-center text-base font-semibold text-foreground">{guestsCount}</span>
+                                        <span className="w-9 text-center text-base font-semibold text-foreground">
+                                          {guestsCount}
+                                        </span>
                                         <Button
                                           variant="ghost"
                                           size="icon"
                                           className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                                          onClick={() => form.setValue("guests", Math.min(roomType.maxOccupancy - childrenCount, guestsCount + 1))}
+                                          onClick={() =>
+                                            form.setValue(
+                                              "guests",
+                                              Math.min(
+                                                roomType.maxOccupancy -
+                                                  childrenCount,
+                                                guestsCount + 1
+                                              )
+                                            )
+                                          }
                                           type="button"
-                                          disabled={(guestsCount + childrenCount) >= roomType.maxOccupancy}
+                                          disabled={
+                                            guestsCount + childrenCount >=
+                                            roomType.maxOccupancy
+                                          }
                                         >
                                           <Plus className="h-3 w-3" />
                                         </Button>
@@ -700,8 +859,12 @@ export default function RoomDetailsPage() {
                                               <Baby className="h-4 w-4" />
                                             </div>
                                             <div>
-                                              <span className="block text-base font-medium text-foreground">Children</span>
-                                              <span className="block text-xs text-muted-foreground">Ages 0 to 12</span>
+                                              <span className="block text-base font-medium text-foreground">
+                                                Children
+                                              </span>
+                                              <span className="block text-xs text-muted-foreground">
+                                                Ages 0 to 12
+                                              </span>
                                             </div>
                                           </div>
                                           <div className="flex items-center lg:gap-3">
@@ -709,19 +872,36 @@ export default function RoomDetailsPage() {
                                               variant="ghost"
                                               size="icon"
                                               className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                                              onClick={() => childField.onChange(Math.max(0, childField.value - 1))}
+                                              onClick={() =>
+                                                childField.onChange(
+                                                  Math.max(
+                                                    0,
+                                                    childField.value - 1
+                                                  )
+                                                )
+                                              }
                                               type="button"
                                             >
                                               <Minus className="h-3 w-3" />
                                             </Button>
-                                            <span className="w-9 text-center text-base font-semibold text-foreground">{childField.value}</span>
+                                            <span className="w-9 text-center text-base font-semibold text-foreground">
+                                              {childField.value}
+                                            </span>
                                             <Button
                                               variant="ghost"
                                               size="icon"
                                               className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                                              onClick={() => childField.onChange(childField.value + 1)}
+                                              onClick={() =>
+                                                childField.onChange(
+                                                  childField.value + 1
+                                                )
+                                              }
                                               type="button"
-                                              disabled={(guestsCount + childField.value) >= roomType.maxOccupancy}
+                                              disabled={
+                                                guestsCount +
+                                                  childField.value >=
+                                                roomType.maxOccupancy
+                                              }
                                             >
                                               <Plus className="h-3 w-3" />
                                             </Button>
@@ -732,7 +912,8 @@ export default function RoomDetailsPage() {
                                   </div>
                                   <div className="pt-2 border-t border-border/20">
                                     <p className="text-xs text-muted-foreground">
-                                      This room can accommodate a maximum of {roomType.maxOccupancy} guests
+                                      This room can accommodate a maximum of{" "}
+                                      {roomType.maxOccupancy} guests
                                     </p>
                                   </div>
                                 </PopoverContent>
@@ -741,7 +922,7 @@ export default function RoomDetailsPage() {
                             </FormItem>
                           )}
                         />
-                        
+
                         {/* Rooms Dropdown */}
                         <FormField
                           control={form.control}
@@ -764,7 +945,8 @@ export default function RoomDetailsPage() {
                                           Rooms
                                         </div>
                                         <div className="text-sm font-medium text-gray-900">
-                                          {roomsCount} room{roomsCount > 1 ? 's' : ''}
+                                          {roomsCount} room
+                                          {roomsCount > 1 ? "s" : ""}
                                         </div>
                                       </div>
                                     </div>
@@ -783,8 +965,12 @@ export default function RoomDetailsPage() {
                                   className="w-[min(90vw,420px)] sm:w-[380px] rounded-3xl border border-border/30 bg-white shadow-xl p-6 space-y-6"
                                 >
                                   <div className="space-y-1">
-                                    <h4 className="text-lg font-semibold text-foreground">Select rooms</h4>
-                                    <p className="text-sm text-muted-foreground">Choose number of rooms</p>
+                                    <h4 className="text-lg font-semibold text-foreground">
+                                      Select rooms
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      Choose number of rooms
+                                    </p>
                                   </div>
                                   <div className="divide-y divide-border/20">
                                     <div className="flex items-center justify-between py-4 first:pt-0 last:pb-0">
@@ -793,8 +979,12 @@ export default function RoomDetailsPage() {
                                           <Building className="h-4 w-4" />
                                         </div>
                                         <div>
-                                          <span className="block text-base font-medium text-foreground">Rooms</span>
-                                          <span className="block text-xs text-muted-foreground">Number of rooms</span>
+                                          <span className="block text-base font-medium text-foreground">
+                                            Rooms
+                                          </span>
+                                          <span className="block text-xs text-muted-foreground">
+                                            Number of rooms
+                                          </span>
                                         </div>
                                       </div>
                                       <div className="flex items-center lg:gap-3">
@@ -802,17 +992,25 @@ export default function RoomDetailsPage() {
                                           variant="ghost"
                                           size="icon"
                                           className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                                          onClick={() => field.onChange(Math.max(1, field.value - 1))}
+                                          onClick={() =>
+                                            field.onChange(
+                                              Math.max(1, field.value - 1)
+                                            )
+                                          }
                                           type="button"
                                         >
                                           <Minus className="h-3 w-3" />
                                         </Button>
-                                        <span className="w-9 text-center text-base font-semibold text-foreground">{field.value}</span>
+                                        <span className="w-9 text-center text-base font-semibold text-foreground">
+                                          {field.value}
+                                        </span>
                                         <Button
                                           variant="ghost"
                                           size="icon"
                                           className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
-                                          onClick={() => field.onChange(field.value + 1)}
+                                          onClick={() =>
+                                            field.onChange(field.value + 1)
+                                          }
                                           type="button"
                                         >
                                           <Plus className="h-3 w-3" />
@@ -828,7 +1026,7 @@ export default function RoomDetailsPage() {
                         />
                       </div>
                     </div>
-                    
+
                     {/* Special Requests */}
                     <FormField
                       control={form.control}
@@ -837,7 +1035,10 @@ export default function RoomDetailsPage() {
                         <FormItem>
                           <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-900">
-                              Special Requests <span className="text-gray-500 font-normal">(Optional)</span>
+                              Special Requests{" "}
+                              <span className="text-gray-500 font-normal">
+                                (Optional)
+                              </span>
                             </label>
                             <textarea
                               {...field}
@@ -852,19 +1053,31 @@ export default function RoomDetailsPage() {
                     {/* Pricing Breakdown */}
                     <div className="space-y-3 p-4 bg-orange-50 rounded-xl">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">₹{nightlyRate.toLocaleString()} × {nightCount} nights</span>
-                        <span className="font-medium text-gray-900">₹{totalPrice.toLocaleString()}</span>
+                        <span className="text-gray-600">
+                          ₹{nightlyRate.toLocaleString()} × {nightCount} nights
+                        </span>
+                        <span className="font-medium text-gray-900">
+                          ₹{totalPrice.toLocaleString()}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Taxes & fees</span>
-                        <span className="font-medium text-gray-900">₹{Math.round(taxesAndFees).toLocaleString()}</span>
+                        <span className="font-medium text-gray-900">
+                          ₹{Math.round(taxesAndFees).toLocaleString()}
+                        </span>
                       </div>
                       <div className="border-t border-gray-200 pt-3 mt-3">
                         <div className="flex justify-between items-start">
-                          <span className="font-semibold text-gray-900">Total</span>
+                          <span className="font-semibold text-gray-900">
+                            Total
+                          </span>
                           <div className="text-right">
-                            <span className="text-2xl font-bold text-primary">₹{Math.round(grandTotal).toLocaleString()}</span>
-                            <p className="text-xs text-gray-500">Inclusive of all taxes</p>
+                            <span className="text-2xl font-bold text-primary">
+                              ₹{Math.round(grandTotal).toLocaleString()}
+                            </span>
+                            <p className="text-xs text-gray-500">
+                              Inclusive of all taxes
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -878,7 +1091,7 @@ export default function RoomDetailsPage() {
                       <Sparkles className="h-5 w-5 mr-2" />
                       Reserve for ₹{Math.round(grandTotal).toLocaleString()}
                     </Button>
-                    
+
                     <p className="text-xs text-center text-gray-500">
                       You won&apos;t be charged yet. Review before payment.
                     </p>
@@ -891,7 +1104,9 @@ export default function RoomDetailsPage() {
 
         {relatedRoomTypes.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-3xl font-bold font-serif text-foreground mb-8">Related Rooms</h2>
+            <h2 className="text-3xl font-bold font-serif text-foreground mb-8">
+              Related Rooms
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedRoomTypes.slice(0, 3).map((relatedRoomType) => (
                 <RoomTypeCard
@@ -907,6 +1122,14 @@ export default function RoomDetailsPage() {
           </div>
         )}
       </div>
+
+      {/* Share Dialog */}
+      <ShareDialog
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        roomType={roomType}
+        shareUrl={shareUrl}
+      />
     </div>
   );
 }

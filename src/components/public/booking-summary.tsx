@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { RoomType } from "@/data/types";
-import type { BookingSearchFormValues } from "./booking-widget";
+import type { EnhancedBookingSearchFormValues } from "./booking-widget";
 import { useDataContext } from "@/context/data-context";
 
 interface BookingSummaryProps {
   selection: RoomType[];
-  searchValues: BookingSearchFormValues;
+  searchValues: EnhancedBookingSearchFormValues;
   onRemove: (index: number) => void;
   onClear: () => void;
 }
@@ -26,7 +26,8 @@ export function BookingSummary({
 }: BookingSummaryProps) {
   const router = useRouter();
   const { ratePlans } = useDataContext();
-  const { dateRange, rooms: requestedRooms } = searchValues;
+  const { dateRange } = searchValues;
+  const requestedRooms = searchValues.roomOccupancies.length;
 
   if (selection.length === 0 || !dateRange?.from || !dateRange?.to) {
     return null;
@@ -57,13 +58,18 @@ export function BookingSummary({
   const grandTotal = totalCost + taxesAndFees;
 
   const handleProceed = () => {
+    // Calculate totals from roomOccupancies for enhanced form
+    const guests = searchValues.roomOccupancies.reduce((sum: number, room: any) => sum + room.adults, 0);
+    const children = searchValues.roomOccupancies.reduce((sum: number, room: any) => sum + room.children, 0);
+    const rooms = searchValues.roomOccupancies.length;
+    
     const query = new URLSearchParams();
     selection.forEach((rt) => query.append("roomTypeId", rt.id));
     query.set("from", format(dateRange.from!, "yyyy-MM-dd"));
     query.set("to", format(dateRange.to!, "yyyy-MM-dd"));
-    query.set("guests", searchValues.guests.toString());
-    query.set("children", (searchValues.children || 0).toString());
-    query.set("rooms", searchValues.rooms.toString());
+    query.set("guests", guests.toString());
+    query.set("children", children.toString());
+    query.set("rooms", rooms.toString());
 
     router.push(`/book/review?${query.toString()}`);
   };

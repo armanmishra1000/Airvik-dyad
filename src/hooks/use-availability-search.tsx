@@ -10,7 +10,49 @@ import {
 import type { DateRange } from "react-day-picker";
 
 import { useDataContext } from "@/context/data-context";
-import type { RoomType } from "@/data/types";
+import type { RoomType, BookingRestriction, RoomOccupancy, BookingValidation } from "@/data/types";
+import { getBookingRestrictions } from "@/lib/api";
+
+// Booking restriction validation helper
+const checkRestrictions = (
+  checkIn: Date,
+  checkOut: Date,
+  roomTypeId: string,
+  restrictions: BookingRestriction[]
+): BookingValidation => {
+  const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+  const checkinDay = checkIn.getDay();
+
+  // Check minimum stay restrictions
+  const minStay = restrictions.find(r => 
+    r.restrictionType === 'min_stay' && 
+    (!r.roomTypeId || r.roomTypeId === roomTypeId) &&
+    (!r.startDate || !r.endDate || (checkIn >= new Date(r.startDate!) && checkOut <= new Date(r.endDate!)))
+  );
+  
+  if (minStay && nights < (minStay.value.minNights || 0)) {
+    return { 
+      isValid: false, 
+      message: `Minimum ${minStay.value.minNights} nights required` 
+    };
+  }
+
+  // Check check-in day restrictions
+  const checkinDayRestriction = restrictions.find(r => 
+    r.restrictionType === 'checkin_days' &&
+    (!r.roomTypeId || r.roomTypeId === roomTypeId) &&
+    (!r.startDate || !r.endDate || (checkIn >= new Date(r.startDate!) && checkOut <= new Date(r.endDate!)))
+  );
+  
+  if (checkinDayRestriction && !checkinDayRestriction.value.allowedDays?.includes(checkinDay)) {
+    return { 
+      isValid: false, 
+      message: 'Check-in not allowed on this day' 
+    };
+  }
+
+  return { isValid: true };
+};
 
 export function useAvailabilitySearch() {
   const { reservations, rooms, roomTypes } = useDataContext();
@@ -19,9 +61,25 @@ export function useAvailabilitySearch() {
     RoomType[] | null
   >(null);
   const [hasNoInventory, setHasNoInventory] = React.useState(false);
+  const [restrictions, setRestrictions] = React.useState<BookingRestriction[]>([]);
+
+  // Load booking restrictions from API
+  React.useEffect(() => {
+    const loadRestrictions = async () => {
+      try {
+        const restrictionsData = await getBookingRestrictions();
+        setRestrictions(restrictionsData);
+      } catch (error) {
+        console.error('Failed to load booking restrictions:', error);
+        setRestrictions([]);
+      }
+    };
+
+    loadRestrictions();
+  }, []);
 
   const search = React.useCallback(
-    (dateRange: DateRange, guests: number, children: number, requestedRooms: number) => {
+    (dateRange: DateRange, roomOccupancies: RoomOccupancy[], categoryIds?: string[]) => {
       setIsLoading(true);
       setAvailableRoomTypes(null);
       setHasNoInventory(false);
@@ -33,13 +91,17 @@ export function useAvailabilitySearch() {
           return;
         }
 
-        const totalOccupants = guests + children;
-
         // If no rooms are configured, show all room types that meet occupancy requirements
         // with a warning message (to be displayed by the consuming component)
         if (!rooms || rooms.length === 0) {
           const availableByOccupancy = roomTypes.filter((rt) => {
-            return rt.maxOccupancy >= Math.ceil(totalOccupants / requestedRooms);
+            // Check each room occupancy configuration against room type
+            return roomOccupancies.every(occ => {
+              const totalGuests = occ.adults + occ.children;
+              const minTotal = (rt.minOccupancy || 1);
+              const maxTotal = rt.maxOccupancy + (rt.maxChildren || 0);
+              return totalGuests >= minTotal && totalGuests <= maxTotal;
+            });
           });
           setAvailableRoomTypes(availableByOccupancy);
           setHasNoInventory(true);
@@ -48,14 +110,34 @@ export function useAvailabilitySearch() {
         }
 
         const available = roomTypes.filter((rt) => {
-          // Check if the room type can accommodate the guests per room
-          if (rt.maxOccupancy < Math.ceil(totalOccupants / requestedRooms)) {
+          // Check if room type has valid category filter
+          if (categoryIds && categoryIds.length > 0 && rt.categoryId) {
+            if (!categoryIds.includes(rt.categoryId)) {
+              return false;
+            }
+          }
+
+          // Check booking restrictions
+          const restrictionCheck = checkRestrictions(dateRange.from!, dateRange.to!, rt.id, restrictions);
+          if (!restrictionCheck.isValid) {
+            return false;
+          }
+
+          // Check if the room type can accommodate each room occupancy configuration
+          const canAccommodateAllRooms = roomOccupancies.every(occ => {
+            const totalGuests = occ.adults + occ.children;
+            const minTotal = (rt.minOccupancy || 1);
+            const maxTotal = rt.maxOccupancy + (rt.maxChildren || 0);
+            return totalGuests >= minTotal && totalGuests <= maxTotal;
+          });
+
+          if (!canAccommodateAllRooms) {
             return false;
           }
 
           const roomsOfType = rooms.filter((r) => r.roomTypeId === rt.id);
           const totalRoomsOfType = roomsOfType.length;
-          if (totalRoomsOfType < requestedRooms) return false;
+          if (totalRoomsOfType < roomOccupancies.length) return false;
 
           const bookingsCountByDate: { [key: string]: number } = {};
           const relevantReservations = reservations.filter(
@@ -95,7 +177,7 @@ export function useAvailabilitySearch() {
             const dayString = format(day, "yyyy-MM-dd");
             const bookedCount = bookingsCountByDate[dayString] || 0;
             const availableRoomsCount = totalRoomsOfType - bookedCount;
-            return availableRoomsCount >= requestedRooms;
+            return availableRoomsCount >= roomOccupancies.length;
           });
 
           return isAvailable;
@@ -105,7 +187,7 @@ export function useAvailabilitySearch() {
         setIsLoading(false);
       }, 500);
     },
-    [reservations, roomTypes, rooms]
+    [reservations, roomTypes, rooms, checkRestrictions]
   );
 
   return { search, availableRoomTypes, isLoading, setAvailableRoomTypes, hasNoInventory };
