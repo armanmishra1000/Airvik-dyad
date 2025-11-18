@@ -21,7 +21,18 @@ import {
 import type { RoomType } from "@/data/types";
 import { Icon } from "@/components/shared/icon";
 import { useDataContext } from "@/context/data-context";
-import type { BookingSearchFormValues, EnhancedBookingSearchFormValues } from "./booking-widget";
+import type { EnhancedBookingSearchFormValues } from "./booking-widget";
+
+// Legacy type for backward compatibility
+type BookingSearchFormValues = {
+  dateRange: {
+    from?: Date;
+    to?: Date;
+  } | undefined;
+  guests: number;
+  children: number;
+  rooms: number;
+};
 
 interface RoomTypeCardProps {
   roomType: RoomType;
