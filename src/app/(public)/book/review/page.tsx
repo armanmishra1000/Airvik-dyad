@@ -13,7 +13,7 @@ import {
 } from "date-fns";
 import { toast } from "sonner";
 import Image from "next/image";
-import { ThumbsUp, Loader2 } from "lucide-react";
+import { ThumbsUp, Loader2, Users } from "lucide-react";
 
 import { useDataContext } from "@/context/data-context";
 import { getOrCreateGuestByEmail } from "@/lib/api";
@@ -21,6 +21,8 @@ import { BookingReviewSkeleton } from "@/components/public/booking-review-skelet
 import { InlineAlert } from "@/components/public/inline-alert";
 import { PaymentTrustBadges } from "@/components/public/payment-trust-badges";
 import { BookingPolicies } from "@/components/public/booking-policies";
+import { calculateRoomPricing, calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
+import { PricingBreakdown } from "@/components/ui/pricing-breakdown";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -167,21 +169,7 @@ function BookingReviewContent() {
     },
   });
 
-  // Calculate nightly rate with proper fallbacks
-  const nightlyRate = React.useMemo(() => {
-    // Priority 1: Use rate plan price
-    if (ratePlan?.price && ratePlan.price > 0) {
-      return ratePlan.price;
-    }
-    
-    // Priority 2: Use room type price (from first selected room)
-    if (selectedRoomTypes.length > 0 && selectedRoomTypes[0]?.price > 0) {
-      return selectedRoomTypes[0].price;
-    }
-    
-    // Priority 3: Default fallback (matches single room page default)
-    return 3000;
-  }, [ratePlan, selectedRoomTypes]);
+
 
   // Validate query parameters and date range
   const { hasValidParams, hasValidDates, fromDate, toDate, nights } = React.useMemo(() => {
@@ -213,6 +201,23 @@ function BookingReviewContent() {
       nights: calculatedNights
     };
   }, [bookingDetails]);
+
+  // Always calculate pricing (not conditional) - must be before early returns
+  const pricing = React.useMemo(() => {
+    if (selectedRoomTypes.length === 1) {
+      return calculateRoomPricing({
+        roomType: selectedRoomTypes[0],
+        ratePlan,
+        nights,
+      });
+    } else {
+      return calculateMultipleRoomPricing({
+        roomTypes: selectedRoomTypes,
+        ratePlan,
+        nights,
+      });
+    }
+  }, [selectedRoomTypes, ratePlan, nights]);
 
   if (isLoading) {
     return <BookingReviewSkeleton />;
@@ -276,10 +281,6 @@ function BookingReviewContent() {
     );
   }
 
-  // At this point, fromDate, toDate, and nights are guaranteed to be valid
-  const totalCost = selectedRoomTypes.length * nights * nightlyRate;
-  const taxesAndFees = totalCost * 0.18; // 18% taxes (matches single room page)
-  const grandTotal = totalCost + taxesAndFees;
   const firstRoomType = selectedRoomTypes[0];
 
   // Helper function to format card number with spaces
@@ -430,6 +431,17 @@ function BookingReviewContent() {
                   className="object-cover rounded-t-lg"
                 />
               </div>
+
+              {/* Room name and guest count display */}
+              <div className="px-4 mt-4 flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-900">{firstRoomType?.name || "Room"}</h3>
+                <div className="flex items-center -mt-1 text-gray-700">
+                  <Users className="size-5 mr-1" />
+                  <span>{bookingDetails.guests || "0"} guest{(parseInt(bookingDetails.guests || "0") > 1) ? "s" : ""}</span>
+                </div>
+              </div>
+
+
               <div className="p-4 space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="bg-primary p-1 rounded-md">
@@ -456,13 +468,13 @@ function BookingReviewContent() {
                   <p className="text-base">
                     {format(fromDate!, "E, d MMM yyyy")}
                   </p>
-                  <p className="text-sm text-muted-foreground">From 12:00</p>
+                  <p className="text-sm text-muted-foreground">From 12:00 PM</p>
                 </div>
                 <Separator orientation="vertical" className="h-auto" />
                 <div>
                   <p className="font-semibold">Check-out</p>
                   <p className="text-base">{format(toDate!, "E, d MMM yyyy")}</p>
-                  <p className="text-sm text-muted-foreground">Until 11:00</p>
+                  <p className="text-sm text-muted-foreground">Before 10:00 AM</p>
                 </div>
               </div>
               <div className="mt-4">
@@ -479,25 +491,14 @@ function BookingReviewContent() {
               <CardTitle className="text-xl">Your total</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 p-4 bg-orange-50 rounded-xl">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">₹{nightlyRate.toLocaleString('en-IN')} × {nights} night{nights > 1 ? 's' : ''}</span>
-                  <span className="font-medium text-gray-900">₹{totalCost.toLocaleString('en-IN')}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Taxes & fees</span>
-                  <span className="font-medium text-gray-900">₹{Math.round(taxesAndFees).toLocaleString('en-IN')}</span>
-                </div>
-                <div className="border-t border-gray-200 pt-3 mt-3">
-                  <div className="flex justify-between items-start">
-                    <span className="font-semibold text-gray-900">Total</span>
-                    <div className="text-right">
-                      <span className="text-2xl font-bold text-primary">₹{Math.round(grandTotal).toLocaleString('en-IN')}</span>
-                      <p className="text-xs text-gray-500">Inclusive of all taxes</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <PricingBreakdown
+                nightlyRate={pricing.nightlyRate}
+                nights={nights}
+                rooms={selectedRoomTypes.length}
+                totalCost={pricing.totalCost}
+                taxesAndFees={pricing.taxesAndFees}
+                grandTotal={pricing.grandTotal}
+              />
             </CardContent>
           </Card>
         </div>
@@ -759,9 +760,9 @@ function BookingReviewContent() {
                         Processing...
                       </>
                     ) : paymentMethod === "card" ? (
-                      `Confirm & Pay ₹${Math.round(grandTotal).toLocaleString('en-IN')}`
+                      `Confirm & Pay ₹${Math.round(pricing.grandTotal).toLocaleString('en-IN')}`
                     ) : (
-                      `Confirm Booking - Pay ₹${Math.round(grandTotal).toLocaleString('en-IN')} at Property`
+                      `Confirm Booking - Pay ₹${Math.round(pricing.grandTotal).toLocaleString('en-IN')} at Property`
                     )}
                   </Button>
                   

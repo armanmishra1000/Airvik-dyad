@@ -345,6 +345,12 @@ export const getReservations = async () => {
     if (error || !data) return { data, error, ...rest };
     return { data: data.map(fromDbReservation), error, ...rest };
 };
+
+export const getReservationById = async (id: string) => {
+    const { data, error, ...rest } = await supabase.from('reservations').select('*').eq('id', id).single();
+    if (error || !data) return { data: null, error, ...rest };
+    return { data: fromDbReservation(data), error, ...rest };
+};
 export const addReservation = async (reservationsData: DbReservationInsert[]) => {
   const { data, error, ...rest } = await supabase
     .from('reservations')

@@ -100,7 +100,7 @@ export const buildRoomType = (overrides: Partial<RoomType> = {}): RoomType => {
     description: overrides.description ?? "Spacious suite with city view",
     maxOccupancy: overrides.maxOccupancy ?? 2,
     bedTypes: overrides.bedTypes ?? ["King"],
-    price: overrides.price ?? 3000,
+    price: overrides.price ?? 2500,
     amenities: overrides.amenities ?? [buildAmenity().id],
     photos: overrides.photos ?? [
       `https://example.com/rooms/${roomTypeSequence}.jpg`,

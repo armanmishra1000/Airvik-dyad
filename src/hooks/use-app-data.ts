@@ -489,16 +489,20 @@ export function useAppData() {
     const { roomIds, ...reservationDetails } = payload;
     const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
-    const ratePlanExists = ratePlans.some((rp) => rp.id === reservationDetails.ratePlanId);
-    if (!ratePlanExists) {
-      throw new Error("Rate plan not found for reservation.");
+    // Check if rate plan exists, but don't fail if it doesn't
+    const ratePlan = reservationDetails.ratePlanId 
+      ? ratePlans.find((rp) => rp.id === reservationDetails.ratePlanId) 
+      : null;
+      
+    if (reservationDetails.ratePlanId && !ratePlan) {
+      console.warn(`Rate plan with id ${reservationDetails.ratePlanId} not found, proceeding with room type pricing`);
     }
 
     const { data, error } = await api.createReservationsWithTotal({
       p_booking_id: bookingId,
       p_guest_id: reservationDetails.guestId,
       p_room_ids: roomIds,
-      p_rate_plan_id: reservationDetails.ratePlanId,
+      p_rate_plan_id: reservationDetails.ratePlanId || "default-rate-plan",
       p_check_in_date: reservationDetails.checkInDate,
       p_check_out_date: reservationDetails.checkOutDate,
       p_number_of_guests: reservationDetails.numberOfGuests,
