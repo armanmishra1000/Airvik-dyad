@@ -185,7 +185,7 @@ export default function BookingConfirmationPage() {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4" />
                           <span>
-                            {guest?.firstName} {guest?.lastName}
+                            {guest?.firstName}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
