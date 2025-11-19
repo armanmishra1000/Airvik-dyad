@@ -216,9 +216,9 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     header: () => <div className="text-right">Amount</div>,
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("totalAmount"))
-      const formatted = new Intl.NumberFormat("en-US", {
+      const formatted = new Intl.NumberFormat("en-IN", {
         style: "currency",
-        currency: "USD",
+        currency: "INR",
       }).format(amount)
  
       return <div className="text-right font-medium">{formatted}</div>
