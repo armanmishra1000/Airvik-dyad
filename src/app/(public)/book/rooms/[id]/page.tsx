@@ -68,6 +68,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ShareDialog } from "@/components/public/share-dialog";
+import { calculateRoomPricing } from "@/lib/pricing-calculator";
+import { PricingBreakdown } from "@/components/ui/pricing-breakdown";
 
 const bookingSchema = z.object({
   dateRange: z
@@ -222,21 +224,21 @@ export default function RoomDetailsPage() {
     return [{ before: new Date() }, ...fullyBookedDates];
   }, [roomType, reservations, rooms]);
 
-  // Calculate nightly rate with consistent pricing (matches book page)
-  const nightlyRate = React.useMemo(() => {
-    // Priority 1: Use room type price (matches book page display)
-    if (roomType?.price && roomType.price > 0) {
-      return roomType.price;
-    }
+  // Calculate pricing based on selected dates
+  const nightCount =
+    dateRange?.from && dateRange?.to
+      ? differenceInDays(dateRange.to, dateRange.from)
+      : 2;
 
-    // Priority 2: Use rate plan price
-    if (standardRatePlan?.price && standardRatePlan.price > 0) {
-      return standardRatePlan.price;
-    }
-
-    // Priority 3: Default fallback
-    return 3000;
-  }, [roomType, standardRatePlan]);
+  // Use shared pricing calculation
+  const pricing = React.useMemo(() => {
+    return calculateRoomPricing({
+      roomType,
+      ratePlan: standardRatePlan,
+      nights: nightCount,
+      rooms: roomsCount,
+    });
+  }, [roomType, standardRatePlan, nightCount, roomsCount]);
 
   // Show loading skeleton while data is loading
   if (isLoading) {
@@ -272,15 +274,7 @@ export default function RoomDetailsPage() {
       ? description.substring(0, 200) + "..."
       : description;
 
-  // Calculate pricing based on selected dates
-  const nightCount =
-    dateRange?.from && dateRange?.to
-      ? differenceInDays(dateRange.to, dateRange.from)
-      : 2;
 
-  const totalPrice = nightlyRate * nightCount;
-  const taxesAndFees = totalPrice * 0.18; // 18% taxes
-  const grandTotal = totalPrice + taxesAndFees;
 
   const newLocal = "container mx-auto p-4 py-6";
   return (
@@ -587,7 +581,7 @@ export default function RoomDetailsPage() {
                 <p className="text-sm text-gray-600 mb-1">from</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold text-gray-900">
-                    ₹{nightlyRate.toLocaleString()}
+                    ₹{pricing.nightlyRate.toLocaleString()}
                   </span>
                   <span className="text-gray-600">/night</span>
                 </div>
@@ -1051,37 +1045,14 @@ export default function RoomDetailsPage() {
                     />
 
                     {/* Pricing Breakdown */}
-                    <div className="space-y-3 p-4 bg-orange-50 rounded-xl">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">
-                          ₹{nightlyRate.toLocaleString()} × {nightCount} nights
-                        </span>
-                        <span className="font-medium text-gray-900">
-                          ₹{totalPrice.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Taxes & fees</span>
-                        <span className="font-medium text-gray-900">
-                          ₹{Math.round(taxesAndFees).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="border-t border-gray-200 pt-3 mt-3">
-                        <div className="flex justify-between items-start">
-                          <span className="font-semibold text-gray-900">
-                            Total
-                          </span>
-                          <div className="text-right">
-                            <span className="text-2xl font-bold text-primary">
-                              ₹{Math.round(grandTotal).toLocaleString()}
-                            </span>
-                            <p className="text-xs text-gray-500">
-                              Inclusive of all taxes
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    <PricingBreakdown
+                      nightlyRate={pricing.nightlyRate}
+                      nights={nightCount}
+                      rooms={roomsCount}
+                      totalCost={pricing.totalCost}
+                      taxesAndFees={pricing.taxesAndFees}
+                      grandTotal={pricing.grandTotal}
+                    />
 
                     <Button
                       className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-white rounded-xl"
@@ -1089,7 +1060,7 @@ export default function RoomDetailsPage() {
                       disabled={!dateRange?.from || !dateRange?.to}
                     >
                       <Sparkles className="h-5 w-5 mr-2" />
-                      Reserve for ₹{Math.round(grandTotal).toLocaleString()}
+                      Reserve for ₹{Math.round(pricing.grandTotal).toLocaleString()}
                     </Button>
 
                     <p className="text-xs text-center text-gray-500">

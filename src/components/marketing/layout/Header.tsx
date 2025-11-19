@@ -47,6 +47,7 @@ const navLinks = [
   { href: "/shop", label: "Shop" },
   { href: "/amenities", label: "Amenities" },
   { href: "/ashram-glimpse", label: "Ashram Glimpse" },
+  { href: "/journey", label: "Journey" },
 ];
 
 type SocialLink = {

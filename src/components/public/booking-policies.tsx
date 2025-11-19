@@ -39,8 +39,8 @@ export function BookingPolicies() {
           </AccordionTrigger>
           <AccordionContent className="pb-4">
             <div className="space-y-3 pl-8 text-sm text-gray-600">
-              <p><strong className="text-gray-900">Check-in:</strong> 12:00 PM - 11:00 PM</p>
-              <p><strong className="text-gray-900">Check-out:</strong> Before 11:00 AM</p>
+              <p><strong className="text-gray-900">Check-in:</strong> 12:00 PM </p>
+              <p><strong className="text-gray-900">Check-out:</strong> Before 10:00 AM </p>
               <p><strong className="text-gray-900">Required documents:</strong></p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>Valid government-issued photo ID (Aadhaar, Passport, Driver&apos;s License)</li>

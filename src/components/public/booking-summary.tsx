@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import type { RoomType } from "@/data/types";
 import type { EnhancedBookingSearchFormValues } from "./booking-widget";
 import { useDataContext } from "@/context/data-context";
+import { calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
 
 interface BookingSummaryProps {
   selection: RoomType[];
@@ -37,25 +38,24 @@ export function BookingSummary({
   const ratePlan =
     ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
   
-  // Calculate cost per room using actual room type prices with fallbacks
-  const costs = selection.map((roomType) => {
-    // Priority 1: Rate plan price
-    if (ratePlan?.price && ratePlan.price > 0) {
-      return nights * ratePlan.price;
-    }
-    
-    // Priority 2: Room type price
-    if (roomType.price > 0) {
-      return nights * roomType.price;
-    }
-    
-    // Priority 3: Default fallback
-    return nights * 3000;
+  // Use shared pricing calculation utility
+  const pricing = calculateMultipleRoomPricing({
+    roomTypes: selection,
+    ratePlan,
+    nights,
   });
   
-  const totalCost = costs.reduce((sum, cost) => sum + cost, 0);
-  const taxesAndFees = Math.round(totalCost * 0.18);
-  const grandTotal = totalCost + taxesAndFees;
+  const { totalCost, taxesAndFees, grandTotal } = pricing;
+  
+  // Calculate individual room costs for display
+  const individualRoomCosts = selection.map((roomType) => {
+    const roomPricing = calculateMultipleRoomPricing({
+      roomTypes: [roomType],
+      ratePlan,
+      nights,
+    });
+    return roomPricing.totalCost;
+  });
 
   const handleProceed = () => {
     // Calculate totals from roomOccupancies for enhanced form
@@ -96,7 +96,7 @@ export function BookingSummary({
               >
                 <span>{roomType.name}</span>
                 <div className="flex items-center gap-2">
-                  <span>₹{costs[index].toLocaleString('en-IN')}</span>
+                  <span>₹{individualRoomCosts[index].toLocaleString('en-IN')}</span>
                   <Button
                     variant="ghost"
                     size="icon"
