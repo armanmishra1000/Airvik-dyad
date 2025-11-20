@@ -105,12 +105,12 @@ export default function HomePage() {
               className="flex justify-center"
             >
               <Image
-                src="/Swami-narayan.png"
+                src="/Your paragraph text.png"
                 alt="Sahajanand Wellness"
-                width={150}
-                height={150}
+                width={400}
+                height={400}
                 quality={100}
-                className="size-28 sm:size-40 object-contain"
+                className="size-32 sm:size-52 object-contain"
               />
             </motion.div>
             <motion.p
@@ -127,7 +127,7 @@ export default function HomePage() {
             </motion.h1>
             <motion.p
               variants={itemVariants}
-              className="mt-4 text-base sm:text-lg font-medium tracking-wider text-primary-foreground/90 uppercase"
+              className="mt-3 text-base sm:text-lg font-medium tracking-wider text-primary-foreground/90 uppercase"
             >
               WELLNESS - THE BEST GIFT TO YOURSELF
             </motion.p>
