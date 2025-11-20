@@ -76,7 +76,7 @@ export function ActivityCard({
           <Button
             asChild
             className={cn(
-              "translate-y-[-20px] transform opacity-0 transition-all duration-300",
+              "translate-y-[-20px] transform opacity-0 hover:bg-primary-hover transition-all duration-300",
               isExpanded && "translate-y-0 opacity-100"
             )}
           >
