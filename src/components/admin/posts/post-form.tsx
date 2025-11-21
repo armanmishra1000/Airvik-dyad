@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,7 +54,6 @@ export function PostForm({
   const { currentUser } = useAuthContext();
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const editorRef = useRef<{ getHTML: () => string } | null>(null);
 
   const defaultCategoryIds = post?.categories?.map((c) => c.id) || [];
 
@@ -102,12 +101,9 @@ export function PostForm({
   const onSubmit = async (values: z.infer<typeof postSchema>) => {
     setIsSaving(true);
     try {
-      // Get current editor content
-      const currentContent = editorRef.current?.getHTML() || values.content || "";
-      
       const updatedValues = {
         ...values,
-        content: currentContent
+        content: values.content || ""
       };
       
       if (post) {
@@ -164,9 +160,6 @@ export function PostForm({
                   <RichTextEditor
                     value={field.value || ""}
                     onChange={field.onChange}
-                    onEditorReady={(editor) => {
-                      editorRef.current = editor;
-                    }}
                     placeholder="Write your post content here..."
                   />
                 </FormControl>
