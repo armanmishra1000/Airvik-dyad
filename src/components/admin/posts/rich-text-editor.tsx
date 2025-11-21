@@ -43,14 +43,12 @@ import { cn } from "@/lib/utils";
 interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
-  onEditorReady?: (editor: any) => void;
   placeholder?: string;
 }
 
 export function RichTextEditor({
   value,
   onChange,
-  onEditorReady,
   placeholder = "Start writing...",
 }: RichTextEditorProps) {
   const editor = useEditor({
@@ -84,25 +82,13 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert focus:outline-none max-w-none min-h-[500px] px-6 py-4 overflow-y-auto",
+          "prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert focus:outline-none max-w-none min-h-[300px] px-6 py-4",
       },
     },
-    
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
   });
-
-  // Sync external value changes to editor
-  useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value);
-    }
-  }, [value, editor]);
-
-  // Notify parent when editor is ready
-  useEffect(() => {
-    if (editor && onEditorReady) {
-      onEditorReady(editor);
-    }
-  }, [editor, onEditorReady]);
 
   const addImage = useCallback(() => {
     const input = document.createElement("input");
@@ -113,10 +99,8 @@ export function RichTextEditor({
       if (file) {
         try {
           const url = await uploadFile(file);
-          if (url && editor?.isEditable) {
-            editor.chain().setImage({ src: url }).run();
-            // Manually update parent when image is added
-            onChange(editor.getHTML());
+          if (url && editor) {
+            editor.chain().focus().setImage({ src: url }).run();
           }
         } catch (error) {
           console.error("Failed to upload image:", error);
@@ -125,10 +109,10 @@ export function RichTextEditor({
       }
     };
     input.click();
-  }, [editor, onChange]);
+  }, [editor]);
 
   const setLink = useCallback(() => {
-    if (!editor?.isEditable) return;
+    if (!editor) return;
     const previousUrl = editor.getAttributes("link").href;
     const url = window.prompt("URL", previousUrl);
 
@@ -137,15 +121,13 @@ export function RichTextEditor({
 
     // empty
     if (url === "") {
-      editor.chain().extendMarkRange("link").unsetLink().run();
-      onChange(editor.getHTML());
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
 
     // update link
-    editor.chain().extendMarkRange("link").setLink({ href: url }).run();
-    onChange(editor.getHTML());
-  }, [editor, onChange]);
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+  }, [editor]);
 
   if (!editor) return null;
 
@@ -155,10 +137,7 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive("bold")}
-          onPressedChange={() => {
-            editor.chain().toggleBold().run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() => editor.chain().focus().toggleBold().run()}
           aria-label="Toggle bold"
         >
           <Bold className="h-4 w-4" />
@@ -166,10 +145,7 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive("italic")}
-          onPressedChange={() => {
-            editor.chain().toggleItalic().run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() => editor.chain().focus().toggleItalic().run()}
           aria-label="Toggle italic"
         >
           <Italic className="h-4 w-4" />
@@ -177,10 +153,7 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive("underline")}
-          onPressedChange={() => {
-            editor.chain().toggleUnderline().run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
           aria-label="Toggle underline"
         >
           <UnderlineIcon className="h-4 w-4" />
@@ -188,10 +161,7 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive("strike")}
-          onPressedChange={() => {
-            editor.chain().toggleStrike().run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() => editor.chain().focus().toggleStrike().run()}
           aria-label="Toggle strikethrough"
         >
           <Strikethrough className="h-4 w-4" />
@@ -215,19 +185,15 @@ export function RichTextEditor({
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem
-              onClick={() => {
-                editor.chain().setParagraph().run();
-                onChange(editor.getHTML());
-              }}
+              onClick={() => editor.chain().focus().setParagraph().run()}
               className={cn(editor.isActive("paragraph") && "bg-accent")}
             >
               Paragraph
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => {
-                editor.chain().toggleHeading({ level: 1 }).run();
-                onChange(editor.getHTML());
-              }}
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 1 }).run()
+              }
               className={cn(
                 editor.isActive("heading", { level: 1 }) && "bg-accent"
               )}
@@ -235,10 +201,9 @@ export function RichTextEditor({
               Heading 1
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => {
-                editor.chain().toggleHeading({ level: 2 }).run();
-                onChange(editor.getHTML());
-              }}
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 2 }).run()
+              }
               className={cn(
                 editor.isActive("heading", { level: 2 }) && "bg-accent"
               )}
@@ -246,10 +211,9 @@ export function RichTextEditor({
               Heading 2
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => {
-                editor.chain().toggleHeading({ level: 3 }).run();
-                onChange(editor.getHTML());
-              }}
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 3 }).run()
+              }
               className={cn(
                 editor.isActive("heading", { level: 3 }) && "bg-accent"
               )}
@@ -264,10 +228,9 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive({ textAlign: "left" })}
-          onPressedChange={() => {
-            editor.chain().setTextAlign("left").run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() =>
+            editor.chain().focus().setTextAlign("left").run()
+          }
           aria-label="Align left"
         >
           <AlignLeft className="h-4 w-4" />
@@ -275,10 +238,9 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive({ textAlign: "center" })}
-          onPressedChange={() => {
-            editor.chain().setTextAlign("center").run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() =>
+            editor.chain().focus().setTextAlign("center").run()
+          }
           aria-label="Align center"
         >
           <AlignCenter className="h-4 w-4" />
@@ -286,10 +248,9 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive({ textAlign: "right" })}
-          onPressedChange={() => {
-            editor.chain().setTextAlign("right").run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() =>
+            editor.chain().focus().setTextAlign("right").run()
+          }
           aria-label="Align right"
         >
           <AlignRight className="h-4 w-4" />
@@ -297,10 +258,9 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive({ textAlign: "justify" })}
-          onPressedChange={() => {
-            editor.chain().setTextAlign("justify").run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() =>
+            editor.chain().focus().setTextAlign("justify").run()
+          }
           aria-label="Justify"
         >
           <AlignJustify className="h-4 w-4" />
@@ -311,10 +271,9 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive("bulletList")}
-          onPressedChange={() => {
-            editor.chain().toggleBulletList().run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() =>
+            editor.chain().focus().toggleBulletList().run()
+          }
           aria-label="Bullet list"
         >
           <List className="h-4 w-4" />
@@ -322,10 +281,9 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive("orderedList")}
-          onPressedChange={() => {
-            editor.chain().toggleOrderedList().run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() =>
+            editor.chain().focus().toggleOrderedList().run()
+          }
           aria-label="Ordered list"
         >
           <ListOrdered className="h-4 w-4" />
@@ -333,10 +291,9 @@ export function RichTextEditor({
         <Toggle
           size="sm"
           pressed={editor.isActive("blockquote")}
-          onPressedChange={() => {
-            editor.chain().toggleBlockquote().run();
-            onChange(editor.getHTML());
-          }}
+          onPressedChange={() =>
+            editor.chain().focus().toggleBlockquote().run()
+          }
           aria-label="Blockquote"
         >
           <Quote className="h-4 w-4" />
@@ -367,10 +324,7 @@ export function RichTextEditor({
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => {
-            editor.chain().undo().run();
-            onChange(editor.getHTML());
-          }}
+          onClick={() => editor.chain().focus().undo().run()}
           aria-label="Undo"
         >
           <Undo className="h-4 w-4" />
@@ -378,10 +332,7 @@ export function RichTextEditor({
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => {
-            editor.chain().redo().run();
-            onChange(editor.getHTML());
-          }}
+          onClick={() => editor.chain().focus().redo().run()}
           aria-label="Redo"
         >
           <Redo className="h-4 w-4" />
