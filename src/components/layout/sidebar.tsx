@@ -15,8 +15,11 @@ import {
   Layers,
   FolderOpen,
   ChevronsLeft,
+  FileText,
+  ChevronRight,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/auth-context";
@@ -28,12 +31,28 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import type { Permission } from "@/data/types";
 
 const navItems = [
   { href: "/admin", icon: Home, label: "Dashboard", requiredPermission: "read:reservation" },
   { href: "/admin/reservations", icon: Calendar, label: "Reservations", requiredPermission: "read:reservation" },
   { href: "/admin/calendar", icon: Calendar, label: "Calendar", requiredPermission: "read:reservation" },
+  { 
+    href: "/admin/posts", 
+    icon: FileText, 
+    label: "Posts", 
+    requiredPermission: "read:post",
+    subItems: [
+      { label: "All Posts", href: "/admin/posts" },
+      { label: "Add Post", href: "/admin/posts/create" },
+      { label: "Categories", href: "/admin/posts/categories" },
+    ]
+  },
   { href: "/admin/housekeeping", icon: ClipboardList, label: "Housekeeping", requiredPermission: "read:room" },
   { href: "/admin/guests", icon: Users, label: "Guests", requiredPermission: "read:guest" },
   { href: "/admin/room-categories", icon: FolderOpen, label: "Room Categories", requiredPermission: "read:room_category" },
@@ -46,6 +65,7 @@ const navItems = [
   icon: LucideIcon;
   label: string;
   requiredPermission: Permission;
+  subItems?: Array<{ label: string; href: string }>;
 }>;
 
 interface SidebarProps {
@@ -91,42 +111,91 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           </Button>
         </div>
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-          {accessibleNavItems.map(({ href, icon: Icon, label }) =>
-            isCollapsed ? (
-              <Tooltip key={href}>
-                <TooltipTrigger asChild>
-                  <Link
-                    href={href}
-                    className={cn(
-                      "flex h-11 w-11 items-center justify-center rounded-2xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none",
-                      pathname === href && "bg-primary/10 text-primary shadow-sm"
-                    )}
+          {accessibleNavItems.map((item) => {
+            const { href, icon: Icon, label, subItems } = item;
+            const isActive = pathname === href || (subItems && pathname.startsWith(href));
+
+            if (isCollapsed) {
+              return (
+                <Tooltip key={href}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={href}
+                      className={cn(
+                        "flex h-11 w-11 items-center justify-center rounded-2xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none",
+                        isActive && "bg-primary/10 text-primary shadow-sm"
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span className="sr-only">{label}</span>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="right"
+                    className="rounded-2xl border border-border/50 bg-card/90 px-3 py-2 text-sm font-medium text-foreground shadow-lg backdrop-blur"
                   >
-                    <Icon className="h-5 w-5" />
-                    <span className="sr-only">{label}</span>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="right"
-                  className="rounded-2xl border border-border/50 bg-card/90 px-3 py-2 text-sm font-medium text-foreground shadow-lg backdrop-blur"
+                    {label}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            if (subItems) {
+              return (
+                <Collapsible
+                  key={href}
+                  defaultOpen={isActive}
+                  className="group/collapsible"
                 >
-                  {label}
-                </TooltipContent>
-              </Tooltip>
-            ) : (
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-visible:outline-none h-auto",
+                        isActive && "text-primary"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-4 w-4" />
+                        {label}
+                      </div>
+                      <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-border/50 pl-2">
+                      {subItems.map((sub) => (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          className={cn(
+                            "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
+                            pathname === sub.href && "bg-primary/10 text-primary"
+                          )}
+                        >
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            }
+
+            return (
               <Link
                 key={href}
                 href={href}
                 className={cn(
                   "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-visible:outline-none",
-                  pathname === href && "bg-primary/10 text-primary shadow-sm"
+                  isActive && "bg-primary/10 text-primary shadow-sm"
                 )}
               >
                 <Icon className="h-4 w-4" />
                 {label}
               </Link>
-            )
-          )}
+            );
+          })}
         </nav>
         <div className="mt-auto border-t border-border/50 px-3 py-4">
           {hasPermission("update:setting") && (

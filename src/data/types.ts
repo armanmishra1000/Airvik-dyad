@@ -1,7 +1,7 @@
 export type UserRole = "manager" | "receptionist" | "housekeeper";
 
 export type PermissionAction = "create" | "read" | "update" | "delete";
-export type PermissionResource = "guest" | "reservation" | "room" | "room_type" | "room_category" | "rate_plan" | "report" | "setting" | "user";
+export type PermissionResource = "guest" | "reservation" | "room" | "room_type" | "room_category" | "rate_plan" | "report" | "setting" | "user" | "post";
 export type Permission = `${PermissionAction}:${PermissionResource}`;
 
 export const allPermissions: readonly Permission[] = [
@@ -11,6 +11,7 @@ export const allPermissions: readonly Permission[] = [
   "create:room_type", "read:room_type", "update:room_type", "delete:room_type",
   "create:room_category", "read:room_category", "update:room_category", "delete:room_category",
   "create:rate_plan", "read:rate_plan", "update:rate_plan", "delete:rate_plan",
+  "create:post", "read:post", "update:post", "delete:post",
   "read:report",
   "update:setting",
   "create:user", "read:user", "update:user", "delete:user",
@@ -186,3 +187,36 @@ export interface StickyNote {
   color: 'yellow' | 'pink' | 'blue' | 'green';
   createdAt: string;
 }
+
+// Blog
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  parent_id?: string;
+  created_at: string;
+  parent?: Category;
+  _count?: {
+    posts: number;
+  };
+}
+
+export interface Post {
+  id: string;
+  title: string;
+  slug: string;
+  content?: string;
+  excerpt?: string;
+  featured_image?: string;
+  status: 'draft' | 'published';
+  published_at?: string;
+  author_id: string;
+  created_at: string;
+  updated_at: string;
+  categories?: Category[];
+  author?: {
+    email: string;
+    full_name?: string;
+  };
+}
