@@ -13,6 +13,8 @@ import type {
   StickyNote,
   FolioItem,
   ReservationStatus,
+  Category,
+  Post,
 } from "@/data/types";
 
 type DbGuest = {
@@ -21,6 +23,29 @@ type DbGuest = {
   last_name: string;
   email: string;
   phone: string;
+};
+
+type DbCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  parent_id: string | null;
+  created_at: string;
+};
+
+type DbPost = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string | null;
+  excerpt: string | null;
+  featured_image: string | null;
+  status: 'draft' | 'published';
+  published_at: string | null;
+  author_id: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 type GuestUpdatePayload = Partial<
@@ -265,6 +290,31 @@ const toDbReservation = (
   if (appReservation.source) dbData.source = appReservation.source;
   return dbData;
 };
+
+// --- Blog Transformers ---
+
+const fromDbCategory = (dbCategory: DbCategory): Category => ({
+  id: dbCategory.id,
+  name: dbCategory.name,
+  slug: dbCategory.slug,
+  description: dbCategory.description ?? undefined,
+  parent_id: dbCategory.parent_id ?? undefined,
+  created_at: dbCategory.created_at,
+});
+
+const fromDbPost = (dbPost: DbPost): Post => ({
+  id: dbPost.id,
+  title: dbPost.title,
+  slug: dbPost.slug,
+  content: dbPost.content ?? undefined,
+  excerpt: dbPost.excerpt ?? undefined,
+  featured_image: dbPost.featured_image ?? undefined,
+  status: dbPost.status,
+  published_at: dbPost.published_at ?? undefined,
+  author_id: dbPost.author_id ?? "",
+  created_at: dbPost.created_at,
+  updated_at: dbPost.updated_at,
+});
 
 // --- File Upload Helper ---
 
@@ -543,3 +593,204 @@ export const validateBookingRequest = async (
   if (error) throw error;
   return data as { isValid: boolean; message?: string };
 };
+
+// Blog API
+
+// Categories
+export const getCategories = async () => {
+  const { data, error } = await supabase.from('categories').select('*, _count:posts(count)');
+  if (error) throw error;
+  // Note: _count from supabase usually requires setup or mapped differently if it's not a direct relation count with foreign keys properly set up for implicit count.
+  // Usually supabase returns { count } inside the relation if using .select('*, posts(count)').
+  // For this simple implementation, we might just get raw data.
+  // Let's stick to basic fetch for now and refine count later or assume 'posts(count)' works if relation exists.
+  // But types might be tricky.
+  const { data: categories, error: catError } = await supabase.from('categories').select('*').order('name');
+  if (catError) throw catError;
+  return categories.map(fromDbCategory);
+};
+
+export const getCategoryById = async (id: string) => {
+  const { data, error } = await supabase.from('categories').select('*').eq('id', id).single();
+  if (error) throw error;
+  return fromDbCategory(data);
+};
+
+export const createCategory = async (categoryData: Omit<Category, "id" | "created_at" | "_count">) => {
+  const { data, error } = await supabase.from('categories').insert([{
+    name: categoryData.name,
+    slug: categoryData.slug,
+    description: categoryData.description,
+    parent_id: categoryData.parent_id,
+  }]).select().single();
+  
+  if (error) throw error;
+  return fromDbCategory(data);
+};
+
+export const updateCategory = async (id: string, categoryData: Partial<Category>) => {
+  const updatePayload: any = {};
+  if (categoryData.name) updatePayload.name = categoryData.name;
+  if (categoryData.slug) updatePayload.slug = categoryData.slug;
+  if (categoryData.description !== undefined) updatePayload.description = categoryData.description;
+  if (categoryData.parent_id !== undefined) updatePayload.parent_id = categoryData.parent_id;
+
+  const { data, error } = await supabase.from('categories').update(updatePayload).eq('id', id).select().single();
+  if (error) throw error;
+  return fromDbCategory(data);
+};
+
+export const deleteCategory = async (id: string) => {
+  const { error } = await supabase.from('categories').delete().eq('id', id);
+  if (error) throw error;
+};
+
+// Posts
+export const getPosts = async (searchParams?: {
+  month?: string;
+  categoryId?: string;
+  search?: string;
+  status?: 'draft' | 'published';
+}) => {
+  let query = supabase.from('posts').select('*, categories:post_categories(categories(*))').order('created_at', { ascending: false });
+
+  if (searchParams?.status) {
+    query = query.eq('status', searchParams.status);
+  }
+  
+  if (searchParams?.search) {
+    query = query.ilike('title', `%${searchParams.search}%`);
+  }
+
+  if (searchParams?.categoryId) {
+    // Filtering by category requires filtering on the joined table which is tricky in simple supabase query builder.
+    // We might need !inner join.
+    // query = query.eq('categories.id', searchParams.categoryId); // This doesn't work directly.
+    // Using !inner on the relation:
+    query = supabase.from('posts').select('*, categories:post_categories!inner(category_id)', { count: 'exact' }).eq('categories.category_id', searchParams.categoryId);
+    // But we also want the other data.
+    // Let's simplify: if categoryId is present, fetch post_ids from junction first.
+    const { data: postIds } = await supabase.from('post_categories').select('post_id').eq('category_id', searchParams.categoryId);
+    if (postIds) {
+      const ids = postIds.map(p => p.post_id);
+      query = supabase.from('posts').select('*, categories:post_categories(categories(*))').in('id', ids).order('created_at', { ascending: false });
+    }
+  }
+  
+  // Month filter (created_at)
+  if (searchParams?.month) {
+      // Format: "YYYY-MM"
+      const startDate = `${searchParams.month}-01`;
+      // Calculate end date (next month)
+      const [year, month] = searchParams.month.split('-').map(Number);
+      const nextMonth = month === 12 ? 1 : month + 1;
+      const nextYear = month === 12 ? year + 1 : year;
+      const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+      
+      query = query.gte('created_at', startDate).lt('created_at', endDate);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  
+  return data.map((post: any) => {
+    const mappedPost = fromDbPost(post);
+    // Map categories
+    if (post.categories) {
+      mappedPost.categories = post.categories.map((pc: any) => fromDbCategory(pc.categories));
+    }
+    return mappedPost;
+  });
+};
+
+export const getPostById = async (id: string) => {
+  const { data, error } = await supabase.from('posts').select('*, categories:post_categories(categories(*))').eq('id', id).single();
+  if (error) throw error;
+  
+  const mappedPost = fromDbPost(data);
+  if (data.categories) {
+    mappedPost.categories = data.categories.map((pc: any) => fromDbCategory(pc.categories));
+  }
+  return mappedPost;
+};
+
+export const getPostBySlug = async (slug: string) => {
+  const { data, error } = await supabase.from('posts').select('*, categories:post_categories(categories(*))').eq('slug', slug).single();
+  if (error) return null;
+  
+  const mappedPost = fromDbPost(data);
+  if (data.categories) {
+    mappedPost.categories = data.categories.map((pc: any) => fromDbCategory(pc.categories));
+  }
+  return mappedPost;
+};
+
+export const createPost = async (postData: Omit<Post, "id" | "created_at" | "updated_at" | "categories"> & { categoryIds?: string[] }) => {
+  // 1. Insert Post
+  const { data: post, error } = await supabase.from('posts').insert([{
+    title: postData.title,
+    slug: postData.slug,
+    content: postData.content,
+    excerpt: postData.excerpt,
+    featured_image: postData.featured_image,
+    status: postData.status,
+    published_at: postData.status === 'published' ? new Date().toISOString() : null,
+    author_id: postData.author_id // Assuming passed or handled by RLS default
+  }]).select().single();
+  
+  if (error) throw error;
+
+  // 2. Insert Categories
+  if (postData.categoryIds && postData.categoryIds.length > 0) {
+    const categoryInserts = postData.categoryIds.map(catId => ({
+      post_id: post.id,
+      category_id: catId
+    }));
+    const { error: catError } = await supabase.from('post_categories').insert(categoryInserts);
+    if (catError) throw catError; // Note: might want to rollback post if this fails
+  }
+
+  return fromDbPost(post);
+};
+
+export const updatePost = async (id: string, postData: Partial<Post> & { categoryIds?: string[] }) => {
+  const updatePayload: any = { updated_at: new Date().toISOString() };
+  if (postData.title) updatePayload.title = postData.title;
+  if (postData.slug) updatePayload.slug = postData.slug;
+  if (postData.content !== undefined) updatePayload.content = postData.content;
+  if (postData.excerpt !== undefined) updatePayload.excerpt = postData.excerpt;
+  if (postData.featured_image !== undefined) updatePayload.featured_image = postData.featured_image;
+  if (postData.status) {
+    updatePayload.status = postData.status;
+    if (postData.status === 'published' && !postData.published_at) {
+        updatePayload.published_at = new Date().toISOString();
+    }
+  }
+
+  const { data: post, error } = await supabase.from('posts').update(updatePayload).eq('id', id).select().single();
+  if (error) throw error;
+
+  // Update Categories (Sync)
+  if (postData.categoryIds) {
+    // Remove old
+    await supabase.from('post_categories').delete().eq('post_id', id);
+    // Add new
+    if (postData.categoryIds.length > 0) {
+       const categoryInserts = postData.categoryIds.map(catId => ({
+          post_id: id,
+          category_id: catId
+        }));
+        await supabase.from('post_categories').insert(categoryInserts);
+    }
+  }
+
+  return fromDbPost(post);
+};
+
+export const deletePost = async (id: string) => {
+  const { error } = await supabase.from('posts').delete().eq('id', id);
+  if (error) throw error;
+};
+
+
+
