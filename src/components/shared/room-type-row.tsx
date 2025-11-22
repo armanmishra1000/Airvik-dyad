@@ -46,8 +46,12 @@ export function RoomTypeRow({
   const [isExpanded, setIsExpanded] = React.useState(false);
   const { roomType, availability } = data;
 
+  const hasNoRooms = roomType.units === 0;
+
   const toggleExpand = () => {
-    setIsExpanded((prev) => !prev);
+    if (!hasNoRooms) {
+      setIsExpanded((prev) => !prev);
+    }
   };
 
   const getDisplayStatus = (
@@ -78,7 +82,13 @@ export function RoomTypeRow({
             <button
               type="button"
               onClick={toggleExpand}
-              className="flex items-center justify-center h-6 w-6 rounded hover:bg-muted transition-colors"
+              disabled={hasNoRooms}
+              className={cn(
+                "flex items-center justify-center h-6 w-6 rounded transition-colors",
+                hasNoRooms
+                  ? "cursor-not-allowed opacity-40"
+                  : "hover:bg-muted cursor-pointer"
+              )}
               aria-label={isExpanded ? "Collapse" : "Expand"}
             >
               {isExpanded ? (
@@ -89,69 +99,83 @@ export function RoomTypeRow({
             </button>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm">{roomType.name}</span>
-              <Badge variant="secondary" className="text-xs">
+              <Badge 
+                variant={hasNoRooms ? "outline" : "secondary"} 
+                className={cn(
+                  "text-xs",
+                  hasNoRooms && "text-muted-foreground border-dashed"
+                )}
+              >
                 {roomType.units} {roomType.units === 1 ? "unit" : "units"}
               </Badge>
             </div>
           </div>
         </TableCell>
-        {availability.map((day) => {
-          const baseStatus = getDisplayStatus(day.status);
-          const isSelected =
-            selectedCell?.roomTypeId === roomType.id &&
-            selectedCell?.date === day.date;
-          const unitsValue =
-            unitsView === "remaining"
-              ? Math.max(day.unitsTotal - day.bookedCount, 0)
-              : day.bookedCount;
-          const showNumber =
-            unitsView === "booked" || unitsValue > 0 ? unitsValue : "";
+        {hasNoRooms ? (
+          <TableCell colSpan={availability.length} className="text-center">
+            <div className="flex items-center justify-center h-14 text-sm text-muted-foreground">
+              <span>No rooms configured</span>
+            </div>
+          </TableCell>
+        ) : (
+          availability.map((day) => {
+            const baseStatus = getDisplayStatus(day.status);
+            const isSelected =
+              selectedCell?.roomTypeId === roomType.id &&
+              selectedCell?.date === day.date;
+            const unitsValue =
+              unitsView === "remaining"
+                ? Math.max(day.unitsTotal - day.bookedCount, 0)
+                : day.bookedCount;
+            const showNumber =
+              unitsView === "booked" || unitsValue > 0 ? unitsValue : "";
 
-          return (
-            <TableCell key={day.date} className="p-0">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    className={cn(
-                      "relative flex h-14 w-full items-center justify-center text-lg font-bold transition cursor-pointer",
-                      availabilityStatusClasses[baseStatus],
-                      (baseStatus === "busy" || baseStatus === "closed") &&
-                        "cursor-not-allowed",
-                      isSelected && "ring-2 ring-primary",
-                      todayIso === day.date && "ring-1 ring-primary/40"
-                    )}
-                    onClick={() =>
-                      handleCellClick(day.date, baseStatus, day.isClosed)
-                    }
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <span className="leading-none">{showNumber}</span>
-                    {(day.hasCheckIn || day.hasCheckOut) && (
-                      <div className="absolute inset-x-1 top-1 flex justify-between text-[9px] font-semibold uppercase text-muted-foreground/70">
-                        <span>{day.hasCheckIn ? "In" : ""}</span>
-                        <span>{day.hasCheckOut ? "Out" : ""}</span>
-                      </div>
-                    )}
-                    {day.isClosed && (
-                      <Lock className="absolute bottom-1 right-1 h-3 w-3 text-muted-foreground/60" />
-                    )}
-                  </div>
-                </TooltipTrigger>
-                {day.reservationIds && day.reservationIds.length > 0 && (
-                  <TooltipContent>
-                    <p className="text-xs">
-                      {day.bookedCount} of {day.unitsTotal} units booked
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(parseISO(day.date), "MMM d, yyyy")}
-                    </p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TableCell>
-          );
-        })}
+            return (
+              <TableCell key={day.date} className="p-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={cn(
+                        "relative flex h-14 w-full items-center justify-center text-lg font-bold transition cursor-pointer",
+                        availabilityStatusClasses[baseStatus],
+                        (baseStatus === "busy" || baseStatus === "closed") &&
+                          "cursor-not-allowed",
+                        isSelected && "ring-2 ring-primary",
+                        todayIso === day.date && "ring-1 ring-primary/40"
+                      )}
+                      onClick={() =>
+                        handleCellClick(day.date, baseStatus, day.isClosed)
+                      }
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <span className="leading-none">{showNumber}</span>
+                      {(day.hasCheckIn || day.hasCheckOut) && (
+                        <div className="absolute inset-x-1 top-1 flex justify-between text-[9px] font-semibold uppercase text-muted-foreground/70">
+                          <span>{day.hasCheckIn ? "In" : ""}</span>
+                          <span>{day.hasCheckOut ? "Out" : ""}</span>
+                        </div>
+                      )}
+                      {day.isClosed && (
+                        <Lock className="absolute bottom-1 right-1 h-3 w-3 text-muted-foreground/60" />
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  {day.reservationIds && day.reservationIds.length > 0 && (
+                    <TooltipContent>
+                      <p className="text-xs">
+                        {day.bookedCount} of {day.unitsTotal} units booked
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(parseISO(day.date), "MMM d, yyyy")}
+                      </p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TableCell>
+            );
+          })
+        )}
       </TableRow>
 
       {/* Expanded: Individual Room Number Rows */}
