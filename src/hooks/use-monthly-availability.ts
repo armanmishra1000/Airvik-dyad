@@ -7,7 +7,10 @@ import { getMonthlyAvailability } from "@/lib/api";
 
 export const formatMonthStart = (value: Date): string => {
   const normalized = new Date(value.getFullYear(), value.getMonth(), 1);
-  return normalized.toISOString().split("T")[0];
+  const year = normalized.getFullYear();
+  const month = String(normalized.getMonth() + 1).padStart(2, '0');
+  const day = '01';
+  return `${year}-${month}-${day}`;
 };
 
 export function useMonthlyAvailability(

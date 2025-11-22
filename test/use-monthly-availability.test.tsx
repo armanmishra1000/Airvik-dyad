@@ -137,3 +137,29 @@ describe("useMonthlyAvailability", () => {
     expect(result.current.error).toBeInstanceOf(Error);
   });
 });
+
+describe("formatMonthStart timezone handling", () => {
+  it("formats December correctly without UTC conversion", () => {
+    const december = new Date(2025, 11, 1);
+    const formatted = formatMonthStart(december);
+    expect(formatted).toBe("2025-12-01");
+  });
+
+  it("formats January correctly without UTC conversion", () => {
+    const january = new Date(2025, 0, 1);
+    const formatted = formatMonthStart(january);
+    expect(formatted).toBe("2025-01-01");
+  });
+
+  it("formats months with single digits correctly", () => {
+    const march = new Date(2025, 2, 15);
+    const formatted = formatMonthStart(march);
+    expect(formatted).toBe("2025-03-01");
+  });
+
+  it("normalizes to first day of month", () => {
+    const midMonth = new Date(2025, 6, 15);
+    const formatted = formatMonthStart(midMonth);
+    expect(formatted).toBe("2025-07-01");
+  });
+});
