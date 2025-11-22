@@ -369,6 +369,9 @@ const defaultProperty: Property = {
   google_maps_url: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.617023443543!2d-73.98784668459395!3d40.74844097932803!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1620312953789!5m2!1sen!2sus",
   timezone: "America/New_York",
   currency: "USD",
+  allowSameDayTurnover: true,
+  showPartialDays: true,
+  defaultUnitsView: "remaining",
 };
 
 export function useAppData() {
@@ -413,7 +416,7 @@ export function useAppData() {
         api.getRoomTypeAmenities()
       ]);
 
-      if (propertyRes.data) setProperty(propertyRes.data);
+      if (propertyRes.data) setProperty({ ...defaultProperty, ...propertyRes.data });
       setGuests(guestsRes.data || []);
       setRooms(roomsRes.data || []);
       setRatePlans(ratePlansRes.data || []);

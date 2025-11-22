@@ -44,6 +44,40 @@ export interface Property {
   google_maps_url: string;
   timezone: string;
   currency: string;
+  allowSameDayTurnover: boolean;
+  showPartialDays: boolean;
+  defaultUnitsView: UnitsViewMode;
+}
+
+export type UnitsViewMode = 'remaining' | 'booked';
+
+export type AvailabilityCellStatus = 'free' | 'partial' | 'busy' | 'closed';
+
+export interface AvailabilityDay {
+  date: string;
+  status: AvailabilityCellStatus;
+  unitsTotal: number;
+  bookedCount: number;
+  reservationIds: string[];
+  hasCheckIn: boolean;
+  hasCheckOut: boolean;
+  isClosed: boolean;
+}
+
+export interface RoomAvailabilityMeta {
+  id: string;
+  name: string;
+  description: string;
+  mainPhotoUrl?: string;
+  price?: number | null;
+  rooms: Array<{ id: string; roomNumber: string }>;
+  units: number;
+  sharedInventory: boolean;
+}
+
+export interface RoomTypeAvailability {
+  roomType: RoomAvailabilityMeta;
+  availability: AvailabilityDay[];
 }
 
 export interface Amenity {
@@ -77,12 +111,13 @@ export interface RoomCategory {
 // Booking restrictions
 export interface BookingRestriction {
   id: string;
-  name: string;
+  name?: string;
   restrictionType: 'min_stay' | 'checkin_days' | 'season';
   value: {
     minNights?: number;
     allowedDays?: number[];
     seasonalPrice?: number;
+    closed?: boolean;
   };
   startDate?: string;
   endDate?: string;
@@ -219,4 +254,4 @@ export interface Post {
     email: string;
     full_name?: string;
   };
-}
+}
