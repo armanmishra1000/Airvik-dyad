@@ -12,9 +12,17 @@ import {
   parseISO,
   isSameDay,
 } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -29,8 +37,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ReservationStatus } from "@/data/types";
+import type {
+  ReservationStatus,
+  UnitsViewMode,
+  AvailabilityCellStatus,
+  RoomTypeAvailability,
+  Reservation,
+  Guest,
+  Room,
+} from "@/data/types";
 import { useDataContext } from "@/context/data-context";
+import { useMonthlyAvailability } from "@/hooks/use-monthly-availability";
 import { cn } from "@/lib/utils";
 
 const reservationStatusStyles: Record<
@@ -71,7 +88,480 @@ const defaultStatusStyle = {
 const getStatusStyle = (status: ReservationStatus) =>
   reservationStatusStyles[status] ?? defaultStatusStyle;
 
+type SelectedCell = {
+  roomTypeId: string;
+  date: string;
+};
+
+type ReservationMetaSummary = {
+  guestName: string;
+  roomNumber?: string;
+  status: ReservationStatus;
+};
+
+const availabilityStatusClasses: Record<AvailabilityCellStatus, string> = {
+  free: "bg-emerald-50 text-emerald-900 border border-emerald-100",
+  partial: "bg-amber-50 text-amber-900 border border-amber-100",
+  busy: "bg-rose-50 text-rose-900 border border-rose-100",
+  closed: "bg-muted text-muted-foreground border border-muted-foreground/20",
+};
+
+const availabilityDotClasses: Record<AvailabilityCellStatus, string> = {
+  free: "bg-emerald-500",
+  partial: "bg-amber-500",
+  busy: "bg-rose-500",
+  closed: "bg-muted-foreground/50",
+};
+
+const legendStatuses: Array<{ key: AvailabilityCellStatus; label: string }> = [
+  { key: "free", label: "Free" },
+  { key: "partial", label: "Partially booked" },
+  { key: "busy", label: "Fully booked" },
+  { key: "closed", label: "Closed" },
+];
+
 export function AvailabilityCalendar() {
+  const { reservations, guests, rooms, property } = useDataContext();
+  const [currentMonth, setCurrentMonth] = React.useState(startOfMonth(new Date()));
+  const [selectedCell, setSelectedCell] = React.useState<SelectedCell | null>(null);
+  const [unitsView, setUnitsView] = React.useState<UnitsViewMode>(property.defaultUnitsView);
+  const { data: monthlyAvailability, isLoading, error } = useMonthlyAvailability(currentMonth);
+
+  const reservationMeta = React.useMemo(
+    () => buildReservationMeta(reservations, guests, rooms),
+    [reservations, guests, rooms]
+  );
+  const monthOptions = React.useMemo(
+    () => buildMonthOptions(currentMonth),
+    [currentMonth]
+  );
+  const headerDays = React.useMemo(
+    () => buildHeaderDays(monthlyAvailability, currentMonth),
+    [monthlyAvailability, currentMonth]
+  );
+  const todayIso = React.useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
+
+  React.useEffect(() => {
+    setUnitsView(property.defaultUnitsView);
+  }, [property.defaultUnitsView]);
+
+  React.useEffect(() => {
+    setSelectedCell(null);
+  }, [currentMonth]);
+
+  const handleMonthSelect = (value: string) => {
+    const parsed = parseISO(value);
+    setCurrentMonth(startOfMonth(parsed));
+  };
+
+  const handleCellSelection = (
+    roomTypeId: string,
+    date: string,
+    status: AvailabilityCellStatus,
+    isClosed: boolean
+  ) => {
+    if (status === "busy" || status === "closed" || isClosed) {
+      return;
+    }
+    setSelectedCell((prev) =>
+      prev && prev.roomTypeId === roomTypeId && prev.date === date
+        ? null
+        : { roomTypeId, date }
+    );
+  };
+
+  if (error) {
+    console.warn("Falling back to legacy calendar due to RPC failure", error);
+    return <LegacyAvailabilityCalendar />;
+  }
+
+  const hasAvailability = (monthlyAvailability?.length ?? 0) > 0;
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+      <div className="border-b border-border/50 p-4 sm:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
+              Availability Overview
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Mirror of the VikBooking calendar with daily room-type availability.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-lg"
+                onClick={() => setCurrentMonth((prev) => subMonths(prev, 1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Select
+                value={format(currentMonth, "yyyy-MM-dd")}
+                onValueChange={handleMonthSelect}
+              >
+                <SelectTrigger className="min-w-[160px] rounded-lg">
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map(({ label, value }) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-lg"
+                onClick={() => setCurrentMonth((prev) => addMonths(prev, 1))}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+              <span>Units view</span>
+              <Select
+                value={unitsView}
+                onValueChange={(value) => setUnitsView(value as UnitsViewMode)}
+              >
+                <SelectTrigger className="h-9 min-w-[140px] rounded-lg text-xs font-medium">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="remaining">Show units left</SelectItem>
+                  <SelectItem value="booked">Show units booked</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="p-4 sm:p-6 space-y-5">
+        {isLoading ? (
+          <Skeleton className="h-[260px] w-full rounded-2xl" />
+        ) : hasAvailability ? (
+          <TooltipProvider delayDuration={0}>
+            <div className="space-y-4">
+              {monthlyAvailability!.map((room) => {
+                const roomMeta = room.roomType;
+                const selectedDate =
+                  selectedCell?.roomTypeId === roomMeta.id
+                    ? selectedCell.date
+                    : null;
+                const firstRoomId = roomMeta.rooms[0]?.id;
+                const availabilityMap = new Map(
+                  room.availability.map((entry) => [entry.date, entry])
+                );
+
+                return (
+                  <div
+                    key={roomMeta.id}
+                    className="rounded-2xl border border-border/50 bg-background/60 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-4 border-b border-border/40 p-4 sm:p-5">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex items-start gap-4">
+                          <div
+                            className={cn(
+                              "h-16 w-16 rounded-xl border border-border/40 bg-muted/40 bg-cover bg-center",
+                              !roomMeta.mainPhotoUrl && "flex items-center justify-center text-muted-foreground"
+                            )}
+                            style={
+                              roomMeta.mainPhotoUrl
+                                ? { backgroundImage: `url(${roomMeta.mainPhotoUrl})` }
+                                : undefined
+                            }
+                          >
+                            {!roomMeta.mainPhotoUrl && (
+                              <CalendarDays className="h-5 w-5 opacity-60" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <h3 className="text-base font-semibold text-foreground">
+                                {roomMeta.name}
+                              </h3>
+                              {roomMeta.sharedInventory && (
+                                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                                  Shared inventory
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                              {roomMeta.description || "No description available."}
+                            </p>
+                            <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                              <span>Units: {roomMeta.units}</span>
+                              {roomMeta.rooms.length > 0 && (
+                                <span>
+                                  Rooms: {formatRoomList(roomMeta.rooms)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-start gap-2 sm:items-end">
+                          <Button
+                            asChild={Boolean(firstRoomId && selectedDate)}
+                            disabled={!firstRoomId || !selectedDate}
+                          >
+                            {firstRoomId && selectedDate ? (
+                              <a href={`/book/rooms/${firstRoomId}?checkin=${selectedDate}`}>
+                                Start booking
+                              </a>
+                            ) : (
+                              <span>Start booking</span>
+                            )}
+                          </Button>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedDate
+                              ? `Check-in ${format(parseISO(selectedDate), "MMM d, yyyy")}`
+                              : "Select a free day to pre-fill check-in"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <Table className="min-w-max">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="sticky left-0 z-10 w-36 bg-muted/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              {format(currentMonth, "MMMM yyyy")}
+                            </TableHead>
+                            {headerDays.map((day) => (
+                              <TableHead
+                                key={`${roomMeta.id}-${day.iso}`}
+                                className="w-12 text-center text-[11px] uppercase text-muted-foreground"
+                              >
+                                <div>{format(day.date, "EEE")}</div>
+                                <div className="font-semibold text-foreground">
+                                  {format(day.date, "d")}
+                                </div>
+                              </TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="sticky left-0 z-10 bg-muted/40 text-xs font-medium text-muted-foreground">
+                              Status
+                            </TableCell>
+                            {headerDays.map((day) => {
+                              const cell = availabilityMap.get(day.iso);
+                              if (!cell) {
+                                return (
+                                  <TableCell key={`${roomMeta.id}-${day.iso}`} className="p-0" />
+                                );
+                              }
+                              const baseStatus = getDisplayStatus(
+                                cell.status,
+                                property.showPartialDays
+                              );
+                              const isSelected =
+                                selectedCell?.roomTypeId === roomMeta.id &&
+                                selectedCell?.date === cell.date;
+                              const reservationsForDay = (cell.reservationIds ?? [])
+                                .map((id) => reservationMeta.get(id))
+                                .filter(
+                                  (entry): entry is ReservationMetaSummary =>
+                                    Boolean(entry)
+                                );
+                              const unitsValue =
+                                unitsView === "remaining"
+                                  ? Math.max(cell.unitsTotal - cell.bookedCount, 0)
+                                  : cell.bookedCount;
+                              const showNumber =
+                                unitsView === "booked" || unitsValue > 0
+                                  ? unitsValue
+                                  : "";
+
+                              const cellContent = (
+                                <div
+                                  className={cn(
+                                    "relative flex h-16 w-full flex-col items-center justify-center gap-1 text-xs font-semibold transition",
+                                    availabilityStatusClasses[baseStatus],
+                                    (baseStatus === "busy" || baseStatus === "closed") &&
+                                      "cursor-not-allowed",
+                                    isSelected && "ring-2 ring-primary",
+                                    todayIso === cell.date && "ring-1 ring-primary/40"
+                                  )}
+                                  onClick={() =>
+                                    handleCellSelection(
+                                      roomMeta.id,
+                                      cell.date,
+                                      baseStatus,
+                                      cell.isClosed
+                                    )
+                                  }
+                                  role="button"
+                                  tabIndex={0}
+                                >
+                                  <span className="text-base leading-none">
+                                    {showNumber}
+                                  </span>
+                                  <span className="text-[10px] font-normal text-muted-foreground">
+                                    {unitsView === "remaining" ? "left" : "booked"}
+                                  </span>
+                                  {(cell.hasCheckIn || cell.hasCheckOut) && (
+                                    <div className="absolute inset-x-1 top-1 flex justify-between text-[9px] font-semibold uppercase text-muted-foreground">
+                                      <span>{cell.hasCheckIn ? "In" : ""}</span>
+                                      <span>{cell.hasCheckOut ? "Out" : ""}</span>
+                                    </div>
+                                  )}
+                                  {cell.isClosed && (
+                                    <Lock className="absolute bottom-1 right-1 h-3.5 w-3.5 text-muted-foreground" />
+                                  )}
+                                </div>
+                              );
+
+                              return (
+                                <TableCell key={`${roomMeta.id}-${cell.date}`} className="p-0">
+                                  {reservationsForDay.length > 0 ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        {cellContent}
+                                      </TooltipTrigger>
+                                      <TooltipContent className="space-y-1">
+                                        {reservationsForDay.map((reservation, index) => (
+                                          <div key={`${reservation.guestName}-${index}`} className="text-xs">
+                                            <p className="font-semibold">
+                                              {reservation.guestName}
+                                            </p>
+                                            {reservation.roomNumber && (
+                                              <p className="text-muted-foreground">
+                                                Room {reservation.roomNumber}
+                                              </p>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ) : (
+                                    cellContent
+                                  )}
+                                </TableCell>
+                              );
+                            })}
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Legend
+              </span>
+              {legendStatuses
+                .filter((status) => property.showPartialDays || status.key !== "partial")
+                .map((status) => (
+                  <div key={status.key} className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "h-3 w-3 rounded-full",
+                        availabilityDotClasses[status.key]
+                      )}
+                    />
+                    <span className="text-muted-foreground">{status.label}</span>
+                  </div>
+                ))}
+            </div>
+          </TooltipProvider>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-border/60 bg-background/40 p-8 text-center text-sm text-muted-foreground">
+            Configure rooms to see availability data.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function buildReservationMeta(
+  reservations: Reservation[],
+  guests: Guest[],
+  rooms: Room[]
+) {
+  const guestMap = new Map(guests.map((guest) => [guest.id, guest]));
+  const roomMap = new Map(rooms.map((room) => [room.id, room]));
+  const meta = new Map<string, ReservationMetaSummary>();
+
+  reservations.forEach((reservation) => {
+    const guest = guestMap.get(reservation.guestId);
+    const room = roomMap.get(reservation.roomId);
+    meta.set(reservation.id, {
+      guestName: guest ? `${guest.firstName} ${guest.lastName}` : "Guest",
+      roomNumber: room?.roomNumber,
+      status: reservation.status,
+    });
+  });
+
+  return meta;
+}
+
+function buildHeaderDays(
+  availability: RoomTypeAvailability[] | null | undefined,
+  fallbackMonth: Date
+) {
+  if (availability && availability.length > 0) {
+    const firstRoom = availability[0];
+    if (firstRoom.availability.length > 0) {
+      return firstRoom.availability.map((day) => ({
+        iso: day.date,
+        date: parseISO(day.date),
+      }));
+    }
+  }
+
+  const start = startOfMonth(fallbackMonth);
+  const end = endOfMonth(fallbackMonth);
+  return eachDayOfInterval({ start, end }).map((date) => ({
+    iso: format(date, "yyyy-MM-dd"),
+    date,
+  }));
+}
+
+function buildMonthOptions(currentMonth: Date) {
+  const todayStart = startOfMonth(new Date());
+  const anchor = currentMonth < todayStart ? startOfMonth(currentMonth) : todayStart;
+  return Array.from({ length: 12 }, (_, index) => {
+    const monthDate = addMonths(anchor, index);
+    return {
+      label: format(monthDate, "MMMM yyyy"),
+      value: format(monthDate, "yyyy-MM-dd"),
+    };
+  });
+}
+
+function formatRoomList(rooms: Array<{ roomNumber: string }>) {
+  if (rooms.length <= 3) {
+    return rooms.map((room) => room.roomNumber).join(", ");
+  }
+  const visible = rooms
+    .slice(0, 3)
+    .map((room) => room.roomNumber)
+    .join(", ");
+  return `${visible} +${rooms.length - 3} more`;
+}
+
+function getDisplayStatus(
+  status: AvailabilityCellStatus,
+  showPartialDays: boolean
+): AvailabilityCellStatus {
+  if (!showPartialDays && status === "partial") {
+    return "free";
+  }
+  return status;
+}
+
+function LegacyAvailabilityCalendar() {
   const { reservations, guests, rooms } = useDataContext();
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
 
