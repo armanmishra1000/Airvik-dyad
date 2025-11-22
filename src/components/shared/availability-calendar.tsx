@@ -195,6 +195,10 @@ export function AvailabilityCalendar() {
     }));
   };
 
+  if (error) {
+    console.error("Failed to load monthly availability", error);
+  }
+
   const handleUseLegacyView = () => {
     setUseLegacyView(true);
   };
