@@ -13,7 +13,6 @@ import {
   isSameDay,
 } from "date-fns";
 import {
-  CalendarDays,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -211,15 +210,12 @@ export function AvailabilityCalendar() {
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-      <div className="border-b border-border/50 p-4 sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1">
+      <div className="border-b border-border/50 p-3 sm:p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
             <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
               Availability Overview
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Mirror of the VikBooking calendar with daily room-type availability.
-            </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
             <div className="flex items-center gap-2">
@@ -255,21 +251,18 @@ export function AvailabilityCalendar() {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
-              <span>Units view</span>
-              <Select
-                value={unitsView}
-                onValueChange={(value) => setUnitsView(value as UnitsViewMode)}
-              >
-                <SelectTrigger className="h-9 min-w-[140px] rounded-lg text-xs font-medium">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="remaining">Show units left</SelectItem>
-                  <SelectItem value="booked">Show units booked</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Select
+              value={unitsView}
+              onValueChange={(value) => setUnitsView(value as UnitsViewMode)}
+            >
+              <SelectTrigger className="h-9 min-w-[130px] rounded-lg text-xs font-medium">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="remaining">Units left</SelectItem>
+                <SelectItem value="booked">Units booked</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -317,77 +310,54 @@ export function AvailabilityCalendar() {
                 return (
                   <div
                     key={roomMeta.id}
-                    className="rounded-2xl border border-border/50 bg-background/60 shadow-sm"
+                    className="rounded-xl border border-border/50 bg-background/60 shadow-sm"
                   >
-                    <div className="flex flex-col gap-4 border-b border-border/40 p-4 sm:p-5">
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex items-start gap-4">
-                          <div
-                            className={cn(
-                              "h-16 w-16 rounded-xl border border-border/40 bg-muted/40 bg-cover bg-center",
-                              !roomMeta.mainPhotoUrl && "flex items-center justify-center text-muted-foreground"
-                            )}
-                            style={
-                              roomMeta.mainPhotoUrl
-                                ? { backgroundImage: `url(${roomMeta.mainPhotoUrl})` }
-                                : undefined
-                            }
+                    <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-base font-semibold text-foreground">
+                          {roomMeta.name}
+                          {roomHasClosure && (
+                            <Lock className="ml-2 inline h-3.5 w-3.5 text-muted-foreground opacity-60" />
+                          )}
+                        </h3>
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                          {roomMeta.units} {roomMeta.units === 1 ? "unit" : "units"}
+                        </span>
+                        {hasRoomNumbers && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleRooms(roomMeta.id)}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            {!roomMeta.mainPhotoUrl && (
-                              <CalendarDays className="h-5 w-5 opacity-60" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="flex flex-wrap items-center gap-3">
-                              <h3 className="text-base font-semibold text-foreground">
-                                {roomMeta.name}
-                              </h3>
-                              {roomMeta.sharedInventory && (
-                                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                                  Shared inventory
-                                </span>
+                            <ChevronDown
+                              className={cn(
+                                "h-3.5 w-3.5 transition-transform",
+                                isRoomsExpanded && "rotate-180"
                               )}
-                              {roomHasClosure && (
-                                <span className="flex items-center gap-1 rounded-full bg-muted/70 px-3 py-1 text-xs font-medium text-muted-foreground">
-                                  <Lock className="h-3 w-3" />
-                                  Closure dates this month
-                                </span>
-                              )}
-                            </div>
-                            <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                              {roomMeta.description || "No description available."}
-                            </p>
-                            <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                              <span>Units: {roomMeta.units}</span>
-                              {roomMeta.rooms.length > 0 && (
-                                <span>
-                                  Rooms: {formatRoomList(roomMeta.rooms)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-start gap-2 sm:items-end">
-                          <Button
-                            asChild={Boolean(firstRoomId && selectedDate)}
-                            disabled={!firstRoomId || !selectedDate}
-                          >
-                            {firstRoomId && selectedDate ? (
-                              <a href={`/book/rooms/${firstRoomId}?checkin=${selectedDate}`}>
-                                Start booking
-                              </a>
-                            ) : (
-                              <span>Start booking</span>
-                            )}
-                          </Button>
-                          <p className="text-xs text-muted-foreground">
-                            {selectedDate
-                              ? `Check-in ${format(parseISO(selectedDate), "MMM d, yyyy")}`
-                              : "Select a free day to pre-fill check-in"}
-                          </p>
-                        </div>
+                            />
+                            {isRoomsExpanded ? "Hide" : "Show"} rooms
+                          </button>
+                        )}
                       </div>
+                      <Button
+                        size="sm"
+                        asChild={Boolean(firstRoomId && selectedDate)}
+                        disabled={!firstRoomId || !selectedDate}
+                      >
+                        {firstRoomId && selectedDate ? (
+                          <a href={`/book/rooms/${firstRoomId}?checkin=${selectedDate}`}>
+                            Book
+                          </a>
+                        ) : (
+                          <span>Book</span>
+                        )}
+                      </Button>
                     </div>
+                    {isRoomsExpanded && hasRoomNumbers && (
+                      <div className="border-b border-border/40 bg-muted/20 px-4 py-2 text-sm text-muted-foreground">
+                        {roomMeta.rooms.map((r) => r.roomNumber).join(", ")}
+                      </div>
+                    )}
                     <div className="overflow-x-auto">
                       <Table className="min-w-max">
                         <TableHeader>
@@ -410,45 +380,14 @@ export function AvailabilityCalendar() {
                         </TableHeader>
                         <TableBody>
                           <TableRow>
-                            <TableCell className="sticky left-0 z-10 bg-muted/40 align-top">
-                              <div className="flex flex-col gap-2 text-sm">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="font-semibold text-foreground">
-                                    {roomMeta.name}
-                                  </span>
-                                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                                    {roomMeta.units} unit{roomMeta.units === 1 ? "" : "s"}
-                                  </span>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                  <span>{format(currentMonth, "MMMM yyyy")}</span>
-                                  {roomMeta.sharedInventory && (
-                                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
-                                      Shared inventory linked
-                                    </span>
-                                  )}
-                                  {roomHasClosure && (
-                                    <span className="flex items-center gap-1 rounded-full bg-muted/70 px-2 py-0.5 text-muted-foreground">
-                                      <Lock className="h-3 w-3" />
-                                      Closure dates
-                                    </span>
-                                  )}
-                                  {hasRoomNumbers && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleRooms(roomMeta.id)}
-                                      className="flex items-center gap-1 rounded-full border border-border/60 px-2 py-0.5 text-xs font-medium text-foreground"
-                                    >
-                                      <ChevronDown
-                                        className={cn(
-                                          "h-3.5 w-3.5 transition-transform",
-                                          isRoomsExpanded && "rotate-180"
-                                        )}
-                                      />
-                                      Room numbers
-                                    </button>
-                                  )}
-                                </div>
+                            <TableCell className="sticky left-0 z-10 bg-muted/40 align-middle">
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="font-semibold text-foreground">
+                                  {roomMeta.name}
+                                </span>
+                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                                  {roomMeta.units}
+                                </span>
                               </div>
                             </TableCell>
                             {headerDays.map((day) => {
@@ -483,7 +422,7 @@ export function AvailabilityCalendar() {
                               const cellContent = (
                                 <div
                                   className={cn(
-                                    "relative flex h-16 w-full flex-col items-center justify-center gap-1 text-xs font-semibold transition",
+                                    "relative flex h-14 w-full items-center justify-center text-lg font-bold transition cursor-pointer",
                                     availabilityStatusClasses[baseStatus],
                                     (baseStatus === "busy" || baseStatus === "closed") &&
                                       "cursor-not-allowed",
@@ -501,20 +440,17 @@ export function AvailabilityCalendar() {
                                   role="button"
                                   tabIndex={0}
                                 >
-                                  <span className="text-base leading-none">
+                                  <span className="leading-none">
                                     {showNumber}
                                   </span>
-                                  <span className="text-[10px] font-normal text-muted-foreground">
-                                    {unitsView === "remaining" ? "left" : "booked"}
-                                  </span>
                                   {(cell.hasCheckIn || cell.hasCheckOut) && (
-                                    <div className="absolute inset-x-1 top-1 flex justify-between text-[9px] font-semibold uppercase text-muted-foreground">
+                                    <div className="absolute inset-x-1 top-1 flex justify-between text-[9px] font-semibold uppercase text-muted-foreground/70">
                                       <span>{cell.hasCheckIn ? "In" : ""}</span>
                                       <span>{cell.hasCheckOut ? "Out" : ""}</span>
                                     </div>
                                   )}
                                   {cell.isClosed && (
-                                    <Lock className="absolute bottom-1 right-1 h-3.5 w-3.5 text-muted-foreground" />
+                                    <Lock className="absolute bottom-1 right-1 h-3 w-3 text-muted-foreground/60" />
                                   )}
                                 </div>
                               );
@@ -551,54 +487,18 @@ export function AvailabilityCalendar() {
                         </TableBody>
                       </Table>
                     </div>
-                    {hasRoomNumbers && (
-                      <div className="border-t border-border/40 bg-muted/20 p-4 text-sm">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-foreground">Rooms in this type</p>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="gap-1 text-muted-foreground"
-                            onClick={() => handleToggleRooms(roomMeta.id)}
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "h-4 w-4 transition-transform",
-                                isRoomsExpanded && "rotate-180"
-                              )}
-                            />
-                            {isRoomsExpanded ? "Hide" : "Show"}
-                          </Button>
-                        </div>
-                        {isRoomsExpanded && (
-                          <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                            {roomMeta.rooms.map((roomItem) => (
-                              <span
-                                key={roomItem.id}
-                                className="rounded-lg border border-border/60 bg-background px-3 py-1 font-medium"
-                              >
-                                {roomItem.roomNumber}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Legend
-              </span>
+            <div className="flex flex-wrap items-center gap-4 text-sm">
               {legendStatuses
                 .filter((status) => property.showPartialDays || status.key !== "partial")
                 .map((status) => (
                   <div key={status.key} className="flex items-center gap-2">
                     <span
                       className={cn(
-                        "h-3 w-3 rounded-full",
+                        "h-4 w-4 rounded-full",
                         availabilityDotClasses[status.key]
                       )}
                     />
@@ -671,17 +571,6 @@ function buildMonthOptions(currentMonth: Date) {
       value: format(monthDate, "yyyy-MM-dd"),
     };
   });
-}
-
-function formatRoomList(rooms: Array<{ roomNumber: string }>) {
-  if (rooms.length <= 3) {
-    return rooms.map((room) => room.roomNumber).join(", ");
-  }
-  const visible = rooms
-    .slice(0, 3)
-    .map((room) => room.roomNumber)
-    .join(", ");
-  return `${visible} +${rooms.length - 3} more`;
 }
 
 function getDisplayStatus(
