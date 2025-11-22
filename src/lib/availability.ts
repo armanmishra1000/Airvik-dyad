@@ -16,3 +16,13 @@ export const mapMonthlyAvailabilityRow = (
   roomType: row.room_type,
   availability: row.availability ?? [],
 });
+
+export const hasClosedDays = (
+  days: AvailabilityDay[] | null | undefined
+): boolean => {
+  if (!Array.isArray(days) || days.length === 0) {
+    return false;
+  }
+
+  return days.some((day) => day.isClosed);
+};

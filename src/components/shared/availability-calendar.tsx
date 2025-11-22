@@ -12,7 +12,13 @@ import {
   parseISO,
   isSameDay,
 } from "date-fns";
-import { CalendarDays, ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +54,7 @@ import type {
 } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
 import { useMonthlyAvailability } from "@/hooks/use-monthly-availability";
+import { hasClosedDays } from "@/lib/availability";
 import { cn } from "@/lib/utils";
 
 const reservationStatusStyles: Record<
@@ -125,6 +132,9 @@ export function AvailabilityCalendar() {
   const [currentMonth, setCurrentMonth] = React.useState(startOfMonth(new Date()));
   const [selectedCell, setSelectedCell] = React.useState<SelectedCell | null>(null);
   const [unitsView, setUnitsView] = React.useState<UnitsViewMode>(property.defaultUnitsView);
+  const [useLegacyView, setUseLegacyView] = React.useState(false);
+  const [expandedRooms, setExpandedRooms] = React.useState<Record<string, boolean>>({});
+  const [rpcError, setRpcError] = React.useState<Error | null>(null);
   const { data: monthlyAvailability, isLoading, error } = useMonthlyAvailability(currentMonth);
 
   const reservationMeta = React.useMemo(
@@ -144,6 +154,14 @@ export function AvailabilityCalendar() {
   React.useEffect(() => {
     setUnitsView(property.defaultUnitsView);
   }, [property.defaultUnitsView]);
+
+  React.useEffect(() => {
+    setRpcError(error ?? null);
+  }, [error]);
+
+  React.useEffect(() => {
+    setExpandedRooms({});
+  }, [currentMonth]);
 
   React.useEffect(() => {
     setSelectedCell(null);
@@ -170,8 +188,18 @@ export function AvailabilityCalendar() {
     );
   };
 
-  if (error) {
-    console.warn("Falling back to legacy calendar due to RPC failure", error);
+  const handleToggleRooms = (roomTypeId: string) => {
+    setExpandedRooms((prev) => ({
+      ...prev,
+      [roomTypeId]: !prev[roomTypeId],
+    }));
+  };
+
+  const handleUseLegacyView = () => {
+    setUseLegacyView(true);
+  };
+
+  if (useLegacyView) {
     return <LegacyAvailabilityCalendar />;
   }
 
@@ -242,6 +270,27 @@ export function AvailabilityCalendar() {
         </div>
       </div>
       <div className="p-4 sm:p-6 space-y-5">
+        {rpcError && (
+          <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+            <p className="font-medium">Unable to load aggregated availability.</p>
+            <p className="mt-1 text-destructive/80">
+              Change the month to retry, or switch to the legacy room-by-room view for immediate access.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={handleUseLegacyView}>
+                Use legacy view
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive"
+                onClick={() => setRpcError(null)}
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        )}
         {isLoading ? (
           <Skeleton className="h-[260px] w-full rounded-2xl" />
         ) : hasAvailability ? (
@@ -257,6 +306,9 @@ export function AvailabilityCalendar() {
                 const availabilityMap = new Map(
                   room.availability.map((entry) => [entry.date, entry])
                 );
+                const isRoomsExpanded = expandedRooms[roomMeta.id] ?? false;
+                const roomHasClosure = hasClosedDays(room.availability);
+                const hasRoomNumbers = roomMeta.rooms.length > 0;
 
                 return (
                   <div
@@ -289,6 +341,12 @@ export function AvailabilityCalendar() {
                               {roomMeta.sharedInventory && (
                                 <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                                   Shared inventory
+                                </span>
+                              )}
+                              {roomHasClosure && (
+                                <span className="flex items-center gap-1 rounded-full bg-muted/70 px-3 py-1 text-xs font-medium text-muted-foreground">
+                                  <Lock className="h-3 w-3" />
+                                  Closure dates this month
                                 </span>
                               )}
                             </div>
@@ -331,7 +389,7 @@ export function AvailabilityCalendar() {
                         <TableHeader>
                           <TableRow>
                             <TableHead className="sticky left-0 z-10 w-36 bg-muted/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                              {format(currentMonth, "MMMM yyyy")}
+                              Room type
                             </TableHead>
                             {headerDays.map((day) => (
                               <TableHead
@@ -348,8 +406,46 @@ export function AvailabilityCalendar() {
                         </TableHeader>
                         <TableBody>
                           <TableRow>
-                            <TableCell className="sticky left-0 z-10 bg-muted/40 text-xs font-medium text-muted-foreground">
-                              Status
+                            <TableCell className="sticky left-0 z-10 bg-muted/40 align-top">
+                              <div className="flex flex-col gap-2 text-sm">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="font-semibold text-foreground">
+                                    {roomMeta.name}
+                                  </span>
+                                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                                    {roomMeta.units} unit{roomMeta.units === 1 ? "" : "s"}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{format(currentMonth, "MMMM yyyy")}</span>
+                                  {roomMeta.sharedInventory && (
+                                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
+                                      Shared inventory linked
+                                    </span>
+                                  )}
+                                  {roomHasClosure && (
+                                    <span className="flex items-center gap-1 rounded-full bg-muted/70 px-2 py-0.5 text-muted-foreground">
+                                      <Lock className="h-3 w-3" />
+                                      Closure dates
+                                    </span>
+                                  )}
+                                  {hasRoomNumbers && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleRooms(roomMeta.id)}
+                                      className="flex items-center gap-1 rounded-full border border-border/60 px-2 py-0.5 text-xs font-medium text-foreground"
+                                    >
+                                      <ChevronDown
+                                        className={cn(
+                                          "h-3.5 w-3.5 transition-transform",
+                                          isRoomsExpanded && "rotate-180"
+                                        )}
+                                      />
+                                      Room numbers
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </TableCell>
                             {headerDays.map((day) => {
                               const cell = availabilityMap.get(day.iso);
@@ -451,6 +547,39 @@ export function AvailabilityCalendar() {
                         </TableBody>
                       </Table>
                     </div>
+                    {hasRoomNumbers && (
+                      <div className="border-t border-border/40 bg-muted/20 p-4 text-sm">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-foreground">Rooms in this type</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1 text-muted-foreground"
+                            onClick={() => handleToggleRooms(roomMeta.id)}
+                          >
+                            <ChevronDown
+                              className={cn(
+                                "h-4 w-4 transition-transform",
+                                isRoomsExpanded && "rotate-180"
+                              )}
+                            />
+                            {isRoomsExpanded ? "Hide" : "Show"}
+                          </Button>
+                        </div>
+                        {isRoomsExpanded && (
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                            {roomMeta.rooms.map((roomItem) => (
+                              <span
+                                key={roomItem.id}
+                                className="rounded-lg border border-border/60 bg-background px-3 py-1 font-medium"
+                              >
+                                {roomItem.roomNumber}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

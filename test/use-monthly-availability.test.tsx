@@ -7,7 +7,7 @@ vi.mock("@/lib/api", () => ({
   getMonthlyAvailability: vi.fn(),
 }));
 
-import { mapMonthlyAvailabilityRow } from "@/lib/availability";
+import { mapMonthlyAvailabilityRow, hasClosedDays } from "@/lib/availability";
 import { getMonthlyAvailability } from "@/lib/api";
 import {
   useMonthlyAvailability,
@@ -71,6 +71,37 @@ describe("mapMonthlyAvailabilityRow", () => {
     });
 
     expect(mapped.availability).toEqual([]);
+  });
+});
+
+describe("hasClosedDays", () => {
+  const baseDay: AvailabilityDay = {
+    date: "2025-01-01",
+    status: "free",
+    unitsTotal: 1,
+    bookedCount: 0,
+    reservationIds: [],
+    hasCheckIn: false,
+    hasCheckOut: false,
+    isClosed: false,
+  };
+
+  it("returns true when at least one day is closed", () => {
+    expect(
+      hasClosedDays([
+        baseDay,
+        {
+          ...baseDay,
+          date: "2025-01-02",
+          isClosed: true,
+        },
+      ])
+    ).toBe(true);
+  });
+
+  it("returns false when no days are closed", () => {
+    expect(hasClosedDays([baseDay])).toBe(false);
+    expect(hasClosedDays(undefined)).toBe(false);
   });
 });
 
