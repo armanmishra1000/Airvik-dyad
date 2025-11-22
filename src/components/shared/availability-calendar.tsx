@@ -13,10 +13,8 @@ import {
   isSameDay,
 } from "date-fns";
 import {
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Lock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -53,7 +51,7 @@ import type {
 } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
 import { useMonthlyAvailability } from "@/hooks/use-monthly-availability";
-import { hasClosedDays } from "@/lib/availability";
+import { RoomTypeRow } from "@/components/shared/room-type-row";
 import { cn } from "@/lib/utils";
 
 const reservationStatusStyles: Record<
@@ -105,13 +103,6 @@ type ReservationMetaSummary = {
   status: ReservationStatus;
 };
 
-const availabilityStatusClasses: Record<AvailabilityCellStatus, string> = {
-  free: "bg-emerald-50 text-emerald-900 border border-emerald-100",
-  partial: "bg-amber-50 text-amber-900 border border-amber-100",
-  busy: "bg-rose-50 text-rose-900 border border-rose-100",
-  closed: "bg-muted text-muted-foreground border border-muted-foreground/20",
-};
-
 const availabilityDotClasses: Record<AvailabilityCellStatus, string> = {
   free: "bg-emerald-500",
   partial: "bg-amber-500",
@@ -132,7 +123,6 @@ export function AvailabilityCalendar() {
   const [selectedCell, setSelectedCell] = React.useState<SelectedCell | null>(null);
   const [unitsView, setUnitsView] = React.useState<UnitsViewMode>(property.defaultUnitsView);
   const [useLegacyView, setUseLegacyView] = React.useState(false);
-  const [expandedRooms, setExpandedRooms] = React.useState<Record<string, boolean>>({});
   const [rpcError, setRpcError] = React.useState<Error | null>(null);
   const { data: monthlyAvailability, isLoading, error } = useMonthlyAvailability(currentMonth);
 
@@ -159,10 +149,6 @@ export function AvailabilityCalendar() {
   }, [error]);
 
   React.useEffect(() => {
-    setExpandedRooms({});
-  }, [currentMonth]);
-
-  React.useEffect(() => {
     setSelectedCell(null);
   }, [currentMonth]);
 
@@ -185,13 +171,6 @@ export function AvailabilityCalendar() {
         ? null
         : { roomTypeId, date }
     );
-  };
-
-  const handleToggleRooms = (roomTypeId: string) => {
-    setExpandedRooms((prev) => ({
-      ...prev,
-      [roomTypeId]: !prev[roomTypeId],
-    }));
   };
 
   if (error) {
@@ -292,206 +271,49 @@ export function AvailabilityCalendar() {
           <Skeleton className="h-[260px] w-full rounded-2xl" />
         ) : hasAvailability ? (
           <TooltipProvider delayDuration={0}>
-            <div className="space-y-4">
-              {monthlyAvailability!.map((room) => {
-                const roomMeta = room.roomType;
-                const selectedDate =
-                  selectedCell?.roomTypeId === roomMeta.id
-                    ? selectedCell.date
-                    : null;
-                const firstRoomId = roomMeta.rooms[0]?.id;
-                const availabilityMap = new Map(
-                  room.availability.map((entry) => [entry.date, entry])
-                );
-                const isRoomsExpanded = expandedRooms[roomMeta.id] ?? false;
-                const roomHasClosure = hasClosedDays(room.availability);
-                const hasRoomNumbers = roomMeta.rooms.length > 0;
-
-                return (
-                  <div
-                    key={roomMeta.id}
-                    className="rounded-xl border border-border/50 bg-background/60 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-base font-semibold text-foreground">
-                          {roomMeta.name}
-                          {roomHasClosure && (
-                            <Lock className="ml-2 inline h-3.5 w-3.5 text-muted-foreground opacity-60" />
-                          )}
-                        </h3>
-                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                          {roomMeta.units} {roomMeta.units === 1 ? "unit" : "units"}
-                        </span>
-                        {hasRoomNumbers && (
-                          <button
-                            type="button"
-                            onClick={() => handleToggleRooms(roomMeta.id)}
-                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "h-3.5 w-3.5 transition-transform",
-                                isRoomsExpanded && "rotate-180"
-                              )}
-                            />
-                            {isRoomsExpanded ? "Hide" : "Show"} rooms
-                          </button>
-                        )}
-                      </div>
-                      <Button
-                        size="sm"
-                        asChild={Boolean(firstRoomId && selectedDate)}
-                        disabled={!firstRoomId || !selectedDate}
-                      >
-                        {firstRoomId && selectedDate ? (
-                          <a href={`/book/rooms/${firstRoomId}?checkin=${selectedDate}`}>
-                            Book
-                          </a>
-                        ) : (
-                          <span>Book</span>
-                        )}
-                      </Button>
-                    </div>
-                    {isRoomsExpanded && hasRoomNumbers && (
-                      <div className="border-b border-border/40 bg-muted/20 px-4 py-2 text-sm text-muted-foreground">
-                        {roomMeta.rooms.map((r) => r.roomNumber).join(", ")}
-                      </div>
-                    )}
-                    <div className="overflow-x-auto">
-                      <Table className="min-w-max">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="sticky left-0 z-10 w-36 bg-muted/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                              Room type
-                            </TableHead>
-                            {headerDays.map((day) => (
-                              <TableHead
-                                key={`${roomMeta.id}-${day.iso}`}
-                                className="w-12 text-center text-[11px] uppercase text-muted-foreground"
-                              >
-                                <div>{format(day.date, "EEE")}</div>
-                                <div className="font-semibold text-foreground">
-                                  {format(day.date, "d")}
-                                </div>
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          <TableRow>
-                            <TableCell className="sticky left-0 z-10 bg-muted/40 align-middle">
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="font-semibold text-foreground">
-                                  {roomMeta.name}
-                                </span>
-                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                                  {roomMeta.units}
-                                </span>
-                              </div>
-                            </TableCell>
-                            {headerDays.map((day) => {
-                              const cell = availabilityMap.get(day.iso);
-                              if (!cell) {
-                                return (
-                                  <TableCell key={`${roomMeta.id}-${day.iso}`} className="p-0" />
-                                );
-                              }
-                              const baseStatus = getDisplayStatus(
-                                cell.status,
-                                property.showPartialDays
-                              );
-                              const isSelected =
-                                selectedCell?.roomTypeId === roomMeta.id &&
-                                selectedCell?.date === cell.date;
-                              const reservationsForDay = (cell.reservationIds ?? [])
-                                .map((id) => reservationMeta.get(id))
-                                .filter(
-                                  (entry): entry is ReservationMetaSummary =>
-                                    Boolean(entry)
-                                );
-                              const unitsValue =
-                                unitsView === "remaining"
-                                  ? Math.max(cell.unitsTotal - cell.bookedCount, 0)
-                                  : cell.bookedCount;
-                              const showNumber =
-                                unitsView === "booked" || unitsValue > 0
-                                  ? unitsValue
-                                  : "";
-
-                              const cellContent = (
-                                <div
-                                  className={cn(
-                                    "relative flex h-14 w-full items-center justify-center text-lg font-bold transition cursor-pointer",
-                                    availabilityStatusClasses[baseStatus],
-                                    (baseStatus === "busy" || baseStatus === "closed") &&
-                                      "cursor-not-allowed",
-                                    isSelected && "ring-2 ring-primary",
-                                    todayIso === cell.date && "ring-1 ring-primary/40"
-                                  )}
-                                  onClick={() =>
-                                    handleCellSelection(
-                                      roomMeta.id,
-                                      cell.date,
-                                      baseStatus,
-                                      cell.isClosed
-                                    )
-                                  }
-                                  role="button"
-                                  tabIndex={0}
-                                >
-                                  <span className="leading-none">
-                                    {showNumber}
-                                  </span>
-                                  {(cell.hasCheckIn || cell.hasCheckOut) && (
-                                    <div className="absolute inset-x-1 top-1 flex justify-between text-[9px] font-semibold uppercase text-muted-foreground/70">
-                                      <span>{cell.hasCheckIn ? "In" : ""}</span>
-                                      <span>{cell.hasCheckOut ? "Out" : ""}</span>
-                                    </div>
-                                  )}
-                                  {cell.isClosed && (
-                                    <Lock className="absolute bottom-1 right-1 h-3 w-3 text-muted-foreground/60" />
-                                  )}
-                                </div>
-                              );
-
-                              return (
-                                <TableCell key={`${roomMeta.id}-${cell.date}`} className="p-0">
-                                  {reservationsForDay.length > 0 ? (
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        {cellContent}
-                                      </TooltipTrigger>
-                                      <TooltipContent className="space-y-1">
-                                        {reservationsForDay.map((reservation, index) => (
-                                          <div key={`${reservation.guestName}-${index}`} className="text-xs">
-                                            <p className="font-semibold">
-                                              {reservation.guestName}
-                                            </p>
-                                            {reservation.roomNumber && (
-                                              <p className="text-muted-foreground">
-                                                Room {reservation.roomNumber}
-                                              </p>
-                                            )}
-                                          </div>
-                                        ))}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  ) : (
-                                    cellContent
-                                  )}
-                                </TableCell>
-                              );
-                            })}
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Single Unified Table */}
+            <div className="rounded-2xl border border-border/50 bg-background/60 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table className="min-w-max">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="sticky left-0 z-20 w-56 bg-muted/80 border-r border-border/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <span>{format(currentMonth, "MMMM yyyy")}</span>
+                        </div>
+                      </TableHead>
+                      {headerDays.map((day) => (
+                        <TableHead
+                          key={day.iso}
+                          className="w-14 text-center text-[11px] uppercase text-muted-foreground bg-muted/60"
+                        >
+                          <div>{format(day.date, "EEE")}</div>
+                          <div className="font-semibold text-foreground">
+                            {format(day.date, "d")}
+                          </div>
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {monthlyAvailability!.map((room) => (
+                      <RoomTypeRow
+                        key={room.roomType.id}
+                        data={room}
+                        unitsView={unitsView}
+                        showPartialDays={property.showPartialDays}
+                        todayIso={todayIso}
+                        onCellClick={handleCellSelection}
+                        selectedCell={selectedCell}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-4 text-sm">
+            
+            {/* Legend */}
+            <div className="flex flex-wrap items-center gap-4 text-sm pt-2">
               {legendStatuses
                 .filter((status) => property.showPartialDays || status.key !== "partial")
                 .map((status) => (
