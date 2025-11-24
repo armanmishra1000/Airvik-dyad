@@ -7,6 +7,7 @@ import {
   useSearchParams,
   useRouter,
 } from "next/navigation";
+import type { DateRange } from "react-day-picker";
 import {
   Calendar as CalendarIcon,
   MapPin,
@@ -597,7 +598,7 @@ export default function RoomDetailsPage() {
                         control={form.control}
                         name="dateRange"
                         render={({ field }) => {
-                          const handleDateSelect = (range: any) => {
+                          const handleDateSelect = (range: DateRange | undefined) => {
                             field.onChange(range);
                             if (range?.from && range?.to) {
                               setIsDatesPopoverOpen(false);

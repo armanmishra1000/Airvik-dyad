@@ -19,52 +19,120 @@ export default function RoomsPage() {
   const {
     search,
     availableRoomTypes,
+    roomTypeAvailability,
     isLoading: isSearching,
     setAvailableRoomTypes,
+    setRoomTypeAvailability,
     hasNoInventory,
   } = useAvailabilitySearch();
   const [hasSearched, setHasSearched] = React.useState(false);
   const [searchValues, setSearchValues] =
     React.useState<EnhancedBookingSearchFormValues | null>(null);
-  const [selection, setSelection] = React.useState<RoomType[]>([]);
+
+  type SelectedRoomTypeQuantity = {
+    roomTypeId: string;
+    quantity: number;
+  };
+
+  const [selectedRoomQuantities, setSelectedRoomQuantities] =
+    React.useState<SelectedRoomTypeQuantity[]>([]);
 
   const handleSearch = (values: EnhancedBookingSearchFormValues) => {
     search(values.dateRange, values.roomOccupancies);
     setHasSearched(true);
     setSearchValues(values);
-    setSelection([]); // Clear previous selection on new search
+    setSelectedRoomQuantities([]); // Clear previous selection on new search
   };
 
   const handleClearSearch = () => {
     setHasSearched(false);
     setAvailableRoomTypes(null);
+    setRoomTypeAvailability(null);
     setSearchValues(null);
-    setSelection([]);
-  };
-
-  const handleSelectRoom = (roomType: RoomType) => {
-    if (searchValues) {
-      // Calculate number of rooms based on roomOccupancies
-      const roomCount = searchValues.roomOccupancies.length;
-      
-      if (selection.length < roomCount) {
-        setSelection((prev) => [...prev, roomType]);
-      }
-    }
-  };
-
-  const handleRemoveRoom = (index: number) => {
-    setSelection((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleClearSelection = () => {
-    setSelection([]);
+    setSelectedRoomQuantities([]);
   };
 
   const roomsToDisplay = hasSearched ? availableRoomTypes : roomTypes;
-  const isSelectionComplete = searchValues
-    ? selection.length >= searchValues.roomOccupancies.length
-    : false;
+  const availabilityByRoomTypeId = React.useMemo(() => {
+    const map = new Map<string, number>();
+    if (roomTypeAvailability) {
+      roomTypeAvailability.forEach((item) => {
+        map.set(item.roomTypeId, item.availableRooms);
+      });
+    }
+    return map;
+  }, [roomTypeAvailability]);
+
+  const getSelectedQuantity = React.useCallback(
+    (roomTypeId: string): number => {
+      const entry = selectedRoomQuantities.find(
+        (item) => item.roomTypeId === roomTypeId,
+      );
+      return entry ? entry.quantity : 0;
+    },
+    [selectedRoomQuantities],
+  );
+
+  const updateSelectedQuantity = React.useCallback(
+    (roomTypeId: string, quantity: number) => {
+      setSelectedRoomQuantities((prev) => {
+        if (quantity <= 0) {
+          return prev.filter((item) => item.roomTypeId !== roomTypeId);
+        }
+
+        const existingIndex = prev.findIndex(
+          (item) => item.roomTypeId === roomTypeId,
+        );
+
+        if (existingIndex === -1) {
+          return [...prev, { roomTypeId, quantity }];
+        }
+
+        const next = [...prev];
+        next[existingIndex] = { roomTypeId, quantity };
+        return next;
+      });
+    },
+    [],
+  );
+
+  const selectedRooms: RoomType[] = React.useMemo(() => {
+    if (!selectedRoomQuantities.length) return [];
+    const byId = new Map(roomTypes.map((rt) => [rt.id, rt] as const));
+    const result: RoomType[] = [];
+
+    selectedRoomQuantities.forEach(({ roomTypeId, quantity }) => {
+      const rt = byId.get(roomTypeId);
+      if (!rt) return;
+      for (let index = 0; index < quantity; index += 1) {
+        result.push(rt);
+      }
+    });
+
+    return result;
+  }, [roomTypes, selectedRoomQuantities]);
+
+  const totalSelectedRooms = selectedRooms.length;
+
+  const totalGuests = React.useMemo(() => {
+    if (!searchValues) return 0;
+    return searchValues.roomOccupancies.reduce(
+      (sum, occ) => sum + occ.adults + occ.children,
+      0,
+    );
+  }, [searchValues]);
+
+  const totalSelectedCapacity = React.useMemo(() => {
+    if (!selectedRoomQuantities.length) return 0;
+    const byId = new Map(roomTypes.map((rt) => [rt.id, rt] as const));
+    return selectedRoomQuantities.reduce((sum, { roomTypeId, quantity }) => {
+      const rt = byId.get(roomTypeId);
+      if (!rt) return sum;
+      return sum + quantity * rt.maxOccupancy;
+    }, 0);
+  }, [roomTypes, selectedRoomQuantities]);
+
+  const coversGuests = searchValues ? totalSelectedCapacity >= totalGuests : false;
 
   const showLoading = isInitialLoading || isSearching;
 
@@ -180,17 +248,120 @@ export default function RoomsPage() {
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
                     {roomsToDisplay.map((roomType) => (
-                      <RoomTypeCard
-                        key={roomType.id}
-                        roomType={roomType}
-                        price={roomType.price}
-                        onSelect={handleSelectRoom}
-                        isSelectionComplete={isSelectionComplete}
-                        hasSearched={hasSearched}
-                        searchValues={searchValues}
-                      />
+                      <div key={roomType.id} className="space-y-2">
+                        <RoomTypeCard
+                          roomType={roomType}
+                          price={roomType.price}
+                          // Selection is now handled via checkbox + quantity below
+                          onSelect={() => {}}
+                          isSelectionComplete
+                          hasSearched={hasSearched}
+                          searchValues={searchValues}
+                        />
+
+                        {hasSearched &&
+                          !hasNoInventory &&
+                          roomTypeAvailability && (
+                            <div className="mt-1 rounded-lg border border-border/40 bg-white px-3 py-2 text-xs sm:text-sm flex flex-col gap-2">
+                              {(() => {
+                                const availableCount =
+                                  availabilityByRoomTypeId.get(roomType.id) ?? 0;
+                                const selectedQuantity = getSelectedQuantity(
+                                  roomType.id,
+                                );
+
+                                return (
+                                  <>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <p className="text-muted-foreground">
+                                        {availableCount > 0
+                                          ? `${availableCount} room${
+                                              availableCount === 1 ? "" : "s"
+                                            } available for your dates`
+                                          : "No rooms currently available for this type"}
+                                      </p>
+                                      {availableCount > 0 && (
+                                        <label className="inline-flex items-center gap-2">
+                                          <input
+                                            type="checkbox"
+                                            className="h-4 w-4 rounded border-border/60"
+                                            checked={selectedQuantity > 0}
+                                            onChange={(event) => {
+                                              if (event.target.checked) {
+                                                updateSelectedQuantity(
+                                                  roomType.id,
+                                                  Math.max(1, selectedQuantity || 0),
+                                                );
+                                              } else {
+                                                updateSelectedQuantity(
+                                                  roomType.id,
+                                                  0,
+                                                );
+                                              }
+                                            }}
+                                          />
+                                          <span>Select</span>
+                                        </label>
+                                      )}
+                                    </div>
+
+                                    {selectedQuantity > 0 && availableCount > 0 && (
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-muted-foreground">
+                                          Rooms
+                                        </span>
+                                        <select
+                                          className="border border-border/60 bg-white px-2 py-1 text-xs sm:text-sm rounded-md"
+                                          value={selectedQuantity}
+                                          onChange={(event) =>
+                                            updateSelectedQuantity(
+                                              roomType.id,
+                                              Number(event.target.value),
+                                            )
+                                          }
+                                        >
+                                          {Array.from(
+                                            { length: availableCount },
+                                            (_, index) => index + 1,
+                                          ).map((count) => (
+                                            <option key={count} value={count}>
+                                              {count}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </div>
+                          )}
+                      </div>
                     ))}
                   </div>
+                  {hasSearched && searchValues && !hasNoInventory && (
+                    <div className="mt-8 max-w-xl space-y-1 text-sm">
+                      <p>
+                        Selected {totalSelectedRooms} room
+                        {totalSelectedRooms === 1 ? "" : "s"}
+                        {totalGuests > 0 && (
+                          <>
+                            {" "}
+                            · Capacity for {totalSelectedCapacity} guest
+                            {totalSelectedCapacity === 1 ? "" : "s"} (you
+                            searched for {totalGuests} guest
+                            {totalGuests === 1 ? "" : "s"})
+                          </>
+                        )}
+                      </p>
+                      {!coversGuests && totalSelectedRooms > 0 && (
+                        <p className="text-xs text-red-600">
+                          Selected rooms may not cover all guests. You can
+                          still continue, but consider adding more rooms.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 /* No Rooms Found */
@@ -214,12 +385,17 @@ export default function RoomsPage() {
           )}
         </div>
       </section>
-      {hasSearched && searchValues && selection.length > 0 && (
+      {hasSearched && searchValues && selectedRooms.length > 0 && (
         <BookingSummary
-          selection={selection}
+          selection={selectedRooms}
           searchValues={searchValues}
-          onRemove={handleRemoveRoom}
-          onClear={handleClearSelection}
+          onRemove={(index) => {
+            const roomToRemove = selectedRooms[index];
+            if (!roomToRemove) return;
+            const currentQuantity = getSelectedQuantity(roomToRemove.id);
+            updateSelectedQuantity(roomToRemove.id, currentQuantity - 1);
+          }}
+          onClear={() => setSelectedRoomQuantities([])}
         />
       )}
     </div>

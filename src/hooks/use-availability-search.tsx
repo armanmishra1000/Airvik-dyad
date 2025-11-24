@@ -10,7 +10,12 @@ import {
 import type { DateRange } from "react-day-picker";
 
 import { useDataContext } from "@/context/data-context";
-import type { RoomType, BookingRestriction, RoomOccupancy, BookingValidation } from "@/data/types";
+import type {
+  RoomType,
+  BookingRestriction,
+  RoomOccupancy,
+  BookingValidation,
+} from "@/data/types";
 import { getBookingRestrictions } from "@/lib/api";
 
 // Booking restriction validation helper
@@ -54,6 +59,11 @@ const checkRestrictions = (
   return { isValid: true };
 };
 
+export interface RoomTypeAvailabilitySummary {
+  roomTypeId: string;
+  availableRooms: number;
+}
+
 export function useAvailabilitySearch() {
   const { reservations, rooms, roomTypes } = useDataContext();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -62,6 +72,9 @@ export function useAvailabilitySearch() {
   >(null);
   const [hasNoInventory, setHasNoInventory] = React.useState(false);
   const [restrictions, setRestrictions] = React.useState<BookingRestriction[]>([]);
+  const [roomTypeAvailability, setRoomTypeAvailability] = React.useState<
+    RoomTypeAvailabilitySummary[] | null
+  >(null);
 
   // Load booking restrictions from API
   React.useEffect(() => {
@@ -83,6 +96,7 @@ export function useAvailabilitySearch() {
       setIsLoading(true);
       setAvailableRoomTypes(null);
       setHasNoInventory(false);
+      setRoomTypeAvailability(null);
 
       // Simulate network delay for a better user experience
       setTimeout(() => {
@@ -105,9 +119,12 @@ export function useAvailabilitySearch() {
           });
           setAvailableRoomTypes(availableByOccupancy);
           setHasNoInventory(true);
+          setRoomTypeAvailability(null);
           setIsLoading(false);
           return;
         }
+
+        const availabilitySummaries: RoomTypeAvailabilitySummary[] = [];
 
         const available = roomTypes.filter((rt) => {
           // Check if room type has valid category filter
@@ -173,22 +190,45 @@ export function useAvailabilitySearch() {
           });
           if (searchInterval.length > 0) searchInterval.pop(); // Don't count checkout day
 
+          let minAvailableRoomsForStay = totalRoomsOfType;
+
           const isAvailable = searchInterval.every((day) => {
             const dayString = format(day, "yyyy-MM-dd");
             const bookedCount = bookingsCountByDate[dayString] || 0;
             const availableRoomsCount = totalRoomsOfType - bookedCount;
+
+            if (availableRoomsCount < minAvailableRoomsForStay) {
+              minAvailableRoomsForStay = availableRoomsCount;
+            }
+
             return availableRoomsCount >= roomOccupancies.length;
           });
+
+          if (isAvailable && minAvailableRoomsForStay > 0) {
+            availabilitySummaries.push({
+              roomTypeId: rt.id,
+              availableRooms: minAvailableRoomsForStay,
+            });
+          }
 
           return isAvailable;
         });
 
         setAvailableRoomTypes(available);
+        setRoomTypeAvailability(availabilitySummaries);
         setIsLoading(false);
       }, 500);
     },
-    [reservations, roomTypes, rooms, checkRestrictions]
+    [reservations, roomTypes, rooms, restrictions, checkRestrictions]
   );
 
-  return { search, availableRoomTypes, isLoading, setAvailableRoomTypes, hasNoInventory };
+  return {
+    search,
+    availableRoomTypes,
+    roomTypeAvailability,
+    isLoading,
+    setAvailableRoomTypes,
+    setRoomTypeAvailability,
+    hasNoInventory,
+  };
 }

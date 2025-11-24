@@ -32,20 +32,19 @@ const amountString = z
   .trim()
   .min(1, "Amount is required")
   .refine(
-    (v) => /^(\d{1,3}(,\d{3})*|\d+)(\.\d+)?$/.test(v) || /^(\d+)?(\.\d+)$/.test(v),
-    "Amount must be a valid number"
-  )
-  .transform((v) => Number(v.replace(/,/g, "")))
-  .refine((n) => !Number.isNaN(n), "Amount must be a valid number")
-  .refine((n) => n > 0, "Amount must be greater than 0");
+    (value) => {
+      const numeric = Number(value.replace(/,/g, ""));
+      return !Number.isNaN(numeric) && numeric > 0;
+    },
+    "Amount must be a valid number greater than 0",
+  );
 
 const chargeSchema = z.object({
   description: z.string().trim().min(1, "Description is required."),
   amount: amountString,
 });
 
-type ChargeFormInput = z.input<typeof chargeSchema>;   // { amount: string; description: string }
-type ChargeFormOutput = z.output<typeof chargeSchema>; // { amount: number; description: string }
+type ChargeFormValues = z.infer<typeof chargeSchema>;
 
 interface AddChargeDialogProps {
   reservationId: string;
@@ -59,17 +58,21 @@ export function AddChargeDialog({
   const [open, setOpen] = React.useState(false);
   const { addFolioItem } = useDataContext();
 
-  const form = useForm<ChargeFormInput>({
-    resolver: zodResolver(chargeSchema) as any,
+  const form = useForm<ChargeFormValues>({
+    resolver: zodResolver(chargeSchema),
     defaultValues: {
       description: "",
       amount: "",
     },
   });
 
-  function onSubmit(values: ChargeFormInput) {
-    const parsed: ChargeFormOutput = chargeSchema.parse(values);
-    addFolioItem(reservationId, parsed);
+  function onSubmit(values: ChargeFormValues) {
+    const parsedAmount = Number(values.amount.replace(/,/g, ""));
+
+    addFolioItem(reservationId, {
+      description: values.description.trim(),
+      amount: parsedAmount,
+    });
     toast.success("Charge added successfully!");
     form.reset();
     setOpen(false);

@@ -19,6 +19,16 @@ const formSchema = z.object({
   password: z.string().min(1, { message: "Password is required." }),
 });
 
+interface UserMetadataWithRole {
+  role_name?: string;
+}
+
+interface ProfileWithRoles {
+  roles?: {
+    name?: string | null;
+  } | null;
+}
+
 export function UserLoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -39,12 +49,20 @@ export function UserLoginForm() {
 
     let roleName: string | null = null;
     const user = data.user ?? (await supabase.auth.getUser()).data.user;
-    const metaRole = (user?.user_metadata as any)?.role_name;
+    const metaRole =
+      (user?.user_metadata as UserMetadataWithRole | undefined)?.role_name ??
+      null;
     roleName = typeof metaRole === "string" ? metaRole : null;
     if (!roleName && user?.id) {
       try {
         const { data: profile } = await getUserProfile(user.id);
-        roleName = (profile?.roles as any)?.name ?? null;
+        const profileRoles = (profile as ProfileWithRoles | null | undefined)
+          ?.roles;
+        const profileRoleName =
+          profileRoles && typeof profileRoles.name === "string"
+            ? profileRoles.name
+            : null;
+        roleName = profileRoleName ?? roleName;
       } catch {}
     }
 
