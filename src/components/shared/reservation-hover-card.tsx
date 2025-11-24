@@ -51,10 +51,11 @@ const getStatusStyle = (status: ReservationStatus) =>
     dot: "bg-muted/70",
   };
 
-const formatCurrency = (amount: number) => {
+const formatCurrency = (amount: number, currency: string) => {
+  const safeCurrency = currency || "USD";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: safeCurrency,
   }).format(amount);
 };
 
@@ -127,7 +128,7 @@ export function ReservationHoverCard({
   reservationIds,
   date,
 }: ReservationHoverCardProps) {
-  const { reservations, guests, rooms, roomTypes } = useDataContext();
+  const { reservations, guests, rooms, roomTypes, property } = useDataContext();
 
   const reservationDetails = React.useMemo<ReservationDetail[]>(() => {
     const guestMap = new Map(guests.map((guest) => [guest.id, guest]));
@@ -288,13 +289,13 @@ export function ReservationHoverCard({
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-primary">Total Amount:</span>
                         <span className="font-semibold">
-                          {formatCurrency(reservation.totalAmount)}
+                          {formatCurrency(reservation.totalAmount, property.currency ?? "USD")}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-primary">Total Paid:</span>
                         <span className="font-semibold text-emerald-600">
-                          {formatCurrency(totalPaid)}
+                          {formatCurrency(totalPaid, property.currency ?? "USD")}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-muted-foreground">
@@ -305,7 +306,7 @@ export function ReservationHoverCard({
                             balance > 0 ? "text-rose-600" : "text-emerald-600"
                           )}
                         >
-                          {formatCurrency(balance)}
+                          {formatCurrency(balance, property.currency ?? "USD")}
                         </span>
                       </div>
                     </div>

@@ -329,11 +329,11 @@ export function AvailabilityCalendar() {
                 ))}
             </div>
           </TooltipProvider>
-        ) : (
+        ) : !rpcError ? (
           <div className="rounded-2xl border border-dashed border-border/60 bg-background/40 p-8 text-center text-sm text-muted-foreground">
             Configure rooms to see availability data.
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

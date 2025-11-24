@@ -201,21 +201,23 @@ export function RoomTypeRow({
 
             const hasBookings = day.reservationIds && day.reservationIds.length > 0;
 
+            const isDisabled =
+              baseStatus === "busy" || baseStatus === "closed" || day.isClosed;
+
             const cellContent = (
-              <div
+              <button
+                type="button"
                 className={cn(
-                  "relative flex h-14 w-full items-center justify-center text-lg font-bold transition cursor-pointer border-x border-b border-border/40 bg-background",
+                  "relative flex h-14 w-full items-center justify-center text-lg font-bold transition border-x border-b border-border/40 bg-background",
                   availabilityStatusClasses[baseStatus],
-                  (baseStatus === "busy" || baseStatus === "closed") &&
-                    "cursor-not-allowed",
+                  isDisabled && "cursor-not-allowed",
                   isSelected && "ring-2 ring-primary",
                   todayIso === day.date && "ring-1 ring-primary/40"
                 )}
                 onClick={() =>
                   handleCellClick(day.date, baseStatus, day.isClosed)
                 }
-                role="button"
-                tabIndex={0}
+                disabled={isDisabled}
               >
                 <span className="leading-none">{showNumber}</span>
                 {(day.hasCheckIn || day.hasCheckOut) && (
@@ -227,7 +229,7 @@ export function RoomTypeRow({
                 {day.isClosed && (
                   <Lock className="absolute bottom-1 right-1 h-3 w-3 text-muted-foreground/60" />
                 )}
-              </div>
+              </button>
             );
 
             return (
@@ -276,13 +278,13 @@ export function RoomTypeRow({
             {availability.map((day) => {
               const reservation = getReservationForRoomOnDate(room.id, day.date);
 
-              let roomStatus: AvailabilityCellStatus = "free";
+              const isClosed = day.isClosed === true;
+              let roomStatus: AvailabilityCellStatus = isClosed ? "closed" : "free";
               let cellContent: React.ReactNode;
-              
-              if (day.isClosed) {
-                roomStatus = "closed";
-              } else if (reservation) {
-                const statusStyle = reservationStatusStyles[reservation.status] ?? defaultStatusStyle;
+
+              if (reservation) {
+                const statusStyle =
+                  reservationStatusStyles[reservation.status] ?? defaultStatusStyle;
                 roomStatus = "busy";
                 cellContent = (
                   <ReservationHoverCard
@@ -301,14 +303,20 @@ export function RoomTypeRow({
                     </div>
                   </ReservationHoverCard>
                 );
-              } else {
+              }
+
+              if (!cellContent) {
                 cellContent = (
                   <div
                     className={cn(
                       "relative flex h-12 w-full items-center justify-center border-x border-b border-border/40 text-sm font-semibold transition bg-background",
                       availabilityStatusClasses[roomStatus]
                     )}
-                  />
+                  >
+                    {isClosed && (
+                      <Lock className="h-3 w-3 text-muted-foreground/60" />
+                    )}
+                  </div>
                 );
               }
 
