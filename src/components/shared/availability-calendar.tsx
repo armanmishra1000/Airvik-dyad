@@ -149,6 +149,12 @@ export function AvailabilityCalendar() {
   }, [error]);
 
   React.useEffect(() => {
+    if (error) {
+      console.error("Failed to load monthly availability", error);
+    }
+  }, [error]);
+
+  React.useEffect(() => {
     setSelectedCell(null);
   }, [currentMonth]);
 
@@ -172,10 +178,6 @@ export function AvailabilityCalendar() {
         : { roomTypeId, date }
     );
   };
-
-  if (error) {
-    console.error("Failed to load monthly availability", error);
-  }
 
   const handleUseLegacyView = () => {
     setUseLegacyView(true);
