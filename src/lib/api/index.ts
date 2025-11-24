@@ -15,7 +15,10 @@ import type {
   ReservationStatus,
   Category,
   Post,
+  RoomTypeAvailability,
+  BookingRestriction,
 } from "@/data/types";
+import { mapMonthlyAvailabilityRow, MonthlyAvailabilityRow } from "@/lib/availability";
 
 type DbGuest = {
   id: string;
@@ -34,6 +37,10 @@ type DbCategory = {
   created_at: string;
 };
 
+type DbCategoryUpdatePayload = Partial<
+  Pick<DbCategory, "name" | "slug" | "description" | "parent_id">
+>;
+
 type DbPost = {
   id: string;
   title: string;
@@ -47,6 +54,28 @@ type DbPost = {
   created_at: string;
   updated_at: string;
 };
+
+type DbPostCategory = {
+  categories: DbCategory;
+};
+
+type DbPostWithCategories = DbPost & {
+  categories?: DbPostCategory[];
+};
+
+type DbPostUpdatePayload = Partial<
+  Pick<
+    DbPost,
+    | "title"
+    | "slug"
+    | "content"
+    | "excerpt"
+    | "featured_image"
+    | "status"
+    | "published_at"
+    | "updated_at"
+  >
+>;
 
 type GuestUpdatePayload = Partial<
   Pick<DbGuest, "first_name" | "last_name" | "email" | "phone">
@@ -133,6 +162,18 @@ type DbReservationInsert = ReservationUpdatePayload & {
   source: Reservation["source"];
 };
 
+type DbBookingRestriction = {
+  id: string;
+  name: string | null;
+  restriction_type: BookingRestriction["restrictionType"];
+  value: BookingRestriction["value"];
+  start_date: string | null;
+  end_date: string | null;
+  room_type_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type CreateReservationsArgs = {
   p_booking_id: string;           // text - keep as string
   p_guest_id: string;             // uuid - validate UUID format
@@ -173,6 +214,7 @@ type UpdateUserProfilePayload = Partial<{
   name: string;
   roleId: string;
 }>;
+
 
 // --- Validation Helpers ---
 
@@ -291,6 +333,18 @@ const toDbReservation = (
   return dbData;
 };
 
+const fromDbBookingRestriction = (
+  row: DbBookingRestriction
+): BookingRestriction => ({
+  id: row.id,
+  name: row.name ?? undefined,
+  restrictionType: row.restriction_type,
+  value: row.value,
+  startDate: row.start_date ?? undefined,
+  endDate: row.end_date ?? undefined,
+  roomTypeId: row.room_type_id ?? undefined,
+});
+
 // --- Blog Transformers ---
 
 const fromDbCategory = (dbCategory: DbCategory): Category => ({
@@ -315,6 +369,20 @@ const fromDbPost = (dbPost: DbPost): Post => ({
   created_at: dbPost.created_at,
   updated_at: dbPost.updated_at,
 });
+
+const fromDbPostWithCategories = (
+  dbPost: DbPostWithCategories
+): Post => {
+  const mapped = fromDbPost(dbPost);
+  if (dbPost.categories) {
+    mapped.categories = dbPost.categories
+      .map((pc) => pc.categories)
+      .filter(Boolean)
+      .map(fromDbCategory);
+  }
+  return mapped;
+};
+
 
 // --- File Upload Helper ---
 
@@ -565,14 +633,30 @@ export const deleteStickyNote = (id: string) => supabase.from('sticky_notes').de
 export const getHousekeepingAssignments = () => supabase.from('housekeeping_assignments').select('*');
 
 // Booking Restrictions
-export const getBookingRestrictions = async () => {
+export const getBookingRestrictions = async (): Promise<BookingRestriction[]> => {
   const { data, error } = await supabase
     .from('booking_restrictions')
     .select('*')
     .order('created_at');
   
   if (error) throw error;
-  return data || [];
+  return (data ?? []).map((row) => fromDbBookingRestriction(row as DbBookingRestriction));
+};
+
+export const getMonthlyAvailability = async (
+  monthStart: string,
+  roomTypeIds?: string[]
+): Promise<RoomTypeAvailability[]> => {
+  const { data, error } = await supabase.rpc('get_monthly_availability', {
+    p_month_start: monthStart,
+    p_room_type_ids:
+      roomTypeIds && roomTypeIds.length > 0 ? roomTypeIds : null,
+  });
+
+  if (error) throw error;
+  return (data ?? []).map((row: MonthlyAvailabilityRow) =>
+    mapMonthlyAvailabilityRow(row)
+  );
 };
 
 export const validateBookingRequest = async (
@@ -628,16 +712,24 @@ export const createCategory = async (categoryData: Omit<Category, "id" | "create
   return fromDbCategory(data);
 };
 
-export const updateCategory = async (id: string, categoryData: Partial<Category>) => {
-  const updatePayload: any = {};
+export const updateCategory = async (
+  id: string,
+  categoryData: Partial<Category>
+) => {
+  const updatePayload: DbCategoryUpdatePayload = {};
   if (categoryData.name) updatePayload.name = categoryData.name;
   if (categoryData.slug) updatePayload.slug = categoryData.slug;
   if (categoryData.description !== undefined) updatePayload.description = categoryData.description;
   if (categoryData.parent_id !== undefined) updatePayload.parent_id = categoryData.parent_id;
 
-  const { data, error } = await supabase.from('categories').update(updatePayload).eq('id', id).select().single();
+  const { data, error } = await supabase
+    .from('categories')
+    .update(updatePayload)
+    .eq('id', id)
+    .select()
+    .single();
   if (error) throw error;
-  return fromDbCategory(data);
+  return fromDbCategory(data as DbCategory);
 };
 
 export const deleteCategory = async (id: string) => {
@@ -692,37 +784,31 @@ export const getPosts = async (searchParams?: {
 
   const { data, error } = await query;
   if (error) throw error;
-  
-  return data.map((post: any) => {
-    const mappedPost = fromDbPost(post);
-    // Map categories
-    if (post.categories) {
-      mappedPost.categories = post.categories.map((pc: any) => fromDbCategory(pc.categories));
-    }
-    return mappedPost;
-  });
+
+  const typedPosts = (data ?? []) as DbPostWithCategories[];
+  return typedPosts.map(fromDbPostWithCategories);
 };
 
 export const getPostById = async (id: string) => {
-  const { data, error } = await supabase.from('posts').select('*, categories:post_categories(categories(*))').eq('id', id).single();
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*, categories:post_categories(categories(*))')
+    .eq('id', id)
+    .single();
   if (error) throw error;
-  
-  const mappedPost = fromDbPost(data);
-  if (data.categories) {
-    mappedPost.categories = data.categories.map((pc: any) => fromDbCategory(pc.categories));
-  }
-  return mappedPost;
+
+  return fromDbPostWithCategories(data as DbPostWithCategories);
 };
 
 export const getPostBySlug = async (slug: string) => {
-  const { data, error } = await supabase.from('posts').select('*, categories:post_categories(categories(*))').eq('slug', slug).single();
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*, categories:post_categories(categories(*))')
+    .eq('slug', slug)
+    .single();
   if (error) return null;
-  
-  const mappedPost = fromDbPost(data);
-  if (data.categories) {
-    mappedPost.categories = data.categories.map((pc: any) => fromDbCategory(pc.categories));
-  }
-  return mappedPost;
+
+  return fromDbPostWithCategories(data as DbPostWithCategories);
 };
 
 export const createPost = async (postData: Omit<Post, "id" | "created_at" | "updated_at" | "categories"> & { categoryIds?: string[] }) => {
@@ -753,8 +839,13 @@ export const createPost = async (postData: Omit<Post, "id" | "created_at" | "upd
   return fromDbPost(post);
 };
 
-export const updatePost = async (id: string, postData: Partial<Post> & { categoryIds?: string[] }) => {
-  const updatePayload: any = { updated_at: new Date().toISOString() };
+export const updatePost = async (
+  id: string,
+  postData: Partial<Post> & { categoryIds?: string[] }
+) => {
+  const updatePayload: DbPostUpdatePayload = {
+    updated_at: new Date().toISOString(),
+  };
   if (postData.title) updatePayload.title = postData.title;
   if (postData.slug) updatePayload.slug = postData.slug;
   if (postData.content !== undefined) updatePayload.content = postData.content;
@@ -767,7 +858,12 @@ export const updatePost = async (id: string, postData: Partial<Post> & { categor
     }
   }
 
-  const { data: post, error } = await supabase.from('posts').update(updatePayload).eq('id', id).select().single();
+  const { data: post, error } = await supabase
+    .from('posts')
+    .update(updatePayload)
+    .eq('id', id)
+    .select()
+    .single();
   if (error) throw error;
 
   // Update Categories (Sync)
@@ -784,7 +880,7 @@ export const updatePost = async (id: string, postData: Partial<Post> & { categor
     }
   }
 
-  return fromDbPost(post);
+  return fromDbPost(post as DbPost);
 };
 
 export const deletePost = async (id: string) => {
@@ -793,4 +889,4 @@ export const deletePost = async (id: string) => {
 };
 
 
-
+

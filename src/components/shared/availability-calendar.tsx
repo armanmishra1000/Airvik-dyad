@@ -12,9 +12,20 @@ import {
   parseISO,
   isSameDay,
 } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -29,8 +40,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ReservationStatus } from "@/data/types";
+import type {
+  ReservationStatus,
+  UnitsViewMode,
+  AvailabilityCellStatus,
+  RoomTypeAvailability,
+  Reservation,
+  Guest,
+  Room,
+} from "@/data/types";
 import { useDataContext } from "@/context/data-context";
+import { useMonthlyAvailability } from "@/hooks/use-monthly-availability";
+import { RoomTypeRow } from "@/components/shared/room-type-row";
 import { cn } from "@/lib/utils";
 
 const reservationStatusStyles: Record<
@@ -71,7 +92,322 @@ const defaultStatusStyle = {
 const getStatusStyle = (status: ReservationStatus) =>
   reservationStatusStyles[status] ?? defaultStatusStyle;
 
+type SelectedCell = {
+  roomTypeId: string;
+  date: string;
+};
+
+type ReservationMetaSummary = {
+  guestName: string;
+  roomNumber?: string;
+  status: ReservationStatus;
+};
+
+const availabilityDotClasses: Record<AvailabilityCellStatus, string> = {
+  free: "bg-emerald-500",
+  partial: "bg-amber-500",
+  busy: "bg-rose-500",
+  closed: "bg-muted-foreground/50",
+};
+
+const legendStatuses: Array<{ key: AvailabilityCellStatus; label: string }> = [
+  { key: "free", label: "Free" },
+  { key: "partial", label: "Partially booked" },
+  { key: "busy", label: "Fully booked" },
+  { key: "closed", label: "Closed" },
+];
+
 export function AvailabilityCalendar() {
+  const { reservations, guests, rooms, property } = useDataContext();
+  const [currentMonth, setCurrentMonth] = React.useState(startOfMonth(new Date()));
+  const [selectedCell, setSelectedCell] = React.useState<SelectedCell | null>(null);
+  const [unitsView, setUnitsView] = React.useState<UnitsViewMode>(property.defaultUnitsView);
+  const [useLegacyView, setUseLegacyView] = React.useState(false);
+  const [rpcError, setRpcError] = React.useState<Error | null>(null);
+  const { data: monthlyAvailability, isLoading, error } = useMonthlyAvailability(currentMonth);
+
+  const reservationMeta = React.useMemo(
+    () => buildReservationMeta(reservations, guests, rooms),
+    [reservations, guests, rooms]
+  );
+  const monthOptions = React.useMemo(
+    () => buildMonthOptions(currentMonth),
+    [currentMonth]
+  );
+  const headerDays = React.useMemo(
+    () => buildHeaderDays(monthlyAvailability, currentMonth),
+    [monthlyAvailability, currentMonth]
+  );
+  const todayIso = React.useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
+
+  React.useEffect(() => {
+    setUnitsView(property.defaultUnitsView);
+  }, [property.defaultUnitsView]);
+
+  React.useEffect(() => {
+    setRpcError(error ?? null);
+  }, [error]);
+
+  React.useEffect(() => {
+    if (error) {
+      console.error("Failed to load monthly availability", error);
+    }
+  }, [error]);
+
+  React.useEffect(() => {
+    setSelectedCell(null);
+  }, [currentMonth]);
+
+  const handleMonthSelect = (value: string) => {
+    const parsed = parseISO(value);
+    setCurrentMonth(startOfMonth(parsed));
+  };
+
+  const handleCellSelection = (
+    roomTypeId: string,
+    date: string,
+    status: AvailabilityCellStatus,
+    isClosed: boolean
+  ) => {
+    if (status === "busy" || status === "closed" || isClosed) {
+      return;
+    }
+    setSelectedCell((prev) =>
+      prev && prev.roomTypeId === roomTypeId && prev.date === date
+        ? null
+        : { roomTypeId, date }
+    );
+  };
+
+  const handleUseLegacyView = () => {
+    setUseLegacyView(true);
+  };
+
+  if (useLegacyView) {
+    return <LegacyAvailabilityCalendar />;
+  }
+
+  const hasAvailability = (monthlyAvailability?.length ?? 0) > 0;
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
+      <div className="border-b border-border/50 p-3 sm:p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
+              Availability Overview
+            </h2>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-lg"
+                onClick={() => setCurrentMonth((prev) => subMonths(prev, 1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Select
+                value={format(currentMonth, "yyyy-MM-dd")}
+                onValueChange={handleMonthSelect}
+              >
+                <SelectTrigger className="min-w-[160px] rounded-lg">
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map(({ label, value }) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-lg"
+                onClick={() => setCurrentMonth((prev) => addMonths(prev, 1))}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <Select
+              value={unitsView}
+              onValueChange={(value) => setUnitsView(value as UnitsViewMode)}
+            >
+              <SelectTrigger className="h-9 min-w-[130px] rounded-lg text-xs font-medium">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="remaining">Units left</SelectItem>
+                <SelectItem value="booked">Units booked</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+      <div className="p-4 sm:p-6 space-y-5">
+        {rpcError && (
+          <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+            <p className="font-medium">Unable to load aggregated availability.</p>
+            <p className="mt-1 text-destructive/80">
+              Change the month to retry, or switch to the legacy room-by-room view for immediate access.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={handleUseLegacyView}>
+                Use legacy view
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive"
+                onClick={() => setRpcError(null)}
+              >
+                Dismiss
+              </Button>
+            </div>
+          </div>
+        )}
+        {isLoading ? (
+          <Skeleton className="h-[260px] w-full rounded-2xl" />
+        ) : hasAvailability ? (
+          <TooltipProvider delayDuration={0}>
+            {/* Single Unified Table */}
+            <div className="rounded-2xl border border-border/50 bg-background/60 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table className="min-w-max">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="sticky left-0 z-20 w-56 bg-muted/80 border-r border-border/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <span>{format(currentMonth, "MMMM yyyy")}</span>
+                        </div>
+                      </TableHead>
+                      {headerDays.map((day) => (
+                        <TableHead
+                          key={day.iso}
+                          className="w-14 text-center text-[11px] uppercase text-muted-foreground bg-muted/60"
+                        >
+                          <div>{format(day.date, "EEE")}</div>
+                          <div className="font-semibold text-foreground">
+                            {format(day.date, "d")}
+                          </div>
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {monthlyAvailability!.map((room) => (
+                      <RoomTypeRow
+                        key={room.roomType.id}
+                        data={room}
+                        unitsView={unitsView}
+                        showPartialDays={property.showPartialDays}
+                        todayIso={todayIso}
+                        onCellClick={handleCellSelection}
+                        selectedCell={selectedCell}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+            
+            {/* Legend */}
+            <div className="flex flex-wrap items-center gap-4 text-sm pt-2">
+              {legendStatuses
+                .filter((status) => property.showPartialDays || status.key !== "partial")
+                .map((status) => (
+                  <div key={status.key} className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "h-4 w-4 rounded-full",
+                        availabilityDotClasses[status.key]
+                      )}
+                    />
+                    <span className="text-muted-foreground">{status.label}</span>
+                  </div>
+                ))}
+            </div>
+          </TooltipProvider>
+        ) : !rpcError ? (
+          <div className="rounded-2xl border border-dashed border-border/60 bg-background/40 p-8 text-center text-sm text-muted-foreground">
+            Configure rooms to see availability data.
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function buildReservationMeta(
+  reservations: Reservation[],
+  guests: Guest[],
+  rooms: Room[]
+) {
+  const guestMap = new Map(guests.map((guest) => [guest.id, guest]));
+  const roomMap = new Map(rooms.map((room) => [room.id, room]));
+  const meta = new Map<string, ReservationMetaSummary>();
+
+  reservations.forEach((reservation) => {
+    const guest = guestMap.get(reservation.guestId);
+    const room = roomMap.get(reservation.roomId);
+    meta.set(reservation.id, {
+      guestName: guest ? `${guest.firstName} ${guest.lastName}` : "Guest",
+      roomNumber: room?.roomNumber,
+      status: reservation.status,
+    });
+  });
+
+  return meta;
+}
+
+function buildHeaderDays(
+  availability: RoomTypeAvailability[] | null | undefined,
+  fallbackMonth: Date
+) {
+  if (availability && availability.length > 0) {
+    const firstRoom = availability[0];
+    if (firstRoom.availability.length > 0) {
+      return firstRoom.availability.map((day) => ({
+        iso: day.date,
+        date: parseISO(day.date),
+      }));
+    }
+  }
+
+  const start = startOfMonth(fallbackMonth);
+  const end = endOfMonth(fallbackMonth);
+  return eachDayOfInterval({ start, end }).map((date) => ({
+    iso: format(date, "yyyy-MM-dd"),
+    date,
+  }));
+}
+
+function buildMonthOptions(currentMonth: Date) {
+  const todayStart = startOfMonth(new Date());
+  const anchor = currentMonth < todayStart ? startOfMonth(currentMonth) : todayStart;
+  return Array.from({ length: 12 }, (_, index) => {
+    const monthDate = addMonths(anchor, index);
+    return {
+      label: format(monthDate, "MMMM yyyy"),
+      value: format(monthDate, "yyyy-MM-dd"),
+    };
+  });
+}
+
+function getDisplayStatus(
+  status: AvailabilityCellStatus,
+  showPartialDays: boolean
+): AvailabilityCellStatus {
+  if (!showPartialDays && status === "partial") {
+    return "free";
+  }
+  return status;
+}
+
+function LegacyAvailabilityCalendar() {
   const { reservations, guests, rooms } = useDataContext();
   const [currentMonth, setCurrentMonth] = React.useState(new Date());
 
