@@ -146,6 +146,28 @@ export default function RoomsPage() {
     return totalSelectedCapacity < totalGuests;
   }, [searchValues, totalGuests, totalSelectedCapacity]);
 
+  const totalAvailableCapacityForDates = React.useMemo(() => {
+    if (!roomTypeAvailability || roomTypeAvailability.length === 0) {
+      return 0;
+    }
+
+    const byId = new Map(roomTypes.map((rt) => [rt.id, rt] as const));
+
+    return roomTypeAvailability.reduce((sum, summary) => {
+      const rt = byId.get(summary.roomTypeId);
+      if (!rt) return sum;
+      return sum + summary.availableRooms * rt.maxOccupancy;
+    }, 0);
+  }, [roomTypeAvailability, roomTypes]);
+
+  const hasInsufficientTotalCapacity = React.useMemo(() => {
+    if (!searchValues) return false;
+    if (!roomTypeAvailability || roomTypeAvailability.length === 0) {
+      return false;
+    }
+    return totalAvailableCapacityForDates < totalGuests;
+  }, [searchValues, roomTypeAvailability, totalAvailableCapacityForDates, totalGuests]);
+
   const dateAvailableRoomTypes: RoomType[] | null = React.useMemo(() => {
     if (!roomTypeAvailability) return null;
     const byId = new Map(roomTypes.map((rt) => [rt.id, rt] as const));
@@ -297,7 +319,40 @@ export default function RoomsPage() {
             </div>
           ) : (
             <>
-              {roomsToDisplay && roomsToDisplay.length > 0 ? (
+              {hasSearched && searchValues && hasInsufficientTotalCapacity ? (
+                <div className="mb-10 rounded-2xl border border-red-100 bg-gradient-to-b from-red-50 via-red-50/80 to-white px-6 py-6 md:px-8 md:py-7 shadow-sm">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-rose-500 text-white shadow-md shadow-red-500/30">
+                        <TriangleAlert className="h-6 w-6" aria-hidden />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-base md:text-lg font-semibold text-red-900">
+                          No suitable rooms available for these dates
+                        </h3>
+                        <p className="text-sm md:text-base text-red-900/90 leading-relaxed">
+                          According to the dates you selected, we don2t have enough rooms to host a total of {totalGuests} guest
+                          {totalGuests === 1 ? "" : "s"}.<br />
+                          Please try selecting different dates or adjust your search. If you have any booking-related queries, you can contact us at
+                          <span className="font-semibold"> +91 85111 51708</span>.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 md:mt-0 flex flex-col items-start md:items-end gap-2 text-sm">
+                      <button
+                        type="button"
+                        onClick={handleClearSearch}
+                        className="inline-flex items-center text-xs md:text-sm font-medium text-red-900/80 hover:text-red-900 underline-offset-4 hover:underline"
+                      >
+                        Clear search & view all rooms
+                      </button>
+                      <span className="text-[11px] md:text-xs text-red-900/70">
+                        Tip: Use the search box above to try different dates or guest combinations.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : roomsToDisplay && roomsToDisplay.length > 0 ? (
                 <>
                   {hasSearched && hasNoInventory && (
                     <div className="mb-6 p-3 bg-amber-100 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900 rounded-xl">
@@ -334,6 +389,9 @@ export default function RoomsPage() {
                         </p>
                       )}
                     </div>
+                  )}
+                  {hasSearched && searchValues && hasInsufficientTotalCapacity && (
+                    <></>
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
                     {roomsToDisplay.map((roomType) => (
@@ -513,7 +571,7 @@ export default function RoomsPage() {
           )}
         </div>
       </section>
-      {hasSearched && searchValues && selectedRooms.length > 0 && (
+      {hasSearched && searchValues && selectedRooms.length > 0 && !hasInsufficientTotalCapacity && (
         <BookingSummary
           selection={selectedRooms}
           searchValues={searchValues}
