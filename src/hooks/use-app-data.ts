@@ -349,6 +349,12 @@ type CreateReservationPayload = {
   ratePlanId: string;
   checkInDate: string;
   checkOutDate: string;
+  /**
+   * Total number of guests for the entire booking (all rooms combined).
+   * The backend procedure is responsible for distributing this value
+   * across individual reservations so that each reservation.numberOfGuests
+   * reflects guests per room for the stay, not multiplied by nights.
+   */
   numberOfGuests: number;
   status: ReservationStatus;
   notes?: string;

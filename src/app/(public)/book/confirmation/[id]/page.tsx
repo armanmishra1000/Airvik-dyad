@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { calculateRoomPricing } from "@/lib/pricing-calculator";
-import { PricingBreakdown } from "@/components/ui/pricing-breakdown";
+import { calculateRoomPricing, calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
 import { useParams, notFound } from "next/navigation";
 import { format, parseISO, differenceInDays } from "date-fns";
 import {
@@ -21,7 +20,7 @@ import { toast } from "sonner";
 
 import { useDataContext } from "@/context/data-context";
 import { getGuestById, getReservationById } from "@/lib/api";
-import type { Guest, Reservation } from "@/data/types";
+import type { Guest, Reservation, RoomType } from "@/data/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -45,25 +44,145 @@ export default function BookingConfirmationPage() {
   const guestFromContext = reservation ? guests.find((g) => g.id === reservation.guestId) : undefined;
   const guest = guestData || guestFromContext;
   
-  // Get room and room type data before early return
-  const room = reservation ? rooms.find((r) => r.id === reservation.roomId) : undefined;
-  const roomType = room ? roomTypes.find((rt) => rt.id === room.roomTypeId) : undefined;
-  
-  // Calculate prices using shared utility
-  const nights = reservation ? differenceInDays(
-    parseISO(reservation.checkOutDate),
-    parseISO(reservation.checkInDate)
-  ) : 0;
-  
+  // Derive all reservations that belong to the same booking
+  const bookingReservations = React.useMemo(() => {
+    if (!reservation) return [] as Reservation[];
+    const grouped = reservations.filter((r) => r.bookingId === reservation.bookingId);
+    if (grouped.length > 0) {
+      return grouped;
+    }
+    return [reservation];
+  }, [reservation, reservations]);
+
+  // Group booked rooms by room type for display
+  type ConfirmedRoomSummary = {
+    roomType: RoomType;
+    quantity: number;
+    guestCount: number;
+  };
+
+  const confirmedRoomSummaries: ConfirmedRoomSummary[] = React.useMemo(() => {
+    if (bookingReservations.length === 0) return [];
+
+    const byRoomType = new Map<string, ConfirmedRoomSummary>();
+
+    for (const res of bookingReservations) {
+      const room = rooms.find((roomItem) => roomItem.id === res.roomId);
+      if (!room) continue;
+      const roomType = roomTypes.find((rt) => rt.id === room.roomTypeId);
+      if (!roomType) continue;
+
+      const existing = byRoomType.get(roomType.id);
+      if (existing) {
+        existing.quantity += 1;
+        existing.guestCount += res.numberOfGuests;
+      } else {
+        byRoomType.set(roomType.id, {
+          roomType,
+          quantity: 1,
+          guestCount: res.numberOfGuests,
+        });
+      }
+    }
+
+    return Array.from(byRoomType.values());
+  }, [bookingReservations, rooms, roomTypes]);
+
+  const totalRooms = React.useMemo(
+    () => confirmedRoomSummaries.reduce((sum, item) => sum + item.quantity, 0),
+    [confirmedRoomSummaries]
+  );
+
+  const totalGuests = React.useMemo(
+    () => bookingReservations.reduce((sum, res) => sum + res.numberOfGuests, 0),
+    [bookingReservations]
+  );
+
+  const primaryRoomType = React.useMemo(() => {
+    if (confirmedRoomSummaries.length > 0) {
+      return confirmedRoomSummaries[0].roomType;
+    }
+
+    if (reservation) {
+      const room = rooms.find((roomItem) => roomItem.id === reservation.roomId);
+      if (room) {
+        return roomTypes.find((rt) => rt.id === room.roomTypeId) ?? null;
+      }
+    }
+
+    return null;
+  }, [confirmedRoomSummaries, reservation, rooms, roomTypes]);
+
+  // Calculate nights based on the reservation dates
+  const nights = reservation
+    ? differenceInDays(
+        parseISO(reservation.checkOutDate),
+        parseISO(reservation.checkInDate)
+      )
+    : 0;
+
+  // Determine the rate plan used for this booking
+  const bookingRatePlan = React.useMemo(() => {
+    if (bookingReservations.length === 0) return null;
+    const ratePlanId = bookingReservations[0].ratePlanId;
+    return ratePlans.find((rp) => rp.id === ratePlanId) ?? null;
+  }, [bookingReservations, ratePlans]);
+
+  const roomLineItems = React.useMemo(
+    () =>
+      confirmedRoomSummaries.map((item) => {
+        const baseNightly =
+          typeof item.roomType.price === "number" ? item.roomType.price : 0;
+        const lineBase = baseNightly * nights * item.quantity;
+        return {
+          id: item.roomType.id,
+          name: item.roomType.name,
+          quantity: item.quantity,
+          nights,
+          baseNightly,
+          lineBase,
+        };
+      }),
+    [confirmedRoomSummaries, nights]
+  );
+
+  // Calculate prices using shared utilities for single or multi-room bookings
   const pricing = React.useMemo(() => {
-    // Get the rate plan used in this reservation
-    const reservationRatePlan = ratePlans.find((rp) => rp.id === reservation?.ratePlanId);
-    return calculateRoomPricing({
-      roomType,
-      ratePlan: reservationRatePlan,
+    if (!reservation || nights <= 0) {
+      return calculateRoomPricing({ nights: 0, rooms: 0 });
+    }
+
+    if (totalRooms <= 1) {
+      const singleRoomType =
+        confirmedRoomSummaries[0]?.roomType ?? primaryRoomType ?? undefined;
+      return calculateRoomPricing({
+        roomType: singleRoomType,
+        ratePlan: bookingRatePlan,
+        nights,
+        rooms: 1,
+      });
+    }
+
+    const roomTypesForPricing: RoomType[] = [];
+    confirmedRoomSummaries.forEach(({ roomType, quantity }) => {
+      for (let i = 0; i < quantity; i += 1) {
+        roomTypesForPricing.push(roomType);
+      }
+    });
+
+    return calculateMultipleRoomPricing({
+      roomTypes: roomTypesForPricing,
+      ratePlan: bookingRatePlan,
       nights,
     });
-  }, [roomType, ratePlans, reservation?.ratePlanId, nights]);
+  }, [
+    reservation,
+    nights,
+    totalRooms,
+    confirmedRoomSummaries,
+    primaryRoomType,
+    bookingRatePlan,
+  ]);
   
   // Fetch reservation directly if not in context
   React.useEffect(() => {
@@ -165,34 +284,55 @@ export default function BookingConfirmationPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-col sm:flex-row items-start gap-4">
-                    <div className="relative w-full sm:w-40 h-32 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
-                        src={
-                          roomType?.mainPhotoUrl ||
-                          roomType?.photos?.[0] ||
-                          "/room-placeholder.svg"
-                        }
-                        alt={roomType?.name || "Room"}
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-semibold">
-                        {roomType?.name}
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground mt-2">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          <span>
-                            {guest?.firstName}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <BedDouble className="h-4 w-4" />
-                          <span>{reservation.numberOfGuests} Guest(s)</span>
-                        </div>
+                  <div className="space-y-4">
+                    {confirmedRoomSummaries.length > 0 && (
+                      <div className="space-y-3">
+                        {confirmedRoomSummaries.map((item) => {
+                          const capacityPerRoom = item.roomType.maxOccupancy;
+
+                          return (
+                            <div
+                              key={item.roomType.id}
+                              className="flex items-start gap-3 rounded-lg border border-border/60 bg-card p-3"
+                            >
+                              <div className="relative h-16 w-24 overflow-hidden rounded flex-shrink-0">
+                                <img
+                                  src={
+                                    item.roomType.mainPhotoUrl ||
+                                    item.roomType.photos?.[0] ||
+                                    "/room-placeholder.svg"
+                                  }
+                                  alt={item.roomType.name}
+                                  className="absolute inset-0 h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 space-y-1">
+                                <p className="text-base font-medium leading-tight">
+                                  {item.roomType.name}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  x{item.quantity} room
+                                  {item.quantity === 1 ? "" : "s"}
+                                  {capacityPerRoom
+                                    ? ` · up to ${capacityPerRoom} guest${capacityPerRoom === 1 ? "" : "s"} per room`
+                                    : ""}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
+                    )}
+                    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
+                      <span>
+                        Total: {totalRooms} room{totalRooms === 1 ? "" : "s"}
+                      </span>
+                      <span>
+                        · {totalGuests} guest{totalGuests === 1 ? "" : "s"}
+                      </span>
+                      <span>
+                        · {nights} night{nights === 1 ? "" : "s"}
+                      </span>
                     </div>
                   </div>
                   <Separator className="my-6" />
@@ -234,14 +374,49 @@ export default function BookingConfirmationPage() {
                       <IndianRupee className="h-4 w-4 text-primary" />
                       Your total price
                     </h4>
-                    <PricingBreakdown
-                      nightlyRate={pricing.nightlyRate}
-                      nights={nights}
-                      rooms={1}
-                      totalCost={pricing.totalCost}
-                      taxesAndFees={pricing.taxesAndFees}
-                      grandTotal={pricing.grandTotal}
-                    />
+                    <div className="space-y-3 text-sm">
+                      {roomLineItems.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex justify-between text-xs sm:text-sm"
+                        >
+                          <span>
+                            {item.name} · x{item.quantity} room
+                            {item.quantity === 1 ? "" : "s"} · {item.nights} night
+                            {item.nights === 1 ? "" : "s"}
+                          </span>
+                          <span className="font-medium">
+                            ₹{Math.round(item.lineBase).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                      ))}
+
+                      <Separator className="my-2" />
+
+                      <div className="flex justify-between text-xs sm:text-sm">
+                        <span className="text-muted-foreground">
+                          Total (before tax)
+                        </span>
+                        <span className="font-semibold">
+                          ₹{Math.round(pricing.totalCost).toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs sm:text-sm">
+                        <span className="text-muted-foreground">Taxes &amp; fees</span>
+                        <span className="font-semibold">
+                          ₹{Math.round(pricing.taxesAndFees).toLocaleString("en-IN")}
+                        </span>
+                      </div>
+
+                      <Separator className="my-2" />
+
+                      <div className="flex justify-between text-sm font-semibold">
+                        <span>Total</span>
+                        <span>
+                          ₹{Math.round(pricing.grandTotal).toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
