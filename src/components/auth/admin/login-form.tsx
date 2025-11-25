@@ -14,13 +14,12 @@ import { ShieldCheck, CalendarCheck, LineChart } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserProfile } from "@/lib/api";
+import { ADMIN_ROLES } from "@/constants/roles";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
-
-const ADMIN_ROLES = ["Hotel Owner", "Hotel Manager", "Receptionist", "Housekeeper"] as const;
 
 interface UserMetadataWithRole {
   role_name?: string;
