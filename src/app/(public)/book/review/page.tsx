@@ -13,7 +13,7 @@ import {
 } from "date-fns";
 import { toast } from "sonner";
 import Image from "next/image";
-import { ThumbsUp, Loader2, Users } from "lucide-react";
+import { Bed, Loader2, Moon, Users } from "lucide-react";
 
 import { useDataContext } from "@/context/data-context";
 import { getOrCreateGuestByEmail } from "@/lib/api";
@@ -22,7 +22,6 @@ import { InlineAlert } from "@/components/public/inline-alert";
 import { PaymentTrustBadges } from "@/components/public/payment-trust-badges";
 import { BookingPolicies } from "@/components/public/booking-policies";
 import { calculateRoomPricing, calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
-import { PricingBreakdown } from "@/components/ui/pricing-breakdown";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -131,6 +130,12 @@ function BookingReviewContent() {
   } | null>(null);
   const [, setHasAvailabilityConflict] = React.useState(false);
   const [paymentMethod, setPaymentMethod] = React.useState<"card" | "property">("card");
+  const [activeRoomTypeId, setActiveRoomTypeId] = React.useState<string | null>(null);
+
+  type SelectedRoomTypeSummary = {
+    roomType: RoomType;
+    quantity: number;
+  };
 
   const bookingDetails = React.useMemo(() => {
     return {
@@ -147,6 +152,28 @@ function BookingReviewContent() {
     return bookingDetails.roomTypeIds
       .map((id) => roomTypes.find((rt) => rt.id === id))
       .filter(Boolean) as RoomType[];
+  }, [bookingDetails.roomTypeIds, roomTypes]);
+
+  const groupedRoomTypes: SelectedRoomTypeSummary[] = React.useMemo(() => {
+    if (!bookingDetails.roomTypeIds || bookingDetails.roomTypeIds.length === 0) {
+      return [];
+    }
+
+    const counts = new Map<string, number>();
+
+    for (const id of bookingDetails.roomTypeIds) {
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+
+    const groups: SelectedRoomTypeSummary[] = [];
+
+    counts.forEach((quantity, roomTypeId) => {
+      const roomType = roomTypes.find((rt) => rt.id === roomTypeId);
+      if (!roomType) return;
+      groups.push({ roomType, quantity });
+    });
+
+    return groups;
   }, [bookingDetails.roomTypeIds, roomTypes]);
 
   const ratePlan =
@@ -168,8 +195,6 @@ function BookingReviewContent() {
       phone: "",
     },
   });
-
-
 
   // Validate query parameters and date range
   const { hasValidParams, hasValidDates, fromDate, toDate, nights } = React.useMemo(() => {
@@ -202,7 +227,20 @@ function BookingReviewContent() {
     };
   }, [bookingDetails]);
 
-  // Always calculate pricing (not conditional) - must be before early returns
+  const totalRooms = React.useMemo(
+    () => groupedRoomTypes.reduce((sum, item) => sum + item.quantity, 0),
+    [groupedRoomTypes],
+  );
+
+  const totalGuests = React.useMemo(() => {
+    const guestsParam = bookingDetails.guests;
+    const parsed = guestsParam ? Number(guestsParam) : 0;
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return 0;
+    }
+    return parsed;
+  }, [bookingDetails.guests]);
+
   const pricing = React.useMemo(() => {
     if (selectedRoomTypes.length === 1) {
       return calculateRoomPricing({
@@ -218,6 +256,39 @@ function BookingReviewContent() {
       });
     }
   }, [selectedRoomTypes, ratePlan, nights]);
+
+  const primaryRoomType = React.useMemo(() => {
+    if (groupedRoomTypes.length > 0) {
+      return groupedRoomTypes[0].roomType;
+    }
+    if (selectedRoomTypes.length > 0) {
+      return selectedRoomTypes[0];
+    }
+    return null;
+  }, [groupedRoomTypes, selectedRoomTypes]);
+
+  const activeHeroRoomType = React.useMemo(() => {
+    if (activeRoomTypeId) {
+      const found = roomTypes.find((rt) => rt.id === activeRoomTypeId);
+      if (found) {
+        return found;
+      }
+    }
+    return primaryRoomType;
+  }, [activeRoomTypeId, primaryRoomType, roomTypes]);
+
+  const roomLineItems = groupedRoomTypes.map(({ roomType, quantity }) => {
+    const baseNightly = typeof roomType.price === "number" ? roomType.price : 0;
+    const lineBase = baseNightly * nights * quantity;
+    return {
+      id: roomType.id,
+      name: roomType.name,
+      quantity,
+      nights,
+      baseNightly,
+      lineBase,
+    };
+  });
 
   if (isLoading) {
     return <BookingReviewSkeleton />;
@@ -280,8 +351,6 @@ function BookingReviewContent() {
       </div>
     );
   }
-
-  const firstRoomType = selectedRoomTypes[0];
 
   // Helper function to format card number with spaces
   const formatCardNumber = (value: string) => {
@@ -393,13 +462,13 @@ function BookingReviewContent() {
 
   return (
     <div className="container px-4 mx-auto py-10">
-      <h1 className="lg:text-3xl sm:text-2xl text-lg font-bold font-serif mb-6 text-center">
+      <h1 className="lg:text-3xl sm:text-2xl text-lg font-bold font-serif mb-2 text-center">
         Review Your Booking
       </h1>
 
       {/* Show error alerts */}
       {bookingError && (
-        <div className="max-w-6xl mx-auto mb-6">
+        <div className="max-w-7xl mx-auto mb-6">
           <InlineAlert
             variant="error"
             title={bookingError.type === "availability" ? "Room Unavailable" : "Booking Failed"}
@@ -413,47 +482,154 @@ function BookingReviewContent() {
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        {/* Booking Summary - Right Side */}
-        <div className="space-y-6">
+      <div className="flex flex-col md:flex-row gap-6 max-w-7xl mx-auto">
+        {/* Booking Summary - Sidebar */}
+        <div className="space-y-6 md:w-2/5 w-full">
           <Card>
             <CardContent className="p-0">
               <div className="relative h-52 w-full">
-                {/* room image */}
                 <Image
                   src={
-                    firstRoomType?.mainPhotoUrl ||
-                    firstRoomType?.photos?.[0] ||
+                    activeHeroRoomType?.mainPhotoUrl ||
+                    activeHeroRoomType?.photos?.[0] ||
                     "/room-placeholder.svg"
                   }
-                  alt={firstRoomType?.name || property.name}
+                  alt={activeHeroRoomType?.name || property.name}
                   fill
                   className="object-cover rounded-t-lg"
                 />
               </div>
 
-              {/* Room name and guest count display */}
-              <div className="px-4 mt-4 flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-900">{firstRoomType?.name || "Room"}</h3>
-                <div className="flex items-center -mt-1 text-gray-700">
-                  <Users className="size-5 mr-1" />
-                  <span>{bookingDetails.guests || "0"} guest{(parseInt(bookingDetails.guests || "0") > 1) ? "s" : ""}</span>
+              <div className="px-4 py-4 space-y-3">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-xl font-semibold text-foreground">
+                    {activeHeroRoomType?.name || primaryRoomType?.name || "Your stay"}
+                  </h3>
                 </div>
-              </div>
-
-
-              <div className="p-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="bg-primary p-1 rounded-md">
-                    <ThumbsUp className="h-4 w-4 text-white" />
+                <div className="flex flex-wrap items-center gap-2 text-sm text-primary">
+                  <div className="inline-flex gap-2 items-center rounded-full border border-border/60 bg-background px-3 py-1.5">
+                    <Bed className="h-4 w-4" />
+                    <span>
+                      {totalRooms} room{totalRooms === 1 ? "" : "s"}
+                    </span>
                   </div>
-                  <h3 className="text-lg font-bold">SAHAJANAND WELLNESS</h3>
+                  <div className="inline-flex gap-2 items-center rounded-full border border-border/60 bg-background px-3 py-1.5">
+                    <Users className="h-4 w-4" />
+                    <span>
+                      {bookingDetails.guests || "0"} guest
+                      {parseInt(bookingDetails.guests || "0", 10) > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="inline-flex gap-2 items-center rounded-full border border-border/60 bg-background px-3 py-1.5">
+                    <Moon className="h-4 w-4" />
+                    <span className="font-medium">{nights} night{nights === 1 ? "" : "s"}</span>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Address: Gali No- 13, shisham jhadi, Chandreshwar Nagar,
-                  Rishikesh, Uttarakhand 249137
-                </p>
+                {groupedRoomTypes.length > 1 && (
+                  <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                    {groupedRoomTypes.map(({ roomType, quantity }) => {
+                      const isActive =
+                        activeHeroRoomType?.id
+                          ? activeHeroRoomType.id === roomType.id
+                          : primaryRoomType?.id === roomType.id;
+
+                      return (
+                        <button
+                          key={roomType.id}
+                          type="button"
+                          onClick={() => setActiveRoomTypeId(roomType.id)}
+                          className={`flex w-[140px] flex-col rounded-md border bg-card/80 p-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${
+                            isActive
+                              ? "border-primary ring-1 ring-primary/60 bg-primary/5"
+                              : "border-border/60"
+                          }`}
+                        >
+                          <div className="relative mb-2 h-16 w-full overflow-hidden rounded">
+                            <Image
+                              src={
+                                roomType.mainPhotoUrl ||
+                                roomType.photos?.[0] ||
+                                "/room-placeholder.svg"
+                              }
+                              alt={roomType.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <p className="truncate text-sm font-medium">{roomType.name}</p>
+                          <p className="text-xs text-primary">x{quantity}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl">Your rooms</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
+              {groupedRoomTypes.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  No rooms selected. Please return to the previous step and
+                  select at least one room.
+                </p>
+              ) : (
+                <>
+                  <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                    {groupedRoomTypes.map(({ roomType, quantity }) => {
+                      const amenities: string[] = [];
+                      const primaryBedType = roomType.bedTypes?.[0];
+                      if (primaryBedType) {
+                        amenities.push(primaryBedType);
+                      }
+                      const visibleAmenities = amenities.slice(0, 3);
+
+                      return (
+                        <div
+                          key={roomType.id}
+                          className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-card p-3"
+                        >
+                          <div className="space-y-1">
+                            <p className="text-base font-medium leading-tight">
+                              {roomType.name}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Sleeps up to {roomType.maxOccupancy} guest
+                              {roomType.maxOccupancy === 1 ? "" : "s"} per room
+                            </p>
+                            {visibleAmenities.length > 0 && (
+                              <p className="text-sm text-muted-foreground">
+                                {visibleAmenities.join(" · ")}
+                              </p>
+                            )}
+                            {typeof roomType.price === "number" && (
+                              <p className="text-sm text-muted-foreground">
+                                From ₹{Math.round(roomType.price).toLocaleString("en-IN")} per night
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <span className="inline-flex items-center rounded-full bg-primary/20 px-2 py-1 text-sm font-medium text-primary">
+                              x{quantity}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <Separator className="my-3" />
+                  <p className="text-base font-semibold">
+                    Total: {totalRooms} room{totalRooms === 1 ? "" : "s"}
+                    {totalGuests > 0 && (
+                      <> · {totalGuests} guest{totalGuests === 1 ? "" : "s"}</>
+                    )}
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -465,7 +641,7 @@ function BookingReviewContent() {
               <div className="flex justify-between space-x-4">
                 <div>
                   <p className="font-semibold">Check-in</p>
-                  <p className="text-base">
+                  <p className="text-sm">
                     {format(fromDate!, "E, d MMM yyyy")}
                   </p>
                   <p className="text-sm text-muted-foreground">From 12:00 PM</p>
@@ -473,13 +649,13 @@ function BookingReviewContent() {
                 <Separator orientation="vertical" className="h-auto" />
                 <div>
                   <p className="font-semibold">Check-out</p>
-                  <p className="text-base">{format(toDate!, "E, d MMM yyyy")}</p>
+                  <p className="text-sm">{format(toDate!, "E, d MMM yyyy")}</p>
                   <p className="text-sm text-muted-foreground">Before 10:00 AM</p>
                 </div>
               </div>
               <div className="mt-4">
                 <p className="font-semibold">Total length of stay:</p>
-                <p className="text-lg">
+                <p className="text-sm">
                   {nights} night{nights > 1 ? "s" : ""}
                 </p>
               </div>
@@ -488,23 +664,63 @@ function BookingReviewContent() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">Your total</CardTitle>
+              <div>
+                <CardTitle className="text-xl">Your total</CardTitle>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Includes taxes and fees. Prices in INR.
+                </p>
+              </div>
             </CardHeader>
             <CardContent>
-              <PricingBreakdown
-                nightlyRate={pricing.nightlyRate}
-                nights={nights}
-                rooms={selectedRoomTypes.length}
-                totalCost={pricing.totalCost}
-                taxesAndFees={pricing.taxesAndFees}
-                grandTotal={pricing.grandTotal}
-              />
+              <div className="space-y-3 text-sm">
+                {roomLineItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex justify-between text-xs sm:text-sm"
+                  >
+                    <span>
+                      {item.name} · x{item.quantity} room
+                      {item.quantity === 1 ? "" : "s"} · {item.nights} night
+                      {item.nights === 1 ? "" : "s"}
+                    </span>
+                    <span className="font-medium">
+                      ₹{Math.round(item.lineBase).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                ))}
+
+                <Separator className="my-2" />
+
+                <div className="flex justify-between text-xs sm:text-sm">
+                  <span className="text-muted-foreground">
+                    Total (before tax)
+                  </span>
+                  <span className="font-semibold">
+                    ₹{Math.round(pricing.totalCost).toLocaleString("en-IN")}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs sm:text-sm">
+                  <span className="text-muted-foreground">Taxes &amp; fees</span>
+                  <span className="font-semibold">
+                    ₹{Math.round(pricing.taxesAndFees).toLocaleString("en-IN")}
+                  </span>
+                </div>
+
+                <Separator className="my-2" />
+
+                <div className="flex justify-between text-sm font-semibold">
+                  <span>Total</span>
+                  <span>
+                    ₹{Math.round(pricing.grandTotal).toLocaleString("en-IN")}
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Guest & Payment Information  - Left Side */}
-        <div className="md:col-span-2">
+        {/* Guest & Payment Information */}
+        <div className="md:w-3/5 w-full">
           <Card>
             <CardHeader>
               <CardTitle>Guest & Payment Information</CardTitle>
