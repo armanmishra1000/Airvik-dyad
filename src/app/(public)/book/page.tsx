@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { BookingSummary } from "@/components/public/booking-summary";
 import type { RoomType } from "@/data/types";
 import { TriangleAlert } from "lucide-react";
+import { toast } from "sonner";
 
 export default function RoomsPage() {
   const { roomTypes, isLoading: isInitialLoading } = useDataContext();
@@ -112,7 +113,7 @@ export default function RoomsPage() {
 
   const totalSelectedRooms = selectedRooms.length;
 
-  const totalGuests = React.useMemo(() => {
+  const   totalGuests = React.useMemo(() => {
     if (!searchValues) return 0;
     return searchValues.roomOccupancies.reduce(
       (sum, occ) => sum + occ.adults + occ.children,
@@ -138,6 +139,12 @@ export default function RoomsPage() {
   const coversGuests = searchValues
     ? totalSelectedCapacity >= totalGuests
     : false;
+
+  const canAddMoreRooms = React.useMemo(() => {
+    if (!searchValues) return true;
+    if (totalGuests === 0) return true;
+    return totalSelectedCapacity < totalGuests;
+  }, [searchValues, totalGuests, totalSelectedCapacity]);
 
   const dateAvailableRoomTypes: RoomType[] | null = React.useMemo(() => {
     if (!roomTypeAvailability) return null;
@@ -182,6 +189,15 @@ export default function RoomsPage() {
       : primaryRoomsToDisplay;
 
   const showLoading = isInitialLoading || isSearching;
+
+  const showCapacityLockedToast = React.useCallback(
+    (guestCount: number) => {
+      toast(
+        `You have already selected rooms for ${guestCount} guest${guestCount === 1 ? "" : "s"}. If you want to select other rooms, please unselect the selected rooms first.`,
+      );
+    },
+    [],
+  );
 
   return (
     /* Main Content */
@@ -343,6 +359,9 @@ export default function RoomsPage() {
                                   roomType.id,
                                 );
 
+                                const isSelected = selectedQuantity > 0;
+                                const checkboxDisabled = !isSelected && !canAddMoreRooms;
+
                                 return (
                                   <>
                                     <div className="flex items-center justify-between gap-2">
@@ -354,11 +373,23 @@ export default function RoomsPage() {
                                           : "No rooms currently available for this type"}
                                       </p>
                                       {availableCount > 0 && (
-                                        <label className="inline-flex items-center gap-2">
+                                        <label
+                                          className="inline-flex items-center gap-2"
+                                          onClick={(event) => {
+                                            if (checkboxDisabled && !isSelected) {
+                                              event.preventDefault();
+                                              if (totalGuests > 0) {
+                                                showCapacityLockedToast(totalGuests);
+                                              }
+                                            }
+                                          }}
+                                        >
                                           <input
                                             type="checkbox"
                                             className="h-4 w-4 rounded border-border/60"
-                                            checked={selectedQuantity > 0}
+                                            checked={isSelected}
+                                            disabled={checkboxDisabled}
+                                            aria-disabled={checkboxDisabled}
                                             onChange={(event) => {
                                               if (event.target.checked) {
                                                 updateSelectedQuantity(
@@ -386,12 +417,35 @@ export default function RoomsPage() {
                                         <select
                                           className="border border-border/60 bg-white px-2 py-1 text-xs sm:text-sm rounded-md"
                                           value={selectedQuantity}
-                                          onChange={(event) =>
+                                          onChange={(event) => {
+                                            const nextQuantity = Number(
+                                              event.target.value,
+                                            );
+
+                                            if (!Number.isFinite(nextQuantity) || nextQuantity <= 0) {
+                                              return;
+                                            }
+
+                                            const isIncrease =
+                                              nextQuantity > selectedQuantity;
+
+                                            if (isIncrease && !canAddMoreRooms) {
+                                              event.target.value = String(
+                                                selectedQuantity,
+                                              );
+                                              if (totalGuests > 0) {
+                                                showCapacityLockedToast(
+                                                  totalGuests,
+                                                );
+                                              }
+                                              return;
+                                            }
+
                                             updateSelectedQuantity(
                                               roomType.id,
-                                              Number(event.target.value),
-                                            )
-                                          }
+                                              nextQuantity,
+                                            );
+                                          }}
                                         >
                                           {Array.from(
                                             { length: availableCount },
