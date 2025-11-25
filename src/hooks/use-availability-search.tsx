@@ -125,38 +125,34 @@ export function useAvailabilitySearch() {
         }
 
         const availabilitySummaries: RoomTypeAvailabilitySummary[] = [];
+        const availableMatchingOccupancy: RoomType[] = [];
 
-        const available = roomTypes.filter((rt) => {
+        roomTypes.forEach((rt) => {
           // Check if room type has valid category filter
           if (categoryIds && categoryIds.length > 0 && rt.categoryId) {
             if (!categoryIds.includes(rt.categoryId)) {
-              return false;
+              return;
             }
           }
 
           // Check booking restrictions
-          const restrictionCheck = checkRestrictions(dateRange.from!, dateRange.to!, rt.id, restrictions);
+          const restrictionCheck = checkRestrictions(
+            dateRange.from!,
+            dateRange.to!,
+            rt.id,
+            restrictions,
+          );
           if (!restrictionCheck.isValid) {
-            return false;
-          }
-
-          // Check if the room type can accommodate each room occupancy configuration
-          const canAccommodateAllRooms = roomOccupancies.every(occ => {
-            const totalGuests = occ.adults + occ.children;
-            const minTotal = (rt.minOccupancy || 1);
-            const maxTotal = rt.maxOccupancy + (rt.maxChildren || 0);
-            return totalGuests >= minTotal && totalGuests <= maxTotal;
-          });
-
-          if (!canAccommodateAllRooms) {
-            return false;
+            return;
           }
 
           const roomsOfType = rooms.filter((r) => r.roomTypeId === rt.id);
           const totalRoomsOfType = roomsOfType.length;
-          if (totalRoomsOfType < roomOccupancies.length) return false;
+          if (totalRoomsOfType === 0) {
+            return;
+          }
 
-          const bookingsCountByDate: { [key: string]: number } = {};
+          const bookingsCountByDate: Record<string, number> = {};
           const relevantReservations = reservations.filter(
             (res) =>
               roomsOfType.some((r) => r.id === res.roomId) &&
@@ -166,8 +162,8 @@ export function useAvailabilitySearch() {
                 {
                   start: parseISO(res.checkInDate),
                   end: parseISO(res.checkOutDate),
-                }
-              )
+                },
+              ),
           );
 
           relevantReservations.forEach((res) => {
@@ -192,7 +188,7 @@ export function useAvailabilitySearch() {
 
           let minAvailableRoomsForStay = totalRoomsOfType;
 
-          const isAvailable = searchInterval.every((day) => {
+          const hasAnyAvailabilityForAllNights = searchInterval.every((day) => {
             const dayString = format(day, "yyyy-MM-dd");
             const bookedCount = bookingsCountByDate[dayString] || 0;
             const availableRoomsCount = totalRoomsOfType - bookedCount;
@@ -201,20 +197,36 @@ export function useAvailabilitySearch() {
               minAvailableRoomsForStay = availableRoomsCount;
             }
 
-            return availableRoomsCount >= roomOccupancies.length;
+            // For general availability we only require at least 1 free room
+            return availableRoomsCount > 0;
           });
 
-          if (isAvailable && minAvailableRoomsForStay > 0) {
-            availabilitySummaries.push({
-              roomTypeId: rt.id,
-              availableRooms: minAvailableRoomsForStay,
-            });
+          if (!hasAnyAvailabilityForAllNights || minAvailableRoomsForStay <= 0) {
+            return;
           }
 
-          return isAvailable;
+          availabilitySummaries.push({
+            roomTypeId: rt.id,
+            availableRooms: minAvailableRoomsForStay,
+          });
+
+          // Now check if this room type can fully satisfy the requested occupancy
+          const canAccommodateAllRooms = roomOccupancies.every((occ) => {
+            const totalGuests = occ.adults + occ.children;
+            const minTotal = rt.minOccupancy || 1;
+            const maxTotal = rt.maxOccupancy + (rt.maxChildren || 0);
+            return totalGuests >= minTotal && totalGuests <= maxTotal;
+          });
+
+          const hasEnoughRoomsForRequestedCount =
+            minAvailableRoomsForStay >= roomOccupancies.length;
+
+          if (canAccommodateAllRooms && hasEnoughRoomsForRequestedCount) {
+            availableMatchingOccupancy.push(rt);
+          }
         });
 
-        setAvailableRoomTypes(available);
+        setAvailableRoomTypes(availableMatchingOccupancy);
         setRoomTypeAvailability(availabilitySummaries);
         setIsLoading(false);
       }, 500);

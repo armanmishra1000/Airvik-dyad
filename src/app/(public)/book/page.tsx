@@ -51,8 +51,6 @@ export default function RoomsPage() {
     setSearchValues(null);
     setSelectedRoomQuantities([]);
   };
-
-  const roomsToDisplay = hasSearched ? availableRoomTypes : roomTypes;
   const availabilityByRoomTypeId = React.useMemo(() => {
     const map = new Map<string, number>();
     if (roomTypeAvailability) {
@@ -122,6 +120,11 @@ export default function RoomsPage() {
     );
   }, [searchValues]);
 
+  const requestedRooms = React.useMemo(() => {
+    if (!searchValues) return 0;
+    return searchValues.roomOccupancies.length;
+  }, [searchValues]);
+
   const totalSelectedCapacity = React.useMemo(() => {
     if (!selectedRoomQuantities.length) return 0;
     const byId = new Map(roomTypes.map((rt) => [rt.id, rt] as const));
@@ -132,7 +135,51 @@ export default function RoomsPage() {
     }, 0);
   }, [roomTypes, selectedRoomQuantities]);
 
-  const coversGuests = searchValues ? totalSelectedCapacity >= totalGuests : false;
+  const coversGuests = searchValues
+    ? totalSelectedCapacity >= totalGuests
+    : false;
+
+  const dateAvailableRoomTypes: RoomType[] | null = React.useMemo(() => {
+    if (!roomTypeAvailability) return null;
+    const byId = new Map(roomTypes.map((rt) => [rt.id, rt] as const));
+    const types: RoomType[] = [];
+    roomTypeAvailability.forEach((summary) => {
+      const rt = byId.get(summary.roomTypeId);
+      if (rt) {
+        types.push(rt);
+      }
+    });
+    return types;
+  }, [roomTypes, roomTypeAvailability]);
+
+  const maxSingleRoomCapacity = React.useMemo(() => {
+    if (!dateAvailableRoomTypes || dateAvailableRoomTypes.length === 0) {
+      return 0;
+    }
+    return dateAvailableRoomTypes.reduce<number>(
+      (max, rt) => (rt.maxOccupancy > max ? rt.maxOccupancy : max),
+      0,
+    );
+  }, [dateAvailableRoomTypes]);
+
+  const noMatchingTypes =
+    hasSearched &&
+    !hasNoInventory &&
+    (availableRoomTypes === null || availableRoomTypes.length === 0);
+
+  const hasDateAvailability =
+    dateAvailableRoomTypes !== null && dateAvailableRoomTypes.length > 0;
+
+  const isOverCapacityForAnyRoom =
+    noMatchingTypes && hasDateAvailability && totalGuests > maxSingleRoomCapacity;
+
+  const shouldShowMultiRoomFallback = noMatchingTypes && hasDateAvailability;
+
+  const primaryRoomsToDisplay = hasSearched ? availableRoomTypes : roomTypes;
+  const roomsToDisplay =
+    shouldShowMultiRoomFallback && dateAvailableRoomTypes
+      ? dateAvailableRoomTypes
+      : primaryRoomsToDisplay;
 
   const showLoading = isInitialLoading || isSearching;
 
@@ -246,6 +293,32 @@ export default function RoomsPage() {
                       </p>
                     </div>
                   )}
+                  {shouldShowMultiRoomFallback && (
+                    <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs sm:text-sm text-amber-900">
+                      <p className="font-medium">
+                        {requestedRooms === 1
+                          ? `We don't have any single room available for ${totalGuests} guest${
+                              totalGuests === 1 ? "" : "s"
+                            }.`
+                          : `We can't match your exact request for ${totalGuests} guest${
+                              totalGuests === 1 ? "" : "s"
+                            } across ${requestedRooms} room${
+                              requestedRooms === 1 ? "" : "s"
+                            }.`}
+                      </p>
+                      <p className="mt-1">
+                        You can still stay with us by booking multiple rooms. Choose one or
+                        more room types below so the total capacity is at least {totalGuests} guest
+                        {totalGuests === 1 ? "" : "s"}.
+                      </p>
+                      {isOverCapacityForAnyRoom && (
+                        <p className="mt-1 text-[11px] sm:text-xs">
+                          No single room type can hold all guests, but a combination of
+                          multiple rooms can. Pick any mix of room types below.
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
                     {roomsToDisplay.map((roomType) => (
                       <div key={roomType.id} className="space-y-2">
@@ -356,8 +429,9 @@ export default function RoomsPage() {
                       </p>
                       {!coversGuests && totalSelectedRooms > 0 && (
                         <p className="text-xs text-red-600">
-                          Selected rooms may not cover all guests. You can
-                          still continue, but consider adding more rooms.
+                          Selected rooms do not yet cover all guests. Add
+                          more rooms until the total capacity is at least {totalGuests} guest
+                          {totalGuests === 1 ? "" : "s"} to continue.
                         </p>
                       )}
                     </div>

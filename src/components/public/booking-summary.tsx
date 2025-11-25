@@ -92,6 +92,7 @@ export function BookingSummary({
 
   const hasSelection = selection.length > 0;
   const coversGuests = totalSelectedCapacity >= totalGuests;
+  const canProceed = hasSelection && coversGuests;
 
   return (
     <div className="fixed bottom-4 right-4 w-full max-w-sm z-50">
@@ -146,8 +147,9 @@ export function BookingSummary({
             </p>
             {!coversGuests && hasSelection && (
               <p className="mt-1 text-xs text-red-600">
-                Selected rooms may not fit all guests. You can still continue,
-                but consider adding more rooms.
+                Selected rooms do not yet cover all guests. Add more rooms so
+                the total capacity is at least {totalGuests} guest
+                {totalGuests === 1 ? "" : "s"} to continue.
               </p>
             )}
             <p>{nights} night(s)</p>
@@ -173,11 +175,11 @@ export function BookingSummary({
           <Button
             className="w-full"
             onClick={handleProceed}
-            disabled={!hasSelection}
+            disabled={!canProceed}
           >
-            {hasSelection
+            {canProceed
               ? "Proceed to Book"
-              : "Select at least 1 room to continue"}
+              : "Select enough rooms to cover all guests"}
           </Button>
         </CardContent>
       </Card>

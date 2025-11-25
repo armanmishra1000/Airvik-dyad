@@ -172,3 +172,61 @@ For this first version we only show a clear warning if the selected capacity is 
 - Lint and build checks are part of the workflow so that new code stays consistent with the existing project.
 
 This keeps the implementation straightforward while giving users a much clearer way to choose multiple rooms and understand how their group fits into the hotel’s available rooms.
+
+---
+
+## 7. Over-capacity single-room search fallback (new behaviour)
+
+This section describes the extra behaviour added when the user searches for **one room** and the total guests are **more than any single room can hold**.
+
+### 7.1 When this fallback is used
+
+On the main booking page:
+
+- The user selects dates, **1 room**, adults and children, then clicks **Search Availability**.
+- The system runs the availability search as usual.
+- If **no single room type** can host that many guests on its own, but there **are rooms available** on those dates, then instead of only showing “No Rooms Found” we do the following:
+  - Show a clear message, for example:
+    - “We don’t have any single room available for 12 guests.”
+  - Immediately below, show **all room types that have at least one room free** for the full stay.
+
+The goal is to turn a hard dead-end into a helpful suggestion: “you can still stay with us by booking multiple rooms.”
+
+### 7.2 What is shown to the user
+
+Under the heading (e.g. “Available Rooms”) we show:
+
+1. A notice panel explaining the situation:
+   - Why there is no single room for this many guests.
+   - That the user can instead book multiple rooms.
+2. A grid of room cards for all **date-available** room types, reusing the same grouping UI:
+   - Existing card content (photo, name, amenities, price, max occupancy).
+   - A line like `2 rooms available for your dates`, using the grouped availability counts.
+   - A checkbox and quantity selector so the user can pick combinations such as:
+     - 3 × 4‑guest rooms for 12 guests.
+     - 1 × 8‑guest + 1 × 4‑guest room for 12 guests.
+
+This uses the same multi-selection logic as described earlier in this document; we only change **when** and **which** room types we show.
+
+### 7.3 Capacity rule for the Continue / Book button
+
+To keep behaviour simple and safe:
+
+- For any multi-room selection (including this fallback):
+  - We calculate **total guest capacity** from the selected rooms.
+  - We compare it to the **total guests** from the search.
+- The main **Continue / Proceed to Book** button is **disabled** until both are true:
+  1. At least one room is selected.
+  2. The total selected capacity is **greater than or equal to** the total guests.
+
+If the capacity is still too low, we show a small red warning explaining that the user must add more rooms until capacity covers all guests. This mirrors the behaviour in both the result summary text and the booking summary footer.
+
+### 7.4 Safety and simplicity
+
+- We do not change any database tables or reservation records.
+- All logic stays in the frontend:
+  - The hook that calculates availability now also returns **how many rooms** of each type are free for the dates.
+  - The page uses this to decide whether it is dealing with an “over-capacity single-room search” and to show the fallback list.
+- Capacity checks are basic arithmetic (summing max occupancies) rather than complex optimisation algorithms.
+- TypeScript types remain explicit and we avoid `any`.
+- Lint and build checks are run to keep the codebase consistent.
