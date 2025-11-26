@@ -58,23 +58,41 @@ export function BookingSummary({
   });
 
   const handleProceed = () => {
-    // Calculate totals from roomOccupancies for enhanced form
-    const guests = searchValues.roomOccupancies.reduce((sum: number, room: any) => sum + room.adults, 0);
-    const children = searchValues.roomOccupancies.reduce((sum: number, room: any) => sum + room.children, 0);
+    const adults = searchValues.roomOccupancies.reduce(
+      (sum, room) => sum + room.adults,
+      0,
+    );
+    const children = searchValues.roomOccupancies.reduce(
+      (sum, room) => sum + room.children,
+      0,
+    );
+    const totalGuests = adults + children;
     const rooms = searchValues.roomOccupancies.length;
     
     const query = new URLSearchParams();
     selection.forEach((rt) => query.append("roomTypeId", rt.id));
     query.set("from", format(dateRange.from!, "yyyy-MM-dd"));
     query.set("to", format(dateRange.to!, "yyyy-MM-dd"));
-    query.set("guests", guests.toString());
+    query.set("guests", totalGuests.toString());
     query.set("children", children.toString());
     query.set("rooms", rooms.toString());
 
     router.push(`/book/review?${query.toString()}`);
   };
 
-  const isSelectionComplete = selection.length === requestedRooms;
+  const totalGuests = searchValues.roomOccupancies.reduce(
+    (sum, room) => sum + room.adults + room.children,
+    0,
+  );
+
+  const totalSelectedCapacity = selection.reduce(
+    (sum, roomType) => sum + roomType.maxOccupancy,
+    0,
+  );
+
+  const hasSelection = selection.length > 0;
+  const coversGuests = totalSelectedCapacity >= totalGuests;
+  const canProceed = hasSelection && coversGuests;
 
   return (
     <div className="fixed bottom-4 right-4 w-full max-w-sm z-50">
@@ -112,8 +130,28 @@ export function BookingSummary({
           <Separator />
           <div className="text-sm">
             <p>
-              Selected: {selection.length} of {requestedRooms} room(s)
+              Selected: {selection.length} room
+              {selection.length === 1 ? "" : "s"}
+              {requestedRooms > 0 && (
+                <>
+                  {" "}
+                  (you requested {requestedRooms} room
+                  {requestedRooms === 1 ? "" : "s"})
+                </>
+              )}
             </p>
+            <p>
+              Capacity: {totalSelectedCapacity} guest
+              {totalSelectedCapacity === 1 ? "" : "s"} for {totalGuests} guest
+              {totalGuests === 1 ? "" : "s"}
+            </p>
+            {!coversGuests && hasSelection && (
+              <p className="mt-1 text-xs text-red-600">
+                Selected rooms do not yet cover all guests. Add more rooms so
+                the total capacity is at least {totalGuests} guest
+                {totalGuests === 1 ? "" : "s"} to continue.
+              </p>
+            )}
             <p>{nights} night(s)</p>
           </div>
           <div className="space-y-2 text-sm">
@@ -137,11 +175,11 @@ export function BookingSummary({
           <Button
             className="w-full"
             onClick={handleProceed}
-            disabled={!isSelectionComplete}
+            disabled={!canProceed}
           >
-            {isSelectionComplete
+            {canProceed
               ? "Proceed to Book"
-              : `Select ${requestedRooms - selection.length} more room(s)`}
+              : "Select enough rooms to cover all guests"}
           </Button>
         </CardContent>
       </Card>

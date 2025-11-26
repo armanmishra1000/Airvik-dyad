@@ -14,13 +14,22 @@ import { ShieldCheck, CalendarCheck, LineChart } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserProfile } from "@/lib/api";
+import { ADMIN_ROLES } from "@/constants/roles";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z.string().min(1, { message: "Password is required." }),
 });
 
-const ADMIN_ROLES = ["Hotel Owner", "Hotel Manager", "Receptionist", "Housekeeper"] as const;
+interface UserMetadataWithRole {
+  role_name?: string;
+}
+
+interface ProfileWithRoles {
+  roles?: {
+    name?: string | null;
+  } | null;
+}
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -42,16 +51,26 @@ export function AdminLoginForm() {
 
     let roleName: string | null = null;
     const user = data.user ?? (await supabase.auth.getUser()).data.user;
-    const metaRole = (user?.user_metadata as any)?.role_name;
+    const metaRole =
+      (user?.user_metadata as UserMetadataWithRole | undefined)?.role_name ??
+      null;
     roleName = typeof metaRole === "string" ? metaRole : null;
     if (!roleName && user?.id) {
       try {
         const { data: profile } = await getUserProfile(user.id);
-        roleName = (profile?.roles as any)?.name ?? null;
+        const profileRoles = (profile as ProfileWithRoles | null | undefined)
+          ?.roles;
+        const profileRoleName =
+          profileRoles && typeof profileRoles.name === "string"
+            ? profileRoles.name
+            : null;
+        roleName = profileRoleName ?? roleName;
       } catch {}
     }
 
-    if (!roleName || !ADMIN_ROLES.includes(roleName as any)) {
+    const isAdminRole = ADMIN_ROLES.some((adminRole) => adminRole === roleName);
+
+    if (!roleName || !isAdminRole) {
       await supabase.auth.signOut();
       toast.error("Admins only", { description: "Use the guest portal at /login." });
       setIsLoading(false);

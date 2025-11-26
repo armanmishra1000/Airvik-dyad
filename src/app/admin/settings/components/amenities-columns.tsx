@@ -32,7 +32,13 @@ export const columns: ColumnDef<Amenity>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const amenity = row.original
-      const hasPermission = (table.options.meta as any)?.hasPermission as ((p: string) => boolean) | undefined;
+      interface AmenitiesTableMeta {
+        hasPermission?: (permission: string) => boolean;
+        openDeleteDialog?: (amenity: Amenity) => void;
+      }
+
+      const meta = table.options.meta as AmenitiesTableMeta | undefined;
+      const hasPermission = meta?.hasPermission;
  
       return (
         <DropdownMenu>
@@ -54,7 +60,7 @@ export const columns: ColumnDef<Amenity>[] = [
             {hasPermission?.("delete:amenity") && (
               <DropdownMenuItem
                 className="text-destructive"
-                onSelect={() => (table.options.meta as any)?.openDeleteDialog?.(amenity)}
+                onSelect={() => meta?.openDeleteDialog?.(amenity)}
               >
                 Delete
               </DropdownMenuItem>

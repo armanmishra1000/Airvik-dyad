@@ -47,7 +47,7 @@ export default function RootLayout({
             <DataProvider>
               {children}
               <StickyBookingButton />
-              <Toaster />
+              <Toaster position="top-right" />
             </DataProvider>
           </SessionProvider>
         </ThemeProvider>

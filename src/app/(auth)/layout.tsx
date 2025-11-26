@@ -16,7 +16,7 @@ export default function AuthLayout({
 
   React.useEffect(() => {
     if (!isLoading && session) {
-      const isAdmin = ADMIN_ROLES.includes((roleName ?? "") as any);
+      const isAdmin = ADMIN_ROLES.some((adminRole) => adminRole === roleName);
       router.push(isAdmin ? "/admin" : "/profile");
     }
   }, [session, roleName, isLoading, router]);

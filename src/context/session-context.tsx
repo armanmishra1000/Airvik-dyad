@@ -4,6 +4,10 @@ import * as React from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+interface UserMetadataWithRole {
+  role_name?: string;
+}
+
 type SessionContextType = {
   session: Session | null;
   isLoading: boolean;
@@ -25,7 +29,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const { data } = await supabase.auth.getSession();
       if (!isMounted) return;
       setSession(data.session);
-      const metaRole = (data.session?.user?.user_metadata as any)?.role_name ?? null;
+      const metaRole =
+        (data.session?.user?.user_metadata as UserMetadataWithRole | undefined)
+          ?.role_name ?? null;
       setRoleName(typeof metaRole === "string" ? metaRole : null);
       setIsLoading(false);
     }
@@ -33,7 +39,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
-      const metaRole = (s?.user?.user_metadata as any)?.role_name ?? null;
+      const metaRole =
+        (s?.user?.user_metadata as UserMetadataWithRole | undefined)
+          ?.role_name ?? null;
       setRoleName(typeof metaRole === "string" ? metaRole : null);
     });
 
