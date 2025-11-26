@@ -93,10 +93,20 @@ export default function BookingConfirmationPage() {
     [confirmedRoomSummaries]
   );
 
-  const totalGuests = React.useMemo(
-    () => bookingReservations.reduce((sum, res) => sum + res.numberOfGuests, 0),
-    [bookingReservations]
-  );
+  const totalGuests = React.useMemo(() => {
+    if (bookingReservations.length === 0) {
+      return 0;
+    }
+
+    const currentId = reservation?.id;
+    const primaryReservation =
+      (currentId
+        ? bookingReservations.find((resItem) => resItem.id === currentId)
+        : undefined) ?? bookingReservations[0];
+
+    const guests = primaryReservation.numberOfGuests ?? 0;
+    return guests > 0 ? guests : 0;
+  }, [bookingReservations, reservation?.id]);
 
   const primaryRoomType = React.useMemo(() => {
     if (confirmedRoomSummaries.length > 0) {

@@ -58,8 +58,7 @@ export function BookingSummary({
   });
 
   const handleProceed = () => {
-    // Calculate totals from roomOccupancies for enhanced form
-    const guests = searchValues.roomOccupancies.reduce(
+    const adults = searchValues.roomOccupancies.reduce(
       (sum, room) => sum + room.adults,
       0,
     );
@@ -67,13 +66,14 @@ export function BookingSummary({
       (sum, room) => sum + room.children,
       0,
     );
+    const totalGuests = adults + children;
     const rooms = searchValues.roomOccupancies.length;
     
     const query = new URLSearchParams();
     selection.forEach((rt) => query.append("roomTypeId", rt.id));
     query.set("from", format(dateRange.from!, "yyyy-MM-dd"));
     query.set("to", format(dateRange.to!, "yyyy-MM-dd"));
-    query.set("guests", guests.toString());
+    query.set("guests", totalGuests.toString());
     query.set("children", children.toString());
     query.set("rooms", rooms.toString());
 
