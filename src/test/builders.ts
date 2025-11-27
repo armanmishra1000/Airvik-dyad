@@ -184,6 +184,9 @@ export const buildReservation = (
     bookingDate:
       overrides.bookingDate ?? new Date().toISOString().split("T")[0],
     source: overrides.source ?? "reception",
+    paymentMethod: overrides.paymentMethod ?? "Not specified",
+    adultCount: overrides.adultCount ?? overrides.numberOfGuests ?? 2,
+    childCount: overrides.childCount ?? 0,
   };
 
   reservationSequence += 1;

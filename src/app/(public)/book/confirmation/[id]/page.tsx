@@ -30,10 +30,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { InlineAlert } from "@/components/public/inline-alert";
 
 export default function BookingConfirmationPage() {
   const params = useParams<{ id: string }>();
   const { property, reservations, guests, rooms, roomTypes, ratePlans } = useDataContext();
+  const formatCurrency = useCurrencyFormatter();
   const [reservationData, setReservationData] = React.useState<Reservation | null>(null);
   const [guestData, setGuestData] = React.useState<Guest | null>(null);
   const [isLoadingReservation, setIsLoadingReservation] = React.useState(false);
@@ -231,24 +234,37 @@ export default function BookingConfirmationPage() {
     }
   }, [params.id, reservation, reservationData, isLoadingReservation, hasAttemptedFetch]);
   
-  // Fetch guest directly if not in context
+  // Always refresh guest data to reflect the latest contact information from Supabase
   React.useEffect(() => {
-    if (reservation && !guestFromContext && reservation.guestId && !guestData && !isLoadingGuest) {
-      setIsLoadingGuest(true);
-      getGuestById(reservation.guestId)
-        .then(({ data }) => {
-          if (data) {
-            setGuestData(data);
-          }
-        })
-        .catch((error) => {
-          console.error("Failed to fetch guest:", error);
-        })
-        .finally(() => {
-          setIsLoadingGuest(false);
-        });
+    const guestId = reservation?.guestId;
+    if (!guestId) {
+      return;
     }
-  }, [reservation, guestFromContext, guestData, isLoadingGuest]);
+
+    let isActive = true;
+    setIsLoadingGuest(true);
+
+    getGuestById(guestId)
+      .then(({ data }) => {
+        if (isActive && data) {
+          setGuestData(data);
+        }
+      })
+      .catch((error) => {
+        if (isActive) {
+          console.error("Failed to fetch guest:", error);
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoadingGuest(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [reservation?.guestId]);
 
   // Show loading state while fetching data
   if (isLoadingReservation || (!reservation && !hasAttemptedFetch)) {
@@ -271,42 +287,142 @@ export default function BookingConfirmationPage() {
     return null; // This should not happen due to the check above
   }
 
-  const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(reservation.id);
-    toast.success("Reservation ID copied to clipboard!");
+  const fullGuestName = guest
+    ? [guest.firstName, guest.lastName].filter(Boolean).join(" ").trim()
+    : "";
+  const displayGuestName = fullGuestName || guest?.firstName || "Guest";
+  const formattedBookingDateTime = reservation.bookingDate
+    ? format(parseISO(reservation.bookingDate), "EEE, dd MMM yyyy · h:mm a")
+    : null;
+
+  const customerDetails = {
+    fullName: displayGuestName,
+    email: guest?.email ?? null,
+    phone: guest?.phone ?? null,
+    bookingTimestamp: formattedBookingDateTime,
+  };
+
+  const copyToClipboard = (value: string, label: string) => {
+    if (!value) return;
+    navigator.clipboard.writeText(value);
+    toast.success(`${label} copied to clipboard!`);
   };
 
   return (
     <div className="bg-muted/40 min-h-screen">
       <div className="container mx-auto px-4 py-10">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <CheckCircle2 className="mx-auto h-16 w-16 text-green-500" />
-            <h1 className="text-4xl font-bold font-serif text-foreground mt-4">
-              Booking Confirmed!
-            </h1>
-            <p className="text-muted-foreground mt-2 text-lg">
-              Thank you, {guest?.firstName}! Your stay at {property.name} is
-              booked.
-            </p>
+          <div className="mb-12">
+            <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-primary/10 via-background to-background p-8 text-center shadow-xl">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <CheckCircle2 className="h-8 w-8" />
+              </div>
+              <p className="mt-4 text-xs uppercase tracking-[0.4em] text-primary/80">
+                Reservation confirmed
+              </p>
+              <h1 className="mt-3 text-4xl font-serif font-bold text-foreground">
+                Your stay is ready at {property.name}
+              </h1>
+              <p className="mt-3 text-lg text-muted-foreground">
+                Thanks, {customerDetails.fullName}. We&apos;ve secured your rooms and our team is preparing to welcome you.
+              </p>
+              <div className="mx-auto mt-5 inline-flex items-center gap-3 rounded-full border border-border/60 bg-background/70 px-4 py-2 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">Reservation ID</span>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {reservation.id}
+                </span>
+              </div>
+              <div className="mx-auto mt-6 max-w-2xl">
+                <InlineAlert
+                  variant="info"
+                  title="Payment confirmation call"
+                  description="Within a short time, our reception team will call you and confirm the payment." />
+              </div>
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Left column: Reservation Details */}
-            <div>
-              <Card className="h-full">
+          <div className="grid gap-8 md:grid-cols-2">
+            {/* Left column: Guest + Reservation Details */}
+            <div className="space-y-6">
+              <Card className="rounded-2xl border-border/60 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-foreground font-serif">Your Reservation</CardTitle>
-                  <CardDescription className="flex items-center gap-2 pt-1">
-                    <span>Reservation ID: {reservation.id}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={handleCopyToClipboard}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
+                  <CardTitle className="font-serif text-2xl">Guest details</CardTitle>
+                  <CardDescription>
+                    We&apos;ll reach you on these contacts if we need anything before arrival.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground">
+                      <User className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Guest name</p>
+                      <p className="text-base font-medium text-foreground">{customerDetails.fullName}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="text-base font-medium text-foreground break-all">
+                        {customerDetails.email ?? "Not provided"}
+                      </p>
+                    </div>
+                    {customerDetails.email ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="mt-2 h-7 w-7"
+                        aria-label="Copy email address"
+                        onClick={() => copyToClipboard(customerDetails.email ?? "", "Email address")}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground">
+                      <Phone className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Mobile number</p>
+                      <p className="text-base font-medium text-foreground">{customerDetails.phone ?? "Not provided"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground">
+                      <CalendarDays className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Booked on</p>
+                      <p className="text-base font-medium text-foreground">
+                        {customerDetails.bookingTimestamp ?? "Not available"}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl border-border/60 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-foreground font-serif text-2xl">Your reservation</CardTitle>
+                  <CardDescription className="flex flex-col gap-2 pt-1 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 text-foreground">
+                      <span>Reservation ID: {reservation.id}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        aria-label="Copy reservation ID"
+                        onClick={() => copyToClipboard(reservation.id, "Reservation ID")}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <span>Everything about your rooms, dates, and price in one glance.</span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -412,7 +528,7 @@ export default function BookingConfirmationPage() {
                             {item.nights === 1 ? "" : "s"}
                           </span>
                           <span className="font-medium">
-                            ₹{Math.round(item.lineBase).toLocaleString("en-IN")}
+                            {formatCurrency(Math.round(item.lineBase))}
                           </span>
                         </div>
                       ))}
@@ -424,7 +540,7 @@ export default function BookingConfirmationPage() {
                           {pricing.taxesApplied ? "Total (before tax)" : "Subtotal"}
                         </span>
                         <span className="font-semibold">
-                          ₹{Math.round(pricing.totalCost).toLocaleString("en-IN")}
+                          {formatCurrency(Math.round(pricing.totalCost))}
                         </span>
                       </div>
                       {pricing.taxesApplied && (
@@ -433,7 +549,7 @@ export default function BookingConfirmationPage() {
                             Taxes &amp; fees ({formattedTaxRate}%)
                           </span>
                           <span className="font-semibold">
-                            ₹{Math.round(pricing.taxesAndFees).toLocaleString("en-IN")}
+                            {formatCurrency(Math.round(pricing.taxesAndFees))}
                           </span>
                         </div>
                       )}
@@ -442,9 +558,7 @@ export default function BookingConfirmationPage() {
 
                       <div className="flex justify-between text-sm font-semibold">
                         <span>Total</span>
-                        <span>
-                          ₹{Math.round(pricing.grandTotal).toLocaleString("en-IN")}
-                        </span>
+                        <span>{formatCurrency(Math.round(pricing.grandTotal))}</span>
                       </div>
                     </div>
                   </div>
@@ -454,14 +568,15 @@ export default function BookingConfirmationPage() {
 
             {/* Right column: Hotel Info & What's Next */}
             <div>
-              <Card className="h-full">
+              <Card className="flex h-full flex-col rounded-2xl border-border/60 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-foreground font-serif">Hotel Information</CardTitle>
+                  <CardTitle className="text-foreground font-serif text-2xl">Hotel information</CardTitle>
+                  <CardDescription>Everything you need to reach us with ease.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                  <p className="font-bold text-base">SAHAJANAND WELLNESS</p>
+                  <p className="text-base font-semibold text-foreground">SAHAJANAND WELLNESS</p>
                   <div className="flex items-start gap-3 text-muted-foreground">
-                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />
                     <span>
                       Street No.12, Shisham Jhadi, Muni Ki Reti, Near Ganga
                       Kinare, Rishikesh U.K Pin Code: 249201
@@ -469,9 +584,11 @@ export default function BookingConfirmationPage() {
                   </div>
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <Phone className="h-4 w-4" />
-                    <span>{property.phone}</span>
+                    <a href={`tel:${property.phone}`} className="font-medium text-foreground hover:underline">
+                      {property.phone}
+                    </a>
                   </div>
-                  <div className="aspect-video w-full overflow-hidden rounded-lg border mt-4">
+                  <div className="mt-4 aspect-video w-full overflow-hidden rounded-lg border">
                     <iframe
                       src={property.google_maps_url}
                       width="100%"
@@ -480,28 +597,62 @@ export default function BookingConfirmationPage() {
                       allowFullScreen={false}
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
+                      title="Hotel location map"
                     ></iframe>
                   </div>
                 </CardContent>
                 <Separator className="my-4" />
                 <CardHeader className="pt-0">
-                  <CardTitle className="text-foreground font-serif">What&apos;s Next?</CardTitle>
+                  <CardTitle className="text-foreground font-serif text-2xl">What&apos;s next?</CardTitle>
+                  <CardDescription>Simple steps before you arrive.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground pt-0">
-                  <div className="flex items-start gap-3">
-                    <Mail className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <span>
-                      A confirmation email has been sent to{" "}
-                      <strong className="text-foreground">
-                        {guest?.email}
-                      </strong>
-                      .
-                    </span>
-                  </div>
-                  <p>
-                    Please contact us for any special requests or questions
-                    about your stay.
-                  </p>
+                <CardContent className="pt-0">
+                  <ol className="space-y-4 text-sm">
+                    <li className="flex gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Phone className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">Reception call for payment</p>
+                        <p className="text-muted-foreground">
+                          Our reception team will call shortly to complete your UPI transaction and answer any final questions.
+                        </p>
+                      </div>
+                    </li>
+                    <li className="flex gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Mail className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">Check your inbox</p>
+                        <p className="text-muted-foreground">
+                          We sent your confirmation to {customerDetails.email ?? "your email"}. Save it for quick reference at check-in.
+                        </p>
+                      </div>
+                    </li>
+                    <li className="flex gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <CalendarDays className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">Plan your arrival</p>
+                        <p className="text-muted-foreground">
+                          Check-in starts at 12:00 PM; consider your travel time so we can welcome you without delay.
+                        </p>
+                      </div>
+                    </li>
+                    <li className="flex gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <MapPin className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">Need directions?</p>
+                        <p className="text-muted-foreground">
+                          Use the map above or tap our phone number if you need live guidance from the property.
+                        </p>
+                      </div>
+                    </li>
+                  </ol>
                 </CardContent>
               </Card>
             </div>

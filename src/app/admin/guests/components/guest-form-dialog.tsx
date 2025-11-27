@@ -37,16 +37,26 @@ const guestSchema = z.object({
 
 interface GuestFormDialogProps {
   guest?: Guest;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  defaultOpen?: boolean;
+  onGuestCreated?: (guest: Guest) => void;
 }
 
 export function GuestFormDialog({
   guest,
   children,
+  defaultOpen = false,
+  onGuestCreated,
 }: GuestFormDialogProps) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(defaultOpen);
   const { addGuest, updateGuest } = useDataContext();
   const isEditing = !!guest;
+
+  React.useEffect(() => {
+    if (defaultOpen) {
+      setOpen(true);
+    }
+  }, [defaultOpen]);
 
   const form = useForm<z.infer<typeof guestSchema>>({
     resolver: zodResolver(guestSchema),
@@ -71,6 +81,7 @@ export function GuestFormDialog({
       } else {
         const created = await addGuest(values);
         form.reset({ firstName: "", lastName: "", email: "", phone: "" });
+        onGuestCreated?.(created);
       }
 
       toast.success(
@@ -96,11 +107,11 @@ export function GuestFormDialog({
     } else {
       form.reset({ firstName: "", lastName: "", email: "", phone: "" });
     }
-  }, [guest?.id, open]);
+  }, [guest, open, form]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>

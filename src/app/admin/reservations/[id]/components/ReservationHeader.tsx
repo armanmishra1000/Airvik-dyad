@@ -3,6 +3,7 @@
 import { ArrowLeft, LogIn, LogOut, XCircle, Edit } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ interface ReservationHeaderProps {
 export function ReservationHeader({ reservation }: ReservationHeaderProps) {
   const { updateReservationStatus } = useDataContext();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
+  const searchParams = useSearchParams();
+  const isNewlyCreated = searchParams.get("createdBooking") === "1";
 
   const handleStatusUpdate = (status: "Checked-in" | "Checked-out" | "Cancelled") => {
     updateReservationStatus(reservation.id, status);
@@ -52,6 +55,11 @@ export function ReservationHeader({ reservation }: ReservationHeaderProps) {
         <Badge variant="outline" className="ml-auto rounded-full px-3 py-1 text-xs font-medium sm:ml-0">
           {reservation.status}
         </Badge>
+        {isNewlyCreated && (
+          <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs font-semibold text-primary">
+            Just created
+          </Badge>
+        )}
         <div className="hidden items-center gap-2 md:ml-auto md:flex">
           <EditReservationDialog reservation={reservation}>
             <Button variant="outline" size="sm" disabled={!canBeModified}>

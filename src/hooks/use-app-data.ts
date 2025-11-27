@@ -340,7 +340,14 @@ import type {
   DashboardComponentId,
 } from "@/data/types";
 
-type FolioItemRecord = FolioItem & { reservation_id: string };
+type FolioItemRecord = {
+  reservation_id: string;
+  id: string;
+  description: string;
+  amount: number;
+  timestamp: string | null;
+  payment_method?: string | null;
+};
 type RoomTypeAmenityRecord = { room_type_id: string; amenity_id: string };
 
 type CreateReservationPayload = {
@@ -356,10 +363,13 @@ type CreateReservationPayload = {
    * reflects guests per room for the stay, not multiplied by nights.
    */
   numberOfGuests: number;
+  adultCount: number;
+  childCount: number;
   status: ReservationStatus;
   notes?: string;
   bookingDate: string;
   source: Reservation["source"];
+  paymentMethod: Reservation["paymentMethod"];
 };
 
 type UserProfileUpdate = Partial<Pick<User, "name" | "roleId">>;
@@ -374,7 +384,7 @@ const defaultProperty: Property = {
   photos: [],
   google_maps_url: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.617023443543!2d-73.98784668459395!3d40.74844097932803!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1620312953789!5m2!1sen!2sus",
   timezone: "America/New_York",
-  currency: "USD",
+  currency: "INR",
   allowSameDayTurnover: true,
   showPartialDays: true,
   defaultUnitsView: "remaining",
@@ -438,11 +448,15 @@ export function useAppData() {
       const reservationsWithFolios: Reservation[] = (reservationsRes.data || []).map((res) => {
         const folio = folioItems
           .filter((item) => item.reservation_id === res.id)
-        .map((item) => {
-          const { reservation_id, ...folioItem } = item;
-          void reservation_id;
-          return folioItem;
-        });
+          .map((item) => {
+            const { reservation_id, payment_method, ...folioItem } = item;
+            void reservation_id;
+            return {
+              ...folioItem,
+              timestamp: item.timestamp ?? res.bookingDate,
+              paymentMethod: payment_method ?? undefined,
+            };
+          });
         return { ...res, folio };
       });
       setReservations(reservationsWithFolios);
@@ -473,7 +487,7 @@ export function useAppData() {
       ? await api.createProperty(updatedData)
       : await api.updateProperty(property.id, updatedData);
     if (error) throw error;
-    setProperty(data);
+    setProperty({ ...defaultProperty, ...data });
   };
 
   const addGuest = async (guestData: Omit<Guest, "id">) => {
@@ -521,6 +535,9 @@ export function useAppData() {
       p_notes: reservationDetails.notes ?? null,
       p_booking_date: reservationDetails.bookingDate,
       p_source: reservationDetails.source,
+      p_payment_method: reservationDetails.paymentMethod,
+      p_adult_count: reservationDetails.adultCount,
+      p_child_count: reservationDetails.childCount,
     });
 
     if (error) throw error;
@@ -543,11 +560,33 @@ export function useAppData() {
   };
 
   const addFolioItem = async (reservationId: string, item: Omit<FolioItem, "id" | "timestamp">) => {
-    const { data, error } = await api.addFolioItem({ ...item, reservation_id: reservationId });
-    if (error || !data) throw error ?? new Error("Failed to add folio item");
-    const { reservation_id, ...folioItem } = data as FolioItemRecord;
-    void reservation_id;
-    setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, folio: [...r.folio, folioItem], totalAmount: r.totalAmount + folioItem.amount } : r));
+    const { data, error } = await api.addFolioItem({
+      reservation_id: reservationId,
+      description: item.description,
+      amount: item.amount,
+      payment_method: item.paymentMethod ?? null,
+    });
+    if (error || !data) {
+      if (error && typeof error === "object" && "message" in error) {
+        throw new Error(String((error as { message?: string }).message || "Failed to add folio item"));
+      }
+      throw new Error("Failed to add folio item");
+    }
+    const inserted = data as FolioItemRecord;
+    const folioItem: FolioItem = {
+      id: inserted.id,
+      description: inserted.description,
+      amount: inserted.amount,
+      timestamp: inserted.timestamp ?? new Date().toISOString(),
+      paymentMethod: inserted.payment_method ?? undefined,
+    };
+    setReservations(prev =>
+      prev.map(r =>
+        r.id === reservationId
+          ? { ...r, folio: [...r.folio, folioItem] }
+          : r
+      )
+    );
   };
 
   const addRoomType = async (roomTypeData: Omit<RoomType, "id">) => {

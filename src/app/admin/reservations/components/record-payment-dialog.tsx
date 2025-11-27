@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useDataContext } from "@/context/data-context";
+import { calculateReservationFinancials } from "@/lib/reservations/calculate-financials";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 const paymentSchema = z.object({
   amount: z.coerce.number().min(0.01, "Amount must be greater than 0."),
@@ -49,7 +51,22 @@ export function RecordPaymentDialog({
   children,
 }: RecordPaymentDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addFolioItem } = useDataContext();
+  const { addFolioItem, reservations } = useDataContext();
+  const formatCurrency = useCurrencyFormatter();
+
+  const reservation = React.useMemo(
+    () => reservations.find((res) => res.id === reservationId),
+    [reservations, reservationId]
+  );
+
+  const { balance } = React.useMemo(() => {
+    if (!reservation) {
+      return { balance: 0 };
+    }
+    return calculateReservationFinancials(reservation);
+  }, [reservation]);
+
+  const outstandingBalance = Math.max(balance, 0);
 
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
@@ -59,10 +76,29 @@ export function RecordPaymentDialog({
   });
 
   async function onSubmit(values: z.infer<typeof paymentSchema>) {
+    if (!reservation) {
+      toast.error("Reservation not found.");
+      return;
+    }
+
+    if (outstandingBalance <= 0) {
+      toast.error("This reservation is already fully paid.");
+      return;
+    }
+
+    if (values.amount > outstandingBalance) {
+      form.setError("amount", {
+        type: "manual",
+        message: "Amount exceeds the outstanding balance.",
+      });
+      return;
+    }
+
     try {
       await addFolioItem(reservationId, {
         description: `Payment - ${values.method}`,
         amount: -Math.abs(values.amount),
+        paymentMethod: values.method,
       });
       toast.success("Payment recorded successfully!");
       form.reset();
@@ -96,6 +132,9 @@ export function RecordPaymentDialog({
                   <FormControl>
                     <Input type="number" step="0.01" {...field} />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Balance due: {formatCurrency(outstandingBalance)}
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
@@ -126,7 +165,9 @@ export function RecordPaymentDialog({
               )}
             />
             <DialogFooter className="border-t border-border/40 pt-4 sm:justify-end">
-              <Button type="submit">Record Payment</Button>
+              <Button type="submit" disabled={outstandingBalance <= 0}>
+                {outstandingBalance <= 0 ? "Fully Paid" : "Record Payment"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>

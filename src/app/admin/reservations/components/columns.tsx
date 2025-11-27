@@ -1,7 +1,7 @@
 "use client"
 
-import { ColumnDef, Table } from "@tanstack/react-table"
-import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User, ChevronDown, ChevronRight } from "lucide-react"
+import { ColumnDef, Table, type CellContext } from "@tanstack/react-table"
+import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User, ChevronDown, ChevronRight, Clock3 } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -23,6 +23,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type { FolioItem, ReservationStatus } from "@/data/types"
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 export type ReservationWithDetails = {
     id: string;
@@ -42,11 +43,16 @@ export type ReservationWithDetails = {
     bookingId: string;
     source: 'reception' | 'website';
     nights: number;
+    paymentMethod: string;
+    adultCount: number;
+    childCount: number;
+    roomCount?: number;
     subRows?: ReservationWithDetails[];
 }
 
 export const statuses = [
     { value: "Tentative", label: "Tentative", icon: HelpCircle },
+    { value: "Standby", label: "Standby", icon: Clock3 },
     { value: "Confirmed", label: "Confirmed", icon: CheckCircle2 },
     { value: "Checked-in", label: "Checked-in", icon: LogIn },
     { value: "Checked-out", label: "Checked-out", icon: LogOut },
@@ -107,21 +113,39 @@ function ReservationActions({ reservation, table }: { reservation: ReservationWi
   )
 }
 
+function AmountCell({ row }: CellContext<ReservationWithDetails, number>) {
+  const formatCurrency = useCurrencyFormatter();
+  const amount = Number(row.getValue("totalAmount")) || 0;
+  return <div className="text-right font-medium">{formatCurrency(amount)}</div>;
+}
+
 export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     id: 'expander',
     header: () => null,
     cell: ({ row }) => {
-      return row.getCanExpand() ? (
-        <button
-          {...{
-            onClick: row.getToggleExpandedHandler(),
-            className: "p-1 rounded-full hover:bg-muted",
-          }}
-        >
-          {row.getIsExpanded() ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </button>
-      ) : <div className="w-8"></div>
+      if (row.getCanExpand()) {
+        return (
+          <button
+            {...{
+              onClick: row.getToggleExpandedHandler(),
+              className: "p-1 rounded-full hover:bg-muted",
+            }}
+          >
+            {row.getIsExpanded() ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </button>
+        );
+      }
+
+      return (
+        <span className="text-xs font-medium text-muted-foreground">
+          {row.index + 1}
+        </span>
+      );
     },
   },
   {
@@ -169,11 +193,36 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     accessorKey: "roomNumber",
     header: "Room",
-    cell: ({ row, getValue }) => (
-        <div style={{ paddingLeft: `${row.depth * 1}rem` }}>
-            {getValue() as string}
-        </div>
-    )
+    cell: ({ row, getValue }) => {
+        const original = row.original;
+        if (row.depth > 0) {
+          return (
+            <div style={{ paddingLeft: `${row.depth * 1}rem` }}>
+              Room {getValue() as string}
+            </div>
+          );
+        }
+
+        const roomCount = original.roomCount ?? original.subRows?.length ?? 1;
+        const childRooms = original.subRows?.map((sub) => sub.roomNumber).filter(Boolean) ?? [];
+        return (
+          <div className="space-y-1">
+            <span className="font-medium">
+              {roomCount === 1 ? "1 Room" : `${roomCount} Rooms`}
+            </span>
+            {roomCount === 1 && original.roomNumber && original.roomNumber !== "N/A" && (
+              <span className="block text-xs text-muted-foreground">
+                Room {original.roomNumber}
+              </span>
+            )}
+            {roomCount > 1 && childRooms.length > 0 && (
+              <span className="block text-xs text-muted-foreground">
+                {childRooms.join(", ")}
+              </span>
+            )}
+          </div>
+        );
+    }
   },
   {
     accessorKey: "numberOfGuests",
@@ -212,17 +261,34 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     }
   },
   {
+    id: "additionalCharges",
+    header: "Additional Charges",
+    cell: ({ row }) => {
+      if (row.depth > 0) return null;
+      const notes = row.original.notes?.trim();
+      if (!notes) {
+        return <span className="text-xs text-muted-foreground">-</span>;
+      }
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="line-clamp-2 max-w-[220px] text-sm text-foreground">
+                {notes}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="text-sm text-foreground">{notes}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
+  },
+  {
     accessorKey: "totalAmount",
     header: () => <div className="text-right">Amount</div>,
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("totalAmount"))
-      const formatted = new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency: "INR",
-      }).format(amount)
- 
-      return <div className="text-right font-medium">{formatted}</div>
-    },
+    cell: AmountCell,
   },
   {
     accessorKey: "status",
@@ -240,6 +306,15 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
             status.value === "Confirmed" ? "secondary" :
             status.value === "Cancelled" ? "destructive" : "outline";
         return <Badge variant={variant}>{status.label}</Badge>
+    }
+  },
+  {
+    accessorKey: "paymentMethod",
+    header: "Payment",
+    cell: ({ row }) => {
+      if (row.depth > 0) return null;
+      const method = row.getValue("paymentMethod") as string | undefined;
+      return <span className="text-sm text-muted-foreground">{method || "-"}</span>;
     }
   },
   {

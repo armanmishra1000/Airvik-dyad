@@ -27,9 +27,11 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { useDataContext } from "@/context/data-context";
 import { cn } from "@/lib/utils";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 export function RevenueReport() {
   const { reservations } = useDataContext();
+  const currencyFormatter = useCurrencyFormatter();
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
     to: new Date(),
@@ -56,13 +58,10 @@ export function RevenueReport() {
     });
   }, [date, reservations]);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      notation: "compact",
-    }).format(value);
-  };
+  const formatCurrency = React.useCallback(
+    (value: number) => currencyFormatter(value, { notation: "compact" }),
+    [currencyFormatter]
+  );
 
   return (
     <Card>

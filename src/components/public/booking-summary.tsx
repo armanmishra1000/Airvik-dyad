@@ -11,6 +11,7 @@ import type { RoomType } from "@/data/types";
 import type { EnhancedBookingSearchFormValues } from "./booking-widget";
 import { useDataContext } from "@/context/data-context";
 import { calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 interface BookingSummaryProps {
   selection: RoomType[];
@@ -27,6 +28,7 @@ export function BookingSummary({
 }: BookingSummaryProps) {
   const router = useRouter();
   const { ratePlans, property } = useDataContext();
+  const formatCurrency = useCurrencyFormatter();
   const { dateRange } = searchValues;
   const requestedRooms = searchValues.roomOccupancies.length;
 
@@ -123,7 +125,7 @@ export function BookingSummary({
               >
                 <span>{roomType.name}</span>
                 <div className="flex items-center gap-2">
-                  <span>₹{individualRoomCosts[index].toLocaleString('en-IN')}</span>
+                  <span>{formatCurrency(individualRoomCosts[index])}</span>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -166,12 +168,12 @@ export function BookingSummary({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600">Subtotal</span>
-              <span className="text-gray-900">₹{totalCost.toLocaleString('en-IN')}</span>
+              <span className="text-gray-900">{formatCurrency(totalCost)}</span>
             </div>
             {taxesApplied && (
               <div className="flex justify-between">
                 <span className="text-gray-600">Taxes &amp; fees ({formattedTaxRate}%)</span>
-                <span className="text-gray-900">₹{taxesAndFees.toLocaleString('en-IN')}</span>
+                <span className="text-gray-900">{formatCurrency(taxesAndFees)}</span>
               </div>
             )}
           </div>
@@ -180,7 +182,7 @@ export function BookingSummary({
             <span>Grand Total</span>
             <div className="flex items-center gap-1">
               <IndianRupee className="h-5 w-5" />
-              <span>{grandTotal.toLocaleString('en-IN')}</span>
+              <span>{formatCurrency(grandTotal)}</span>
             </div>
           </div>
           <Button

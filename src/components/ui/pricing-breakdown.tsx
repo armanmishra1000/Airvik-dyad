@@ -1,4 +1,5 @@
 import React from "react";
+import { DEFAULT_CURRENCY, formatCurrency } from "@/lib/currency";
 
 interface PricingBreakdownProps {
   nightlyRate: number;
@@ -10,6 +11,7 @@ interface PricingBreakdownProps {
   className?: string;
   taxesApplied?: boolean;
   taxRatePercent?: number;
+  currency?: string;
 }
 
 export function PricingBreakdown({
@@ -22,6 +24,7 @@ export function PricingBreakdown({
   className = "",
   taxesApplied = false,
   taxRatePercent = 0,
+  currency = DEFAULT_CURRENCY,
 }: PricingBreakdownProps) {
   // Calculate totalCost if not provided
   const calculatedTotalCost = totalCost || nightlyRate * nights * rooms;
@@ -30,11 +33,11 @@ export function PricingBreakdown({
     <div className={`space-y-3 rounded-xl ${className}`}>
       <div className="flex justify-between text-sm">
         <span className="text-gray-600">
-          ₹{nightlyRate.toLocaleString()} × {nights} night{nights > 1 ? "s" : ""}
+          {formatCurrency(nightlyRate, currency)} × {nights} night{nights > 1 ? "s" : ""}
           {rooms > 1 && ` × ${rooms} room${rooms > 1 ? "s" : ""}`}
         </span>
         <span className="font-medium text-gray-900">
-          ₹{calculatedTotalCost.toLocaleString()}
+          {formatCurrency(calculatedTotalCost, currency)}
         </span>
       </div>
       {taxesApplied && (
@@ -43,7 +46,7 @@ export function PricingBreakdown({
             Taxes &amp; fees {taxRatePercent > 0 ? `(${taxRatePercent.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: taxRatePercent % 1 === 0 ? 0 : 2 })}%)` : ""}
           </span>
           <span className="font-medium text-gray-900">
-            ₹{Math.round(taxesAndFees).toLocaleString()}
+            {formatCurrency(Math.round(taxesAndFees), currency)}
           </span>
         </div>
       )}
@@ -54,7 +57,7 @@ export function PricingBreakdown({
           </span>
           <div className="text-right">
             <span className="text-2xl font-bold text-primary">
-              ₹{Math.round(grandTotal).toLocaleString()}
+              {formatCurrency(Math.round(grandTotal), currency)}
             </span>
             {taxesApplied && (
               <p className="text-xs text-gray-500">

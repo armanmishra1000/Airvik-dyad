@@ -181,17 +181,27 @@ export interface Guest {
 
 export type ReservationStatus =
   | "Tentative"
+  | "Standby"
   | "Confirmed"
   | "Checked-in"
   | "Checked-out"
   | "Cancelled"
   | "No-show";
 
+export type ReservationPaymentMethod =
+  | "Not specified"
+  | "Not relevant"
+  | "Pay with UPI"
+  | "Card on file"
+  | "Cash"
+  | "Transfer";
+
 export interface FolioItem {
   id: string;
   description: string;
   amount: number;
   timestamp: string;
+  paymentMethod?: string | null;
 }
 
 export interface Reservation {
@@ -209,6 +219,9 @@ export interface Reservation {
   totalAmount: number;
   bookingDate: string;
   source: 'reception' | 'website';
+  paymentMethod: ReservationPaymentMethod;
+  adultCount: number;
+  childCount: number;
 }
 
 export interface HousekeepingAssignment {
