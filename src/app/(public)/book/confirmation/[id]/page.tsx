@@ -155,10 +155,6 @@ export default function BookingConfirmationPage() {
       }),
     [confirmedRoomSummaries, nights]
   );
-  const formattedTaxRate = pricing.taxRatePercent.toLocaleString("en-IN", {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: pricing.taxRatePercent % 1 === 0 ? 0 : 2,
-  });
 
   // Calculate prices using shared utilities for single or multi-room bookings
   const taxConfig = React.useMemo(
@@ -208,6 +204,11 @@ export default function BookingConfirmationPage() {
     bookingRatePlan,
     taxConfig,
   ]);
+
+  const formattedTaxRate = pricing.taxRatePercent.toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: pricing.taxRatePercent % 1 === 0 ? 0 : 2,
+  });
   
   // Fetch reservation directly if not in context
   React.useEffect(() => {
