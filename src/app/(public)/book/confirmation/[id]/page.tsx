@@ -157,9 +157,17 @@ export default function BookingConfirmationPage() {
   );
 
   // Calculate prices using shared utilities for single or multi-room bookings
+  const taxConfig = React.useMemo(
+    () => ({
+      enabled: Boolean(property.tax_enabled),
+      percentage: property.tax_percentage ?? 0,
+    }),
+    [property.tax_enabled, property.tax_percentage]
+  );
+
   const pricing = React.useMemo(() => {
     if (!reservation || nights <= 0) {
-      return calculateRoomPricing({ nights: 0, rooms: 0 });
+      return calculateRoomPricing({ nights: 0, rooms: 0, taxConfig });
     }
 
     if (totalRooms <= 1) {
@@ -170,6 +178,7 @@ export default function BookingConfirmationPage() {
         ratePlan: bookingRatePlan,
         nights,
         rooms: 1,
+        taxConfig,
       });
     }
 
@@ -184,6 +193,7 @@ export default function BookingConfirmationPage() {
       roomTypes: roomTypesForPricing,
       ratePlan: bookingRatePlan,
       nights,
+      taxConfig,
     });
   }, [
     reservation,
@@ -192,7 +202,13 @@ export default function BookingConfirmationPage() {
     confirmedRoomSummaries,
     primaryRoomType,
     bookingRatePlan,
+    taxConfig,
   ]);
+
+  const formattedTaxRate = pricing.taxRatePercent.toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: pricing.taxRatePercent % 1 === 0 ? 0 : 2,
+  });
   
   // Fetch reservation directly if not in context
   React.useEffect(() => {
@@ -405,18 +421,22 @@ export default function BookingConfirmationPage() {
 
                       <div className="flex justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">
-                          Total (before tax)
+                          {pricing.taxesApplied ? "Total (before tax)" : "Subtotal"}
                         </span>
                         <span className="font-semibold">
                           ₹{Math.round(pricing.totalCost).toLocaleString("en-IN")}
                         </span>
                       </div>
-                      <div className="flex justify-between text-xs sm:text-sm">
-                        <span className="text-muted-foreground">Taxes &amp; fees</span>
-                        <span className="font-semibold">
-                          ₹{Math.round(pricing.taxesAndFees).toLocaleString("en-IN")}
-                        </span>
-                      </div>
+                      {pricing.taxesApplied && (
+                        <div className="flex justify-between text-xs sm:text-sm">
+                          <span className="text-muted-foreground">
+                            Taxes &amp; fees ({formattedTaxRate}%)
+                          </span>
+                          <span className="font-semibold">
+                            ₹{Math.round(pricing.taxesAndFees).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                      )}
 
                       <Separator className="my-2" />
 

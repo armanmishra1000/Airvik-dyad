@@ -241,21 +241,31 @@ function BookingReviewContent() {
     return parsed;
   }, [bookingDetails.guests]);
 
+  const taxConfig = React.useMemo(
+    () => ({
+      enabled: Boolean(property.tax_enabled),
+      percentage: property.tax_percentage ?? 0,
+    }),
+    [property.tax_enabled, property.tax_percentage]
+  );
+
   const pricing = React.useMemo(() => {
     if (selectedRoomTypes.length === 1) {
       return calculateRoomPricing({
         roomType: selectedRoomTypes[0],
         ratePlan,
         nights,
+        taxConfig,
       });
     } else {
       return calculateMultipleRoomPricing({
         roomTypes: selectedRoomTypes,
         ratePlan,
         nights,
+        taxConfig,
       });
     }
-  }, [selectedRoomTypes, ratePlan, nights]);
+  }, [selectedRoomTypes, ratePlan, nights, taxConfig]);
 
   const primaryRoomType = React.useMemo(() => {
     if (groupedRoomTypes.length > 0) {
@@ -288,6 +298,10 @@ function BookingReviewContent() {
       baseNightly,
       lineBase,
     };
+  });
+  const formattedTaxRate = pricing.taxRatePercent.toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: pricing.taxRatePercent % 1 === 0 ? 0 : 2,
   });
 
   if (isLoading) {
@@ -670,7 +684,9 @@ function BookingReviewContent() {
               <div>
                 <CardTitle className="text-xl">Your total</CardTitle>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Includes taxes and fees. Prices in INR.
+                  {pricing.taxesApplied
+                    ? "Includes taxes and fees. Prices in INR."
+                    : "Prices in INR."}
                 </p>
               </div>
             </CardHeader>
@@ -696,18 +712,22 @@ function BookingReviewContent() {
 
                 <div className="flex justify-between text-xs sm:text-sm">
                   <span className="text-muted-foreground">
-                    Total (before tax)
+                    {pricing.taxesApplied ? "Total (before tax)" : "Subtotal"}
                   </span>
                   <span className="font-semibold">
                     ₹{Math.round(pricing.totalCost).toLocaleString("en-IN")}
                   </span>
                 </div>
-                <div className="flex justify-between text-xs sm:text-sm">
-                  <span className="text-muted-foreground">Taxes &amp; fees</span>
-                  <span className="font-semibold">
-                    ₹{Math.round(pricing.taxesAndFees).toLocaleString("en-IN")}
-                  </span>
-                </div>
+                {pricing.taxesApplied && (
+                  <div className="flex justify-between text-xs sm:text-sm">
+                    <span className="text-muted-foreground">
+                      Taxes &amp; fees ({formattedTaxRate}%)
+                    </span>
+                    <span className="font-semibold">
+                      ₹{Math.round(pricing.taxesAndFees).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                )}
 
                 <Separator className="my-2" />
 

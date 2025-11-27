@@ -105,7 +105,7 @@ export default function HomePage() {
               className="flex justify-center"
             >
               <Image
-                src="/swami-narayan.png"
+                src="/Swami-narayan.png"
                 alt="Sahajanand Wellness"
                 width={400}
                 height={400}

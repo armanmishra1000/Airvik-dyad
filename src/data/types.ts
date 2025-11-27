@@ -47,6 +47,8 @@ export interface Property {
   allowSameDayTurnover: boolean;
   showPartialDays: boolean;
   defaultUnitsView: UnitsViewMode;
+  tax_enabled: boolean;
+  tax_percentage: number;
 }
 
 export type UnitsViewMode = 'remaining' | 'booked';

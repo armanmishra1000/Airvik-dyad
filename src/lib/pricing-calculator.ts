@@ -5,6 +5,27 @@ export interface PricingCalculation {
   totalCost: number;
   taxesAndFees: number;
   grandTotal: number;
+  taxesApplied: boolean;
+  taxRatePercent: number;
+}
+
+export interface TaxConfig {
+  enabled: boolean;
+  /** Fractional percentage (e.g., 0.12 for 12%) */
+  percentage: number;
+}
+
+function resolveTaxSummary(totalCost: number, taxConfig?: TaxConfig) {
+  const normalizedPercentage = taxConfig?.enabled ? Math.max(taxConfig.percentage, 0) : 0;
+  const taxesApplied = Boolean(taxConfig?.enabled && normalizedPercentage > 0);
+  const taxesAndFees = taxesApplied ? totalCost * normalizedPercentage : 0;
+  const taxRatePercent = taxesApplied ? normalizedPercentage * 100 : 0;
+
+  return {
+    taxesAndFees,
+    taxesApplied,
+    taxRatePercent,
+  };
 }
 
 /**
@@ -16,11 +37,13 @@ export function calculateRoomPricing({
   ratePlan,
   nights,
   rooms = 1,
+  taxConfig,
 }: {
   roomType?: RoomType | null;
   ratePlan?: RatePlan | null;
   nights: number;
   rooms?: number;
+  taxConfig?: TaxConfig;
 }): PricingCalculation {
   // Determine the nightly rate with consistent priority
   // Priority 1: Use room type price (matches single room page display)
@@ -32,7 +55,7 @@ export function calculateRoomPricing({
     3000;
 
   const totalCost = nightlyRate * nights * rooms;
-  const taxesAndFees = totalCost * 0.18; // 18% taxes (consistent across all pages)
+  const { taxesAndFees, taxesApplied, taxRatePercent } = resolveTaxSummary(totalCost, taxConfig);
   const grandTotal = totalCost + taxesAndFees;
 
   return {
@@ -40,6 +63,8 @@ export function calculateRoomPricing({
     totalCost,
     taxesAndFees,
     grandTotal,
+    taxesApplied,
+    taxRatePercent,
   };
 }
 
@@ -50,14 +75,16 @@ export function calculateMultipleRoomPricing({
   roomTypes,
   ratePlan,
   nights,
+  taxConfig,
 }: {
   roomTypes: RoomType[];
   ratePlan?: RatePlan | null;
   nights: number;
+  taxConfig?: TaxConfig;
 }): PricingCalculation {
   const rooms = roomTypes.length;
   if (rooms === 0) {
-    return calculateRoomPricing({ nights, rooms: 0 });
+    return calculateRoomPricing({ nights, rooms: 0, taxConfig });
   }
 
   // Calculate cost for each room type using consistent pricing logic
@@ -67,11 +94,12 @@ export function calculateMultipleRoomPricing({
       ratePlan,
       nights,
       rooms: 1,
+      taxConfig: undefined,
     });
     return sum + roomPricing.totalCost;
   }, 0);
 
-  const taxesAndFees = totalCost * 0.18; // 18% taxes
+  const { taxesAndFees, taxesApplied, taxRatePercent } = resolveTaxSummary(totalCost, taxConfig);
   const grandTotal = totalCost + taxesAndFees;
   
   // Calculate average nightly rate for display
@@ -82,5 +110,7 @@ export function calculateMultipleRoomPricing({
     totalCost,
     taxesAndFees,
     grandTotal,
+    taxesApplied,
+    taxRatePercent,
   };
 }
