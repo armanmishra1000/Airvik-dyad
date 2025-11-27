@@ -10,6 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Menu } from 'lucide-react';
+import { useCurrencyFormatter } from '@/hooks/use-currency';
 
 export type ShopFilters = {
   categories: string[];
@@ -109,6 +110,8 @@ export function FiltersSheet({
     [onPendingFiltersChange]
   );
 
+  const formatCurrency = useCurrencyFormatter();
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
@@ -161,7 +164,7 @@ export function FiltersSheet({
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Price range</h3>
               <span className="text-xs font-medium text-muted-foreground">
-                {`₹${pendingFilters.priceRange[0].toLocaleString()} - ₹${pendingFilters.priceRange[1].toLocaleString()}`}
+                {`${formatCurrency(pendingFilters.priceRange[0])} - ${formatCurrency(pendingFilters.priceRange[1])}`}
               </span>
             </div>
             <Slider
@@ -172,8 +175,8 @@ export function FiltersSheet({
               onValueChange={handlePriceChange}
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>₹0</span>
-              <span>₹10,000</span>
+              <span>{formatCurrency(0)}</span>
+              <span>{formatCurrency(10000)}</span>
             </div>
           </div>
 

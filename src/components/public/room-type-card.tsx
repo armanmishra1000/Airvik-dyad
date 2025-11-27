@@ -22,6 +22,7 @@ import type { RoomType } from "@/data/types";
 import { Icon } from "@/components/shared/icon";
 import { useDataContext } from "@/context/data-context";
 import type { EnhancedBookingSearchFormValues } from "./booking-widget";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 // Legacy type for backward compatibility
 type BookingSearchFormValues = {
@@ -52,6 +53,7 @@ export function RoomTypeCard({
   searchValues,
 }: RoomTypeCardProps) {
   const { amenities: allAmenities } = useDataContext();
+  const formatCurrency = useCurrencyFormatter();
 
   const detailsLink = React.useMemo(() => {
     const baseUrl = `/book/rooms/${roomType.id}`;
@@ -100,11 +102,7 @@ export function RoomTypeCard({
     .slice(0, 5)
     .join(" ");
 
-  const formattedPrice = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(price);
+  const formattedPrice = formatCurrency(price, { maximumFractionDigits: 0 });
 
   const isSelectable = hasSearched && !isSelectionComplete;
 

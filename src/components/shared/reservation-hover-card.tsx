@@ -14,6 +14,7 @@ import { useDataContext } from "@/context/data-context";
 import type { Reservation, ReservationStatus } from "@/data/types";
 import { calculateReservationFinancials } from "@/lib/reservations/calculate-financials";
 import { cn } from "@/lib/utils";
+import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyValue } from "@/lib/currency";
 
 const reservationStatusStyles: Record<
   ReservationStatus,
@@ -54,14 +55,6 @@ const getStatusStyle = (status: ReservationStatus) =>
     ribbon: "border border-muted/40 bg-muted/40 text-muted-foreground",
     dot: "bg-muted/70",
   };
-
-const formatCurrency = (amount: number, currency: string) => {
-  const safeCurrency = currency || "USD";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: safeCurrency,
-  }).format(amount);
-};
 
 interface ReservationDetail {
   reservation: Reservation;
@@ -133,6 +126,7 @@ export function ReservationHoverCard({
   date,
 }: ReservationHoverCardProps) {
   const { reservations, guests, rooms, roomTypes, property } = useDataContext();
+  const currencyCode = property.currency || DEFAULT_CURRENCY;
 
   const reservationDetails = React.useMemo<ReservationDetail[]>(() => {
     const guestMap = new Map(guests.map((guest) => [guest.id, guest]));
@@ -194,7 +188,12 @@ export function ReservationHoverCard({
                 const nights = differenceInDays(checkOut, checkIn);
                 const bookingDate = parseISO(reservation.bookingDate);
                 const statusStyle = getStatusStyle(reservation.status);
-                const { totalPaid, balance, paymentStatus } = calculateReservationFinancials(reservation);
+                const {
+                  totalCharges,
+                  totalPaid,
+                  balance,
+                  paymentStatus,
+                } = calculateReservationFinancials(reservation);
 
                 const paymentStatusBadgeVariant = 
                   paymentStatus === "Fully Paid" ? "default" :
@@ -291,15 +290,15 @@ export function ReservationHoverCard({
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-primary">Total Amount:</span>
+                        <span className="font-medium text-primary">Total Charges:</span>
                         <span className="font-semibold">
-                          {formatCurrency(reservation.totalAmount, property.currency ?? "USD")}
+                          {formatCurrencyValue(totalCharges, currencyCode)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-primary">Total Paid:</span>
                         <span className="font-semibold text-emerald-600">
-                          {formatCurrency(totalPaid, property.currency ?? "USD")}
+                          {formatCurrencyValue(totalPaid, currencyCode)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-muted-foreground">
@@ -310,7 +309,7 @@ export function ReservationHoverCard({
                             balance > 0 ? "text-rose-600" : "text-emerald-600"
                           )}
                         >
-                          {formatCurrency(balance, property.currency ?? "USD")}
+                          {formatCurrencyValue(balance, currencyCode)}
                         </span>
                       </div>
                     </div>

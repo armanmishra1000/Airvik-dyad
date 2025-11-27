@@ -31,6 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 const paymentMethodOptions = [
   "Not specified",
@@ -221,13 +222,7 @@ export default function CreateReservationPage() {
     });
   }, [selectedRoomTypes, defaultRatePlan, nights]);
 
-  const formatCurrency = React.useCallback((amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      maximumFractionDigits: 0,
-    }).format(amount || 0);
-  }, []);
+  const formatCurrency = useCurrencyFormatter({ maximumFractionDigits: 0 });
 
   const onSubmit = async (values: ReservationFormValues) => {
     if (!defaultRatePlan) {
@@ -641,7 +636,9 @@ export default function CreateReservationPage() {
                     <div className="flex items-center justify-between text-sm font-medium">
                       <span>{roomType.name}</span>
                       <span className="text-primary">
-                        ₹{roomType.price?.toLocaleString("en-IN") ?? "-"} / night
+                        {roomType.price
+                          ? `${formatCurrency(roomType.price)} / night`
+                          : "-"}
                       </span>
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground">

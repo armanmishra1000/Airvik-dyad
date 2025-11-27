@@ -21,18 +21,23 @@ import { RecordPaymentDialog } from "@/app/admin/reservations/components/record-
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
+import { calculateReservationFinancials } from "@/lib/reservations/calculate-financials";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 interface BillingCardProps {
   reservation: ReservationWithDetails;
 }
 
 export function BillingCard({ reservation }: BillingCardProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-    }).format(amount);
-  };
+  const formatCurrency = useCurrencyFormatter();
+
+  const {
+    roomCharges,
+    additionalCharges,
+    totalCharges,
+    totalPaid,
+    balance,
+  } = calculateReservationFinancials(reservation);
 
   return (
     <Card className="flex h-full flex-col">
@@ -67,16 +72,25 @@ export function BillingCard({ reservation }: BillingCardProps) {
             <TableRow>
               <TableHead className="w-[120px]">Date</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead className="w-[140px]">Method</TableHead>
               <TableHead className="text-right">Amount</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {reservation.folio.map((item) => (
+            {reservation.folio.map((item) => {
+              const displayDate = item.timestamp
+                ? format(parseISO(item.timestamp), "MMM d, yyyy")
+                : "-";
+
+              return (
               <TableRow key={item.id}>
                 <TableCell className="text-sm text-muted-foreground">
-                  {format(parseISO(item.timestamp), "MMM d, yyyy")}
+                  {displayDate}
                 </TableCell>
                 <TableCell>{item.description}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {item.paymentMethod || "-"}
+                </TableCell>
                 <TableCell
                   className={cn(
                       "text-right font-medium",
@@ -88,25 +102,45 @@ export function BillingCard({ reservation }: BillingCardProps) {
                     : formatCurrency(item.amount)}
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
             {reservation.folio.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={3}
+                  colSpan={4}
                   className="h-24 text-center text-muted-foreground"
                 >
                   No charges or payments posted yet.
                 </TableCell>
               </TableRow>
             )}
-              <TableRow className="bg-primary/5 text-base font-semibold text-primary">
-                <TableCell colSpan={2}>Balance Due</TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(reservation.totalAmount)}
-                </TableCell>
-              </TableRow>
             </TableBody>
           </Table>
+        </div>
+
+        <div className="rounded-2xl border border-dashed border-border/50 p-4 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Room Charges</span>
+            <span className="font-medium">{formatCurrency(roomCharges)}</span>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-muted-foreground">Additional Charges</span>
+            <span className="font-medium">{formatCurrency(additionalCharges)}</span>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-muted-foreground">Payments Recorded</span>
+            <span className="font-medium text-emerald-600">
+              {totalPaid === 0 ? "-" : formatCurrency(totalPaid)}
+            </span>
+          </div>
+          <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
+            <span className="font-medium">Balance Due (Total)</span>
+            <span className="font-semibold">{formatCurrency(totalCharges)}</span>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <span className="font-medium text-primary">Amount Remaining</span>
+            <span className={cn("font-semibold", balance > 0 ? "text-rose-600" : "text-emerald-600")}>{formatCurrency(balance)}</span>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -71,6 +71,7 @@ import {
 import { ShareDialog } from "@/components/public/share-dialog";
 import { calculateRoomPricing } from "@/lib/pricing-calculator";
 import { PricingBreakdown } from "@/components/ui/pricing-breakdown";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 const bookingSchema = z.object({
   dateRange: z
@@ -123,6 +124,7 @@ export default function RoomDetailsPage() {
     isLoading,
     property,
   } = useDataContext();
+  const formatCurrency = useCurrencyFormatter();
   const roomType = roomTypes.find((rt) => rt.id === params.id);
   const [isDescriptionExpanded, setIsDescriptionExpanded] =
     React.useState(false);
@@ -591,7 +593,7 @@ export default function RoomDetailsPage() {
                 <p className="text-sm text-gray-600 mb-1">from</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold text-gray-900">
-                    ₹{pricing.nightlyRate.toLocaleString()}
+                    {formatCurrency(pricing.nightlyRate, { maximumFractionDigits: 0 })}
                   </span>
                   <span className="text-gray-600">/night</span>
                 </div>
@@ -1064,6 +1066,7 @@ export default function RoomDetailsPage() {
                       grandTotal={pricing.grandTotal}
                       taxesApplied={pricing.taxesApplied}
                       taxRatePercent={pricing.taxRatePercent}
+                      currency={property.currency}
                     />
 
                     <Button
@@ -1072,7 +1075,7 @@ export default function RoomDetailsPage() {
                       disabled={!dateRange?.from || !dateRange?.to}
                     >
                       <Sparkles className="h-5 w-5 mr-2" />
-                      Reserve for ₹{Math.round(pricing.grandTotal).toLocaleString()}
+                      Reserve for {formatCurrency(Math.round(pricing.grandTotal))}
                     </Button>
 
                     <p className="text-xs text-center text-gray-500">

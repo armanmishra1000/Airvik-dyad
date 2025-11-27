@@ -1,6 +1,6 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, type CellContext } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { RatePlan } from "@/data/types"
 import { RatePlanFormDialog } from "./rate-plan-form-dialog"
+import { useCurrencyFormatter } from "@/hooks/use-currency";
+
+function PriceCell({ row }: CellContext<RatePlan, number>) {
+  const formatCurrency = useCurrencyFormatter();
+  const amount = Number(row.getValue("price")) || 0;
+  return <div className="text-right font-medium">{formatCurrency(amount)}</div>;
+}
 
 export const columns: ColumnDef<RatePlan>[] = [
   {
@@ -22,15 +29,7 @@ export const columns: ColumnDef<RatePlan>[] = [
   {
     accessorKey: "price",
     header: () => <div className="text-right">Price (per night)</div>,
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("price"))
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount)
- 
-      return <div className="text-right font-medium">{formatted}</div>
-    },
+    cell: PriceCell,
   },
   {
     id: "actions",

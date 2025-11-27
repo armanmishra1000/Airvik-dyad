@@ -209,8 +209,11 @@ type RoomTypeUpsertInput = Omit<RoomType, "id"> & {
   id?: string;
 };
 
-type FolioItemInsertPayload = Omit<FolioItem, "id" | "timestamp"> & {
+type FolioItemInsertPayload = {
   reservation_id: string;
+  description: string;
+  amount: number;
+  payment_method?: string | null;
   timestamp?: string;
 };
 
@@ -548,7 +551,19 @@ export const updateReservationStatus = (id: string, status: string) => supabase.
 // Folio Items
 export const getFolioItems = () => supabase.from('folio_items').select('*');
 export const addFolioItem = (itemData: FolioItemInsertPayload) =>
-  supabase.from('folio_items').insert([itemData]).select().single();
+  supabase
+    .from('folio_items')
+    .insert([
+      {
+        reservation_id: itemData.reservation_id,
+        description: itemData.description,
+        amount: itemData.amount,
+        payment_method: itemData.payment_method ?? null,
+        timestamp: itemData.timestamp,
+      },
+    ])
+    .select()
+    .single();
 
 // Rooms
 export const getRooms = async () => {

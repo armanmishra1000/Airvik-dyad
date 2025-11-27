@@ -30,10 +30,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 export default function BookingConfirmationPage() {
   const params = useParams<{ id: string }>();
   const { property, reservations, guests, rooms, roomTypes, ratePlans } = useDataContext();
+  const formatCurrency = useCurrencyFormatter();
   const [reservationData, setReservationData] = React.useState<Reservation | null>(null);
   const [guestData, setGuestData] = React.useState<Guest | null>(null);
   const [isLoadingReservation, setIsLoadingReservation] = React.useState(false);
@@ -412,7 +414,7 @@ export default function BookingConfirmationPage() {
                             {item.nights === 1 ? "" : "s"}
                           </span>
                           <span className="font-medium">
-                            ₹{Math.round(item.lineBase).toLocaleString("en-IN")}
+                            {formatCurrency(Math.round(item.lineBase))}
                           </span>
                         </div>
                       ))}
@@ -424,7 +426,7 @@ export default function BookingConfirmationPage() {
                           {pricing.taxesApplied ? "Total (before tax)" : "Subtotal"}
                         </span>
                         <span className="font-semibold">
-                          ₹{Math.round(pricing.totalCost).toLocaleString("en-IN")}
+                          {formatCurrency(Math.round(pricing.totalCost))}
                         </span>
                       </div>
                       {pricing.taxesApplied && (
@@ -433,7 +435,7 @@ export default function BookingConfirmationPage() {
                             Taxes &amp; fees ({formattedTaxRate}%)
                           </span>
                           <span className="font-semibold">
-                            ₹{Math.round(pricing.taxesAndFees).toLocaleString("en-IN")}
+                            {formatCurrency(Math.round(pricing.taxesAndFees))}
                           </span>
                         </div>
                       )}
@@ -442,9 +444,7 @@ export default function BookingConfirmationPage() {
 
                       <div className="flex justify-between text-sm font-semibold">
                         <span>Total</span>
-                        <span>
-                          ₹{Math.round(pricing.grandTotal).toLocaleString("en-IN")}
-                        </span>
+                        <span>{formatCurrency(Math.round(pricing.grandTotal))}</span>
                       </div>
                     </div>
                   </div>

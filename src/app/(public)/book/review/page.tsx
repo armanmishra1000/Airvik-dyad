@@ -22,6 +22,7 @@ import { InlineAlert } from "@/components/public/inline-alert";
 import { PaymentTrustBadges } from "@/components/public/payment-trust-badges";
 import { BookingPolicies } from "@/components/public/booking-policies";
 import { calculateRoomPricing, calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -114,14 +115,15 @@ function BookingReviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
-    property,
+    reservations,
     roomTypes,
     rooms,
-    reservations,
     addReservation,
     ratePlans,
     isLoading,
+    property,
   } = useDataContext();
+  const formatCurrency = useCurrencyFormatter();
 
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [bookingError, setBookingError] = React.useState<{
@@ -625,7 +627,7 @@ function BookingReviewContent() {
                             )}
                             {typeof roomType.price === "number" && (
                               <p className="text-sm text-muted-foreground">
-                                From ₹{Math.round(roomType.price).toLocaleString("en-IN")} per night
+                                From {formatCurrency(Math.round(roomType.price))} per night
                               </p>
                             )}
                           </div>
@@ -685,8 +687,8 @@ function BookingReviewContent() {
                 <CardTitle className="text-xl">Your total</CardTitle>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {pricing.taxesApplied
-                    ? "Includes taxes and fees. Prices in INR."
-                    : "Prices in INR."}
+                    ? `Includes taxes and fees. Prices in ${property.currency || "INR"}.`
+                    : `Prices in ${property.currency || "INR"}.`}
                 </p>
               </div>
             </CardHeader>
@@ -703,7 +705,7 @@ function BookingReviewContent() {
                       {item.nights === 1 ? "" : "s"}
                     </span>
                     <span className="font-medium">
-                      ₹{Math.round(item.lineBase).toLocaleString("en-IN")}
+                      {formatCurrency(Math.round(item.lineBase))}
                     </span>
                   </div>
                 ))}
@@ -715,7 +717,7 @@ function BookingReviewContent() {
                     {pricing.taxesApplied ? "Total (before tax)" : "Subtotal"}
                   </span>
                   <span className="font-semibold">
-                    ₹{Math.round(pricing.totalCost).toLocaleString("en-IN")}
+                    {formatCurrency(Math.round(pricing.totalCost))}
                   </span>
                 </div>
                 {pricing.taxesApplied && (
@@ -724,7 +726,7 @@ function BookingReviewContent() {
                       Taxes &amp; fees ({formattedTaxRate}%)
                     </span>
                     <span className="font-semibold">
-                      ₹{Math.round(pricing.taxesAndFees).toLocaleString("en-IN")}
+                      {formatCurrency(Math.round(pricing.taxesAndFees))}
                     </span>
                   </div>
                 )}
@@ -733,9 +735,7 @@ function BookingReviewContent() {
 
                 <div className="flex justify-between text-sm font-semibold">
                   <span>Total</span>
-                  <span>
-                    ₹{Math.round(pricing.grandTotal).toLocaleString("en-IN")}
-                  </span>
+                  <span>{formatCurrency(Math.round(pricing.grandTotal))}</span>
                 </div>
               </div>
             </CardContent>
@@ -999,9 +999,9 @@ function BookingReviewContent() {
                         Processing...
                       </>
                     ) : paymentMethod === "card" ? (
-                      `Confirm & Pay ₹${Math.round(pricing.grandTotal).toLocaleString('en-IN')}`
+                      `Confirm & Pay ${formatCurrency(Math.round(pricing.grandTotal))}`
                     ) : (
-                      `Confirm Booking - Pay ₹${Math.round(pricing.grandTotal).toLocaleString('en-IN')} at Property`
+                      `Confirm Booking - Pay ${formatCurrency(Math.round(pricing.grandTotal))} at Property`
                     )}
                   </Button>
                   

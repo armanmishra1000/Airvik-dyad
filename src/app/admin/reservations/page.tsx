@@ -23,6 +23,7 @@ export default function ReservationsPage() {
         guestName: guest ? `${guest.firstName} ${guest.lastName}` : "N/A",
         roomNumber: room ? room.roomNumber : "N/A",
         nights,
+        roomCount: 1,
       } as ReservationWithDetails;
     });
 
@@ -41,9 +42,10 @@ export default function ReservationsPage() {
         const parentRow: ReservationWithDetails = {
           ...firstRes,
           id: firstRes.bookingId,
-          roomNumber: `${group.length} Rooms`,
+          roomNumber: group.map((r) => r.roomNumber).filter(Boolean).join(", "),
+          roomCount: group.length,
           totalAmount: group.reduce((sum, r) => sum + r.totalAmount, 0),
-          subRows: group,
+          subRows: group.map((entry) => ({ ...entry, roomCount: 1 })),
         };
         tableData.push(parentRow);
       } else {

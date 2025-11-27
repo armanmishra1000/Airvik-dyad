@@ -2,6 +2,7 @@ import { AlertCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { DEFAULT_CURRENCY, formatCurrency } from "@/lib/currency";
 
 interface AlternativeDateRange {
   from: Date;
@@ -14,12 +15,14 @@ interface DateConflictBannerProps {
   alternatives: AlternativeDateRange[];
   onSelectDate: (dateRange: AlternativeDateRange) => void;
   onViewMoreDates: () => void;
+  currency?: string;
 }
 
 export function DateConflictBanner({
   alternatives,
   onSelectDate,
   onViewMoreDates,
+  currency = DEFAULT_CURRENCY,
 }: DateConflictBannerProps) {
   return (
     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6" role="alert">
@@ -55,14 +58,15 @@ export function DateConflictBanner({
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <p className="text-sm font-semibold text-gray-900">
-                        ₹{alt.price.toLocaleString()}
+                        {formatCurrency(alt.price, currency)}
                       </p>
                       {alt.priceDifference !== 0 && (
                         <Badge
                           variant={alt.priceDifference > 0 ? "destructive" : "default"}
                           className="text-xs"
                         >
-                          {alt.priceDifference > 0 ? "+" : ""}₹{Math.abs(alt.priceDifference).toLocaleString()}
+                          {alt.priceDifference > 0 ? "+" : ""}
+                          {formatCurrency(Math.abs(alt.priceDifference), currency)}
                         </Badge>
                       )}
                     </div>

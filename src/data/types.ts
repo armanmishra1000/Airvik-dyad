@@ -200,6 +200,7 @@ export interface FolioItem {
   description: string;
   amount: number;
   timestamp: string;
+  paymentMethod?: string | null;
 }
 
 export interface Reservation {

@@ -29,6 +29,19 @@ import { useDataContext } from "@/context/data-context";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { currencyOptions, SUPPORTED_CURRENCIES } from "@/lib/currency";
+
+const currencyEnumValues = SUPPORTED_CURRENCIES.map((currency) => currency.value) as [
+  string,
+  ...string[]
+];
 
 const propertySchema = z.object({
   name: z.string().min(1, "Property name is required."),
@@ -46,6 +59,7 @@ const propertySchema = z.object({
     )
     .transform((v) => (v === "" ? undefined : v))
     .optional(),
+  currency: z.enum(currencyEnumValues),
   tax_enabled: z.boolean(),
   tax_percentage: z.coerce
     .number({ invalid_type_error: "Enter a valid percentage" })
@@ -76,6 +90,7 @@ export function PropertySettingsForm() {
       logo_url: property.logo_url || "",
       photos: property.photos?.join(", ") || "",
       google_maps_url: property.google_maps_url || "",
+      currency: property.currency || "INR",
       tax_enabled: property.tax_enabled ?? false,
       tax_percentage: (property.tax_percentage ?? 0) * 100,
     },
@@ -93,6 +108,7 @@ export function PropertySettingsForm() {
       logo_url: property.logo_url,
       photos: property.photos?.join(", ") || "",
       google_maps_url: property.google_maps_url,
+      currency: property.currency || "INR",
       tax_enabled: property.tax_enabled ?? false,
       tax_percentage: (property.tax_percentage ?? 0) * 100,
     });
@@ -190,6 +206,33 @@ export function PropertySettingsForm() {
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField<PropertyFormValues, "currency">
+                control={form.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Currency</FormLabel>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {currencyOptions.map((currency) => (
+                          <SelectItem key={currency.value} value={currency.value}>
+                            {currency.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Choose the currency displayed across booking and admin experiences.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
