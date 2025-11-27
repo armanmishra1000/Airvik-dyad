@@ -139,6 +139,7 @@ export function RichTextEditor({
           pressed={editor.isActive("bold")}
           onPressedChange={() => editor.chain().focus().toggleBold().run()}
           aria-label="Toggle bold"
+          type="button"
         >
           <Bold className="h-4 w-4" />
         </Toggle>
@@ -147,6 +148,7 @@ export function RichTextEditor({
           pressed={editor.isActive("italic")}
           onPressedChange={() => editor.chain().focus().toggleItalic().run()}
           aria-label="Toggle italic"
+          type="button"
         >
           <Italic className="h-4 w-4" />
         </Toggle>
@@ -155,6 +157,7 @@ export function RichTextEditor({
           pressed={editor.isActive("underline")}
           onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
           aria-label="Toggle underline"
+          type="button"
         >
           <UnderlineIcon className="h-4 w-4" />
         </Toggle>
@@ -163,6 +166,7 @@ export function RichTextEditor({
           pressed={editor.isActive("strike")}
           onPressedChange={() => editor.chain().focus().toggleStrike().run()}
           aria-label="Toggle strikethrough"
+          type="button"
         >
           <Strikethrough className="h-4 w-4" />
         </Toggle>
@@ -171,7 +175,7 @@ export function RichTextEditor({
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-1">
+            <Button variant="ghost" size="sm" className="gap-1" type="button">
               {editor.isActive("heading", { level: 1 }) ? (
                 <Heading1 className="h-4 w-4" />
               ) : editor.isActive("heading", { level: 2 }) ? (
@@ -232,6 +236,7 @@ export function RichTextEditor({
             editor.chain().focus().setTextAlign("left").run()
           }
           aria-label="Align left"
+          type="button"
         >
           <AlignLeft className="h-4 w-4" />
         </Toggle>
@@ -242,6 +247,7 @@ export function RichTextEditor({
             editor.chain().focus().setTextAlign("center").run()
           }
           aria-label="Align center"
+          type="button"
         >
           <AlignCenter className="h-4 w-4" />
         </Toggle>
@@ -252,6 +258,7 @@ export function RichTextEditor({
             editor.chain().focus().setTextAlign("right").run()
           }
           aria-label="Align right"
+          type="button"
         >
           <AlignRight className="h-4 w-4" />
         </Toggle>
@@ -262,6 +269,7 @@ export function RichTextEditor({
             editor.chain().focus().setTextAlign("justify").run()
           }
           aria-label="Justify"
+          type="button"
         >
           <AlignJustify className="h-4 w-4" />
         </Toggle>
@@ -275,6 +283,7 @@ export function RichTextEditor({
             editor.chain().focus().toggleBulletList().run()
           }
           aria-label="Bullet list"
+          type="button"
         >
           <List className="h-4 w-4" />
         </Toggle>
@@ -285,6 +294,7 @@ export function RichTextEditor({
             editor.chain().focus().toggleOrderedList().run()
           }
           aria-label="Ordered list"
+          type="button"
         >
           <ListOrdered className="h-4 w-4" />
         </Toggle>
@@ -295,6 +305,7 @@ export function RichTextEditor({
             editor.chain().focus().toggleBlockquote().run()
           }
           aria-label="Blockquote"
+          type="button"
         >
           <Quote className="h-4 w-4" />
         </Toggle>
@@ -307,6 +318,7 @@ export function RichTextEditor({
           onClick={setLink}
           className={cn(editor.isActive("link") && "bg-accent")}
           aria-label="Insert link"
+          type="button"
         >
           <LinkIcon className="h-4 w-4" />
         </Button>
@@ -315,6 +327,7 @@ export function RichTextEditor({
           size="sm"
           onClick={addImage}
           aria-label="Insert image"
+          type="button"
         >
           <ImageIcon className="h-4 w-4" />
         </Button>
@@ -326,6 +339,7 @@ export function RichTextEditor({
           size="sm"
           onClick={() => editor.chain().focus().undo().run()}
           aria-label="Undo"
+          type="button"
         >
           <Undo className="h-4 w-4" />
         </Button>
@@ -334,6 +348,7 @@ export function RichTextEditor({
           size="sm"
           onClick={() => editor.chain().focus().redo().run()}
           aria-label="Redo"
+          type="button"
         >
           <Redo className="h-4 w-4" />
         </Button>
