@@ -66,6 +66,10 @@ export interface RoomTypeAvailabilitySummary {
 
 export function useAvailabilitySearch() {
   const { reservations, rooms, roomTypes } = useDataContext();
+  const visibleRoomTypes = React.useMemo(
+    () => (roomTypes ?? []).filter((roomType) => roomType.isVisible !== false),
+    [roomTypes]
+  );
   const [isLoading, setIsLoading] = React.useState(false);
   const [availableRoomTypes, setAvailableRoomTypes] = React.useState<
     RoomType[] | null
@@ -108,7 +112,7 @@ export function useAvailabilitySearch() {
         // If no rooms are configured, show all room types that meet occupancy requirements
         // with a warning message (to be displayed by the consuming component)
         if (!rooms || rooms.length === 0) {
-          const availableByOccupancy = roomTypes.filter((rt) => {
+          const availableByOccupancy = visibleRoomTypes.filter((rt) => {
             // Check each room occupancy configuration against room type
             return roomOccupancies.every(occ => {
               const totalGuests = occ.adults + occ.children;
@@ -127,7 +131,7 @@ export function useAvailabilitySearch() {
         const availabilitySummaries: RoomTypeAvailabilitySummary[] = [];
         const availableMatchingOccupancy: RoomType[] = [];
 
-        roomTypes.forEach((rt) => {
+          visibleRoomTypes.forEach((rt) => {
           // Check if room type has valid category filter
           if (categoryIds && categoryIds.length > 0 && rt.categoryId) {
             if (!categoryIds.includes(rt.categoryId)) {
@@ -231,7 +235,7 @@ export function useAvailabilitySearch() {
         setIsLoading(false);
       }, 500);
     },
-    [reservations, roomTypes, rooms, restrictions, checkRestrictions]
+    [reservations, visibleRoomTypes, rooms, restrictions, checkRestrictions]
   );
 
   return {
