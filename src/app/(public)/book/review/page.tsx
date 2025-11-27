@@ -122,6 +122,7 @@ function BookingReviewContent() {
       to: searchParams.get("to"),
       guests: searchParams.get("guests"),
       rooms: searchParams.get("rooms"),
+      specialRequests: searchParams.get("specialRequests")?.trim() ?? "",
     };
   }, [searchParams]);
 
@@ -409,6 +410,8 @@ function BookingReviewContent() {
         throw guestError ?? new Error("Could not get or create guest record.");
       }
 
+      const additionalRequest = bookingDetails.specialRequests?.trim();
+
       const newReservations = await addReservation({
         guestId: guest.id,
         roomIds: assignedRoomIds,
@@ -419,7 +422,7 @@ function BookingReviewContent() {
         adultCount: Number(bookingDetails.guests ?? "1"),
         childCount: 0,
         status: "Confirmed",
-        notes: "Booked via public website.",
+        notes: additionalRequest || undefined,
         bookingDate: new Date().toISOString(),
         source: "website",
         paymentMethod: "Pay with UPI",
@@ -550,6 +553,16 @@ function BookingReviewContent() {
                         </button>
                       );
                     })}
+                  </div>
+                )}
+                {bookingDetails.specialRequests && (
+                  <div className="mt-4 rounded-2xl border border-dashed border-border/60 bg-muted/30 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Additional Charges
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {bookingDetails.specialRequests}
+                    </p>
                   </div>
                 )}
               </div>

@@ -72,14 +72,14 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
             <span>{reservation.paymentMethod || "Payment on file"}</span>
           </div>
         </div>
-        {reservation.notes && (
+        {reservation.notes?.trim() && (
           <>
             <Separator />
             <div>
               <h4 className="mb-2 font-serif text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Notes
+                Additional Charges
               </h4>
-              <p className="text-muted-foreground">{reservation.notes}</p>
+              <p className="whitespace-pre-wrap text-muted-foreground">{reservation.notes}</p>
             </div>
           </>
         )}

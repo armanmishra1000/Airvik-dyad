@@ -261,6 +261,31 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     }
   },
   {
+    id: "additionalCharges",
+    header: "Additional Charges",
+    cell: ({ row }) => {
+      if (row.depth > 0) return null;
+      const notes = row.original.notes?.trim();
+      if (!notes) {
+        return <span className="text-xs text-muted-foreground">-</span>;
+      }
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="line-clamp-2 max-w-[220px] text-sm text-foreground">
+                {notes}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="text-sm text-foreground">{notes}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    },
+  },
+  {
     accessorKey: "totalAmount",
     header: () => <div className="text-right">Amount</div>,
     cell: AmountCell,

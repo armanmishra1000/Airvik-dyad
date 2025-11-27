@@ -142,6 +142,16 @@ export function BillingCard({ reservation }: BillingCardProps) {
             <span className={cn("font-semibold", balance > 0 ? "text-rose-600" : "text-emerald-600")}>{formatCurrency(balance)}</span>
           </div>
         </div>
+        {reservation.notes?.trim() && (
+          <div className="rounded-2xl border border-border/40 bg-muted/40 p-4 text-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Additional Charges Detail
+            </p>
+            <p className="mt-2 whitespace-pre-wrap text-muted-foreground">
+              {reservation.notes}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

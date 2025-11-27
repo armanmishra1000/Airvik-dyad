@@ -39,12 +39,16 @@ export default function ReservationsPage() {
     for (const group of bookingGroups.values()) {
       if (group.length > 1) {
         const firstRes = group[0];
+        const combinedNotes = group
+          .map((entry) => entry.notes?.trim())
+          .filter((note): note is string => Boolean(note && note.length > 0));
         const parentRow: ReservationWithDetails = {
           ...firstRes,
           id: firstRes.bookingId,
           roomNumber: group.map((r) => r.roomNumber).filter(Boolean).join(", "),
           roomCount: group.length,
           totalAmount: group.reduce((sum, r) => sum + r.totalAmount, 0),
+          notes: combinedNotes.length > 0 ? Array.from(new Set(combinedNotes)).join(" • ") : undefined,
           subRows: group.map((entry) => ({ ...entry, roomCount: 1 })),
         };
         tableData.push(parentRow);
