@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ import {
 import { useDataContext } from "@/context/data-context";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 const propertySchema = z.object({
   name: z.string().min(1, "Property name is required."),
@@ -45,12 +46,27 @@ const propertySchema = z.object({
     )
     .transform((v) => (v === "" ? undefined : v))
     .optional(),
+  tax_enabled: z.boolean(),
+  tax_percentage: z.coerce
+    .number({ invalid_type_error: "Enter a valid percentage" })
+    .min(0, "Tax percentage cannot be negative")
+    .max(100, "Tax percentage cannot exceed 100"),
+}).superRefine((data, ctx) => {
+  if (data.tax_enabled && data.tax_percentage <= 0) {
+    ctx.addIssue({
+      path: ["tax_percentage"],
+      code: z.ZodIssueCode.custom,
+      message: "Enter a percentage greater than 0 when taxes are enabled.",
+    });
+  }
 });
+
+type PropertyFormValues = z.infer<typeof propertySchema>;
 
 export function PropertySettingsForm() {
   const { property, updateProperty } = useDataContext();
 
-  const form = useForm<z.infer<typeof propertySchema>>({
+  const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertySchema),
     defaultValues: {
       name: property.name || "",
@@ -60,10 +76,13 @@ export function PropertySettingsForm() {
       logo_url: property.logo_url || "",
       photos: property.photos?.join(", ") || "",
       google_maps_url: property.google_maps_url || "",
+      tax_enabled: property.tax_enabled ?? false,
+      tax_percentage: (property.tax_percentage ?? 0) * 100,
     },
   });
 
   const google_maps_url = form.watch("google_maps_url");
+  const taxEnabled = form.watch("tax_enabled");
 
   React.useEffect(() => {
     form.reset({
@@ -74,19 +93,25 @@ export function PropertySettingsForm() {
       logo_url: property.logo_url,
       photos: property.photos?.join(", ") || "",
       google_maps_url: property.google_maps_url,
+      tax_enabled: property.tax_enabled ?? false,
+      tax_percentage: (property.tax_percentage ?? 0) * 100,
     });
   }, [property, form]);
 
-  function onSubmit(values: z.infer<typeof propertySchema>) {
+  const onSubmit: SubmitHandler<PropertyFormValues> = (values) => {
+    const normalizedTaxPercentage = values.tax_enabled
+      ? values.tax_percentage / 100
+      : 0;
     const updatedData = {
       ...values,
       logo_url: values.logo_url || "",
       photos: values.photos ? values.photos.split(",").map(p => p.trim()).filter(Boolean) : [],
       google_maps_url: values.google_maps_url?.trim() || undefined,
+      tax_percentage: normalizedTaxPercentage,
     };
     updateProperty(updatedData);
     toast.success("Property details updated successfully!");
-  }
+  };
 
   return (
     <Card>
@@ -103,7 +128,7 @@ export function PropertySettingsForm() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-8"
           >
-            <FormField
+            <FormField<PropertyFormValues, "logo_url">
               control={form.control}
               name="logo_url"
               render={({ field }) => (
@@ -117,7 +142,7 @@ export function PropertySettingsForm() {
               )}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
+              <FormField<PropertyFormValues, "name">
                 control={form.control}
                 name="name"
                 render={({ field }) => (
@@ -130,7 +155,7 @@ export function PropertySettingsForm() {
                   </FormItem>
                 )}
               />
-              <FormField
+              <FormField<PropertyFormValues, "email">
                 control={form.control}
                 name="email"
                 render={({ field }) => (
@@ -143,7 +168,7 @@ export function PropertySettingsForm() {
                   </FormItem>
                 )}
               />
-              <FormField
+              <FormField<PropertyFormValues, "phone">
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
@@ -156,7 +181,7 @@ export function PropertySettingsForm() {
                   </FormItem>
                 )}
               />
-              <FormField
+              <FormField<PropertyFormValues, "address">
                 control={form.control}
                 name="address"
                 render={({ field }) => (
@@ -170,7 +195,7 @@ export function PropertySettingsForm() {
                 )}
               />
             </div>
-            <FormField
+            <FormField<PropertyFormValues, "google_maps_url">
               control={form.control}
               name="google_maps_url"
               render={({ field }) => (
@@ -202,7 +227,7 @@ export function PropertySettingsForm() {
                 </div>
               </div>
             )}
-            <FormField
+            <FormField<PropertyFormValues, "photos">
               control={form.control}
               name="photos"
               render={({ field }) => (
@@ -218,6 +243,56 @@ export function PropertySettingsForm() {
                 </FormItem>
               )}
             />
+            <div className="border rounded-lg p-4 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Taxes &amp; Fees</h3>
+                <p className="text-sm text-muted-foreground">
+                  Enable or disable taxes globally and set the percentage applied to bookings.
+                </p>
+              </div>
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <FormField<PropertyFormValues, "tax_enabled">
+                  control={form.control}
+                  name="tax_enabled"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>Enable taxes</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormDescription>
+                        When enabled, the configured tax percentage is included in all pricing breakdowns.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField<PropertyFormValues, "tax_percentage">
+                  control={form.control}
+                  name="tax_percentage"
+                  render={({ field }) => (
+                    <FormItem className="w-full md:w-48 space-y-2">
+                      <FormLabel>Tax percentage</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            disabled={!taxEnabled}
+                            {...field}
+                          />
+                          <span className="text-sm text-muted-foreground">%</span>
+                        </div>
+                      </FormControl>
+                      <FormDescription>Enter the rate to apply (e.g., 12 for 12%).</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
             <Button type="submit">Save Changes</Button>
           </form>
         </Form>

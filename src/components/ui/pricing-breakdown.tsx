@@ -8,6 +8,8 @@ interface PricingBreakdownProps {
   grandTotal: number;
   totalCost?: number;
   className?: string;
+  taxesApplied?: boolean;
+  taxRatePercent?: number;
 }
 
 export function PricingBreakdown({
@@ -18,6 +20,8 @@ export function PricingBreakdown({
   grandTotal,
   totalCost,
   className = "",
+  taxesApplied = false,
+  taxRatePercent = 0,
 }: PricingBreakdownProps) {
   // Calculate totalCost if not provided
   const calculatedTotalCost = totalCost || nightlyRate * nights * rooms;
@@ -33,12 +37,16 @@ export function PricingBreakdown({
           ₹{calculatedTotalCost.toLocaleString()}
         </span>
       </div>
-      <div className="flex justify-between text-sm">
-        <span className="text-gray-600">Taxes & fees</span>
-        <span className="font-medium text-gray-900">
-          ₹{Math.round(taxesAndFees).toLocaleString()}
-        </span>
-      </div>
+      {taxesApplied && (
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">
+            Taxes &amp; fees {taxRatePercent > 0 ? `(${taxRatePercent.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: taxRatePercent % 1 === 0 ? 0 : 2 })}%)` : ""}
+          </span>
+          <span className="font-medium text-gray-900">
+            ₹{Math.round(taxesAndFees).toLocaleString()}
+          </span>
+        </div>
+      )}
       <div className="border-t border-gray-200 pt-3 mt-3">
         <div className="flex justify-between items-start">
           <span className="font-semibold text-gray-900">
@@ -48,9 +56,11 @@ export function PricingBreakdown({
             <span className="text-2xl font-bold text-primary">
               ₹{Math.round(grandTotal).toLocaleString()}
             </span>
-            <p className="text-xs text-gray-500">
-              Inclusive of all taxes
-            </p>
+            {taxesApplied && (
+              <p className="text-xs text-gray-500">
+                Inclusive of all taxes
+              </p>
+            )}
           </div>
         </div>
       </div>

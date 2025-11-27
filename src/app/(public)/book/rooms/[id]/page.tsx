@@ -121,6 +121,7 @@ export default function RoomDetailsPage() {
     rooms,
     ratePlans,
     isLoading,
+    property,
   } = useDataContext();
   const roomType = roomTypes.find((rt) => rt.id === params.id);
   const [isDescriptionExpanded, setIsDescriptionExpanded] =
@@ -133,6 +134,13 @@ export default function RoomDetailsPage() {
 
   const standardRatePlan =
     ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
+  const taxConfig = React.useMemo(
+    () => ({
+      enabled: Boolean(property.tax_enabled),
+      percentage: property.tax_percentage ?? 0,
+    }),
+    [property.tax_enabled, property.tax_percentage]
+  );
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
@@ -238,8 +246,9 @@ export default function RoomDetailsPage() {
       ratePlan: standardRatePlan,
       nights: nightCount,
       rooms: roomsCount,
+      taxConfig,
     });
-  }, [roomType, standardRatePlan, nightCount, roomsCount]);
+  }, [roomType, standardRatePlan, nightCount, roomsCount, taxConfig]);
 
   // Show loading skeleton while data is loading
   if (isLoading) {
@@ -1053,6 +1062,8 @@ export default function RoomDetailsPage() {
                       totalCost={pricing.totalCost}
                       taxesAndFees={pricing.taxesAndFees}
                       grandTotal={pricing.grandTotal}
+                      taxesApplied={pricing.taxesApplied}
+                      taxRatePercent={pricing.taxRatePercent}
                     />
 
                     <Button

@@ -26,7 +26,7 @@ export function BookingSummary({
   onClear,
 }: BookingSummaryProps) {
   const router = useRouter();
-  const { ratePlans } = useDataContext();
+  const { ratePlans, property } = useDataContext();
   const { dateRange } = searchValues;
   const requestedRooms = searchValues.roomOccupancies.length;
 
@@ -37,15 +37,24 @@ export function BookingSummary({
   const nights = differenceInDays(dateRange.to, dateRange.from);
   const ratePlan =
     ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
+  const taxConfig = {
+    enabled: Boolean(property.tax_enabled),
+    percentage: property.tax_percentage ?? 0,
+  };
   
   // Use shared pricing calculation utility
   const pricing = calculateMultipleRoomPricing({
     roomTypes: selection,
     ratePlan,
     nights,
+    taxConfig,
   });
   
-  const { totalCost, taxesAndFees, grandTotal } = pricing;
+  const { totalCost, taxesAndFees, grandTotal, taxesApplied, taxRatePercent } = pricing;
+  const formattedTaxRate = taxRatePercent.toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: taxRatePercent % 1 === 0 ? 0 : 2,
+  });
   
   // Calculate individual room costs for display
   const individualRoomCosts = selection.map((roomType) => {
@@ -159,10 +168,12 @@ export function BookingSummary({
               <span className="text-gray-600">Subtotal</span>
               <span className="text-gray-900">₹{totalCost.toLocaleString('en-IN')}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Taxes & fees (18%)</span>
-              <span className="text-gray-900">₹{taxesAndFees.toLocaleString('en-IN')}</span>
-            </div>
+            {taxesApplied && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Taxes &amp; fees ({formattedTaxRate}%)</span>
+                <span className="text-gray-900">₹{taxesAndFees.toLocaleString('en-IN')}</span>
+              </div>
+            )}
           </div>
           <Separator />
           <div className="flex justify-between items-center font-bold text-lg">
