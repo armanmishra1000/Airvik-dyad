@@ -66,7 +66,7 @@ function AdminLayoutInner({
   return (
     <div
       className={cn(
-        "grid min-h-screen w-full overflow-x-hidden bg-background transition-colors",
+        "grid min-h-screen overflow-hidden w-full bg-background transition-colors",
         isSidebarCollapsed
           ? "md:grid-cols-[72px_1fr]"
           : "md:grid-cols-[240px_1fr] lg:grid-cols-[288px_1fr]"

@@ -50,7 +50,7 @@ export function EditReservationDialog({ reservation, children }: { reservation: 
       numberOfGuests: reservation.numberOfGuests,
       notes: reservation.notes ?? "",
     });
-  }, [reservation.id, reservation.numberOfGuests, reservation.notes]);
+  }, [reservation.id, reservation.numberOfGuests, reservation.notes, form]);
 
   const onSubmit = async (values: z.infer<typeof schema>) => {
     try {

@@ -356,10 +356,13 @@ type CreateReservationPayload = {
    * reflects guests per room for the stay, not multiplied by nights.
    */
   numberOfGuests: number;
+  adultCount: number;
+  childCount: number;
   status: ReservationStatus;
   notes?: string;
   bookingDate: string;
   source: Reservation["source"];
+  paymentMethod: Reservation["paymentMethod"];
 };
 
 type UserProfileUpdate = Partial<Pick<User, "name" | "roleId">>;
@@ -519,6 +522,9 @@ export function useAppData() {
       p_notes: reservationDetails.notes ?? null,
       p_booking_date: reservationDetails.bookingDate,
       p_source: reservationDetails.source,
+      p_payment_method: reservationDetails.paymentMethod,
+      p_adult_count: reservationDetails.adultCount,
+      p_child_count: reservationDetails.childCount,
     });
 
     if (error) throw error;

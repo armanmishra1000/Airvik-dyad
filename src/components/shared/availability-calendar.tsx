@@ -62,6 +62,10 @@ const reservationStatusStyles: Record<
     ribbon: "border border-secondary/50 bg-secondary/30 text-secondary-foreground",
     dot: "bg-secondary/80",
   },
+  Standby: {
+    ribbon: "border border-amber-400/60 bg-amber-100 text-amber-900",
+    dot: "bg-amber-500",
+  },
   Confirmed: {
     ribbon: "border border-primary/40 bg-primary/10 text-primary",
     dot: "bg-primary/80",

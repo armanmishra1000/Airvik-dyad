@@ -430,10 +430,13 @@ function BookingReviewContent() {
         checkInDate: bookingDetails.from!,
         checkOutDate: bookingDetails.to!,
         numberOfGuests: Number(bookingDetails.guests),
+        adultCount: Number(bookingDetails.guests ?? "1"),
+        childCount: 0,
         status: "Confirmed",
         notes: "Booked via public website.",
         bookingDate: new Date().toISOString(),
         source: "website",
+        paymentMethod: paymentMethod === "card" ? "Card on file" : "Not relevant",
       });
 
       // Redirect to the confirmation page of the first reservation in the group

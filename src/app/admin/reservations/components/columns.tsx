@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef, Table } from "@tanstack/react-table"
-import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User, ChevronDown, ChevronRight } from "lucide-react"
+import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User, ChevronDown, ChevronRight, Clock3 } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -42,11 +42,15 @@ export type ReservationWithDetails = {
     bookingId: string;
     source: 'reception' | 'website';
     nights: number;
+    paymentMethod: string;
+    adultCount: number;
+    childCount: number;
     subRows?: ReservationWithDetails[];
 }
 
 export const statuses = [
     { value: "Tentative", label: "Tentative", icon: HelpCircle },
+    { value: "Standby", label: "Standby", icon: Clock3 },
     { value: "Confirmed", label: "Confirmed", icon: CheckCircle2 },
     { value: "Checked-in", label: "Checked-in", icon: LogIn },
     { value: "Checked-out", label: "Checked-out", icon: LogOut },
@@ -240,6 +244,15 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
             status.value === "Confirmed" ? "secondary" :
             status.value === "Cancelled" ? "destructive" : "outline";
         return <Badge variant={variant}>{status.label}</Badge>
+    }
+  },
+  {
+    accessorKey: "paymentMethod",
+    header: "Payment",
+    cell: ({ row }) => {
+      if (row.depth > 0) return null;
+      const method = row.getValue("paymentMethod") as string | undefined;
+      return <span className="text-sm text-muted-foreground">{method || "-"}</span>;
     }
   },
   {

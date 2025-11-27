@@ -127,6 +127,9 @@ type DbReservation = {
   total_amount: number;
   booking_date: string;
   source: Reservation["source"];
+  payment_method: Reservation["paymentMethod"] | null;
+  adult_count: number | null;
+  child_count: number | null;
 };
 
 type ReservationUpdatePayload = Partial<
@@ -145,6 +148,9 @@ type ReservationUpdatePayload = Partial<
     | "total_amount"
     | "booking_date"
     | "source"
+    | "payment_method"
+    | "adult_count"
+    | "child_count"
   >
 >;
 
@@ -160,6 +166,9 @@ type DbReservationInsert = ReservationUpdatePayload & {
   total_amount: number;
   booking_date: string;
   source: Reservation["source"];
+  payment_method: Reservation["paymentMethod"];
+  adult_count: number;
+  child_count: number;
 };
 
 type DbBookingRestriction = {
@@ -186,6 +195,9 @@ type CreateReservationsArgs = {
   p_notes?: string | null;
   p_booking_date?: string | null; // timestamptz - convert to ISO 8601
   p_source?: Reservation["source"] | null;
+  p_payment_method?: Reservation["paymentMethod"] | null;
+  p_adult_count?: number | null;
+  p_child_count?: number | null;
 };
 
 type RoomTypeAmenityRow = {
@@ -305,6 +317,15 @@ const fromDbReservation = (dbReservation: DbReservation): Reservation => ({
   totalAmount: dbReservation.total_amount,
   bookingDate: dbReservation.booking_date,
   source: dbReservation.source,
+  paymentMethod: dbReservation.payment_method ?? "Not specified",
+  adultCount:
+    typeof dbReservation.adult_count === "number"
+      ? dbReservation.adult_count
+      : dbReservation.number_of_guests,
+  childCount:
+    typeof dbReservation.child_count === "number"
+      ? dbReservation.child_count
+      : 0,
 });
 
 const toDbReservation = (
@@ -330,6 +351,13 @@ const toDbReservation = (
   }
   if (appReservation.bookingDate) dbData.booking_date = appReservation.bookingDate;
   if (appReservation.source) dbData.source = appReservation.source;
+  if (appReservation.paymentMethod) dbData.payment_method = appReservation.paymentMethod;
+  if (typeof appReservation.adultCount === "number") {
+    dbData.adult_count = appReservation.adultCount;
+  }
+  if (typeof appReservation.childCount === "number") {
+    dbData.child_count = appReservation.childCount;
+  }
   return dbData;
 };
 
@@ -496,6 +524,9 @@ export const createReservationsWithTotal = async (
       ? formatTimestampForPostgres(args.p_booking_date)
       : null,
     p_source: args.p_source ?? 'website',
+    p_payment_method: args.p_payment_method ?? 'Not specified',
+    p_adult_count: args.p_adult_count ?? 1,
+    p_child_count: args.p_child_count ?? 0,
   };
 
   const { data, error } = await supabase.rpc('create_reservations_with_total', validatedArgs);
@@ -682,7 +713,7 @@ export const validateBookingRequest = async (
 
 // Categories
 export const getCategories = async () => {
-  const { data, error } = await supabase.from('categories').select('*, _count:posts(count)');
+  const { error } = await supabase.from('categories').select('*, _count:posts(count)');
   if (error) throw error;
   // Note: _count from supabase usually requires setup or mapped differently if it's not a direct relation count with foreign keys properly set up for implicit count.
   // Usually supabase returns { count } inside the relation if using .select('*, posts(count)').

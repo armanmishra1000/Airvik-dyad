@@ -1,11 +1,12 @@
 "use client"
 
 import { Table } from "@tanstack/react-table"
+import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { DataTableViewOptions } from "./data-table-view-options"
-import { CreateReservationDialog } from "./create-reservation-dialog"
 import { DataTableFacetedFilter } from "./data-table-faceted-filter"
 import { statuses } from "./columns"
+import { Button } from "@/components/ui/button"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -35,7 +36,9 @@ export function DataTableToolbar<TData>({
       </div>
       <div className="flex items-center gap-3">
         <DataTableViewOptions table={table} />
-        <CreateReservationDialog />
+        <Button asChild>
+          <Link href="/admin/reservations/new">Add Reservation</Link>
+        </Button>
       </div>
     </div>
   )

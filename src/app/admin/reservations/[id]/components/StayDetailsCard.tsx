@@ -1,7 +1,7 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
-import { BedDouble, CalendarDays, Moon, Users } from "lucide-react";
+import { BedDouble, CalendarDays, Moon, Users, CreditCard } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -53,7 +53,9 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
           </div>
           <div className="flex items-center gap-3">
             <Users className="h-4 w-4 text-muted-foreground" />
-            <span>{reservation.numberOfGuests} guests</span>
+            <span>
+              {reservation.numberOfGuests} guests ({reservation.adultCount} adults · {reservation.childCount} children)
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <BedDouble className="h-4 w-4 text-muted-foreground" />
@@ -64,6 +66,10 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
           <div className="flex items-center gap-3">
             <BedDouble className="h-4 w-4 text-muted-foreground" />
             <span>{ratePlan?.name}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <span>{reservation.paymentMethod || "Payment on file"}</span>
           </div>
         </div>
         {reservation.notes && (
