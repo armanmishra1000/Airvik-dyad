@@ -378,6 +378,8 @@ const defaultProperty: Property = {
   allowSameDayTurnover: true,
   showPartialDays: true,
   defaultUnitsView: "remaining",
+  tax_enabled: false,
+  tax_percentage: 0,
 };
 
 export function useAppData() {

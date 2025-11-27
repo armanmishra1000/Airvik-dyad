@@ -28,6 +28,7 @@ import {
 import { useDataContext } from "@/context/data-context";
 import { ImageUpload } from "@/components/shared/image-upload";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 const propertySchema = z.object({
   name: z.string().min(1, "Property name is required."),
@@ -45,6 +46,19 @@ const propertySchema = z.object({
     )
     .transform((v) => (v === "" ? undefined : v))
     .optional(),
+  tax_enabled: z.boolean().default(false),
+  tax_percentage: z.coerce
+    .number({ invalid_type_error: "Enter a valid percentage" })
+    .min(0, "Tax percentage cannot be negative")
+    .max(100, "Tax percentage cannot exceed 100"),
+}).superRefine((data, ctx) => {
+  if (data.tax_enabled && data.tax_percentage <= 0) {
+    ctx.addIssue({
+      path: ["tax_percentage"],
+      code: z.ZodIssueCode.custom,
+      message: "Enter a percentage greater than 0 when taxes are enabled.",
+    });
+  }
 });
 
 export function PropertySettingsForm() {
@@ -60,10 +74,13 @@ export function PropertySettingsForm() {
       logo_url: property.logo_url || "",
       photos: property.photos?.join(", ") || "",
       google_maps_url: property.google_maps_url || "",
+      tax_enabled: property.tax_enabled ?? false,
+      tax_percentage: (property.tax_percentage ?? 0) * 100,
     },
   });
 
   const google_maps_url = form.watch("google_maps_url");
+  const taxEnabled = form.watch("tax_enabled");
 
   React.useEffect(() => {
     form.reset({
@@ -74,15 +91,21 @@ export function PropertySettingsForm() {
       logo_url: property.logo_url,
       photos: property.photos?.join(", ") || "",
       google_maps_url: property.google_maps_url,
+      tax_enabled: property.tax_enabled ?? false,
+      tax_percentage: (property.tax_percentage ?? 0) * 100,
     });
   }, [property, form]);
 
   function onSubmit(values: z.infer<typeof propertySchema>) {
+    const normalizedTaxPercentage = values.tax_enabled
+      ? values.tax_percentage / 100
+      : 0;
     const updatedData = {
       ...values,
       logo_url: values.logo_url || "",
       photos: values.photos ? values.photos.split(",").map(p => p.trim()).filter(Boolean) : [],
       google_maps_url: values.google_maps_url?.trim() || undefined,
+      tax_percentage: normalizedTaxPercentage,
     };
     updateProperty(updatedData);
     toast.success("Property details updated successfully!");
@@ -218,6 +241,56 @@ export function PropertySettingsForm() {
                 </FormItem>
               )}
             />
+            <div className="border rounded-lg p-4 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Taxes &amp; Fees</h3>
+                <p className="text-sm text-muted-foreground">
+                  Enable or disable taxes globally and set the percentage applied to bookings.
+                </p>
+              </div>
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <FormField
+                  control={form.control}
+                  name="tax_enabled"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel>Enable taxes</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormDescription>
+                        When enabled, the configured tax percentage is included in all pricing breakdowns.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="tax_percentage"
+                  render={({ field }) => (
+                    <FormItem className="w-full md:w-48 space-y-2">
+                      <FormLabel>Tax percentage</FormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            disabled={!taxEnabled}
+                            {...field}
+                          />
+                          <span className="text-sm text-muted-foreground">%</span>
+                        </div>
+                      </FormControl>
+                      <FormDescription>Enter the rate to apply (e.g., 12 for 12%).</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
             <Button type="submit">Save Changes</Button>
           </form>
         </Form>
