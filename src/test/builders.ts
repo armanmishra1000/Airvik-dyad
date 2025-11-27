@@ -106,6 +106,7 @@ export const buildRoomType = (overrides: Partial<RoomType> = {}): RoomType => {
       `https://example.com/rooms/${roomTypeSequence}.jpg`,
     ],
     mainPhotoUrl: overrides.mainPhotoUrl,
+    isVisible: overrides.isVisible ?? true,
   };
 
   roomTypeSequence += 1;

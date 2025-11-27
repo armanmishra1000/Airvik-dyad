@@ -89,6 +89,10 @@ function AmenityIcons({ amenities, gapClass }: AmenityIconsProps) {
 
 export function RoomsShowcaseSection() {
   const { roomTypes, amenities } = useDataContext();
+  const visibleRoomTypes = React.useMemo(
+    () => (roomTypes ?? []).filter((roomType) => roomType.isVisible !== false),
+    [roomTypes]
+  );
 
   const featuredOrder = [
     "AnnaDaan",
@@ -138,11 +142,15 @@ export function RoomsShowcaseSection() {
   };
 
   const featuredRoomTypes = featuredOrder
-    .map((name) => roomTypes?.find((roomType) => normalizeName(roomType.name) === normalizeName(name)))
+    .map((name) =>
+      visibleRoomTypes.find(
+        (roomType) => normalizeName(roomType.name) === normalizeName(name)
+      )
+    )
     .filter((roomType): roomType is RoomType => Boolean(roomType))
     .map(toDisplayRoom);
 
-  const fallbackRoomTypes = (roomTypes ?? [])
+  const fallbackRoomTypes = visibleRoomTypes
     .filter(
       (roomType) =>
         !featuredOrder.some((name) => normalizeName(roomType.name) === normalizeName(name))

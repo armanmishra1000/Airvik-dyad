@@ -10,6 +10,10 @@ import Link from "next/link";
 
 export function OurRoomsSection() {
   const { roomTypes, isLoading: isInitialLoading } = useDataContext();
+  const visibleRoomTypes = React.useMemo(
+    () => (roomTypes ?? []).filter((roomType) => roomType.isVisible !== false),
+    [roomTypes]
+  );
 
   return (
     <section className="py-16 md:py-24 bg-muted/10">
@@ -42,9 +46,9 @@ export function OurRoomsSection() {
           </div>
         ) : (
           <>
-            {roomTypes && roomTypes.length > 0 ? (
+            {visibleRoomTypes.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                {roomTypes.slice(0, 6).map((roomType) => (
+                {visibleRoomTypes.slice(0, 6).map((roomType) => (
                   <RoomTypeCard
                     key={roomType.id}
                     roomType={roomType}

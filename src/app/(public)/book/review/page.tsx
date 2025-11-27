@@ -124,6 +124,10 @@ function BookingReviewContent() {
     property,
   } = useDataContext();
   const formatCurrency = useCurrencyFormatter();
+  const visibleRoomTypes = React.useMemo(
+    () => roomTypes.filter((rt) => rt.isVisible !== false),
+    [roomTypes]
+  );
 
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [bookingError, setBookingError] = React.useState<{
@@ -152,9 +156,9 @@ function BookingReviewContent() {
   const selectedRoomTypes = React.useMemo(() => {
     if (!bookingDetails.roomTypeIds) return [];
     return bookingDetails.roomTypeIds
-      .map((id) => roomTypes.find((rt) => rt.id === id))
+      .map((id) => visibleRoomTypes.find((rt) => rt.id === id))
       .filter(Boolean) as RoomType[];
-  }, [bookingDetails.roomTypeIds, roomTypes]);
+  }, [bookingDetails.roomTypeIds, visibleRoomTypes]);
 
   const groupedRoomTypes: SelectedRoomTypeSummary[] = React.useMemo(() => {
     if (!bookingDetails.roomTypeIds || bookingDetails.roomTypeIds.length === 0) {
@@ -170,13 +174,13 @@ function BookingReviewContent() {
     const groups: SelectedRoomTypeSummary[] = [];
 
     counts.forEach((quantity, roomTypeId) => {
-      const roomType = roomTypes.find((rt) => rt.id === roomTypeId);
+      const roomType = visibleRoomTypes.find((rt) => rt.id === roomTypeId);
       if (!roomType) return;
       groups.push({ roomType, quantity });
     });
 
     return groups;
-  }, [bookingDetails.roomTypeIds, roomTypes]);
+  }, [bookingDetails.roomTypeIds, visibleRoomTypes]);
 
   const ratePlan =
     ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
@@ -281,13 +285,13 @@ function BookingReviewContent() {
 
   const activeHeroRoomType = React.useMemo(() => {
     if (activeRoomTypeId) {
-      const found = roomTypes.find((rt) => rt.id === activeRoomTypeId);
+      const found = visibleRoomTypes.find((rt) => rt.id === activeRoomTypeId);
       if (found) {
         return found;
       }
     }
     return primaryRoomType;
-  }, [activeRoomTypeId, primaryRoomType, roomTypes]);
+  }, [activeRoomTypeId, primaryRoomType, visibleRoomTypes]);
 
   const roomLineItems = groupedRoomTypes.map(({ roomType, quantity }) => {
     const baseNightly = typeof roomType.price === "number" ? roomType.price : 0;

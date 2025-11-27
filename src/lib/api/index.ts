@@ -110,6 +110,7 @@ type DbRoomType = {
   amenities?: string[] | null;
   photos?: string[] | null;
   main_photo_url?: string | null;
+  is_visible: boolean | null;
 };
 
 type DbReservation = {
@@ -303,6 +304,7 @@ export const fromDbRoomType = (dbRoomType: DbRoomType): RoomType => ({
   amenities: dbRoomType.amenities ?? [],
   photos: dbRoomType.photos ?? [],
   mainPhotoUrl: dbRoomType.main_photo_url ?? undefined,
+  isVisible: dbRoomType.is_visible ?? true,
 });
 
 const fromDbReservation = (dbReservation: DbReservation): Reservation => ({
@@ -597,6 +599,7 @@ export const upsertRoomType = (roomTypeData: RoomTypeUpsertInput) => {
     p_photos: roomTypeData.photos,
     p_main_photo_url: roomTypeData.mainPhotoUrl,
     p_amenity_ids: roomTypeData.amenities,
+    p_is_visible: roomTypeData.isVisible,
   };
   return supabase.rpc('upsert_room_type_with_amenities', params).single();
 };

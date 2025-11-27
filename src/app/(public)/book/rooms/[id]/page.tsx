@@ -125,7 +125,11 @@ export default function RoomDetailsPage() {
     property,
   } = useDataContext();
   const formatCurrency = useCurrencyFormatter();
-  const roomType = roomTypes.find((rt) => rt.id === params.id);
+  const visibleRoomTypes = React.useMemo(
+    () => roomTypes.filter((rt) => rt.isVisible !== false),
+    [roomTypes]
+  );
+  const roomType = visibleRoomTypes.find((rt) => rt.id === params.id);
   const [isDescriptionExpanded, setIsDescriptionExpanded] =
     React.useState(false);
   const [isDatesPopoverOpen, setIsDatesPopoverOpen] = React.useState(false);
@@ -261,7 +265,7 @@ export default function RoomDetailsPage() {
     notFound();
   }
 
-  const relatedRoomTypes = roomTypes.filter((rt) => rt.id !== roomType.id);
+  const relatedRoomTypes = visibleRoomTypes.filter((rt) => rt.id !== roomType.id);
 
   function onSubmit(values: BookingFormValues) {
     const query = new URLSearchParams({
