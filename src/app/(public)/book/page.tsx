@@ -130,6 +130,10 @@ function RoomAvailabilityPanel({
 
 export default function RoomsPage() {
   const { roomTypes, isLoading: isInitialLoading } = useDataContext();
+  const visibleRoomTypes = React.useMemo(
+    () => (roomTypes ?? []).filter((roomType) => roomType.isVisible !== false),
+    [roomTypes]
+  );
   const {
     search,
     availableRoomTypes,
@@ -210,7 +214,7 @@ export default function RoomsPage() {
 
   const selectedRooms: RoomType[] = React.useMemo(() => {
     if (!selectedRoomQuantities.length) return [];
-    const byId = new Map(roomTypes.map((rt) => [rt.id, rt] as const));
+    const byId = new Map(visibleRoomTypes.map((rt) => [rt.id, rt] as const));
     const result: RoomType[] = [];
 
     selectedRoomQuantities.forEach(({ roomTypeId, quantity }) => {
@@ -222,7 +226,7 @@ export default function RoomsPage() {
     });
 
     return result;
-  }, [roomTypes, selectedRoomQuantities]);
+  }, [visibleRoomTypes, selectedRoomQuantities]);
 
   const totalSelectedRooms = selectedRooms.length;
 
@@ -241,13 +245,13 @@ export default function RoomsPage() {
 
   const totalSelectedCapacity = React.useMemo(() => {
     if (!selectedRoomQuantities.length) return 0;
-    const byId = new Map(roomTypes.map((rt) => [rt.id, rt] as const));
+    const byId = new Map(visibleRoomTypes.map((rt) => [rt.id, rt] as const));
     return selectedRoomQuantities.reduce((sum, { roomTypeId, quantity }) => {
       const rt = byId.get(roomTypeId);
       if (!rt) return sum;
       return sum + quantity * rt.maxOccupancy;
     }, 0);
-  }, [roomTypes, selectedRoomQuantities]);
+  }, [visibleRoomTypes, selectedRoomQuantities]);
 
   const coversGuests = searchValues
     ? totalSelectedCapacity >= totalGuests
@@ -264,14 +268,14 @@ export default function RoomsPage() {
       return 0;
     }
 
-    const byId = new Map(roomTypes.map((rt) => [rt.id, rt] as const));
+    const byId = new Map(visibleRoomTypes.map((rt) => [rt.id, rt] as const));
 
     return roomTypeAvailability.reduce((sum, summary) => {
       const rt = byId.get(summary.roomTypeId);
       if (!rt) return sum;
       return sum + summary.availableRooms * rt.maxOccupancy;
     }, 0);
-  }, [roomTypeAvailability, roomTypes]);
+  }, [roomTypeAvailability, visibleRoomTypes]);
 
   const hasInsufficientTotalCapacity = React.useMemo(() => {
     if (!searchValues) return false;
@@ -283,7 +287,7 @@ export default function RoomsPage() {
 
   const dateAvailableRoomTypes: RoomType[] | null = React.useMemo(() => {
     if (!roomTypeAvailability) return null;
-    const byId = new Map(roomTypes.map((rt) => [rt.id, rt] as const));
+    const byId = new Map(visibleRoomTypes.map((rt) => [rt.id, rt] as const));
     const types: RoomType[] = [];
     roomTypeAvailability.forEach((summary) => {
       const rt = byId.get(summary.roomTypeId);
@@ -292,7 +296,7 @@ export default function RoomsPage() {
       }
     });
     return types;
-  }, [roomTypes, roomTypeAvailability]);
+  }, [visibleRoomTypes, roomTypeAvailability]);
 
   const maxSingleRoomCapacity = React.useMemo(() => {
     if (!dateAvailableRoomTypes || dateAvailableRoomTypes.length === 0) {
@@ -317,7 +321,7 @@ export default function RoomsPage() {
 
   const shouldShowMultiRoomFallback = noMatchingTypes && hasDateAvailability;
 
-  const primaryRoomsToDisplay = hasSearched ? availableRoomTypes : roomTypes;
+  const primaryRoomsToDisplay = hasSearched ? availableRoomTypes : visibleRoomTypes;
   const roomsToDisplay =
     shouldShowMultiRoomFallback && dateAvailableRoomTypes
       ? dateAvailableRoomTypes

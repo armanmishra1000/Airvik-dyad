@@ -41,13 +41,17 @@ export function StickyBookingButton() {
   const pathname = usePathname();
   const { roomTypes } = useDataContext();
   const [isOpen, setIsOpen] = React.useState(false);
+  const visibleRoomTypes = React.useMemo(
+    () => (roomTypes ?? []).filter((roomType) => roomType.isVisible !== false),
+    [roomTypes]
+  );
 
   const isAdminRoute = React.useMemo(() => {
     return pathname?.startsWith("/admin");
   }, [pathname]);
 
   const rooms = React.useMemo(() => {
-    if (!roomTypes || roomTypes.length === 0) {
+    if (visibleRoomTypes.length === 0) {
       return featuredRoomMatchers.map((room) => ({
         name: room.label,
         subtitle: room.subtitle,
@@ -56,7 +60,7 @@ export function StickyBookingButton() {
     }
 
     return featuredRoomMatchers.map((room) => {
-      const matchedRoomType = roomTypes.find((roomType) =>
+      const matchedRoomType = visibleRoomTypes.find((roomType) =>
         roomType.name.toLowerCase().startsWith(room.match.toLowerCase())
       );
 
@@ -66,7 +70,7 @@ export function StickyBookingButton() {
         href: matchedRoomType ? `/book/rooms/${matchedRoomType.id}` : "/book",
       };
     });
-  }, [roomTypes]);
+  }, [visibleRoomTypes]);
 
   if (isAdminRoute) {
     return null;

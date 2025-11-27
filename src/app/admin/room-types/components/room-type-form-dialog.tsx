@@ -22,11 +22,13 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormDescription,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import type { RoomType } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
 import { MultiImageUpload } from "@/components/shared/multi-image-upload";
@@ -40,6 +42,7 @@ const roomTypeSchema = z.object({
   amenities: z.array(z.string()).optional(),
   photos: z.array(z.string()).optional(),
   mainPhotoUrl: z.string().optional(),
+  isVisible: z.boolean(),
 });
 
 interface RoomTypeFormDialogProps {
@@ -66,6 +69,7 @@ export function RoomTypeFormDialog({
       amenities: roomType?.amenities || [],
       photos: roomType?.photos || [],
       mainPhotoUrl: roomType?.mainPhotoUrl || "",
+      isVisible: roomType?.isVisible ?? true,
     },
   });
 
@@ -78,6 +82,7 @@ export function RoomTypeFormDialog({
       amenities: values.amenities || [],
       photos: values.photos || [],
       mainPhotoUrl: values.mainPhotoUrl || values.photos?.[0] || "",
+      isVisible: values.isVisible,
     };
 
     try {
@@ -178,6 +183,27 @@ export function RoomTypeFormDialog({
                     <Input type="number" min={0} step="1" {...field} />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="isVisible"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/40 bg-card/80 px-4 py-3">
+                  <div className="space-y-1">
+                    <FormLabel>Show on website</FormLabel>
+                    <FormDescription>
+                      Toggle off to hide this room type from guests on the frontend.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      aria-label="Toggle room type visibility"
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />

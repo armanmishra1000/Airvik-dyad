@@ -551,7 +551,10 @@ export function useAppData() {
   };
 
   const addRoomType = async (roomTypeData: Omit<RoomType, "id">) => {
-    const { data, error } = await api.upsertRoomType(roomTypeData);
+    const { data, error } = await api.upsertRoomType({
+      ...roomTypeData,
+      isVisible: roomTypeData.isVisible ?? true,
+    });
     if (error || !data) throw error ?? new Error("Failed to create room type.");
     const newRoomType = api.fromDbRoomType(
       data as Parameters<typeof api.fromDbRoomType>[0]
@@ -575,6 +578,10 @@ export function useAppData() {
       photos: updatedData.photos ?? existingRoomType.photos,
       mainPhotoUrl: updatedData.mainPhotoUrl ?? existingRoomType.mainPhotoUrl,
       amenities: updatedData.amenities ?? existingRoomType.amenities,
+      isVisible:
+        typeof updatedData.isVisible === "boolean"
+          ? updatedData.isVisible
+          : existingRoomType.isVisible,
     };
 
     const { data, error } = await api.upsertRoomType(payload);

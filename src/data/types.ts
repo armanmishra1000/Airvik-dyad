@@ -102,6 +102,7 @@ export interface RoomType {
   amenities: string[]; // Array of Amenity IDs
   photos: string[];
   mainPhotoUrl?: string;
+  isVisible: boolean;
 }
 
 export interface RoomCategory {
