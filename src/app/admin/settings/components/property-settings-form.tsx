@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -46,7 +46,7 @@ const propertySchema = z.object({
     )
     .transform((v) => (v === "" ? undefined : v))
     .optional(),
-  tax_enabled: z.boolean().default(false),
+  tax_enabled: z.boolean(),
   tax_percentage: z.coerce
     .number({ invalid_type_error: "Enter a valid percentage" })
     .min(0, "Tax percentage cannot be negative")
@@ -61,10 +61,12 @@ const propertySchema = z.object({
   }
 });
 
+type PropertyFormValues = z.infer<typeof propertySchema>;
+
 export function PropertySettingsForm() {
   const { property, updateProperty } = useDataContext();
 
-  const form = useForm<z.infer<typeof propertySchema>>({
+  const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertySchema),
     defaultValues: {
       name: property.name || "",
@@ -96,7 +98,7 @@ export function PropertySettingsForm() {
     });
   }, [property, form]);
 
-  function onSubmit(values: z.infer<typeof propertySchema>) {
+  const onSubmit: SubmitHandler<PropertyFormValues> = (values) => {
     const normalizedTaxPercentage = values.tax_enabled
       ? values.tax_percentage / 100
       : 0;
@@ -109,7 +111,7 @@ export function PropertySettingsForm() {
     };
     updateProperty(updatedData);
     toast.success("Property details updated successfully!");
-  }
+  };
 
   return (
     <Card>
@@ -126,7 +128,7 @@ export function PropertySettingsForm() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-8"
           >
-            <FormField
+            <FormField<PropertyFormValues, "logo_url">
               control={form.control}
               name="logo_url"
               render={({ field }) => (
@@ -140,7 +142,7 @@ export function PropertySettingsForm() {
               )}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
+              <FormField<PropertyFormValues, "name">
                 control={form.control}
                 name="name"
                 render={({ field }) => (
@@ -153,7 +155,7 @@ export function PropertySettingsForm() {
                   </FormItem>
                 )}
               />
-              <FormField
+              <FormField<PropertyFormValues, "email">
                 control={form.control}
                 name="email"
                 render={({ field }) => (
@@ -166,7 +168,7 @@ export function PropertySettingsForm() {
                   </FormItem>
                 )}
               />
-              <FormField
+              <FormField<PropertyFormValues, "phone">
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
@@ -179,7 +181,7 @@ export function PropertySettingsForm() {
                   </FormItem>
                 )}
               />
-              <FormField
+              <FormField<PropertyFormValues, "address">
                 control={form.control}
                 name="address"
                 render={({ field }) => (
@@ -193,7 +195,7 @@ export function PropertySettingsForm() {
                 )}
               />
             </div>
-            <FormField
+            <FormField<PropertyFormValues, "google_maps_url">
               control={form.control}
               name="google_maps_url"
               render={({ field }) => (
@@ -225,7 +227,7 @@ export function PropertySettingsForm() {
                 </div>
               </div>
             )}
-            <FormField
+            <FormField<PropertyFormValues, "photos">
               control={form.control}
               name="photos"
               render={({ field }) => (
@@ -249,7 +251,7 @@ export function PropertySettingsForm() {
                 </p>
               </div>
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <FormField
+                <FormField<PropertyFormValues, "tax_enabled">
                   control={form.control}
                   name="tax_enabled"
                   render={({ field }) => (
@@ -265,7 +267,7 @@ export function PropertySettingsForm() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                <FormField<PropertyFormValues, "tax_percentage">
                   control={form.control}
                   name="tax_percentage"
                   render={({ field }) => (
