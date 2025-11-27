@@ -10,6 +10,7 @@ import {
   FaFacebook,
   FaInstagram,
   FaLinkedin,
+  FaWhatsapp,
   FaXTwitter,
 } from "react-icons/fa6";
 import {
@@ -78,6 +79,12 @@ const socialLinks: SocialLink[] = [
     icon: FaXTwitter,
   },
 ];
+
+const whatsappNumber = "918511151708";
+const whatsappMessage = encodeURIComponent(
+  "Hi! I'd like to know more about staying at Swaminarayan Ashram."
+);
+const whatsappContactUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
 export function Header() {
   return (
@@ -161,12 +168,27 @@ export function Header() {
               </NavigationMenuList>
             </NavigationMenu>
           </nav>
-          <Button
-            asChild
-            className="hidden bg-primary hover:bg-primary-hover text-primary-foreground xl:flex justify-center text-center"
-          >
-            <Link href="/book">BOOK NOW</Link>
-          </Button>
+          <div className="hidden xl:flex items-center gap-3">
+            <Button
+              asChild
+              className="bg-primary hover:bg-primary-hover text-primary-foreground justify-center text-center"
+            >
+              <Link href="/book">BOOK NOW</Link>
+            </Button>
+            <Button
+              asChild
+              className="bg-[#25D366] text-white hover:bg-[#1fb454] font-semibold gap-2"
+            >
+              <a
+                href={whatsappContactUrl}
+                aria-label="Contact us on WhatsApp"
+                rel="noopener noreferrer"
+              >
+                <FaWhatsapp className="h-4 w-4" aria-hidden="true" />
+                Contact Us on WhatsApp
+              </a>
+            </Button>
+          </div>
           <div className="xl:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -218,14 +240,31 @@ export function Header() {
                     )
                   )}
                 </nav>
-                <SheetClose asChild>
-                  <Button
-                    asChild
-                    className="bg-primary hover:bg-primary-hover text-primary-foreground mt-8 flex w-full justify-center text-center"
-                  >
-                    <Link href="/book">BOOK NOW</Link>
-                  </Button>
-                </SheetClose>
+                <div className="mt-8 flex w-full flex-col gap-3">
+                  <SheetClose asChild>
+                    <Button
+                      asChild
+                      className="bg-primary hover:bg-primary-hover text-primary-foreground flex w-full justify-center text-center"
+                    >
+                      <Link href="/book">BOOK NOW</Link>
+                    </Button>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Button
+                      asChild
+                      className="bg-[#25D366] text-white hover:bg-[#1fb454] font-semibold gap-2"
+                    >
+                      <a
+                        href={whatsappContactUrl}
+                        aria-label="Contact us on WhatsApp"
+                        rel="noopener noreferrer"
+                      >
+                        <FaWhatsapp className="h-4 w-4" aria-hidden="true" />
+                        Contact Us on WhatsApp
+                      </a>
+                    </Button>
+                  </SheetClose>
+                </div>
               </SheetContent>
             </Sheet>
           </div>

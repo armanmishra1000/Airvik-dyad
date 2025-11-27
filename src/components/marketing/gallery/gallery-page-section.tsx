@@ -1,10 +1,36 @@
 "use client";
 
-import React from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import Lightbox, { type Slide } from "yet-another-react-lightbox";
+import DownloadPlugin from "yet-another-react-lightbox/plugins/download";
+import Counter from "yet-another-react-lightbox/plugins/counter";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download as DownloadIcon,
+  X,
+} from "lucide-react";
 
-const galleryImages = [
+type GalleryImage = {
+  src: string;
+  alt: string;
+};
+
+type DownloadableSlide = Slide & {
+  download?: {
+    url: string;
+    filename: string;
+  };
+};
+
+const galleryImages: GalleryImage[] = [
   {
     src: "/havan.png",
     alt: "Saints performing a havan ceremony at the ashram.",
@@ -55,7 +81,51 @@ const galleryImages = [
   },
 ];
 
+const buildDownloadName = (alt: string, index: number, src: string) => {
+  const sanitized = alt
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "")
+    .trim();
+  const fallback = `ashram-image-${index + 1}`;
+  const extension = src.split("?")[0]?.split(".").pop() ?? "jpg";
+  return `${sanitized || fallback}.${extension}`;
+};
+
 export function GalleryPageSection() {
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const lastTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  const slides = useMemo<DownloadableSlide[]>(
+    () =>
+      galleryImages.map((image, index) => ({
+        src: image.src,
+        alt: image.alt,
+        download: {
+          url: image.src,
+          filename: buildDownloadName(image.alt, index, image.src),
+        },
+      })),
+    []
+  );
+
+  const handleClose = useCallback(() => {
+    setIsViewerOpen(false);
+    setTimeout(() => {
+      lastTriggerRef.current?.focus();
+    }, 0);
+  }, []);
+
+  const openViewer = useCallback(
+    (index: number) => (event: React.MouseEvent<HTMLButtonElement>) => {
+      lastTriggerRef.current = event.currentTarget;
+      setViewerIndex(index);
+      setIsViewerOpen(true);
+    },
+    []
+  );
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -108,21 +178,58 @@ export function GalleryPageSection() {
             <motion.div
               key={index}
               variants={itemVariants}
-              className="bg-card border border-border/50 rounded-2xl shadow-lg overflow-hidden group hover:shadow-xl transition-shadow duration-300"
+              className="shadow-lg transition-shadow duration-150 hover:shadow-xl"
             >
-              <div className="relative aspect-[4/3] w-full overflow-hidden">
-                <Image
-                  src={image.src}
-                  alt={image.alt}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-              </div>
+              <button
+                type="button"
+                onClick={openViewer(index)}
+                aria-label={`Open image ${index + 1} of ${galleryImages.length}`}
+                className="group block w-full rounded-2xl border border-border/50 overflow-hidden focus-visible:outline-none"
+              >
+                <div className="relative aspect-[4/3] w-full overflow-hidden">
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-150 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-150" />
+                </div>
+              </button>
             </motion.div>
           ))}
         </motion.div>
       </div>
+
+      <Lightbox
+        className="ashram-lightbox"
+        open={isViewerOpen}
+        close={handleClose}
+        index={viewerIndex}
+        slides={slides}
+        controller={{ closeOnBackdropClick: true }}
+        carousel={{ finite: false, imageFit: "contain" }}
+        plugins={[DownloadPlugin, Counter]}
+        counter={{
+          container: {
+            className: "ashram-lightbox-counter",
+            "aria-live": "polite",
+          },
+        }}
+        toolbar={{
+          buttons: ["close", "download"],
+        }}
+        render={{
+          iconClose: () =>  <X className="h-5 w-5" aria-hidden />,
+          iconPrev: () => <ChevronLeft className="h-6 w-6" aria-hidden />,
+          iconNext: () => <ChevronRight className="h-6 w-6" aria-hidden />,
+          iconDownload: () => <DownloadIcon className="h-5 w-5" aria-hidden />,
+        }}
+        on={{
+          view: ({ index }) => setViewerIndex(index),
+        }}
+      />
     </section>
   );
 }
