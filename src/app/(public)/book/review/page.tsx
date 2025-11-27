@@ -19,13 +19,10 @@ import { useDataContext } from "@/context/data-context";
 import { getOrCreateGuestByEmail } from "@/lib/api";
 import { BookingReviewSkeleton } from "@/components/public/booking-review-skeleton";
 import { InlineAlert } from "@/components/public/inline-alert";
-import { PaymentTrustBadges } from "@/components/public/payment-trust-badges";
 import { BookingPolicies } from "@/components/public/booking-policies";
 import { calculateRoomPricing, calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -48,37 +45,13 @@ import {
 import type { RoomType } from "@/data/types";
 
 const paymentSchema = z.object({
-  paymentMethod: z.enum(["card", "property"]),
-  cardName: z.string().optional(),
-  cardNumber: z.string().optional(),
-  expiryDate: z.string().optional(),
-  cvc: z.string().optional(),
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().min(1, "Last name is required."),
   email: z.string().email("Please enter a valid email."),
   country: z.string({ required_error: "Country is required." }),
   phoneCountryCode: z.string(),
   phone: z.string().min(10, "Phone number must be at least 10 digits."),
-}).refine(
-  (data) => {
-    if (data.paymentMethod === "card") {
-      return (
-        data.cardName &&
-        data.cardNumber &&
-        data.cardNumber.replace(/\s/g, "").length >= 16 &&
-        data.expiryDate &&
-        /^(0[1-9]|1[0-2])\/\d{2}$/.test(data.expiryDate) &&
-        data.cvc &&
-        data.cvc.length >= 3
-      );
-    }
-    return true;
-  },
-  {
-    message: "All card details are required when paying with card",
-    path: ["cardNumber"],
-  }
-);
+});
 
 const DEFAULT_BOOKING_ERROR_MESSAGE =
   "An unexpected error occurred. Please try again or contact support.";
@@ -135,7 +108,6 @@ function BookingReviewContent() {
     message: string;
   } | null>(null);
   const [, setHasAvailabilityConflict] = React.useState(false);
-  const [paymentMethod, setPaymentMethod] = React.useState<"card" | "property">("card");
   const [activeRoomTypeId, setActiveRoomTypeId] = React.useState<string | null>(null);
 
   type SelectedRoomTypeSummary = {
@@ -188,11 +160,6 @@ function BookingReviewContent() {
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      paymentMethod: "card",
-      cardName: "",
-      cardNumber: "",
-      expiryDate: "",
-      cvc: "",
       firstName: "",
       lastName: "",
       email: "",
@@ -372,19 +339,18 @@ function BookingReviewContent() {
     );
   }
 
-  // Helper function to format card number with spaces
-  const formatCardNumber = (value: string) => {
-    const cleaned = value.replace(/\s/g, "");
-    const chunks = cleaned.match(/.{1,4}/g);
-    return chunks ? chunks.join(" ") : cleaned;
-  };
-
   async function onSubmit(values: z.infer<typeof paymentSchema>) {
     setIsProcessing(true);
     setBookingError(null); // Clear previous errors
     try {
       // Simulate network delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const normalizedPhone = [values.phoneCountryCode, values.phone]
+        .filter((segment) => Boolean(segment && segment.trim().length > 0))
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
 
       // Find available physical rooms for the selection
       const assignedRoomIds: string[] = [];
@@ -436,7 +402,7 @@ function BookingReviewContent() {
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
-        phone: values.phone,
+        phone: normalizedPhone.length > 0 ? normalizedPhone : values.phone,
       });
 
       if (guestError || !guest) {
@@ -456,7 +422,7 @@ function BookingReviewContent() {
         notes: "Booked via public website.",
         bookingDate: new Date().toISOString(),
         source: "website",
-        paymentMethod: paymentMethod === "card" ? "Card on file" : "Not relevant",
+        paymentMethod: "Pay with UPI",
       });
 
       // Redirect to the confirmation page of the first reservation in the group
@@ -875,123 +841,13 @@ function BookingReviewContent() {
                     </div>
                   </div>
                   <Separator />
-                  
-                  {/* Payment Method Selection */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Payment Method</h3>
-                    <FormField
-                      control={form.control}
-                      name="paymentMethod"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <RadioGroup
-                              value={field.value}
-                              onValueChange={(value) => {
-                                field.onChange(value);
-                                setPaymentMethod(value as "card" | "property");
-                              }}
-                              className="grid grid-cols-2 gap-4"
-                            >
-                              <Label
-                                htmlFor="card"
-                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer [&:has([data-state=checked])]:border-primary"
-                              >
-                                <RadioGroupItem value="card" id="card" className="sr-only" />
-                                <div className="space-y-1 text-center">
-                                  <p className="text-sm font-medium leading-none">Pay Now</p>
-                                  <p className="text-xs text-muted-foreground">Credit/Debit Card</p>
-                                </div>
-                              </Label>
-                              <Label
-                                htmlFor="property"
-                                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer [&:has([data-state=checked])]:border-primary"
-                              >
-                                <RadioGroupItem value="property" id="property" className="sr-only" />
-                                <div className="space-y-1 text-center">
-                                  <p className="text-sm font-medium leading-none">Pay at Property</p>
-                                  <p className="text-xs text-muted-foreground">Cash or Card</p>
-                                </div>
-                              </Label>
-                            </RadioGroup>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
 
-                  {/* Card Details - Show only if Pay Now selected */}
-                  {paymentMethod === "card" && (
-                    <>
-                      <Separator />
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold">Card Details</h3>
-                        <PaymentTrustBadges />
-                    <FormField
-                      control={form.control}
-                      name="cardName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name on Card</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="cardNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Card Number</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="•••• •••• •••• ••••"
-                              {...field}
-                              onChange={(e) => {
-                                const formatted = formatCardNumber(e.target.value);
-                                field.onChange(formatted);
-                              }}
-                              maxLength={19}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="expiryDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Expiry Date</FormLabel>
-                            <FormControl>
-                              <Input placeholder="MM/YY" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="cvc"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>CVC</FormLabel>
-                            <FormControl>
-                              <Input placeholder="•••" {...field} maxLength={4} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                      </div>
-                    </>
-                  )}
+                  <InlineAlert
+                    variant="info"
+                    title="Manual payment"
+                    description="Within a short time, our reception team will call you to confirm the booking and collect the UPI payment manually."
+                  />
+
                   <Button
                     type="submit"
                     className="w-full text-lg rounded-lg h-12"
@@ -1002,17 +858,13 @@ function BookingReviewContent() {
                         <Loader2 className="h-5 w-5 animate-spin mr-2" />
                         Processing...
                       </>
-                    ) : paymentMethod === "card" ? (
-                      `Confirm & Pay ${formatCurrency(Math.round(pricing.grandTotal))}`
                     ) : (
-                      `Confirm Booking - Pay ${formatCurrency(Math.round(pricing.grandTotal))} at Property`
+                      `Confirm Booking`
                     )}
                   </Button>
                   
                   <p className="text-xs text-center text-gray-500 mt-4">
-                    {paymentMethod === "card"
-                      ? "You will be charged immediately. Secure payment powered by SSL encryption."
-                      : "You can pay cash or card when you arrive at the property. Your booking will be confirmed instantly."}
+                    Keep your phone handy—our reception will reach out shortly after you confirm.
                   </p>
                 </form>
               </Form>
