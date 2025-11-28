@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import { motion, type Variants } from "framer-motion";
+import { MessageSquareHeart, HeartHandshake } from "lucide-react";
 import { FeatureCard } from "@/components/marketing/home/FeatureCard";
 import { WelcomeSection } from "@/components/marketing/home/WelcomeSection";
 import { VideoSection } from "@/components/marketing/home/VideoSection";
 import { RoomsShowcaseSection } from "@/components/marketing/home/RoomsShowcaseSection";
 import { TestimonialSection } from "@/components/marketing/home/TestimonialSection";
 import { GallerySection } from "@/components/marketing/home/GallerySection";
+import { SupportActionsSection, type SupportAction } from "@/components/marketing/home/SupportActionsSection";
 import { Marquee } from "@/components/marketing/layout/Marquee";
 
 type Feature = {
@@ -44,6 +46,27 @@ const features: Feature[] = [
     imageUrl: "/yoga-ashram.png",
     highlighted: false,
     desktopPositionClass: "lg:col-start-3 lg:row-start-1",
+  },
+];
+
+const supportActions: SupportAction[] = [
+  {
+    eyebrow: "FEEDBACK",
+    title: "Share your peaceful reflections",
+    description:
+      "Tell us your gentle thoughts what touched your heart, what felt special, or where we can grow.Your reflections help us serve every seeker with more care and devotion.",
+    href: "/feedback",
+    ctaLabel: "Go to feedback",
+    icon: MessageSquareHeart,
+  },
+  {
+    eyebrow: "DONATE",
+    title: "Support daily seva initiatives",
+    description:
+      "Your contribution helps us continue essential seva daily meals, wellness stays, spiritual gatherings, and ongoing cleanliness of the ashram surroundings.",
+    href: "/donate",
+    ctaLabel: "Visit donate page",
+    icon: HeartHandshake,
   },
 ];
 
@@ -180,6 +203,11 @@ export default function HomePage() {
 
       {/* Testimonial Section */}
       <TestimonialSection />
+
+      {/* Support Actions Section */}
+      <SupportActionsSection actions={supportActions} />
+
+
       <Marquee />
     </div>
   );

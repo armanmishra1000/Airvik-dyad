@@ -132,16 +132,8 @@ export function FeedbackForm() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl rounded-3xl border border-border/40 bg-card/40 p-6 shadow-lg sm:p-10">
-      <div className="space-y-3 text-center">
-        <p className="text-sm uppercase tracking-[0.3em] text-primary">We&apos;d love to hear from you</p>
-        <h2 className="text-3xl font-serif font-semibold text-foreground">Share your feedback</h2>
-        <p className="text-muted-foreground text-base">
-          Tell us how we can make your stay and spiritual journey even more meaningful.
-        </p>
-      </div>
-
-      <div className="mt-8 space-y-4">
+    <div className="mx-auto w-full max-w-3xl rounded-3xl border border-border/20 bg-card/40 p-6 shadow-md">
+      <div className="space-y-4">
         {successMessage && (
           <Alert>
             <AlertDescription>{successMessage}</AlertDescription>
@@ -216,7 +208,7 @@ export function FeedbackForm() {
                     <Input
                       {...field}
                       disabled={submitAsAnonymous}
-                      placeholder="e.g. Aarti Sharma"
+                      placeholder="e.g. Raju Sharma"
                       className="h-12 rounded-2xl"
                     />
                   </FormControl>
@@ -235,7 +227,7 @@ export function FeedbackForm() {
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="[email protected]"
+                      placeholder="email"
                       className="h-12 rounded-2xl"
                       inputMode="email"
                     />

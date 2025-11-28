@@ -395,7 +395,7 @@ export default function RoomsPage() {
           {/* room skeleton */}
           {showLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
-              {[...Array(6)].map((_, i) => (
+              {[...Array(7)].map((_, i) => (
                 <div key={i} className="flex flex-col border border-border/40 overflow-hidden rounded-2xl shadow-lg">
                   {/* Image skeleton */}
                   <div className="relative h-32 md:h-40 overflow-hidden">
