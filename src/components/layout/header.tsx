@@ -30,6 +30,7 @@ const navItems = [
   { href: "/admin/calendar", label: "Calendar", requiredPermission: "read:reservation" },
   { href: "/admin/housekeeping", label: "Housekeeping", requiredPermission: "read:room" },
   { href: "/admin/guests", label: "Guests", requiredPermission: "read:guest" },
+  { href: "/admin/feedback", label: "Feedback", requiredPermission: "read:feedback" },
   { href: "/admin/reports", label: "Reports", requiredPermission: "read:report" },
 ] satisfies Array<{ href: string; label: string; requiredPermission: Permission }>;
 

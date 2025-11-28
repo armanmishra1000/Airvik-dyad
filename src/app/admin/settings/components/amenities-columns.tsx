@@ -50,14 +50,14 @@ export const columns: ColumnDef<Amenity>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            {hasPermission?.("update:amenity") && (
+            {hasPermission?.("update:setting") && (
               <AmenityFormDialog amenity={amenity}>
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                   Edit
                 </DropdownMenuItem>
               </AmenityFormDialog>
             )}
-            {hasPermission?.("delete:amenity") && (
+            {hasPermission?.("update:setting") && (
               <DropdownMenuItem
                 className="text-destructive"
                 onSelect={() => meta?.openDeleteDialog?.(amenity)}

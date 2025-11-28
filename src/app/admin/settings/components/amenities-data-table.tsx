@@ -25,6 +25,7 @@ import { DataTablePagination } from "@/app/admin/reservations/components/data-ta
 import { AmenityFormDialog } from "./amenity-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
 import { useDataContext } from "@/context/data-context"
+import { useAuthContext } from "@/context/auth-context"
 import type { Amenity } from "@/data/types"
 
 export function AmenitiesDataTable<TData extends Amenity, TValue>({
@@ -37,6 +38,7 @@ export function AmenitiesDataTable<TData extends Amenity, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
   const { deleteAmenity } = useDataContext()
+  const { hasPermission } = useAuthContext()
 
   const handleDeleteConfirm = async () => {
     if (itemToDelete) {
@@ -66,6 +68,7 @@ export function AmenitiesDataTable<TData extends Amenity, TValue>({
       openDeleteDialog: (item: TData) => {
         setItemToDelete(item)
       },
+      hasPermission,
     },
   })
 
@@ -73,9 +76,11 @@ export function AmenitiesDataTable<TData extends Amenity, TValue>({
     <>
       <div className="space-y-6">
         <div className="flex items-center justify-end gap-3">
-          <AmenityFormDialog>
-            <Button>Add Amenity</Button>
-          </AmenityFormDialog>
+          {hasPermission("update:setting") && (
+            <AmenityFormDialog>
+              <Button>Add Amenity</Button>
+            </AmenityFormDialog>
+          )}
         </div>
         <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
           <Table>
