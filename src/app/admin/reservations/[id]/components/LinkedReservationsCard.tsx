@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -16,22 +15,33 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useDataContext } from "@/context/data-context";
-import type { Reservation } from "@/data/types";
+import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
+import { cn } from "@/lib/utils";
 
 interface LinkedReservationsCardProps {
-  reservation: Reservation;
+  reservations: ReservationWithDetails[];
+  activeReservationId: string;
 }
 
-export function LinkedReservationsCard({ reservation }: LinkedReservationsCardProps) {
-  const { reservations: allReservations, rooms, roomTypes } = useDataContext();
+export function LinkedReservationsCard({ reservations, activeReservationId }: LinkedReservationsCardProps) {
+  const { rooms, roomTypes } = useDataContext();
 
-  const linkedReservations = allReservations.filter(
-    (r) => r.bookingId === reservation.bookingId && r.id !== reservation.id
-  );
-
-  if (linkedReservations.length === 0) {
+  if (reservations.length === 0) {
     return null;
   }
+
+  const sortedReservations = [...reservations].sort((a, b) => {
+    if (a.id === activeReservationId) return -1;
+    if (b.id === activeReservationId) return 1;
+    const roomA = a.roomNumber || "";
+    const roomB = b.roomNumber || "";
+    return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: "base" });
+  });
+
+  const description =
+    reservations.length === 1
+      ? "This booking currently includes 1 room."
+      : `This booking currently includes ${reservations.length} rooms.`;
 
   return (
     <Card>
@@ -39,27 +49,26 @@ export function LinkedReservationsCard({ reservation }: LinkedReservationsCardPr
         <CardTitle className="font-serif text-lg font-semibold">
           Group Booking
         </CardTitle>
-        <CardDescription>
-          This reservation is part of a group booking.
-        </CardDescription>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="rounded-2xl border border-border/40">
           <Table>
           <TableBody>
-            {linkedReservations.map((res) => {
+            {sortedReservations.map((res) => {
               const room = rooms.find((r) => r.id === res.roomId);
               const roomType = roomTypes.find(rt => rt.id === room?.roomTypeId);
+              const isActive = res.id === activeReservationId;
+              const roomLabel = room?.roomNumber || res.roomNumber || "N/A";
               return (
-                <TableRow key={res.id}>
-                  <TableCell>
-                      <Link
-                        href={`/admin/reservations/${res.id}`}
-                        className="font-medium text-primary hover:underline"
-                      >
-                      Room {room?.roomNumber}
-                    </Link>
-                    <div className="text-xs text-muted-foreground">{roomType?.name}</div>
+                <TableRow
+                  key={res.id}
+                  className={cn(isActive && "bg-primary/5")}
+                >
+                  <TableCell className="space-y-1">
+                    <p className="font-medium">
+                      {(roomType?.name || "Room type")} · Room {roomLabel}
+                    </p>
                   </TableCell>
                     <TableCell className="text-right">
                       <Badge variant="outline" className="capitalize">

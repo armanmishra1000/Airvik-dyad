@@ -9,6 +9,7 @@ import { GuestDetailsCard } from "./components/GuestDetailsCard";
 import { StayDetailsCard } from "./components/StayDetailsCard";
 import { BillingCard } from "./components/BillingCard";
 import { LinkedReservationsCard } from "./components/LinkedReservationsCard";
+import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
 
 export default function ReservationDetailsPage() {
   const params = useParams<{ id: string }>();
@@ -21,7 +22,32 @@ export default function ReservationDetailsPage() {
     return notFound();
   }
 
-  const reservationWithDetails = {
+  const bookingReservationsWithDetails: ReservationWithDetails[] = reservation
+    ? reservations
+        .filter((entry) => entry.bookingId === reservation.bookingId)
+        .map((entry) => {
+          const entryGuest = guests.find((g) => g.id === entry.guestId);
+          const entryRoomNumber =
+            rooms.find((room) => room.id === entry.roomId)?.roomNumber || "N/A";
+          return {
+            ...entry,
+            guestName: entryGuest
+              ? `${entryGuest.firstName} ${entryGuest.lastName}`
+              : "N/A",
+            roomNumber: entryRoomNumber,
+            nights: differenceInDays(
+              parseISO(entry.checkOutDate),
+              parseISO(entry.checkInDate)
+            ),
+          } as ReservationWithDetails;
+        })
+    : [];
+
+  if (!reservation) {
+    return notFound();
+  }
+
+  const fallbackReservationDetails: ReservationWithDetails = {
     ...reservation,
     guestName: guest ? `${guest.firstName} ${guest.lastName}` : "N/A",
     roomNumber:
@@ -32,6 +58,24 @@ export default function ReservationDetailsPage() {
     ),
   };
 
+  const reservationWithDetails =
+    bookingReservationsWithDetails.find((entry) => entry.id === reservation.id) ??
+    fallbackReservationDetails;
+
+  const normalizedReservations =
+    bookingReservationsWithDetails.length > 0
+      ? bookingReservationsWithDetails
+      : [reservationWithDetails];
+  const groupSummary = {
+    reservations: normalizedReservations,
+    roomCount: normalizedReservations.length,
+    totalAmount: normalizedReservations.reduce(
+      (sum, entry) => sum + entry.totalAmount,
+      0
+    ),
+    folio: normalizedReservations.flatMap((entry) => entry.folio),
+  };
+
   return (
     <div className="space-y-6">
       <ReservationHeader reservation={reservationWithDetails} />
@@ -39,10 +83,16 @@ export default function ReservationDetailsPage() {
         <div className="lg:col-span-1 space-y-6">
           <GuestDetailsCard guest={guest} />
           <StayDetailsCard reservation={reservationWithDetails} />
-          <LinkedReservationsCard reservation={reservation} />
+          <LinkedReservationsCard
+            activeReservationId={reservation.id}
+            reservations={groupSummary.reservations}
+          />
         </div>
         <div className="lg:col-span-2">
-          <BillingCard reservation={reservationWithDetails} />
+          <BillingCard
+            reservation={reservationWithDetails}
+            groupSummary={groupSummary}
+          />
         </div>
       </div>
     </div>

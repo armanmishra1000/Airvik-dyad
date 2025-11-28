@@ -124,10 +124,6 @@ function RoomAvailabilityPanel({
           </select>
         </div>
       )}
-      <p className="text-[11px] text-muted-foreground">
-        Availability reflects rooms the housekeeping team has marked Clean or Dirty;
-        rooms under maintenance stay hidden until they&apos;re ready again.
-      </p>
     </div>
   );
 }

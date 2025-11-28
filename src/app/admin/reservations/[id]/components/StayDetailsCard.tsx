@@ -18,12 +18,7 @@ interface StayDetailsCardProps {
 }
 
 export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
-  const { roomTypes, ratePlans, rooms } = useDataContext();
-  const roomType = roomTypes.find(
-    (rt) =>
-      rt.id ===
-      rooms.find((r) => r.id === reservation.roomId)?.roomTypeId
-  );
+  const { ratePlans } = useDataContext();
   const ratePlan = ratePlans.find((rp) => rp.id === reservation.ratePlanId);
 
   return (
@@ -55,12 +50,6 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
             <Users className="h-4 w-4 text-muted-foreground" />
             <span>
               {reservation.numberOfGuests} guests ({reservation.adultCount} adults · {reservation.childCount} children)
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <BedDouble className="h-4 w-4 text-muted-foreground" />
-            <span>
-              {reservation.roomNumber} ({roomType?.name})
             </span>
           </div>
           <div className="flex items-center gap-3">
