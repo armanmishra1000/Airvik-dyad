@@ -29,8 +29,8 @@ import {
   
   import { Button } from "@/components/ui/button";
   import type { DashboardComponentId } from "@/data/types";
-  import { isToday, parseISO } from "date-fns";
-  import { useDataContext } from "@/context/data-context";
+import { parseISO } from "date-fns";
+import { useDataContext } from "@/context/data-context";
   import { AvailabilityCalendar } from "@/components/shared/availability-calendar";
   import { DashboardStickyNotes } from "./components/DashboardStickyNotes";
   import { DraggableCard } from "./components/DraggableCard";
@@ -42,11 +42,13 @@ import {
     StickyNotesSkeleton, 
     CalendarSkeleton 
   } from "./components/dashboard-skeleton";
+import { getTodayRange } from "@/lib/date";
   
   export default function DashboardPage() {
     const { reservations, guests, dashboardLayout, updateDashboardLayout, rooms, isLoading } = useDataContext();
     const [isEditing, setIsEditing] = React.useState(false);
     const [activeId, setActiveId] = React.useState<string | null>(null);
+    const todayRange = React.useMemo(() => getTodayRange(), []);
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -54,43 +56,86 @@ import {
           coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+    const {
+      occupancyPercentage,
+      occupiedRoomsCount,
+      availableRooms,
+      arrivalsRows,
+      departuresRows,
+      roomsForSaleCount,
+    } = React.useMemo(() => {
+      const CANCELLED_STATUSES = new Set(["Cancelled", "No-show"]);
+      const guestMap = new Map(guests.map((guest) => [guest.id, guest]));
+      const roomMap = new Map(rooms.map((room) => [room.id, room]));
+      const roomsAvailableForSale = rooms.filter((room) => room.status !== "Maintenance");
 
-    const todayArrivals = reservations.filter(r => isToday(parseISO(r.checkInDate)) && r.status !== 'Cancelled');
-    const todayDepartures = reservations.filter(r => isToday(parseISO(r.checkOutDate)) && r.status !== 'Cancelled');
-    
-    const occupiedRoomsCount = reservations.filter(r => {
-        const today = new Date();
-        const checkIn = parseISO(r.checkInDate);
-        const checkOut = parseISO(r.checkOutDate);
-        return r.status === 'Checked-in' || (today >= checkIn && today < checkOut && r.status === 'Confirmed');
-    }).length;
+      let occupiedRooms = 0;
+      const arrivals: Array<{ row: DashboardTableRow; sort: number }> = [];
+      const departures: Array<{ row: DashboardTableRow; sort: number }> = [];
 
-    const availableRooms = rooms.length - occupiedRoomsCount;
-    const occupancy = rooms.length > 0 ? (occupiedRoomsCount / rooms.length) * 100 : 0;
+      reservations.forEach((reservation) => {
+        if (CANCELLED_STATUSES.has(reservation.status)) {
+          return;
+        }
 
-    const arrivalsRows: DashboardTableRow[] = todayArrivals.map(res => {
-        const guest = guests.find(g => g.id === res.guestId);
-        const room = rooms.find(r => r.id === res.roomId);
-        return {
-            id: res.id,
-            guestName: guest ? `${guest.firstName} ${guest.lastName}` : "Unknown Guest",
-            guestEmail: guest?.email,
-            roomNumber: room?.roomNumber || "N/A",
-            status: res.status,
-        };
-    });
+        const checkIn = parseISO(reservation.checkInDate);
+        const checkOut = parseISO(reservation.checkOutDate);
 
-    const departuresRows: DashboardTableRow[] = todayDepartures.map(res => {
-        const guest = guests.find(g => g.id === res.guestId);
-        const room = rooms.find(r => r.id === res.roomId);
-        return {
-            id: res.id,
-            guestName: guest ? `${guest.firstName} ${guest.lastName}` : "Unknown Guest",
-            guestEmail: guest?.email,
-            roomNumber: room?.roomNumber || "N/A",
-            status: res.status,
-        };
-    });
+        if (checkIn >= todayRange.start && checkIn <= todayRange.end) {
+          const guest = guestMap.get(reservation.guestId);
+          const room = roomMap.get(reservation.roomId);
+          arrivals.push({
+            sort: checkIn.getTime(),
+            row: {
+              id: reservation.id,
+              guestName: guest ? `${guest.firstName} ${guest.lastName}` : "Unknown Guest",
+              guestEmail: guest?.email,
+              roomNumber: room?.roomNumber || "N/A",
+              status: reservation.status,
+            },
+          });
+        }
+
+        if (checkOut >= todayRange.start && checkOut <= todayRange.end) {
+          const guest = guestMap.get(reservation.guestId);
+          const room = roomMap.get(reservation.roomId);
+          departures.push({
+            sort: checkOut.getTime(),
+            row: {
+              id: reservation.id,
+              guestName: guest ? `${guest.firstName} ${guest.lastName}` : "Unknown Guest",
+              guestEmail: guest?.email,
+              roomNumber: room?.roomNumber || "N/A",
+              status: reservation.status,
+            },
+          });
+        }
+
+        const stayCoversToday = todayRange.start >= checkIn && todayRange.start < checkOut;
+        if (reservation.status === "Checked-in" || (stayCoversToday && reservation.status === "Confirmed")) {
+          occupiedRooms += 1;
+        }
+      });
+
+      const availableRoomsCount = Math.max(roomsAvailableForSale.length - occupiedRooms, 0);
+      const occupancy = roomsAvailableForSale.length
+        ? (occupiedRooms / roomsAvailableForSale.length) * 100
+        : 0;
+
+      const sortByDate = (a: { sort: number }, b: { sort: number }) => a.sort - b.sort;
+
+      return {
+        occupancyPercentage: occupancy,
+        occupiedRoomsCount: occupiedRooms,
+        availableRooms: availableRoomsCount,
+        arrivalsRows: arrivals.sort(sortByDate).map((item) => item.row),
+        departuresRows: departures.sort(sortByDate).map((item) => item.row),
+        roomsForSaleCount: roomsAvailableForSale.length,
+      };
+    }, [guests, reservations, rooms, todayRange]);
+
+    const todayArrivalsCount = arrivalsRows.length;
+    const todayDeparturesCount = departuresRows.length;
 
     const components: Record<DashboardComponentId, React.ReactNode> = {
         stats: isLoading ? (
@@ -101,22 +146,22 @@ import {
                     icon={Building2}
                     title="Occupancy"
                     subtitle="Overall occupancy rate"
-                    value={`${occupancy.toFixed(0)}%`}
-                    context={`${occupiedRoomsCount} of ${rooms.length} rooms occupied`}
+                    value={`${occupancyPercentage.toFixed(0)}%`}
+                    context={`${occupiedRoomsCount} of ${roomsForSaleCount} rooms occupied`}
                 />
                 <StatCardContent
                     icon={LogIn}
                     title="Arrivals Today"
                     subtitle="Check-ins scheduled"
-                    value={todayArrivals.length}
-                    context={todayArrivals.length === 1 ? "1 guest arriving" : `${todayArrivals.length} guests arriving`}
+                    value={todayArrivalsCount}
+                    context={todayArrivalsCount === 1 ? "1 guest arriving" : `${todayArrivalsCount} guests arriving`}
                 />
                 <StatCardContent
                     icon={LogOut}
                     title="Departures Today"
                     subtitle="Check-outs scheduled"
-                    value={todayDepartures.length}
-                    context={todayDepartures.length === 1 ? "1 guest departing" : `${todayDepartures.length} guests departing`}
+                    value={todayDeparturesCount}
+                    context={todayDeparturesCount === 1 ? "1 guest departing" : `${todayDeparturesCount} guests departing`}
                 />
                 <StatCardContent
                     icon={Hotel}
