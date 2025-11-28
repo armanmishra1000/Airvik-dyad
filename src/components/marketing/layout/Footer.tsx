@@ -18,6 +18,7 @@ const quickLinks = [
   { href: "/amenities", label: "Amenities" },
   { href: "/ashram-glimpse", label: "Ashram Glimpse" },
   { href: "/journey", label: "Our Journey" },
+  { href: "/blog", label: "News" },
 ];
 
 type SocialLink = {
