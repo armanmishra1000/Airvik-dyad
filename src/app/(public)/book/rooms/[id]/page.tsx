@@ -449,14 +449,18 @@ export default function RoomDetailsPage() {
 
   function onSubmit(values: BookingFormValues) {
     const totalGuests = values.guests + values.children;
-    const query = new URLSearchParams({
-      roomTypeId: roomType!.id,
-      from: formatISO(values.dateRange.from, { representation: "date" }),
-      to: formatISO(values.dateRange.to, { representation: "date" }),
-      guests: totalGuests.toString(),
-      children: values.children.toString(),
-      rooms: values.rooms.toString(),
-    });
+    const query = new URLSearchParams();
+
+    const roomsRequested = Math.max(1, Number(values.rooms) || 1);
+    for (let index = 0; index < roomsRequested; index += 1) {
+      query.append("roomTypeId", roomType!.id);
+    }
+
+    query.set("from", formatISO(values.dateRange.from, { representation: "date" }));
+    query.set("to", formatISO(values.dateRange.to, { representation: "date" }));
+    query.set("guests", totalGuests.toString());
+    query.set("children", values.children.toString());
+    query.set("rooms", values.rooms.toString());
 
     if (values.specialRequests) {
       query.set("specialRequests", values.specialRequests);
