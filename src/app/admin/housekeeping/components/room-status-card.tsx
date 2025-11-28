@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Room, RoomStatus, HousekeepingAssignment } from "@/data/types";
 import { cn } from "@/lib/utils";
+import { ROOM_STATUS_LABELS } from "@/lib/rooms";
 import { User } from "lucide-react";
 import { UpdateStatusDialog } from "./update-status-dialog";
 import { AssignHousekeeperDialog } from "./assign-housekeeper-dialog";
@@ -27,36 +28,25 @@ interface RoomStatusCardProps {
   onStatusUpdate: (roomId: string, newStatus: RoomStatus) => void;
 }
 
-const statusStyles: {
-  [key in RoomStatus]: {
-    className: string;
-    label: string;
-  };
-} = {
+const statusStyles: Record<RoomStatus, { className: string }> = {
   Clean: {
-    className:
-      "border border-accent/50 bg-accent/30 text-accent-foreground",
-    label: "Clean",
+    className: "border border-accent/50 bg-accent/30 text-accent-foreground",
   },
   Inspected: {
-    className:
-      "border border-primary/40 bg-primary/10 text-primary",
-    label: "Inspected",
+    className: "border border-primary/40 bg-primary/10 text-primary",
   },
   Dirty: {
-    className:
-      "border border-destructive/40 bg-destructive/10 text-destructive",
-    label: "Dirty",
+    className: "border border-destructive/40 bg-destructive/10 text-destructive",
   },
   Maintenance: {
     className:
       "border border-secondary/50 bg-secondary/30 text-secondary-foreground",
-    label: "Maintenance",
   },
 };
 
 export function RoomStatusCard({ room, onStatusUpdate }: RoomStatusCardProps) {
-  const { className, label } = statusStyles[room.status];
+  const { className } = statusStyles[room.status];
+  const label = ROOM_STATUS_LABELS[room.status];
 
   return (
     <Card className="flex h-full flex-col">
