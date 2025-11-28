@@ -79,7 +79,7 @@ export default function CreateReservationPage() {
   } = useDataContext();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const guestPrefillId = searchParams.get("guestId");
+  const guestPrefillId = searchParams?.get("guestId") ?? null;
   const guestCreationUrl = `/admin/guests?intent=create-for-reservation&redirect=${encodeURIComponent(
     "/admin/reservations/new"
   )}`;

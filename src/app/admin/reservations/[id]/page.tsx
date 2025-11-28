@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useParams, notFound } from "next/navigation";
 import { differenceInDays, parseISO } from "date-fns";
 
@@ -10,12 +11,22 @@ import { StayDetailsCard } from "./components/StayDetailsCard";
 import { BillingCard } from "./components/BillingCard";
 import { LinkedReservationsCard } from "./components/LinkedReservationsCard";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
+import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
 
 export default function ReservationDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { reservations, guests, rooms } = useDataContext();
+  const { reservations, guests, rooms, property } = useDataContext();
+  const reservationIdFromParams = React.useMemo(() => {
+    const rawId = params?.id;
+    if (!rawId) return "";
+    return Array.isArray(rawId) ? rawId[0] ?? "" : rawId;
+  }, [params]);
 
-  const reservation = reservations.find((r) => r.id === params.id);
+  if (!reservationIdFromParams) {
+    return notFound();
+  }
+
+  const reservation = reservations.find((r) => r.id === reservationIdFromParams);
   const guest = guests.find((g) => g.id === reservation?.guestId);
 
   if (!reservation) {
@@ -66,6 +77,17 @@ export default function ReservationDetailsPage() {
     bookingReservationsWithDetails.length > 0
       ? bookingReservationsWithDetails
       : [reservationWithDetails];
+  const taxesTotal = normalizedReservations.reduce(
+    (sum, entry) => sum + calculateReservationTaxAmount(entry, property),
+    0
+  );
+  const enabledRates = normalizedReservations
+    .map((entry) => (entry.taxEnabledSnapshot ? entry.taxRateSnapshot ?? 0 : 0))
+    .filter((rate) => rate > 0);
+  const uniqueRates = new Set(enabledRates.map((rate) => rate.toFixed(4)));
+  const hasMixedTaxRates = uniqueRates.size > 1;
+  const appliedTaxRate = enabledRates.length === 1 ? enabledRates[0] : 0;
+
   const groupSummary = {
     reservations: normalizedReservations,
     roomCount: normalizedReservations.length,
@@ -73,7 +95,10 @@ export default function ReservationDetailsPage() {
       (sum, entry) => sum + entry.totalAmount,
       0
     ),
-    folio: normalizedReservations.flatMap((entry) => entry.folio),
+    folio: normalizedReservations.flatMap((entry) => entry.folio ?? []),
+    taxesTotal,
+    hasMixedTaxRates,
+    appliedTaxRate: hasMixedTaxRates ? null : appliedTaxRate,
   };
 
   return (

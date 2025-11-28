@@ -96,7 +96,14 @@ import type {
 
 type AddReservationPayload = Omit<
   Reservation,
-  "id" | "roomId" | "bookingId" | "folio" | "totalAmount"
+  |
+    "id"
+  | "roomId"
+  | "bookingId"
+  | "folio"
+  | "totalAmount"
+  | "taxEnabledSnapshot"
+  | "taxRateSnapshot"
 > & { roomIds: string[] };
 
 // This mirrors the original AppContextType for component compatibility

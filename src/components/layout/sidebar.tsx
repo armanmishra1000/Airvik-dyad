@@ -78,7 +78,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const { hasPermission } = useAuthContext();
   const { property } = useDataContext();
 

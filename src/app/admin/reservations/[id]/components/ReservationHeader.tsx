@@ -21,7 +21,7 @@ export function ReservationHeader({ reservation }: ReservationHeaderProps) {
   const { updateReservationStatus } = useDataContext();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
   const searchParams = useSearchParams();
-  const isNewlyCreated = searchParams.get("createdBooking") === "1";
+  const isNewlyCreated = searchParams?.get("createdBooking") === "1";
 
   const handleStatusUpdate = (status: "Checked-in" | "Checked-out" | "Cancelled") => {
     updateReservationStatus(reservation.id, status);

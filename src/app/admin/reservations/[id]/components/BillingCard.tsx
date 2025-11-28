@@ -21,7 +21,7 @@ import { RecordPaymentDialog } from "@/app/admin/reservations/components/record-
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
-import { calculateReservationFinancials } from "@/lib/reservations/calculate-financials";
+import { calculateReservationFinancials, resolveReservationTaxConfig } from "@/lib/reservations/calculate-financials";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import { useDataContext } from "@/context/data-context";
 
@@ -32,18 +32,16 @@ interface BillingCardProps {
     roomCount: number;
     totalAmount: number;
     folio: ReservationWithDetails["folio"];
+    taxesTotal: number;
+    hasMixedTaxRates: boolean;
+    appliedTaxRate: number | null;
   };
 }
 
 export function BillingCard({ reservation, groupSummary }: BillingCardProps) {
   const { property } = useDataContext();
   const formatCurrency = useCurrencyFormatter();
-  const taxConfig = {
-    enabled: Boolean(property.tax_enabled),
-    percentage: property.tax_percentage ?? 0,
-  };
-  const taxPercentDisplay = taxConfig.percentage * 100;
-
+  const baseTaxConfig = resolveReservationTaxConfig(reservation, property);
   const hasGroupData = groupSummary.roomCount > 0;
   const folioEntries = hasGroupData && groupSummary.folio.length > 0
     ? groupSummary.folio
@@ -52,6 +50,19 @@ export function BillingCard({ reservation, groupSummary }: BillingCardProps) {
     totalAmount: hasGroupData ? groupSummary.totalAmount : reservation.totalAmount,
     folio: folioEntries,
   };
+  const summaryTaxConfig = hasGroupData
+    ? {
+        enabled: groupSummary.taxesTotal > 0,
+        percentage:
+          groupSummary.hasMixedTaxRates
+            ? baseTaxConfig.percentage
+            : groupSummary.appliedTaxRate ?? baseTaxConfig.percentage,
+        taxesOverride: groupSummary.taxesTotal,
+      }
+    : baseTaxConfig;
+  const taxPercentDisplay = !hasGroupData || !groupSummary.hasMixedTaxRates
+    ? (summaryTaxConfig.percentage * 100)
+    : null;
   const sortedFolio = [...folioEntries].sort((a, b) => {
     if (!a.timestamp && !b.timestamp) return 0;
     if (!a.timestamp) return 1;
@@ -69,7 +80,7 @@ export function BillingCard({ reservation, groupSummary }: BillingCardProps) {
     totalCharges,
     totalPaid,
     balance,
-  } = calculateReservationFinancials(billingSource, taxConfig);
+  } = calculateReservationFinancials(billingSource, summaryTaxConfig);
 
   return (
     <Card className="flex h-full flex-col">
@@ -87,7 +98,7 @@ export function BillingCard({ reservation, groupSummary }: BillingCardProps) {
             <RecordPaymentDialog
               reservationId={reservation.id}
               billingSource={billingSource}
-              taxConfig={taxConfig}
+              taxConfig={summaryTaxConfig}
             >
               <Button variant="outline" size="sm">
                 Record Payment
@@ -163,12 +174,17 @@ export function BillingCard({ reservation, groupSummary }: BillingCardProps) {
             {taxesAndFees > 0 && (
               <div className="mt-2 flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
                 <span>
-                  Taxes &amp; Fees Charged (
-                  {taxPercentDisplay.toLocaleString(undefined, {
-                    maximumFractionDigits: 2,
-                    minimumFractionDigits: taxPercentDisplay % 1 === 0 ? 0 : 2,
-                  })}
-                  %)
+                  Taxes &amp; Fees Charged
+                  {typeof taxPercentDisplay === "number" && !Number.isNaN(taxPercentDisplay) && (
+                    <>
+                      {" "}(
+                      {taxPercentDisplay.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: taxPercentDisplay % 1 === 0 ? 0 : 2,
+                      })}
+                      %)
+                    </>
+                  )}
                 </span>
                 <span className="text-foreground">{formatCurrency(taxesAndFees)}</span>
               </div>

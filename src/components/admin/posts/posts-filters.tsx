@@ -17,10 +17,11 @@ import { Category } from "@/data/types";
 export function PostsFilters({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = searchParams ?? new URLSearchParams();
   
-  const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [category, setCategory] = useState(searchParams.get("category") || "all");
-  const [month, setMonth] = useState(searchParams.get("month") || "all");
+  const [search, setSearch] = useState(params.get("search") || "");
+  const [category, setCategory] = useState(params.get("category") || "all");
+  const [month, setMonth] = useState(params.get("month") || "all");
 
   // Helper to generate last 12 months
   const months = Array.from({ length: 12 }, (_, i) => {

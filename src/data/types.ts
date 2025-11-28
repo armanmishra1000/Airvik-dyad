@@ -265,6 +265,8 @@ export interface Reservation {
   paymentMethod: ReservationPaymentMethod;
   adultCount: number;
   childCount: number;
+  taxEnabledSnapshot: boolean;
+  taxRateSnapshot: number;
 }
 
 export interface HousekeepingAssignment {

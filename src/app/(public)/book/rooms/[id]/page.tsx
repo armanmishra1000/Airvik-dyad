@@ -113,7 +113,13 @@ const amenityIcons: Record<string, IconName> = {
 
 export default function RoomDetailsPage() {
   const params = useParams<{ id: string }>();
+  const roomTypeIdFromParams = React.useMemo(() => {
+    if (!params) return "";
+    const value = params.id;
+    return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+  }, [params]);
   const searchParams = useSearchParams();
+  const safeSearchParams = React.useMemo(() => searchParams ?? new URLSearchParams(), [searchParams]);
   const router = useRouter();
   const {
     reservations,
@@ -129,7 +135,7 @@ export default function RoomDetailsPage() {
     () => roomTypes.filter((rt) => rt.isVisible !== false),
     [roomTypes]
   );
-  const roomType = visibleRoomTypes.find((rt) => rt.id === params.id);
+  const roomType = visibleRoomTypes.find((rt) => rt.id === roomTypeIdFromParams);
   const capacitySchema = React.useMemo(() => {
     if (!roomType) {
       return bookingSchema;
@@ -186,20 +192,19 @@ export default function RoomDetailsPage() {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(capacitySchema),
     defaultValues: {
-      guests: searchParams.get("guests")
-        ? Number(searchParams.get("guests"))
+      guests: safeSearchParams.get("guests")
+        ? Number(safeSearchParams.get("guests"))
         : 2,
-      children: searchParams.get("children")
-        ? Number(searchParams.get("children"))
+      children: safeSearchParams.get("children")
+        ? Number(safeSearchParams.get("children"))
         : 0,
-      rooms: searchParams.get("rooms") ? Number(searchParams.get("rooms")) : 1,
-      dateRange:
-        searchParams.get("from") && searchParams.get("to")
-          ? {
-              from: parse(searchParams.get("from")!, "yyyy-MM-dd", new Date()),
-              to: parse(searchParams.get("to")!, "yyyy-MM-dd", new Date()),
-            }
-          : undefined,
+      rooms: safeSearchParams.get("rooms") ? Number(safeSearchParams.get("rooms")) : 1,
+      dateRange: safeSearchParams.get("from") && safeSearchParams.get("to")
+        ? {
+            from: parse(safeSearchParams.get("from")!, "yyyy-MM-dd", new Date()),
+            to: parse(safeSearchParams.get("to")!, "yyyy-MM-dd", new Date()),
+          }
+        : undefined,
       specialRequests: "",
     },
   });
@@ -254,7 +259,7 @@ export default function RoomDetailsPage() {
       totalCapacity === 1 ? "" : "s"
     } (${roomType.maxOccupancy} per room)${childSnippet}`;
   }, [roomType, roomsCount, totalCapacity]);
-  const roomsParam = searchParams.get("rooms");
+  const roomsParam = safeSearchParams.get("rooms");
   const parsedRequestedRooms = roomsParam ? Number(roomsParam) : undefined;
   const requestedRoomsLimit =
     parsedRequestedRooms && Number.isFinite(parsedRequestedRooms) && parsedRequestedRooms > 0
