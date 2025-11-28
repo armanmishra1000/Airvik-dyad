@@ -16,6 +16,7 @@ import type {
   RoomOccupancy,
   BookingValidation,
 } from "@/data/types";
+import { isBookableRoom } from "@/lib/rooms";
 import { getBookingRestrictions } from "@/lib/api";
 
 // Booking restriction validation helper
@@ -150,7 +151,9 @@ export function useAvailabilitySearch() {
             return;
           }
 
-          const roomsOfType = rooms.filter((r) => r.roomTypeId === rt.id);
+          const roomsOfType = rooms.filter(
+            (room) => room.roomTypeId === rt.id && isBookableRoom(room)
+          );
           const totalRoomsOfType = roomsOfType.length;
           if (totalRoomsOfType === 0) {
             return;

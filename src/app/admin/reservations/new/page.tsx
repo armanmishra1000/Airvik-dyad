@@ -31,6 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
+import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 const paymentMethodOptions = [
@@ -134,7 +135,11 @@ export default function CreateReservationPage() {
         );
       });
 
-      return !isBooked;
+      if (isBooked) {
+        return false;
+      }
+
+      return isBookableRoom(room);
     });
   }, [rooms, reservations, watchedDateRange]);
 
@@ -433,23 +438,31 @@ export default function CreateReservationPage() {
                           const roomType = roomTypes.find((rt) => rt.id === room.roomTypeId);
                           const isSelected = selectedRoomIds.includes(room.id);
                           return (
-                            <div
-                              key={room.id}
-                              className={cn(
-                                "flex items-center gap-4 rounded-2xl border px-4 py-3",
-                                isSelected ? "border-primary/60 bg-primary/5" : "border-border/40 bg-card"
-                              )}
-                            >
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => handleRoomToggle(room.id)}
-                                id={`room-${room.id}`}
-                              />
-                              <label htmlFor={`room-${room.id}`} className="flex flex-col text-sm font-medium">
-                                Room {room.roomNumber}
-                                <span className="text-xs text-muted-foreground">{roomType?.name}</span>
-                              </label>
-                            </div>
+                        <div
+                          key={room.id}
+                          className={cn(
+                            "flex items-center gap-4 rounded-2xl border px-4 py-3",
+                            isSelected ? "border-primary/60 bg-primary/5" : "border-border/40 bg-card"
+                          )}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => handleRoomToggle(room.id)}
+                            id={`room-${room.id}`}
+                          />
+                          <label htmlFor={`room-${room.id}`} className="flex flex-1 flex-col text-sm font-medium">
+                            <span className="flex items-center gap-2">
+                              Room {room.roomNumber}
+                              <Badge
+                                variant="outline"
+                                className="rounded-full border-border/50 bg-background/50 px-2 py-0 text-[10px] font-semibold"
+                              >
+                                {ROOM_STATUS_LABELS[room.status]}
+                              </Badge>
+                            </span>
+                            <span className="text-xs text-muted-foreground">{roomType?.name}</span>
+                          </label>
+                        </div>
                           );
                         })
                       ) : (

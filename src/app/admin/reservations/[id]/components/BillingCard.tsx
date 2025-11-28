@@ -27,13 +27,40 @@ import { useDataContext } from "@/context/data-context";
 
 interface BillingCardProps {
   reservation: ReservationWithDetails;
+  groupSummary: {
+    reservations: ReservationWithDetails[];
+    roomCount: number;
+    totalAmount: number;
+    folio: ReservationWithDetails["folio"];
+  };
 }
 
-export function BillingCard({ reservation }: BillingCardProps) {
+export function BillingCard({ reservation, groupSummary }: BillingCardProps) {
   const { property } = useDataContext();
   const formatCurrency = useCurrencyFormatter();
-  const taxesEnabled = Boolean(property.tax_enabled && (property.tax_percentage ?? 0) > 0);
-  const taxPercentDisplay = (property.tax_percentage ?? 0) * 100;
+  const taxConfig = {
+    enabled: Boolean(property.tax_enabled),
+    percentage: property.tax_percentage ?? 0,
+  };
+  const taxPercentDisplay = taxConfig.percentage * 100;
+
+  const hasGroupData = groupSummary.roomCount > 0;
+  const folioEntries = hasGroupData && groupSummary.folio.length > 0
+    ? groupSummary.folio
+    : reservation.folio;
+  const billingSource: Pick<ReservationWithDetails, "folio" | "totalAmount"> = {
+    totalAmount: hasGroupData ? groupSummary.totalAmount : reservation.totalAmount,
+    folio: folioEntries,
+  };
+  const sortedFolio = [...folioEntries].sort((a, b) => {
+    if (!a.timestamp && !b.timestamp) return 0;
+    if (!a.timestamp) return 1;
+    if (!b.timestamp) return -1;
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  });
+  const roomCountLabel = groupSummary.roomCount === 1
+    ? "Totals include 1 room in this booking"
+    : `Totals include ${groupSummary.roomCount} rooms in this booking`;
 
   const {
     roomCharges,
@@ -42,10 +69,7 @@ export function BillingCard({ reservation }: BillingCardProps) {
     totalCharges,
     totalPaid,
     balance,
-  } = calculateReservationFinancials(reservation, {
-    enabled: Boolean(property.tax_enabled),
-    percentage: property.tax_percentage ?? 0,
-  });
+  } = calculateReservationFinancials(billingSource, taxConfig);
 
   return (
     <Card className="flex h-full flex-col">
@@ -56,11 +80,15 @@ export function BillingCard({ reservation }: BillingCardProps) {
               Billing & Folio
             </CardTitle>
             <CardDescription>
-              All charges and payments for this reservation.
+              Charges and payments for this booking.
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <RecordPaymentDialog reservationId={reservation.id}>
+            <RecordPaymentDialog
+              reservationId={reservation.id}
+              billingSource={billingSource}
+              taxConfig={taxConfig}
+            >
               <Button variant="outline" size="sm">
                 Record Payment
               </Button>
@@ -85,7 +113,7 @@ export function BillingCard({ reservation }: BillingCardProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {reservation.folio.map((item) => {
+            {sortedFolio.map((item) => {
               const displayDate = item.timestamp
                 ? format(parseISO(item.timestamp), "MMM d, yyyy")
                 : "-";
@@ -112,7 +140,7 @@ export function BillingCard({ reservation }: BillingCardProps) {
               </TableRow>
               );
             })}
-            {reservation.folio.length === 0 && (
+            {sortedFolio.length === 0 && (
               <TableRow>
                 <TableCell
                   colSpan={4}
@@ -131,6 +159,7 @@ export function BillingCard({ reservation }: BillingCardProps) {
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Pricing Summary
             </p>
+            <p className="mt-1 text-xs text-muted-foreground">{roomCountLabel}</p>
             {taxesAndFees > 0 && (
               <div className="mt-2 flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
                 <span>

@@ -24,7 +24,6 @@ import {
   Wifi,
   Shield,
   CheckCircle,
-  Sparkles,
   Baby,
   Minus,
   Plus,
@@ -72,6 +71,7 @@ import { ShareDialog } from "@/components/public/share-dialog";
 import { calculateRoomPricing } from "@/lib/pricing-calculator";
 import { PricingBreakdown } from "@/components/ui/pricing-breakdown";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { isBookableRoom } from "@/lib/rooms";
 
 const bookingSchema = z.object({
   dateRange: z
@@ -130,6 +130,41 @@ export default function RoomDetailsPage() {
     [roomTypes]
   );
   const roomType = visibleRoomTypes.find((rt) => rt.id === params.id);
+  const capacitySchema = React.useMemo(() => {
+    if (!roomType) {
+      return bookingSchema;
+    }
+
+    return bookingSchema.superRefine((data, ctx) => {
+      const perRoomCapacity = roomType.maxOccupancy;
+      const perRoomChildCapacity =
+        typeof roomType.maxChildren === "number"
+          ? roomType.maxChildren
+          : roomType.maxOccupancy;
+      const totalCapacity = data.rooms * perRoomCapacity;
+      const totalChildCapacity = data.rooms * perRoomChildCapacity;
+
+      if (data.guests + data.children > totalCapacity) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Select up to ${totalCapacity} total guest${
+            totalCapacity === 1 ? "" : "s"
+          } across ${data.rooms} room${data.rooms === 1 ? "" : "s"}.`,
+          path: ["guests"],
+        });
+      }
+
+      if (data.children > totalChildCapacity) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `You can include up to ${totalChildCapacity} child${
+            totalChildCapacity === 1 ? "" : "ren"
+          } across ${data.rooms} room${data.rooms === 1 ? "" : "s"}.`,
+          path: ["children"],
+        });
+      }
+    });
+  }, [roomType]);
   const [isDescriptionExpanded, setIsDescriptionExpanded] =
     React.useState(false);
   const [isDatesPopoverOpen, setIsDatesPopoverOpen] = React.useState(false);
@@ -149,7 +184,7 @@ export default function RoomDetailsPage() {
   );
 
   const form = useForm<BookingFormValues>({
-    resolver: zodResolver(bookingSchema),
+    resolver: zodResolver(capacitySchema),
     defaultValues: {
       guests: searchParams.get("guests")
         ? Number(searchParams.get("guests"))
@@ -173,6 +208,58 @@ export default function RoomDetailsPage() {
   const guestsCount = form.watch("guests");
   const childrenCount = form.watch("children");
   const roomsCount = form.watch("rooms");
+  const totalCapacity = roomType ? roomsCount * roomType.maxOccupancy : 0;
+  const perRoomChildLimit = roomType
+    ? roomType.maxChildren ?? roomType.maxOccupancy
+    : 0;
+  const totalChildCapacity = roomsCount * perRoomChildLimit;
+  const maxConfiguredChildCapacity =
+    roomType?.maxChildren !== undefined
+      ? roomsCount * roomType.maxChildren
+      : undefined;
+  const maxChildrenAllowed = Math.max(
+    0,
+    Math.min(totalChildCapacity, totalCapacity - guestsCount)
+  );
+  const isAtTotalCapacity =
+    totalCapacity > 0 && guestsCount + childrenCount >= totalCapacity;
+  const isAtChildCapacity =
+    typeof maxConfiguredChildCapacity === "number" &&
+    childrenCount >= maxConfiguredChildCapacity;
+  const capacityHelperMessage = React.useMemo(() => {
+    if (!roomType) {
+      return "";
+    }
+
+    if (roomsCount === 1) {
+      const childSnippet =
+        roomType.maxChildren !== undefined
+          ? `, including up to ${roomType.maxChildren} child${
+              roomType.maxChildren === 1 ? "" : "ren"
+            }`
+          : "";
+      return `This room fits up to ${roomType.maxOccupancy} guest${
+        roomType.maxOccupancy === 1 ? "" : "s"
+      }${childSnippet}.`;
+    }
+
+    const childSnippet =
+      roomType.maxChildren !== undefined
+        ? `, including up to ${roomsCount * roomType.maxChildren} child${
+            roomsCount * roomType.maxChildren === 1 ? "" : "ren"
+          } total.`
+        : ".";
+
+    return `Your ${roomsCount} room selection fits up to ${totalCapacity} guest${
+      totalCapacity === 1 ? "" : "s"
+    } (${roomType.maxOccupancy} per room)${childSnippet}`;
+  }, [roomType, roomsCount, totalCapacity]);
+  const roomsParam = searchParams.get("rooms");
+  const parsedRequestedRooms = roomsParam ? Number(roomsParam) : undefined;
+  const requestedRoomsLimit =
+    parsedRequestedRooms && Number.isFinite(parsedRequestedRooms) && parsedRequestedRooms > 0
+      ? Math.floor(parsedRequestedRooms)
+      : undefined;
 
   // Get current URL for sharing (client-side only)
   React.useEffect(() => {
@@ -204,16 +291,31 @@ export default function RoomDetailsPage() {
     return paddedPhotos;
   }, [roomType]);
 
-  const disabledDates = React.useMemo(() => {
-    if (!roomType) return [];
-    const roomsOfType = rooms.filter((r) => r.roomTypeId === roomType.id);
-    const numberOfRooms = roomsOfType.length;
-    if (numberOfRooms === 0) return [{ before: new Date() }];
+  const roomAvailability = React.useMemo(() => {
+    if (!roomType) {
+      return {
+        disabledDates: [{ before: new Date() }],
+        minAvailableRoomsForStay: undefined,
+        totalBookableRooms: 0,
+      };
+    }
 
-    const bookingsCountByDate: { [key: string]: number } = {};
+    const roomsOfType = rooms.filter(
+      (room) => room.roomTypeId === roomType.id && isBookableRoom(room)
+    );
+    const numberOfRooms = roomsOfType.length;
+    if (numberOfRooms === 0) {
+      return {
+        disabledDates: [{ before: new Date() }],
+        minAvailableRoomsForStay: undefined,
+        totalBookableRooms: 0,
+      };
+    }
+
+    const bookingsCountByDate: Record<string, number> = {};
     const relevantReservations = reservations.filter(
       (res) =>
-        roomsOfType.some((r) => r.id === res.roomId) &&
+        roomsOfType.some((room) => room.id === res.roomId) &&
         res.status !== "Cancelled"
     );
 
@@ -236,8 +338,86 @@ export default function RoomDetailsPage() {
       .filter(([, count]) => count >= numberOfRooms)
       .map(([dateString]) => parseISO(dateString));
 
-    return [{ before: new Date() }, ...fullyBookedDates];
-  }, [roomType, reservations, rooms]);
+    let minAvailableRoomsForStay: number | undefined;
+    if (dateRange?.from && dateRange?.to) {
+      const stayInterval = eachDayOfInterval({
+        start: dateRange.from,
+        end: dateRange.to,
+      });
+      if (stayInterval.length > 0) stayInterval.pop();
+      if (stayInterval.length > 0) {
+        let minAvailable = numberOfRooms;
+        stayInterval.forEach((day) => {
+          const dayString = formatISO(day, { representation: "date" });
+          const bookedCount = bookingsCountByDate[dayString] || 0;
+          const availableRoomsCount = numberOfRooms - bookedCount;
+          if (availableRoomsCount < minAvailable) {
+            minAvailable = availableRoomsCount;
+          }
+        });
+        minAvailableRoomsForStay = Math.max(0, minAvailable);
+      }
+    }
+
+    return {
+      disabledDates: [{ before: new Date() }, ...fullyBookedDates],
+      minAvailableRoomsForStay,
+      totalBookableRooms: numberOfRooms,
+    };
+  }, [roomType, rooms, reservations, dateRange]);
+
+  const { disabledDates, minAvailableRoomsForStay, totalBookableRooms } = roomAvailability;
+
+  const cappedByInventory = totalBookableRooms > 0
+    ? Math.min(requestedRoomsLimit ?? totalBookableRooms, totalBookableRooms)
+    : requestedRoomsLimit ?? 0;
+
+  const computedMaxRooms =
+    minAvailableRoomsForStay !== undefined
+      ? Math.min(cappedByInventory, minAvailableRoomsForStay)
+      : cappedByInventory;
+
+  const maxSelectableRooms = Math.max(0, computedMaxRooms);
+  const roomsUnavailableForDates = Boolean(
+    dateRange?.from &&
+      dateRange?.to &&
+      maxSelectableRooms === 0 &&
+      totalBookableRooms > 0
+  );
+  const isRoomsCappedByRequest = Boolean(
+    requestedRoomsLimit &&
+      maxSelectableRooms > 0 &&
+      maxSelectableRooms < requestedRoomsLimit
+  );
+
+  React.useEffect(() => {
+    if (maxSelectableRooms > 0 && roomsCount > maxSelectableRooms) {
+      form.setValue("rooms", maxSelectableRooms);
+    }
+  }, [form, roomsCount, maxSelectableRooms]);
+
+  React.useEffect(() => {
+    if (!roomType) {
+      return;
+    }
+
+    const maxAdults = Math.max(1, totalCapacity - childrenCount);
+    if (guestsCount > maxAdults) {
+      form.setValue("guests", maxAdults, { shouldValidate: true });
+    }
+
+    if (childrenCount > maxChildrenAllowed) {
+      form.setValue("children", maxChildrenAllowed, { shouldValidate: true });
+    }
+  }, [
+    form,
+    roomType,
+    totalCapacity,
+    totalChildCapacity,
+    guestsCount,
+    childrenCount,
+    maxChildrenAllowed,
+  ]);
 
   // Calculate pricing based on selected dates
   const nightCount =
@@ -268,14 +448,19 @@ export default function RoomDetailsPage() {
   const relatedRoomTypes = visibleRoomTypes.filter((rt) => rt.id !== roomType.id);
 
   function onSubmit(values: BookingFormValues) {
-    const query = new URLSearchParams({
-      roomTypeId: roomType!.id,
-      from: formatISO(values.dateRange.from, { representation: "date" }),
-      to: formatISO(values.dateRange.to, { representation: "date" }),
-      guests: values.guests.toString(),
-      children: values.children.toString(),
-      rooms: values.rooms.toString(),
-    });
+    const totalGuests = values.guests + values.children;
+    const query = new URLSearchParams();
+
+    const roomsRequested = Math.max(1, Number(values.rooms) || 1);
+    for (let index = 0; index < roomsRequested; index += 1) {
+      query.append("roomTypeId", roomType!.id);
+    }
+
+    query.set("from", formatISO(values.dateRange.from, { representation: "date" }));
+    query.set("to", formatISO(values.dateRange.to, { representation: "date" }));
+    query.set("guests", totalGuests.toString());
+    query.set("children", values.children.toString());
+    query.set("rooms", values.rooms.toString());
 
     if (values.specialRequests) {
       query.set("specialRequests", values.specialRequests);
@@ -651,7 +836,7 @@ export default function RoomDetailsPage() {
                                                 field.value.to,
                                                 "MMM dd, yyyy"
                                               )}`
-                                            : "Nov 15 - Nov 17, 2025"}
+                                            : "Select dates"}
                                         </div>
                                       </div>
                                     </div>
@@ -743,6 +928,9 @@ export default function RoomDetailsPage() {
                                       day_hidden: "invisible",
                                     }}
                                   />
+                                  <p className="px-5 pb-1 text-xs text-muted-foreground">
+                                    Availability reflects rooms housekeeping has marked Clean or Dirty; maintenance rooms stay hidden until they&apos;re ready.
+                                  </p>
                                 </PopoverContent>
                               </Popover>
                               <FormMessage className="pl-2" />
@@ -842,17 +1030,22 @@ export default function RoomDetailsPage() {
                                           onClick={() =>
                                             form.setValue(
                                               "guests",
-                                              Math.min(
-                                                roomType.maxOccupancy -
-                                                  childrenCount,
-                                                guestsCount + 1
-                                              )
+                                              Math.max(
+                                                1,
+                                                Math.min(
+                                                  totalCapacity -
+                                                    childrenCount,
+                                                  guestsCount + 1
+                                                )
+                                              ),
+                                              { shouldValidate: true }
                                             )
                                           }
                                           type="button"
                                           disabled={
+                                            totalCapacity === 0 ||
                                             guestsCount + childrenCount >=
-                                            roomType.maxOccupancy
+                                              totalCapacity
                                           }
                                         >
                                           <Plus className="h-3 w-3" />
@@ -903,14 +1096,17 @@ export default function RoomDetailsPage() {
                                               className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
                                               onClick={() =>
                                                 childField.onChange(
-                                                  childField.value + 1
+                                                  Math.min(
+                                                    childField.value + 1,
+                                                    Math.max(0, maxChildrenAllowed)
+                                                  )
                                                 )
                                               }
                                               type="button"
                                               disabled={
-                                                guestsCount +
-                                                  childField.value >=
-                                                roomType.maxOccupancy
+                                                totalCapacity === 0 ||
+                                                childField.value >=
+                                                  Math.max(0, maxChildrenAllowed)
                                               }
                                             >
                                               <Plus className="h-3 w-3" />
@@ -920,11 +1116,22 @@ export default function RoomDetailsPage() {
                                       )}
                                     />
                                   </div>
-                                  <div className="pt-2 border-t border-border/20">
+                                  <div className="pt-2 border-t border-border/20 space-y-1">
                                     <p className="text-xs text-muted-foreground">
-                                      This room can accommodate a maximum of{" "}
-                                      {roomType.maxOccupancy} guests
+                                      {capacityHelperMessage}
                                     </p>
+                                    {isAtTotalCapacity && (
+                                      <p className="text-xs text-amber-700">
+                                        Need space for more guests? Increase your room count first.
+                                      </p>
+                                    )}
+                                    {!isAtTotalCapacity &&
+                                      isAtChildCapacity &&
+                                      roomType?.maxChildren !== undefined && (
+                                        <p className="text-xs text-amber-700">
+                                          You’ve reached the child limit for these rooms.
+                                        </p>
+                                      )}
                                   </div>
                                 </PopoverContent>
                               </Popover>
@@ -1008,6 +1215,7 @@ export default function RoomDetailsPage() {
                                             )
                                           }
                                           type="button"
+                                          disabled={field.value <= 1}
                                         >
                                           <Minus className="h-3 w-3" />
                                         </Button>
@@ -1019,14 +1227,39 @@ export default function RoomDetailsPage() {
                                           size="icon"
                                           className="lg:h-9 lg:w-9 w-7 h-7 rounded-full border border-border/50 text-foreground transition hover:border-primary hover:text-primary disabled:border-border/30 disabled:text-border"
                                           onClick={() =>
-                                            field.onChange(field.value + 1)
+                                            field.onChange(
+                                              Math.min(
+                                                maxSelectableRooms || 1,
+                                                field.value + 1
+                                              )
+                                            )
                                           }
                                           type="button"
+                                          disabled={
+                                            maxSelectableRooms === 0 ||
+                                            field.value >= maxSelectableRooms
+                                          }
                                         >
                                           <Plus className="h-3 w-3" />
                                         </Button>
                                       </div>
                                     </div>
+                                  </div>
+                                  <div className="pt-3 text-xs text-muted-foreground">
+                                    {maxSelectableRooms > 0 ? (
+                                      <p>
+                                        {`You can select up to ${maxSelectableRooms} room${
+                                          maxSelectableRooms === 1 ? "" : "s"
+                                        } for these dates.`}
+                                        {isRoomsCappedByRequest && requestedRoomsLimit && (
+                                          <>
+                                            {" "}You originally chose {requestedRoomsLimit}; adjust your search if you need more.
+                                          </>
+                                        )}
+                                      </p>
+                                    ) : (
+                                      <p>No rooms of this type are ready for the selected dates.</p>
+                                    )}
                                   </div>
                                 </PopoverContent>
                               </Popover>
@@ -1072,14 +1305,21 @@ export default function RoomDetailsPage() {
                       taxRatePercent={pricing.taxRatePercent}
                       currency={property.currency}
                     />
+                    {roomsUnavailableForDates && (
+                      <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                        <Info className="h-4 w-4" />
+                        <p>
+                          This room type is fully booked for at least one night in your selected range. Please adjust your dates or pick another room type.
+                        </p>
+                      </div>
+                    )}
 
                     <Button
-                      className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-white rounded-xl"
                       type="submit"
-                      disabled={!dateRange?.from || !dateRange?.to}
+                      className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-white rounded-xl"
+                      disabled={!dateRange?.from || !dateRange?.to || maxSelectableRooms === 0}
                     >
-                      <Sparkles className="h-5 w-5 mr-2" />
-                      Reserve for {formatCurrency(Math.round(pricing.grandTotal))}
+                      Book now
                     </Button>
 
                     <p className="text-xs text-center text-gray-500">

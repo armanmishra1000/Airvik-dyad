@@ -126,21 +126,47 @@ function BookingReviewContent() {
     };
   }, [searchParams]);
 
+  const normalizedRoomTypeIds = React.useMemo(() => {
+    const ids = bookingDetails.roomTypeIds ?? [];
+    const requestedRooms = Number(bookingDetails.rooms ?? "0");
+
+    if (ids.length === 0 || requestedRooms <= ids.length) {
+      return ids;
+    }
+
+    const firstId = ids[0];
+    if (!firstId) {
+      return ids;
+    }
+
+    const allSame = ids.every((id) => id === firstId);
+    if (!allSame) {
+      return ids;
+    }
+
+    const padded = [...ids];
+    while (padded.length < requestedRooms) {
+      padded.push(firstId);
+    }
+
+    return padded;
+  }, [bookingDetails.roomTypeIds, bookingDetails.rooms]);
+
   const selectedRoomTypes = React.useMemo(() => {
-    if (!bookingDetails.roomTypeIds) return [];
-    return bookingDetails.roomTypeIds
+    if (!normalizedRoomTypeIds.length) return [];
+    return normalizedRoomTypeIds
       .map((id) => visibleRoomTypes.find((rt) => rt.id === id))
       .filter(Boolean) as RoomType[];
-  }, [bookingDetails.roomTypeIds, visibleRoomTypes]);
+  }, [normalizedRoomTypeIds, visibleRoomTypes]);
 
   const groupedRoomTypes: SelectedRoomTypeSummary[] = React.useMemo(() => {
-    if (!bookingDetails.roomTypeIds || bookingDetails.roomTypeIds.length === 0) {
+    if (!normalizedRoomTypeIds.length) {
       return [];
     }
 
     const counts = new Map<string, number>();
 
-    for (const id of bookingDetails.roomTypeIds) {
+    for (const id of normalizedRoomTypeIds) {
       counts.set(id, (counts.get(id) ?? 0) + 1);
     }
 
@@ -153,7 +179,7 @@ function BookingReviewContent() {
     });
 
     return groups;
-  }, [bookingDetails.roomTypeIds, visibleRoomTypes]);
+  }, [normalizedRoomTypeIds, visibleRoomTypes]);
 
   const ratePlan =
     ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];

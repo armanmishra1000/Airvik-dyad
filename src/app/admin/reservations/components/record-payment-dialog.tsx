@@ -33,7 +33,11 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useDataContext } from "@/context/data-context";
-import { calculateReservationFinancials } from "@/lib/reservations/calculate-financials";
+import type { Reservation } from "@/data/types";
+import {
+  calculateReservationFinancials,
+  type ReservationTaxConfig,
+} from "@/lib/reservations/calculate-financials";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 const paymentSchema = z.object({
@@ -44,11 +48,15 @@ const paymentSchema = z.object({
 interface RecordPaymentDialogProps {
   reservationId: string;
   children: React.ReactNode;
+  billingSource?: Pick<Reservation, "folio" | "totalAmount">;
+  taxConfig?: ReservationTaxConfig;
 }
 
 export function RecordPaymentDialog({
   reservationId,
   children,
+  billingSource,
+  taxConfig,
 }: RecordPaymentDialogProps) {
   const [open, setOpen] = React.useState(false);
   const { addFolioItem, reservations, property } = useDataContext();
@@ -59,20 +67,22 @@ export function RecordPaymentDialog({
     [reservations, reservationId]
   );
 
-  const taxConfig = React.useMemo(
-    () => ({
-      enabled: Boolean(property?.tax_enabled),
-      percentage: property?.tax_percentage ?? 0,
-    }),
-    [property?.tax_enabled, property?.tax_percentage]
+  const derivedTaxConfig = React.useMemo<ReservationTaxConfig>(
+    () =>
+      taxConfig ?? {
+        enabled: Boolean(property?.tax_enabled),
+        percentage: property?.tax_percentage ?? 0,
+      },
+    [property?.tax_enabled, property?.tax_percentage, taxConfig]
   );
 
   const { balance } = React.useMemo(() => {
-    if (!reservation) {
+    const financialSource = billingSource ?? reservation;
+    if (!financialSource) {
       return { balance: 0 };
     }
-    return calculateReservationFinancials(reservation, taxConfig);
-  }, [reservation, taxConfig]);
+    return calculateReservationFinancials(financialSource, derivedTaxConfig);
+  }, [billingSource, reservation, derivedTaxConfig]);
 
   const outstandingBalance = Math.max(balance, 0);
 
