@@ -6,9 +6,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { FeedbackFilters } from "@/data/types";
 
 export function useFeedbackQueryParams() {
-  const searchParams = useSearchParams();
+  const rawSearchParams = useSearchParams();
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
+  const searchParams = React.useMemo(
+    () => rawSearchParams ?? new URLSearchParams(),
+    [rawSearchParams]
+  );
 
   const params = React.useMemo<FeedbackFilters>(() => {
     const paramRecord: FeedbackFilters = {};

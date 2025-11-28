@@ -76,10 +76,11 @@ export default function CreateReservationPage() {
     ratePlans,
     addReservation,
     isLoading,
+    property,
   } = useDataContext();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const guestPrefillId = searchParams.get("guestId");
+  const guestPrefillId = searchParams?.get("guestId") ?? null;
   const guestCreationUrl = `/admin/guests?intent=create-for-reservation&redirect=${encodeURIComponent(
     "/admin/reservations/new"
   )}`;
@@ -218,14 +219,23 @@ export default function CreateReservationPage() {
 
   const hasCapacityForGuests = totalGuests > 0 && selectedRoomsCapacity >= totalGuests;
 
+  const taxConfig = React.useMemo(() => {
+    const enabled = Boolean(property?.tax_enabled);
+    return {
+      enabled,
+      percentage: enabled ? property?.tax_percentage ?? 0 : 0,
+    };
+  }, [property?.tax_enabled, property?.tax_percentage]);
+
   const pricing = React.useMemo(() => {
     if (!selectedRoomTypes.length || nights <= 0) return null;
     return calculateMultipleRoomPricing({
       roomTypes: selectedRoomTypes,
       ratePlan: defaultRatePlan,
       nights: nights || 1,
+      taxConfig,
     });
-  }, [selectedRoomTypes, defaultRatePlan, nights]);
+  }, [selectedRoomTypes, defaultRatePlan, nights, taxConfig]);
 
   const formatCurrency = useCurrencyFormatter({ maximumFractionDigits: 0 });
 
@@ -607,13 +617,22 @@ export default function CreateReservationPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Taxes & Fees</span>
-                    <span className="font-semibold">{pricing ? formatCurrency(pricing.taxesAndFees) : "-"}</span>
+                    <span className="font-semibold">
+                      {pricing
+                        ? `${taxConfig.enabled && pricing.taxRatePercent ? `${pricing.taxRatePercent.toFixed(pricing.taxRatePercent % 1 === 0 ? 0 : 2)}% · ` : ""}${formatCurrency(pricing.taxesAndFees)}`
+                        : "-"}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-base">
                     <span className="font-medium">Grand Total</span>
                     <span className="font-semibold">{pricing ? formatCurrency(pricing.grandTotal) : "-"}</span>
                   </div>
                 </div>
+                {!taxConfig.enabled && (
+                  <p className="text-xs text-muted-foreground">
+                    Taxes &amp; Fees are turned off in Property Settings.
+                  </p>
+                )}
                 <Separator />
                 <div className="space-y-2">
                   <div className="text-xs uppercase tracking-wide text-muted-foreground">Selected Rooms</div>

@@ -131,6 +131,8 @@ type DbReservation = {
   payment_method: Reservation["paymentMethod"] | null;
   adult_count: number | null;
   child_count: number | null;
+  tax_enabled_snapshot: boolean | null;
+  tax_rate_snapshot: number | null;
 };
 
 type ReservationUpdatePayload = Partial<
@@ -152,6 +154,8 @@ type ReservationUpdatePayload = Partial<
     | "payment_method"
     | "adult_count"
     | "child_count"
+    | "tax_enabled_snapshot"
+    | "tax_rate_snapshot"
   >
 >;
 
@@ -170,6 +174,8 @@ type DbReservationInsert = ReservationUpdatePayload & {
   payment_method: Reservation["paymentMethod"];
   adult_count: number;
   child_count: number;
+  tax_enabled_snapshot: boolean;
+  tax_rate_snapshot: number;
 };
 
 type DbBookingRestriction = {
@@ -199,6 +205,8 @@ type CreateReservationsArgs = {
   p_payment_method?: Reservation["paymentMethod"] | null;
   p_adult_count?: number | null;
   p_child_count?: number | null;
+  p_tax_enabled_snapshot?: boolean | null;
+  p_tax_rate_snapshot?: number | null;
 };
 
 type RoomTypeAmenityRow = {
@@ -331,6 +339,8 @@ const fromDbReservation = (dbReservation: DbReservation): Reservation => ({
     typeof dbReservation.child_count === "number"
       ? dbReservation.child_count
       : 0,
+  taxEnabledSnapshot: Boolean(dbReservation.tax_enabled_snapshot ?? false),
+  taxRateSnapshot: dbReservation.tax_rate_snapshot ?? 0,
 });
 
 const toDbReservation = (
@@ -362,6 +372,12 @@ const toDbReservation = (
   }
   if (typeof appReservation.childCount === "number") {
     dbData.child_count = appReservation.childCount;
+  }
+  if (typeof appReservation.taxEnabledSnapshot === "boolean") {
+    dbData.tax_enabled_snapshot = appReservation.taxEnabledSnapshot;
+  }
+  if (typeof appReservation.taxRateSnapshot === "number") {
+    dbData.tax_rate_snapshot = appReservation.taxRateSnapshot;
   }
   return dbData;
 };
@@ -492,7 +508,11 @@ export const deleteGuest = (id: string) => supabase.from('guests').delete().eq('
 
 // Reservations
 export const getReservations = async () => {
-    const { data, error, ...rest } = await supabase.from('reservations').select('*');
+    const { data, error, ...rest } = await supabase
+      .from('reservations')
+      .select('*')
+      .order('booking_date', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false });
     if (error || !data) return { data, error, ...rest };
     return { data: data.map(fromDbReservation), error, ...rest };
 };
@@ -532,6 +552,8 @@ export const createReservationsWithTotal = async (
     p_payment_method: args.p_payment_method ?? 'Not specified',
     p_adult_count: args.p_adult_count ?? 1,
     p_child_count: args.p_child_count ?? 0,
+    p_tax_enabled_snapshot: args.p_tax_enabled_snapshot ?? false,
+    p_tax_rate_snapshot: args.p_tax_rate_snapshot ?? 0,
   };
 
   const { data, error } = await supabase.rpc('create_reservations_with_total', validatedArgs);

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { calculateRoomPricing, calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
 import { useParams, notFound } from "next/navigation";
 import { format, parseISO, differenceInDays } from "date-fns";
 import {
@@ -21,6 +20,7 @@ import { toast } from "sonner";
 import { useDataContext } from "@/context/data-context";
 import { getGuestById, getReservationById } from "@/lib/api";
 import type { Guest, Reservation, RoomType } from "@/data/types";
+import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,6 +35,11 @@ import { InlineAlert } from "@/components/public/inline-alert";
 
 export default function BookingConfirmationPage() {
   const params = useParams<{ id: string }>();
+  const reservationIdFromParams = React.useMemo(() => {
+    if (!params) return "";
+    const value = params.id;
+    return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+  }, [params]);
   const { property, reservations, guests, rooms, roomTypes, ratePlans } = useDataContext();
   const formatCurrency = useCurrencyFormatter();
   const [reservationData, setReservationData] = React.useState<Reservation | null>(null);
@@ -43,7 +48,7 @@ export default function BookingConfirmationPage() {
   const [isLoadingGuest, setIsLoadingGuest] = React.useState(false);
   const [hasAttemptedFetch, setHasAttemptedFetch] = React.useState(false);
 
-  const reservation = reservationData || reservations.find((r) => r.id === params.id);
+  const reservation = reservationData || reservations.find((r) => r.id === reservationIdFromParams);
   const guestFromContext = reservation ? guests.find((g) => g.id === reservation.guestId) : undefined;
   const guest = guestData || guestFromContext;
   
@@ -62,6 +67,7 @@ export default function BookingConfirmationPage() {
     roomType: RoomType;
     quantity: number;
     guestCount: number;
+    totalAmount: number;
   };
 
   const confirmedRoomSummaries: ConfirmedRoomSummary[] = React.useMemo(() => {
@@ -79,11 +85,13 @@ export default function BookingConfirmationPage() {
       if (existing) {
         existing.quantity += 1;
         existing.guestCount += res.numberOfGuests;
+        existing.totalAmount += res.totalAmount;
       } else {
         byRoomType.set(roomType.id, {
           roomType,
           quantity: 1,
           guestCount: res.numberOfGuests,
+          totalAmount: res.totalAmount,
         });
       }
     }
@@ -144,82 +152,70 @@ export default function BookingConfirmationPage() {
   const roomLineItems = React.useMemo(
     () =>
       confirmedRoomSummaries.map((item) => {
-        const baseNightly =
-          typeof item.roomType.price === "number" ? item.roomType.price : 0;
-        const lineBase = baseNightly * nights * item.quantity;
         return {
           id: item.roomType.id,
           name: item.roomType.name,
           quantity: item.quantity,
           nights,
-          baseNightly,
-          lineBase,
+          lineBase: item.totalAmount,
         };
       }),
     [confirmedRoomSummaries, nights]
   );
 
-  // Calculate prices using shared utilities for single or multi-room bookings
-  const taxConfig = React.useMemo(
-    () => ({
-      enabled: Boolean(property.tax_enabled),
-      percentage: property.tax_percentage ?? 0,
-    }),
-    [property.tax_enabled, property.tax_percentage]
-  );
-
-  const pricing = React.useMemo(() => {
-    if (!reservation || nights <= 0) {
-      return calculateRoomPricing({ nights: 0, rooms: 0, taxConfig });
+  const bookingTotals = React.useMemo(() => {
+    if (bookingReservations.length === 0) {
+      return {
+        baseTotal: 0,
+        taxesTotal: 0,
+        grandTotal: 0,
+        taxesApplied: false,
+        taxRatePercent: null as number | null,
+      };
     }
 
-    if (totalRooms <= 1) {
-      const singleRoomType =
-        confirmedRoomSummaries[0]?.roomType ?? primaryRoomType ?? undefined;
-      return calculateRoomPricing({
-        roomType: singleRoomType,
-        ratePlan: bookingRatePlan,
-        nights,
-        rooms: 1,
-        taxConfig,
-      });
+    const baseTotal = bookingReservations.reduce(
+      (sum, resItem) => sum + resItem.totalAmount,
+      0
+    );
+    const taxesTotal = bookingReservations.reduce(
+      (sum, resItem) => sum + calculateReservationTaxAmount(resItem, property),
+      0
+    );
+    const enabledRates = bookingReservations
+      .map((resItem) => (resItem.taxEnabledSnapshot ? resItem.taxRateSnapshot ?? 0 : 0))
+      .filter((rate) => rate > 0);
+    const uniqueRates = new Set(enabledRates.map((rate) => rate.toFixed(4)));
+    const taxRatePercent = uniqueRates.size === 1 && enabledRates.length > 0
+      ? enabledRates[0] * 100
+      : null;
+
+    return {
+      baseTotal,
+      taxesTotal,
+      grandTotal: baseTotal + taxesTotal,
+      taxesApplied: taxesTotal > 0,
+      taxRatePercent,
+    };
+  }, [bookingReservations, property]);
+
+  const formattedTaxRate = React.useMemo(() => {
+    if (typeof bookingTotals.taxRatePercent !== "number") {
+      return null;
     }
-
-    const roomTypesForPricing: RoomType[] = [];
-    confirmedRoomSummaries.forEach(({ roomType, quantity }) => {
-      for (let i = 0; i < quantity; i += 1) {
-        roomTypesForPricing.push(roomType);
-      }
+    return bookingTotals.taxRatePercent.toLocaleString("en-IN", {
+      maximumFractionDigits: 2,
+      minimumFractionDigits:
+        bookingTotals.taxRatePercent % 1 === 0 ? 0 : 2,
     });
+  }, [bookingTotals.taxRatePercent]);
 
-    return calculateMultipleRoomPricing({
-      roomTypes: roomTypesForPricing,
-      ratePlan: bookingRatePlan,
-      nights,
-      taxConfig,
-    });
-  }, [
-    reservation,
-    nights,
-    totalRooms,
-    confirmedRoomSummaries,
-    primaryRoomType,
-    bookingRatePlan,
-    taxConfig,
-  ]);
-
-  const formattedTaxRate = pricing.taxRatePercent.toLocaleString("en-IN", {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: pricing.taxRatePercent % 1 === 0 ? 0 : 2,
-  });
-  
   // Fetch reservation directly if not in context
   React.useEffect(() => {
-    const reservationId = params.id;
-    if (reservationId && !reservation && !reservationData && !isLoadingReservation && !hasAttemptedFetch) {
+    if (reservationIdFromParams && !reservation && !reservationData && !isLoadingReservation && !hasAttemptedFetch) {
       setIsLoadingReservation(true);
       setHasAttemptedFetch(true);
-      getReservationById(reservationId)
+      getReservationById(reservationIdFromParams)
         .then(({ data }) => {
           if (data) {
             setReservationData(data);
@@ -232,7 +228,7 @@ export default function BookingConfirmationPage() {
           setIsLoadingReservation(false);
         });
     }
-  }, [params.id, reservation, reservationData, isLoadingReservation, hasAttemptedFetch]);
+  }, [reservationIdFromParams, reservation, reservationData, isLoadingReservation, hasAttemptedFetch]);
   
   // Always refresh guest data to reflect the latest contact information from Supabase
   React.useEffect(() => {
@@ -537,19 +533,20 @@ export default function BookingConfirmationPage() {
 
                       <div className="flex justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">
-                          {pricing.taxesApplied ? "Total (before tax)" : "Subtotal"}
+                          {bookingTotals.taxesApplied ? "Total (before tax)" : "Subtotal"}
                         </span>
                         <span className="font-semibold">
-                          {formatCurrency(Math.round(pricing.totalCost))}
+                          {formatCurrency(Math.round(bookingTotals.baseTotal))}
                         </span>
                       </div>
-                      {pricing.taxesApplied && (
+                      {bookingTotals.taxesApplied && (
                         <div className="flex justify-between text-xs sm:text-sm">
                           <span className="text-muted-foreground">
-                            Taxes &amp; fees ({formattedTaxRate}%)
+                            Taxes &amp; fees
+                            {formattedTaxRate && <span> ({formattedTaxRate}%)</span>}
                           </span>
                           <span className="font-semibold">
-                            {formatCurrency(Math.round(pricing.taxesAndFees))}
+                            {formatCurrency(Math.round(bookingTotals.taxesTotal))}
                           </span>
                         </div>
                       )}
@@ -558,7 +555,7 @@ export default function BookingConfirmationPage() {
 
                       <div className="flex justify-between text-sm font-semibold">
                         <span>Total</span>
-                        <span>{formatCurrency(Math.round(pricing.grandTotal))}</span>
+                        <span>{formatCurrency(Math.round(bookingTotals.grandTotal))}</span>
                       </div>
                     </div>
                   </div>

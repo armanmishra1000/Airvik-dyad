@@ -15,7 +15,7 @@ import {
   ROOM_OR_FACILITY_OPTIONS,
 } from "@/constants/feedback";
 import type { Feedback, FeedbackStatus, FeedbackType } from "@/data/types";
-import { supabase } from "@/integrations/supabase/client";
+import { authorizedFetch, getValidSession } from "@/lib/auth/client-session";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useFeedbackQueryParams } from "@/hooks/use-feedback-query-params";
 import { truncateText } from "@/lib/text";
@@ -115,12 +115,9 @@ export default function AdminFeedbackPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-      if (sessionError || !session?.access_token) {
-        throw new Error("Not authenticated");
+      const session = await getValidSession();
+      if (!session) {
+        throw new Error("Please sign in to view feedback.");
       }
 
       const query = new URLSearchParams();
@@ -133,11 +130,7 @@ export default function AdminFeedbackPage() {
       if (urlFilters.startDate) query.set("startDate", urlFilters.startDate);
       if (urlFilters.endDate) query.set("endDate", urlFilters.endDate);
 
-      const response = await fetch(`/api/admin/feedback?${query.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      const response = await authorizedFetch(`/api/admin/feedback?${query.toString()}`);
 
       const result = (await response.json()) as FeedbackResponse & { message?: string };
       if (!response.ok) {
@@ -204,18 +197,10 @@ export default function AdminFeedbackPage() {
   ) => {
     setIsUpdatingDetail(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error("Not authenticated");
-      }
-
-      const response = await fetch(`/api/admin/feedback/${id}`, {
+      const response = await authorizedFetch(`/api/admin/feedback/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(updates),
       });

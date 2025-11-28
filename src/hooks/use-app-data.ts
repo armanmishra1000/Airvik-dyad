@@ -322,6 +322,7 @@
 import * as React from "react";
 import { useSessionContext } from "@/context/session-context";
 import * as api from "@/lib/api";
+import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
 import type {
   Reservation,
   Guest,
@@ -459,7 +460,7 @@ export function useAppData() {
           });
         return { ...res, folio };
       });
-      setReservations(reservationsWithFolios);
+      setReservations(sortReservationsByBookingDate(reservationsWithFolios));
 
       const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
       const roomTypesData = (roomTypesRes.data || []).map(rt => {
@@ -523,6 +524,9 @@ export function useAppData() {
       console.warn(`Rate plan with id ${reservationDetails.ratePlanId} not found, proceeding with room type pricing`);
     }
 
+    const taxEnabled = Boolean(property?.tax_enabled);
+    const taxRate = property?.tax_percentage ?? 0;
+
     const { data, error } = await api.createReservationsWithTotal({
       p_booking_id: bookingId,
       p_guest_id: reservationDetails.guestId,
@@ -538,12 +542,16 @@ export function useAppData() {
       p_payment_method: reservationDetails.paymentMethod,
       p_adult_count: reservationDetails.adultCount,
       p_child_count: reservationDetails.childCount,
+      p_tax_enabled_snapshot: taxEnabled,
+      p_tax_rate_snapshot: taxEnabled ? taxRate : 0,
     });
 
     if (error) throw error;
 
     const reservationsWithEmptyFolio = data.map((r) => ({ ...r, folio: [] }));
-    setReservations(prev => [...prev, ...reservationsWithEmptyFolio]);
+    setReservations(prev =>
+      sortReservationsByBookingDate([...prev, ...reservationsWithEmptyFolio])
+    );
     return reservationsWithEmptyFolio;
   };
 

@@ -1,5 +1,6 @@
-
 "use client";
+
+import * as React from "react";
 
 import { useParams, notFound } from "next/navigation";
 import { useDataContext } from "@/context/data-context";
@@ -22,13 +23,21 @@ import {
 
 export default function GuestDetailsPage() {
   const params = useParams<{ id: string }>();
+  const guestIdFromParams = React.useMemo(() => {
+    if (!params) return "";
+    const value = params.id;
+    return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+  }, [params]);
   const { isLoading, guests, reservations, rooms } = useDataContext();
 
   if (isLoading) {
     return <AppSkeleton />;
   }
   const list = guests ?? [];
-  const guest = list.find((g) => g.id === params.id);
+  if (!guestIdFromParams) {
+    notFound();
+  }
+  const guest = list.find((g) => g.id === guestIdFromParams);
 
   if (!guest) {
     notFound();
