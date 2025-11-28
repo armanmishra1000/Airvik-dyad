@@ -49,6 +49,8 @@ export type ReservationWithDetails = {
     childCount: number;
     roomCount?: number;
     subRows?: ReservationWithDetails[];
+    taxEnabledSnapshot: boolean;
+    taxRateSnapshot: number;
 }
 
 export const statuses = [

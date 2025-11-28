@@ -187,6 +187,8 @@ export const buildReservation = (
     paymentMethod: overrides.paymentMethod ?? "Not specified",
     adultCount: overrides.adultCount ?? overrides.numberOfGuests ?? 2,
     childCount: overrides.childCount ?? 0,
+    taxEnabledSnapshot: overrides.taxEnabledSnapshot ?? false,
+    taxRateSnapshot: overrides.taxRateSnapshot ?? 0,
   };
 
   reservationSequence += 1;

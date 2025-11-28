@@ -7,39 +7,57 @@ import { columns, ReservationWithDetails } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { useDataContext } from "@/context/data-context";
 import type { FolioItem } from "@/data/types";
+import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
+import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
 
-function calculateDisplayAmount(
-  roomTotal: number,
-  folioItems: FolioItem[],
-  taxRate: number
-) {
-  const taxes = taxRate > 0 ? roomTotal * taxRate : 0;
-  const additionalCharges = folioItems
+function sumAdditionalCharges(folioItems: FolioItem[] = []) {
+  return folioItems
     .filter((item) => item.amount > 0)
     .reduce((sum, item) => sum + item.amount, 0);
-  return roomTotal + taxes + additionalCharges;
+}
+
+function getReservationDisplayAmount(
+  reservation: ReservationWithDetails,
+  property: { tax_enabled?: boolean | null; tax_percentage?: number | null }
+) {
+  const taxes = calculateReservationTaxAmount(reservation, property);
+  const additionalCharges = sumAdditionalCharges(reservation.folio ?? []);
+  return reservation.totalAmount + taxes + additionalCharges;
+}
+
+function getGroupDisplayAmount(
+  group: ReservationWithDetails[],
+  combinedFolio: FolioItem[],
+  property: { tax_enabled?: boolean | null; tax_percentage?: number | null }
+) {
+  const roomTotal = group.reduce((sum, r) => sum + r.totalAmount, 0);
+  const taxesTotal = group.reduce((sum, r) => sum + calculateReservationTaxAmount(r, property), 0);
+  const additionalCharges = sumAdditionalCharges(combinedFolio);
+  return roomTotal + taxesTotal + additionalCharges;
 }
 
 export default function ReservationsPage() {
   const { reservations, guests, updateReservationStatus, rooms, property } = useDataContext();
-  const taxRate = property.tax_enabled ? property.tax_percentage ?? 0 : 0;
 
   const groupedReservations = React.useMemo(() => {
-    const reservationsWithDetails = reservations.map((res) => {
+    const reservationsWithDetails = sortReservationsByBookingDate(reservations).map((res) => {
       const guest = guests.find((g) => g.id === res.guestId);
       const room = rooms.find((r) => r.id === res.roomId);
       const nights = differenceInDays(
         parseISO(res.checkOutDate),
         parseISO(res.checkInDate)
       );
-      return {
+      const detailedReservation: ReservationWithDetails = {
         ...res,
         guestName: guest ? `${guest.firstName} ${guest.lastName}` : "N/A",
         roomNumber: room ? room.roomNumber : "N/A",
         nights,
         roomCount: 1,
-        displayAmount: calculateDisplayAmount(res.totalAmount, res.folio ?? [], taxRate),
-      } as ReservationWithDetails;
+        displayAmount: 0,
+      };
+
+      detailedReservation.displayAmount = getReservationDisplayAmount(detailedReservation, property);
+      return detailedReservation;
     });
 
     const bookingGroups = new Map<string, typeof reservationsWithDetails>();
@@ -62,7 +80,7 @@ export default function ReservationsPage() {
           roomNumber: group.map((r) => r.roomNumber).filter(Boolean).join(", "),
           roomCount: group.length,
           totalAmount: roomTotal,
-          displayAmount: calculateDisplayAmount(roomTotal, combinedFolio, taxRate),
+          displayAmount: getGroupDisplayAmount(group, combinedFolio, property),
           subRows: group.map((entry) => ({ ...entry, roomCount: 1 })),
         };
         tableData.push(parentRow);
@@ -71,7 +89,7 @@ export default function ReservationsPage() {
       }
     }
     return tableData;
-  }, [reservations, guests, rooms, taxRate]);
+  }, [reservations, guests, rooms, property]);
 
   const handleCancelReservation = (reservationId: string) => {
     updateReservationStatus(reservationId, "Cancelled");

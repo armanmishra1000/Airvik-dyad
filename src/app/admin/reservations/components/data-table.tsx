@@ -45,7 +45,9 @@ export function DataTable({
   onCheckInReservation,
   onCheckOutReservation,
 }: DataTableProps) {
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "bookingDate", desc: true },
+  ])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )

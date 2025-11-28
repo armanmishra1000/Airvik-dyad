@@ -26,7 +26,11 @@ const fontMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Sahajanand Ashram | Rishikesh",
-  description: "A spiritual ashram in Rishikesh dedicated to religious, educational, and health-related activities. Experience tranquility and spiritual rejuvenation.",
+  description:
+    "A spiritual ashram in Rishikesh dedicated to religious, educational, and health-related activities. Experience tranquility and spiritual rejuvenation.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({

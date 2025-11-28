@@ -14,8 +14,8 @@ export default function GuestsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const intent = searchParams.get("intent");
-  const redirectParam = searchParams.get("redirect") ?? "/admin/reservations/new";
+  const intent = searchParams?.get("intent") ?? null;
+  const redirectParam = searchParams?.get("redirect") ?? "/admin/reservations/new";
   const safeRedirect = redirectParam.startsWith("/") ? redirectParam : "/admin/reservations/new";
   const isReservationFlow = intent === "create-for-reservation";
 

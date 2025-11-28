@@ -36,6 +36,7 @@ import { useDataContext } from "@/context/data-context";
 import type { Reservation } from "@/data/types";
 import {
   calculateReservationFinancials,
+  resolveReservationTaxConfig,
   type ReservationTaxConfig,
 } from "@/lib/reservations/calculate-financials";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
@@ -69,11 +70,8 @@ export function RecordPaymentDialog({
 
   const derivedTaxConfig = React.useMemo<ReservationTaxConfig>(
     () =>
-      taxConfig ?? {
-        enabled: Boolean(property?.tax_enabled),
-        percentage: property?.tax_percentage ?? 0,
-      },
-    [property?.tax_enabled, property?.tax_percentage, taxConfig]
+      taxConfig ?? resolveReservationTaxConfig(reservation ?? undefined, property),
+    [property, reservation, taxConfig]
   );
 
   const { balance } = React.useMemo(() => {

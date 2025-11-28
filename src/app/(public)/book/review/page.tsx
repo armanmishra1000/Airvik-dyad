@@ -116,6 +116,16 @@ function BookingReviewContent() {
   };
 
   const bookingDetails = React.useMemo(() => {
+    if (!searchParams) {
+      return {
+        roomTypeIds: [],
+        from: null,
+        to: null,
+        guests: null,
+        rooms: null,
+        specialRequests: "",
+      };
+    }
     return {
       roomTypeIds: searchParams.getAll("roomTypeId"),
       from: searchParams.get("from"),
