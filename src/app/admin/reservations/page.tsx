@@ -6,9 +6,23 @@ import { differenceInDays, parseISO } from "date-fns";
 import { columns, ReservationWithDetails } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { useDataContext } from "@/context/data-context";
+import type { FolioItem } from "@/data/types";
+
+function calculateDisplayAmount(
+  roomTotal: number,
+  folioItems: FolioItem[],
+  taxRate: number
+) {
+  const taxes = taxRate > 0 ? roomTotal * taxRate : 0;
+  const additionalCharges = folioItems
+    .filter((item) => item.amount > 0)
+    .reduce((sum, item) => sum + item.amount, 0);
+  return roomTotal + taxes + additionalCharges;
+}
 
 export default function ReservationsPage() {
-  const { reservations, guests, updateReservationStatus, rooms } = useDataContext();
+  const { reservations, guests, updateReservationStatus, rooms, property } = useDataContext();
+  const taxRate = property.tax_enabled ? property.tax_percentage ?? 0 : 0;
 
   const groupedReservations = React.useMemo(() => {
     const reservationsWithDetails = reservations.map((res) => {
@@ -24,6 +38,7 @@ export default function ReservationsPage() {
         roomNumber: room ? room.roomNumber : "N/A",
         nights,
         roomCount: 1,
+        displayAmount: calculateDisplayAmount(res.totalAmount, res.folio ?? [], taxRate),
       } as ReservationWithDetails;
     });
 
@@ -39,16 +54,15 @@ export default function ReservationsPage() {
     for (const group of bookingGroups.values()) {
       if (group.length > 1) {
         const firstRes = group[0];
-        const combinedNotes = group
-          .map((entry) => entry.notes?.trim())
-          .filter((note): note is string => Boolean(note && note.length > 0));
+        const roomTotal = group.reduce((sum, r) => sum + r.totalAmount, 0);
+        const combinedFolio = group.flatMap((entry) => entry.folio ?? []);
         const parentRow: ReservationWithDetails = {
           ...firstRes,
           id: firstRes.bookingId,
           roomNumber: group.map((r) => r.roomNumber).filter(Boolean).join(", "),
           roomCount: group.length,
-          totalAmount: group.reduce((sum, r) => sum + r.totalAmount, 0),
-          notes: combinedNotes.length > 0 ? Array.from(new Set(combinedNotes)).join(" • ") : undefined,
+          totalAmount: roomTotal,
+          displayAmount: calculateDisplayAmount(roomTotal, combinedFolio, taxRate),
           subRows: group.map((entry) => ({ ...entry, roomCount: 1 })),
         };
         tableData.push(parentRow);
@@ -57,7 +71,7 @@ export default function ReservationsPage() {
       }
     }
     return tableData;
-  }, [reservations, guests, rooms]);
+  }, [reservations, guests, rooms, taxRate]);
 
   const handleCancelReservation = (reservationId: string) => {
     updateReservationStatus(reservationId, "Cancelled");

@@ -77,7 +77,7 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
             <Separator />
             <div>
               <h4 className="mb-2 font-serif text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Additional Charges
+                Guest Notes
               </h4>
               <p className="whitespace-pre-wrap text-muted-foreground">{reservation.notes}</p>
             </div>

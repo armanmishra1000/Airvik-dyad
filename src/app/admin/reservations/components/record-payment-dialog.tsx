@@ -51,7 +51,7 @@ export function RecordPaymentDialog({
   children,
 }: RecordPaymentDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addFolioItem, reservations } = useDataContext();
+  const { addFolioItem, reservations, property } = useDataContext();
   const formatCurrency = useCurrencyFormatter();
 
   const reservation = React.useMemo(
@@ -59,12 +59,20 @@ export function RecordPaymentDialog({
     [reservations, reservationId]
   );
 
+  const taxConfig = React.useMemo(
+    () => ({
+      enabled: Boolean(property?.tax_enabled),
+      percentage: property?.tax_percentage ?? 0,
+    }),
+    [property?.tax_enabled, property?.tax_percentage]
+  );
+
   const { balance } = React.useMemo(() => {
     if (!reservation) {
       return { balance: 0 };
     }
-    return calculateReservationFinancials(reservation);
-  }, [reservation]);
+    return calculateReservationFinancials(reservation, taxConfig);
+  }, [reservation, taxConfig]);
 
   const outstandingBalance = Math.max(balance, 0);
 
