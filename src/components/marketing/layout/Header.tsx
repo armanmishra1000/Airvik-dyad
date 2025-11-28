@@ -38,7 +38,7 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/book", label: "Rooms" },
-  { href: "/donate", label: "Donate" },
+  // { href: "/donate", label: "Donate" },
   {
     label: "About Us",
     subLinks: [
@@ -50,7 +50,8 @@ const navLinks = [
   { href: "/shop", label: "Shop" },
   { href: "/amenities", label: "Amenities" },
   { href: "/ashram-glimpse", label: "Ashram Glimpse" },
-  { href: "/journey", label: "Our Journey" },
+  // { href: "/journey", label: "Our Journey" },
+  // { href: "/feedback", label: "Feedback" },
 ];
 
 type SocialLink = {

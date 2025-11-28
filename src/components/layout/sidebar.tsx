@@ -17,6 +17,7 @@ import {
   ChevronsLeft,
   FileText,
   ChevronRight,
+  MessageSquare,
   HeartHandshake,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -60,6 +61,7 @@ const navItems = [
   { href: "/admin/room-types", icon: Layers, label: "Room Types", requiredPermission: "read:room_type" },
   { href: "/admin/rooms", icon: BedDouble, label: "Rooms", requiredPermission: "read:room" },
   { href: "/admin/rates", icon: DollarSign, label: "Rate Plans", requiredPermission: "read:rate_plan" },
+  { href: "/admin/feedback", icon: MessageSquare, label: "Feedback", requiredPermission: "read:feedback" },
   { href: "/admin/reports", icon: BarChart3, label: "Reports", requiredPermission: "read:report" },
   { href: "/admin/donations", icon: HeartHandshake, label: "Donations", requiredPermission: "read:report" },
 ] satisfies Array<{
