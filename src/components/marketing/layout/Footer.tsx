@@ -22,8 +22,8 @@ const quickLinks = [
 const AshramLinks = [
   { href: "/journey", label: "Our Journey" },
   { href: "/feedback", label: "Feedback" },
-  { href: "/blog", label: "News" },
   { href: "/donate", label: "Donate" },
+  { href: "/blog", label: "News" },
 ];
 
 type SocialLink = {

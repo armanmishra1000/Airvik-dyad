@@ -108,7 +108,7 @@ export function TestimonialSection() {
                   key={index}
                   className="basis-full sm:basis-1/2 lg:basis-1/3"
                 >
-                  <div className="p-4 h-full">
+                  <div className="p-12 h-full">
                     <Card
                       className="relative h-full rounded-3xl border border-white/80"
                       style={{ backgroundColor: testimonialCardBackground }}
