@@ -116,7 +116,7 @@ function ReservationActions({ reservation, table }: { reservation: ReservationWi
 
 function AmountCell({ row }: CellContext<ReservationWithDetails, number>) {
   const formatCurrency = useCurrencyFormatter();
-  const amount = row.original.displayAmount ?? Number(row.getValue("totalAmount")) || 0;
+  const amount = (row.original.displayAmount ?? Number(row.getValue("totalAmount"))) || 0;
   return <div className="text-right font-medium">{formatCurrency(amount)}</div>;
 }
 
