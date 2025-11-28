@@ -37,6 +37,7 @@ export type ReservationWithDetails = {
     notes?: string | undefined;
     folio: FolioItem[];
     totalAmount: number;
+    displayAmount?: number;
     guestName: string;
     roomNumber: string;
     bookingDate: string;
@@ -115,7 +116,7 @@ function ReservationActions({ reservation, table }: { reservation: ReservationWi
 
 function AmountCell({ row }: CellContext<ReservationWithDetails, number>) {
   const formatCurrency = useCurrencyFormatter();
-  const amount = Number(row.getValue("totalAmount")) || 0;
+  const amount = row.original.displayAmount ?? Number(row.getValue("totalAmount")) || 0;
   return <div className="text-right font-medium">{formatCurrency(amount)}</div>;
 }
 
@@ -259,31 +260,6 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
         if (row.depth > 0) return null;
         return getValue();
     }
-  },
-  {
-    id: "additionalCharges",
-    header: "Additional Charges",
-    cell: ({ row }) => {
-      if (row.depth > 0) return null;
-      const notes = row.original.notes?.trim();
-      if (!notes) {
-        return <span className="text-xs text-muted-foreground">-</span>;
-      }
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="line-clamp-2 max-w-[220px] text-sm text-foreground">
-                {notes}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <p className="text-sm text-foreground">{notes}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    },
   },
   {
     accessorKey: "totalAmount",

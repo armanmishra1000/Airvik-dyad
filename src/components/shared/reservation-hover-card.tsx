@@ -126,6 +126,13 @@ export function ReservationHoverCard({
   date,
 }: ReservationHoverCardProps) {
   const { reservations, guests, rooms, roomTypes, property } = useDataContext();
+  const taxConfig = React.useMemo(
+    () => ({
+      enabled: Boolean(property?.tax_enabled),
+      percentage: property?.tax_percentage ?? 0,
+    }),
+    [property?.tax_enabled, property?.tax_percentage]
+  );
   const currencyCode = property.currency || DEFAULT_CURRENCY;
 
   const reservationDetails = React.useMemo<ReservationDetail[]>(() => {
@@ -193,7 +200,7 @@ export function ReservationHoverCard({
                   totalPaid,
                   balance,
                   paymentStatus,
-                } = calculateReservationFinancials(reservation);
+                } = calculateReservationFinancials(reservation, taxConfig);
 
                 const paymentStatusBadgeVariant = 
                   paymentStatus === "Fully Paid" ? "default" :

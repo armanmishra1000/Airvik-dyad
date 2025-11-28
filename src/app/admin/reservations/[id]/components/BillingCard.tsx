@@ -23,21 +23,29 @@ import { cn } from "@/lib/utils";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
 import { calculateReservationFinancials } from "@/lib/reservations/calculate-financials";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { useDataContext } from "@/context/data-context";
 
 interface BillingCardProps {
   reservation: ReservationWithDetails;
 }
 
 export function BillingCard({ reservation }: BillingCardProps) {
+  const { property } = useDataContext();
   const formatCurrency = useCurrencyFormatter();
+  const taxesEnabled = Boolean(property.tax_enabled && (property.tax_percentage ?? 0) > 0);
+  const taxPercentDisplay = (property.tax_percentage ?? 0) * 100;
 
   const {
     roomCharges,
     additionalCharges,
+    taxesAndFees,
     totalCharges,
     totalPaid,
     balance,
-  } = calculateReservationFinancials(reservation);
+  } = calculateReservationFinancials(reservation, {
+    enabled: Boolean(property.tax_enabled),
+    percentage: property.tax_percentage ?? 0,
+  });
 
   return (
     <Card className="flex h-full flex-col">
@@ -118,40 +126,51 @@ export function BillingCard({ reservation }: BillingCardProps) {
           </Table>
         </div>
 
-        <div className="rounded-2xl border border-dashed border-border/50 p-4 text-sm">
+        <div className="rounded-2xl border border-dashed border-border/50 p-4 text-sm space-y-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Pricing Summary
+            </p>
+            {taxesAndFees > 0 && (
+              <div className="mt-2 flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+                <span>
+                  Taxes &amp; Fees Charged (
+                  {taxPercentDisplay.toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                    minimumFractionDigits: taxPercentDisplay % 1 === 0 ? 0 : 2,
+                  })}
+                  %)
+                </span>
+                <span className="text-foreground">{formatCurrency(taxesAndFees)}</span>
+              </div>
+            )}
+          </div>
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Room Charges</span>
+            <span className="text-muted-foreground">Total (before tax)</span>
             <span className="font-medium">{formatCurrency(roomCharges)}</span>
           </div>
-          <div className="mt-2 flex items-center justify-between">
+          
+          <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Additional Charges</span>
             <span className="font-medium">{formatCurrency(additionalCharges)}</span>
           </div>
-          <div className="mt-2 flex items-center justify-between">
-            <span className="text-muted-foreground">Payments Recorded</span>
-            <span className="font-medium text-emerald-600">
-              {totalPaid === 0 ? "-" : formatCurrency(totalPaid)}
-            </span>
+          <div className="flex items-center justify-between border-t border-border/40 pt-3">
+            <span className="font-semibold">Total</span>
+            <span className="text-lg font-semibold">{formatCurrency(totalCharges)}</span>
           </div>
-          <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
-            <span className="font-medium">Balance Due (Total)</span>
-            <span className="font-semibold">{formatCurrency(totalCharges)}</span>
-          </div>
-          <div className="mt-2 flex items-center justify-between">
-            <span className="font-medium text-primary">Amount Remaining</span>
-            <span className={cn("font-semibold", balance > 0 ? "text-rose-600" : "text-emerald-600")}>{formatCurrency(balance)}</span>
+          <div className="pt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Payments Recorded</span>
+              <span className="font-medium text-emerald-600">
+                {totalPaid === 0 ? "-" : formatCurrency(totalPaid)}
+              </span>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <span className="font-medium text-primary">Balance Due (Total)</span>
+              <span className={cn("font-semibold", balance > 0 ? "text-rose-600" : "text-emerald-600")}>{formatCurrency(balance)}</span>
+            </div>
           </div>
         </div>
-        {reservation.notes?.trim() && (
-          <div className="rounded-2xl border border-border/40 bg-muted/40 p-4 text-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Additional Charges Detail
-            </p>
-            <p className="mt-2 whitespace-pre-wrap text-muted-foreground">
-              {reservation.notes}
-            </p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
