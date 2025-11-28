@@ -17,9 +17,13 @@ const quickLinks = [
   { href: "/shop", label: "Shop" },
   { href: "/amenities", label: "Amenities" },
   { href: "/ashram-glimpse", label: "Ashram Glimpse" },
-  { href: "/journey", label: "Our Journey" },
-  { href: "/feedback", label: "Feedback" }
+];
 
+const AshramLinks = [
+  { href: "/journey", label: "Our Journey" },
+  { href: "/feedback", label: "Feedback" },
+  { href: "/blog", label: "News" },
+  { href: "/donate", label: "Donate" },
 ];
 
 type SocialLink = {
@@ -47,20 +51,26 @@ export function Footer() {
     <footer className="border-t shadow-md">
       <div className="container mx-auto px-4 pt-16 pb-5">
         {/* First Row */}
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-4 lg:gap-12 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mb-5 gap-10">
           {/* Column 1: Logo and Subtitle */}
           <div>
-            <Link href="/" className="mb-4 inline-block focus-visible:outline-none">
-              <Image
-                src="/logo.png"
-                alt="SahajAnand Wellness Logo"
-                width={360}
-                height={144}
-                quality={100}
-                className="lg:h-24 h-[70px] w-auto"
-              />
-            </Link>
-            <p className="text-muted-foreground max-w-md">
+             <Link
+            href="/"
+            className="flex items-center shrink-0 focus-visible:outline-none"
+          >
+            {/* Header-logo */}
+            <Image
+              src="/logo.png"
+              alt="SahajAnand Wellness Logo"
+              width={360}
+              height={160}
+              quality={100}
+              priority
+              sizes="(max-width: 640px) 128px, (max-width: 1024px) 176px, (max-width: 1280px) 208px, 240px"
+              className="h-auto w-52 xl:w-56 max-w-full"
+            />
+          </Link>
+            <p className="text-muted-foreground max-w-md mt-3">
               A registered religious trust in Uttarakhand, dedicated to
               religious, educational, and health-related activities.
             </p>
@@ -103,6 +113,24 @@ export function Footer() {
             </h3>
             <ul className="space-y-3">
               {quickLinks.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          {/* Column 3: Links */}
+          <div>
+            <h3 className="text-xl font-bold text-foreground mb-6">
+              Ashram Links
+            </h3>
+            <ul className="space-y-3">
+              {AshramLinks.map((link) => (
                 <li key={link.label}>
                   <Link
                     href={link.href}

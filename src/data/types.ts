@@ -216,6 +216,37 @@ export interface FolioItem {
   paymentMethod?: string | null;
 }
 
+export type DonationFrequency = "one_time" | "monthly";
+export type DonationStatus = "pending" | "paid" | "failed" | "refunded";
+
+export interface Donation {
+  id: string;
+  donorName: string;
+  email: string;
+  phone: string;
+  amountInMinor: number;
+  currency: string;
+  frequency: DonationFrequency;
+  message?: string;
+  consent: boolean;
+  paymentProvider: string;
+  paymentStatus: DonationStatus;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
+  upiReference?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DonationStats {
+  totalAmountInMinor: number;
+  totalDonations: number;
+  monthlyDonations: number;
+  lastDonationAt?: string;
+}
+
 export interface Reservation {
   id: string;
   bookingId: string; // Shared ID for multi-room bookings

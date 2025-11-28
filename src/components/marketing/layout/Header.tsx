@@ -10,6 +10,7 @@ import {
   FaFacebook,
   FaInstagram,
   FaLinkedin,
+  FaRegCalendarCheck,
   FaWhatsapp,
   FaXTwitter,
 } from "react-icons/fa6";
@@ -37,6 +38,7 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/book", label: "Rooms" },
+  // { href: "/donate", label: "Donate" },
   {
     label: "About Us",
     subLinks: [
@@ -45,11 +47,11 @@ const navLinks = [
       { href: "/about-rishikesh", label: "About Rishikesh" },
     ],
   },
-  // { href: "/shop", label: "Shop" },
+  { href: "/shop", label: "Shop" },
   { href: "/amenities", label: "Amenities" },
   { href: "/ashram-glimpse", label: "Ashram Glimpse" },
-  { href: "/journey", label: "Our Journey" },
-  { href: "/feedback", label: "Feedback" },
+  // { href: "/journey", label: "Our Journey" },
+  // { href: "/feedback", label: "Feedback" },
 ];
 
 type SocialLink = {
@@ -121,7 +123,11 @@ export function Header() {
 
         {/* Main Header */}
         <div className="container mx-auto flex h-20 items-center justify-between px-4 text-foreground xl:h-24">
-          <Link href="/" className="flex items-center focus-visible:outline-none">
+          <Link
+            href="/"
+            className="flex items-center shrink-0 focus-visible:outline-none"
+          >
+            {/* Header-logo */}
             <Image
               src="/logo.png"
               alt="SahajAnand Wellness Logo"
@@ -129,7 +135,8 @@ export function Header() {
               height={160}
               quality={100}
               priority
-              className="h-16 w-auto xl:h-20"
+              sizes="(max-width: 640px) 128px, (max-width: 1024px) 176px, (max-width: 1280px) 208px, 240px"
+              className="h-auto w-44 xl:w-56 max-w-full"
             />
           </Link>
           <nav className="hidden xl:flex space-x-1 self-stretch">
@@ -172,13 +179,17 @@ export function Header() {
           <div className="hidden xl:flex items-center gap-3">
             <Button
               asChild
-              className="bg-primary hover:bg-primary-hover text-primary-foreground justify-center text-center"
+              className="bg-primary hover:bg-primary-hover capitalize text-primary-foreground justify-center text-center gap-2"
             >
-              <Link href="/book">BOOK NOW</Link>
+              <Link href="/book">
+                {" "}
+                <FaRegCalendarCheck className="size-4" />
+                book now
+              </Link>
             </Button>
             <Button
               asChild
-              className="bg-[#25D366] text-white hover:bg-[#1fb454] font-semibold gap-2"
+              className="bg-[#1ba74e] text-white hover:bg-[#147c39] font-semibold capitalize gap-2"
             >
               <a
                 href={whatsappContactUrl}
@@ -186,7 +197,7 @@ export function Header() {
                 rel="noopener noreferrer"
               >
                 <FaWhatsapp className="h-4 w-4" aria-hidden="true" />
-                Contact Us on WhatsApp
+                Ashram Connect
               </a>
             </Button>
           </div>
@@ -245,15 +256,18 @@ export function Header() {
                   <SheetClose asChild>
                     <Button
                       asChild
-                      className="bg-primary hover:bg-primary-hover text-primary-foreground flex w-full justify-center text-center"
+                      className="bg-primary hover:bg-primary-hover text-primary-foreground flex w-full justify-center text-center gap-2"
                     >
-                      <Link href="/book">BOOK NOW</Link>
+                      <Link href="/book">
+                        <FaRegCalendarCheck className="h-4 w-4" />
+                        Book Now
+                      </Link>
                     </Button>
                   </SheetClose>
                   <SheetClose asChild>
                     <Button
                       asChild
-                      className="bg-[#25D366] text-white hover:bg-[#1fb454] font-semibold gap-2"
+                      className="bg-[#1ba74e] text-white hover:bg-[#147c39] font-semibold capitalize gap-2"
                     >
                       <a
                         href={whatsappContactUrl}
@@ -261,7 +275,7 @@ export function Header() {
                         rel="noopener noreferrer"
                       >
                         <FaWhatsapp className="h-4 w-4" aria-hidden="true" />
-                        Contact Us on WhatsApp
+                        Ashram Connect
                       </a>
                     </Button>
                   </SheetClose>
