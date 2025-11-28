@@ -322,6 +322,7 @@
 import * as React from "react";
 import { useSessionContext } from "@/context/session-context";
 import * as api from "@/lib/api";
+import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
 import type {
   Reservation,
   Guest,
@@ -459,7 +460,7 @@ export function useAppData() {
           });
         return { ...res, folio };
       });
-      setReservations(reservationsWithFolios);
+      setReservations(sortReservationsByBookingDate(reservationsWithFolios));
 
       const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
       const roomTypesData = (roomTypesRes.data || []).map(rt => {
@@ -548,7 +549,9 @@ export function useAppData() {
     if (error) throw error;
 
     const reservationsWithEmptyFolio = data.map((r) => ({ ...r, folio: [] }));
-    setReservations(prev => [...prev, ...reservationsWithEmptyFolio]);
+    setReservations(prev =>
+      sortReservationsByBookingDate([...prev, ...reservationsWithEmptyFolio])
+    );
     return reservationsWithEmptyFolio;
   };
 

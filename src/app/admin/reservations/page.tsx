@@ -8,6 +8,7 @@ import { DataTable } from "./components/data-table";
 import { useDataContext } from "@/context/data-context";
 import type { FolioItem } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
+import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
 
 function sumAdditionalCharges(folioItems: FolioItem[] = []) {
   return folioItems
@@ -39,7 +40,7 @@ export default function ReservationsPage() {
   const { reservations, guests, updateReservationStatus, rooms, property } = useDataContext();
 
   const groupedReservations = React.useMemo(() => {
-    const reservationsWithDetails = reservations.map((res) => {
+    const reservationsWithDetails = sortReservationsByBookingDate(reservations).map((res) => {
       const guest = guests.find((g) => g.id === res.guestId);
       const room = rooms.find((r) => r.id === res.roomId);
       const nights = differenceInDays(

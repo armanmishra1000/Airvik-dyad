@@ -508,7 +508,11 @@ export const deleteGuest = (id: string) => supabase.from('guests').delete().eq('
 
 // Reservations
 export const getReservations = async () => {
-    const { data, error, ...rest } = await supabase.from('reservations').select('*');
+    const { data, error, ...rest } = await supabase
+      .from('reservations')
+      .select('*')
+      .order('booking_date', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false });
     if (error || !data) return { data, error, ...rest };
     return { data: data.map(fromDbReservation), error, ...rest };
 };
