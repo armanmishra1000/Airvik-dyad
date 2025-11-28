@@ -4,7 +4,7 @@ const signals = [
   {
     icon: ShieldCheck,
     title: "PCI DSS compliant",
-    description: "Stripe handles card data using industry-grade encryption and tokenization.",
+    description: "Razorpay handles card, UPI, and wallet data with industry-grade encryption & tokenization.",
   },
   {
     icon: Lock,

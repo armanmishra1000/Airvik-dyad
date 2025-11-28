@@ -18,7 +18,9 @@ type DbDonation = {
   consent: boolean;
   payment_provider: string;
   payment_status: DonationStatus;
-  stripe_session_id: string | null;
+  razorpay_order_id: string | null;
+  razorpay_payment_id: string | null;
+  razorpay_signature: string | null;
   upi_reference: string | null;
   metadata: Record<string, unknown> | null;
   created_at: string;
@@ -43,7 +45,9 @@ export type CreateDonationInput = {
   consent: boolean;
   paymentProvider: string;
   paymentStatus?: DonationStatus;
-  stripeSessionId?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
   upiReference?: string;
   metadata?: Record<string, unknown>;
 };
@@ -61,11 +65,21 @@ export type UpdateDonationInput = Partial<
     | "consent"
     | "paymentProvider"
     | "paymentStatus"
-    | "stripeSessionId"
+    | "razorpayOrderId"
+    | "razorpayPaymentId"
+    | "razorpaySignature"
     | "upiReference"
     | "metadata"
   >
 >;
+
+export type DonationListFilters = {
+  query?: string;
+  status?: DonationStatus;
+  frequency?: DonationFrequency;
+  from?: string;
+  to?: string;
+};
 
 const fromDbDonation = (row: DbDonation): Donation => ({
   id: row.id,
@@ -79,7 +93,9 @@ const fromDbDonation = (row: DbDonation): Donation => ({
   consent: row.consent,
   paymentProvider: row.payment_provider,
   paymentStatus: row.payment_status,
-  stripeSessionId: row.stripe_session_id ?? undefined,
+  razorpayOrderId: row.razorpay_order_id ?? undefined,
+  razorpayPaymentId: row.razorpay_payment_id ?? undefined,
+  razorpaySignature: row.razorpay_signature ?? undefined,
   upiReference: row.upi_reference ?? undefined,
   metadata: row.metadata ?? undefined,
   createdAt: row.created_at,
@@ -108,7 +124,9 @@ export async function createDonationRecord(input: CreateDonationInput): Promise<
       consent: input.consent,
       payment_provider: input.paymentProvider,
       payment_status: input.paymentStatus ?? "pending",
-      stripe_session_id: input.stripeSessionId ?? null,
+      razorpay_order_id: input.razorpayOrderId ?? null,
+      razorpay_payment_id: input.razorpayPaymentId ?? null,
+      razorpay_signature: input.razorpaySignature ?? null,
       upi_reference: input.upiReference ?? null,
       metadata: input.metadata ?? {},
     })
@@ -120,6 +138,52 @@ export async function createDonationRecord(input: CreateDonationInput): Promise<
   }
 
   return fromDbDonation(data as DbDonation);
+}
+
+export async function getDonations(filters: DonationListFilters = {}): Promise<Donation[]> {
+  const supabase = createServerSupabaseClient();
+  let query = supabase.from("donations").select("*").order("created_at", { ascending: false });
+
+  if (filters.status) {
+    query = query.eq("payment_status", filters.status);
+  }
+
+  if (filters.frequency) {
+    query = query.eq("frequency", filters.frequency);
+  }
+
+  if (filters.from) {
+    query = query.gte("created_at", filters.from);
+  }
+
+  if (filters.to) {
+    query = query.lte("created_at", filters.to);
+  }
+
+  if (filters.query) {
+    const sanitized = filters.query.trim();
+    if (sanitized.length > 0) {
+      const like = `%${sanitized}%`;
+      query = query.or(
+        [
+          `donor_name.ilike.${like}`,
+          `email.ilike.${like}`,
+          `phone.ilike.${like}`,
+          `razorpay_payment_id.ilike.${like}`,
+          `razorpay_order_id.ilike.${like}`,
+        ].join(","),
+      );
+    }
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.warn("Unable to fetch donations", error.message);
+    return [];
+  }
+
+  return (data as DbDonation[]).map(fromDbDonation);
 }
 
 export async function updateDonationRecord(
@@ -139,7 +203,9 @@ export async function updateDonationRecord(
   if (typeof input.consent !== "undefined") payload.consent = input.consent;
   if (typeof input.paymentProvider !== "undefined") payload.payment_provider = input.paymentProvider;
   if (typeof input.paymentStatus !== "undefined") payload.payment_status = input.paymentStatus;
-  if (typeof input.stripeSessionId !== "undefined") payload.stripe_session_id = input.stripeSessionId;
+  if (typeof input.razorpayOrderId !== "undefined") payload.razorpay_order_id = input.razorpayOrderId;
+  if (typeof input.razorpayPaymentId !== "undefined") payload.razorpay_payment_id = input.razorpayPaymentId;
+  if (typeof input.razorpaySignature !== "undefined") payload.razorpay_signature = input.razorpaySignature;
   if (typeof input.upiReference !== "undefined") payload.upi_reference = input.upiReference;
   if (typeof input.metadata !== "undefined") payload.metadata = input.metadata;
 
@@ -157,18 +223,31 @@ export async function updateDonationRecord(
   return fromDbDonation(data as DbDonation);
 }
 
-export async function getDonationByStripeSession(
-  sessionId: string,
-): Promise<Donation | null> {
+export async function getDonationById(id: string): Promise<Donation | null> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("donations")
     .select("*")
-    .eq("stripe_session_id", sessionId)
+    .eq("id", id)
     .maybeSingle();
 
   if (error) {
     throw new Error(`Failed to load donation: ${error.message}`);
+  }
+
+  return data ? fromDbDonation(data as DbDonation) : null;
+}
+
+export async function getDonationByOrderId(orderId: string): Promise<Donation | null> {
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("donations")
+    .select("*")
+    .eq("razorpay_order_id", orderId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to load donation by order id: ${error.message}`);
   }
 
   return data ? fromDbDonation(data as DbDonation) : null;

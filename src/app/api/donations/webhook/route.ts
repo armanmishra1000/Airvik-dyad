@@ -1,51 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
-import { getStripeClient } from "@/lib/stripe";
-import { updateDonationRecord } from "@/lib/api/donations";
+import { getDonationByOrderId, updateDonationRecord } from "@/lib/api/donations";
+import { verifyWebhookSignature } from "@/lib/razorpay";
 
 export async function POST(request: NextRequest) {
-  const signature = request.headers.get("stripe-signature");
-  const body = await request.text();
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const signature = request.headers.get("x-razorpay-signature");
+  const payload = await request.text();
 
-  if (!signature || !webhookSecret) {
-    return NextResponse.json({ message: "Invalid webhook configuration" }, { status: 400 });
+  if (!signature) {
+    return NextResponse.json({ message: "Missing webhook signature" }, { status: 400 });
   }
 
   try {
-    const stripe = getStripeClient();
-    const event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-
-    if (
-      event.type === "checkout.session.completed" ||
-      event.type === "checkout.session.async_payment_succeeded"
-    ) {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const donationId = session.metadata?.donation_id;
-      if (donationId) {
-        await updateDonationRecord(donationId, { paymentStatus: "paid" });
-      }
+    const isValid = verifyWebhookSignature(payload, signature);
+    if (!isValid) {
+      return NextResponse.json({ message: "Invalid webhook signature" }, { status: 400 });
     }
 
-    if (event.type === "checkout.session.async_payment_failed") {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const donationId = session.metadata?.donation_id;
-      if (donationId) {
-        await updateDonationRecord(donationId, { paymentStatus: "failed" });
-      }
+    const event = JSON.parse(payload);
+    const payment = event?.payload?.payment?.entity;
+    const orderId = payment?.order_id;
+    const paymentId = payment?.id;
+    const status = payment?.status;
+
+    if (!orderId) {
+      return NextResponse.json({ received: true });
     }
 
-    if (event.type === "charge.refunded") {
-      const charge = event.data.object as Stripe.Charge;
-      const donationId = charge.metadata?.donation_id;
-      if (donationId) {
-        await updateDonationRecord(donationId, { paymentStatus: "refunded" });
-      }
+    const donation = await getDonationByOrderId(orderId);
+    if (!donation) {
+      return NextResponse.json({ received: true });
     }
+
+    const updates: Parameters<typeof updateDonationRecord>[1] = {
+      razorpayPaymentId: paymentId ?? undefined,
+    };
+
+    if (status === "captured" || status === "authorized") {
+      updates.paymentStatus = "paid";
+    } else if (status === "failed") {
+      updates.paymentStatus = "failed";
+    } else if (status === "refunded") {
+      updates.paymentStatus = "refunded";
+    }
+
+    await updateDonationRecord(donation.id, updates);
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Stripe webhook error", error);
+    console.error("Razorpay webhook error", error);
     return NextResponse.json({ message: "Webhook handler failed" }, { status: 400 });
   }
 }

@@ -24,7 +24,7 @@ const faqs = [
   {
     question: "Is my payment secure?",
     answer:
-      "We use Stripe Checkout so your card or wallet information never touches our servers. All data is encrypted end-to-end and monitored for fraud.",
+      "We use Razorpay Checkout so your card, UPI, or wallet details never touch our servers. All data is encrypted end-to-end and monitored for fraud.",
   },
 ];
 

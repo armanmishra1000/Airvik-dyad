@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +16,30 @@ import {
 } from "@/lib/validators/donation";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/currency";
+import { storeDonationReceipt } from "@/lib/donations/receipt-storage";
+import type { DonationReceipt } from "@/lib/donations/receipt-storage";
+
+type CreateOrderResponse = {
+  mock?: boolean;
+  mockReceipt?: DonationReceipt;
+  keyId?: string;
+  order?: {
+    id: string;
+    amount: number;
+    currency: string;
+    status: string;
+  };
+  donation: {
+    id: string;
+    donorName: string;
+    email: string;
+    phone: string;
+    amountInMinor: number;
+    currency: string;
+    frequency: "one_time" | "monthly";
+    message?: string;
+  };
+};
 
 type DonationFormProps = {
   currency: string;
@@ -27,11 +52,13 @@ export function DonationForm({ currency }: DonationFormProps) {
     (value: number) => formatCurrency(value, currency),
     [currency],
   );
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors },
     watch,
   } = useForm<DonationFormValues>({
@@ -59,10 +86,29 @@ export function DonationForm({ currency }: DonationFormProps) {
     }));
   }, [formatAmount]);
 
+  const loadCheckoutScript = useCallback(async () => {
+    if (typeof window === "undefined") return;
+    if (window.Razorpay) return;
+    await new Promise<void>((resolve, reject) => {
+      const existing = document.getElementById("razorpay-checkout");
+      if (existing) {
+        resolve();
+        return;
+      }
+      const script = document.createElement("script");
+      script.id = "razorpay-checkout";
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Failed to load Razorpay script"));
+      document.body.appendChild(script);
+    });
+  }, []);
+
   const onSubmit = handleSubmit(async (values) => {
     try {
       setIsSubmitting(true);
-      const response = await fetch("/api/donations/create-session", {
+      const response = await fetch("/api/donations/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -73,13 +119,85 @@ export function DonationForm({ currency }: DonationFormProps) {
         throw new Error(error.message || "Unable to start donation");
       }
 
-      const data = await response.json();
-      if (data.url) {
-        window.location.assign(data.url);
+      const data = (await response.json()) as CreateOrderResponse;
+      if (data.mock && data.mockReceipt) {
+        storeDonationReceipt(data.mockReceipt);
+        toast.success("Donation recorded (mock mode)");
+        setIsSubmitting(false);
+        router.push(`/donate/success?donation_id=${data.donation.id}`);
+        return;
       }
+
+      if (!data.keyId || !data.order?.id) {
+        throw new Error("Missing Razorpay order details");
+      }
+
+      await loadCheckoutScript();
+      if (!window.Razorpay) {
+        throw new Error("Razorpay checkout unavailable");
+      }
+
+      const checkout = new window.Razorpay({
+        key: data.keyId,
+        amount: data.order.amount,
+        currency: data.order.currency.toUpperCase(),
+        name: "Sahajanand Wellness",
+        description: "Donation towards meals, education & seva",
+        order_id: data.order.id,
+        prefill: {
+          name: data.donation.donorName,
+          email: data.donation.email,
+          contact: data.donation.phone,
+        },
+        notes: {
+          donation_id: data.donation.id,
+          frequency: data.donation.frequency,
+        },
+        theme: { color: "#7f5539" },
+        handler: async (response) => {
+          try {
+            const verifyRes = await fetch("/api/donations/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                donationId: data.donation.id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+            const verifyPayload = await verifyRes.json();
+            if (!verifyRes.ok) {
+              throw new Error(verifyPayload.message || "Verification failed");
+            }
+            if (verifyPayload.receipt) {
+              storeDonationReceipt(verifyPayload.receipt);
+            }
+            setIsSubmitting(false);
+            router.push(`/donate/success?donation_id=${data.donation.id}`);
+            toast.success("Donation received. Thank you!");
+          } catch (error) {
+            console.error(error);
+            toast.error(error instanceof Error ? error.message : "Payment verification failed");
+            setIsSubmitting(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsSubmitting(false);
+          },
+        },
+        retry: { enabled: false, max_count: 0 },
+      });
+
+      checkout.on("payment.failed", () => {
+        toast.error("Payment was not completed. Please try again.");
+      });
+
+      checkout.open();
     } catch (error) {
+      console.error(error);
       toast.error(error instanceof Error ? error.message : "Unable to process donation");
-    } finally {
       setIsSubmitting(false);
     }
   });
@@ -196,7 +314,17 @@ export function DonationForm({ currency }: DonationFormProps) {
 
             <div className="space-y-3 rounded-2xl bg-muted/40 p-4">
               <Label className="flex items-start gap-3 text-sm text-muted-foreground">
-                <Checkbox id="consent" {...register("consent")} />
+                <Controller
+                  name="consent"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="consent"
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                    />
+                  )}
+                />
                 <span>
                   I consent to Sahajanand Wellness storing this donation information to issue receipts (including 80G) and acknowledge my contribution.
                 </span>
@@ -205,16 +333,26 @@ export function DonationForm({ currency }: DonationFormProps) {
                 <p className="text-sm text-destructive">{errors.consent.message}</p>
               )}
               <Label className="flex items-center gap-3 text-xs text-muted-foreground">
-                <Checkbox id="allowUpdates" {...register("allowUpdates")} />
+                <Controller
+                  name="allowUpdates"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="allowUpdates"
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                    />
+                  )}
+                />
                 Keep me informed about seva opportunities on WhatsApp/email.
               </Label>
             </div>
 
             <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? "Redirecting to secure checkout…" : "Continue to secure payment"}
+              {isSubmitting ? "Opening secure checkout…" : "Continue to secure payment"}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Payments are processed via Stripe with PCI DSS compliance. We also accept UPI transfers; instructions follow after checkout if you prefer manual transfer.
+              Payments are processed via Razorpay (cards, UPI, wallets) with PCI DSS compliance. We also accept UPI transfers; instructions follow after checkout if you prefer manual transfer.
             </p>
           </div>
 

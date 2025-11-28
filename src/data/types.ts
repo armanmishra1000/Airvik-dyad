@@ -219,7 +219,9 @@ export interface Donation {
   consent: boolean;
   paymentProvider: string;
   paymentStatus: DonationStatus;
-  stripeSessionId?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  razorpaySignature?: string;
   upiReference?: string;
   metadata?: Record<string, unknown>;
   createdAt: string;
