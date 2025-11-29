@@ -17,7 +17,12 @@ import { Post } from "@/data/types";
 import { deletePost } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
-export function PostsTable({ posts }: { posts: Post[] }) {
+interface PostsTableProps {
+  posts: Post[];
+  showDraftBadge?: boolean;
+}
+
+export function PostsTable({ posts, showDraftBadge = true }: PostsTableProps) {
   const router = useRouter();
 
   const handleDelete = async (id: string) => {
@@ -56,7 +61,14 @@ export function PostsTable({ posts }: { posts: Post[] }) {
               <TableRow key={post.id} className="group">
                 <TableCell className="font-medium">
                   <div className="flex flex-col gap-1">
-                    <span className="font-semibold">{post.title}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{post.title}</span>
+                      {showDraftBadge && post.status === "draft" ? (
+                        <span className="text-xs font-medium text-muted-foreground">
+                          — Draft
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
                       <Link
                         href={`/admin/posts/${post.id}`}
