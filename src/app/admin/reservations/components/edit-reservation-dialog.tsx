@@ -41,7 +41,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
-import { calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
+import { calculateMultipleRoomPricing, calculateRoomPricing } from "@/lib/pricing-calculator";
 import { resolveReservationTaxConfig } from "@/lib/reservations/calculate-financials";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import type { Reservation } from "@/data/types";
@@ -128,6 +128,7 @@ export function EditReservationDialog({
     ratePlans,
     property,
     validateBookingRequest,
+    refreshReservations,
   } = useDataContext();
 
   const guest = React.useMemo(() => guests.find((g) => g.id === reservation.guestId), [guests, reservation.guestId]);
@@ -356,6 +357,25 @@ export function EditReservationDialog({
     });
   }, [selectedRoomTypes, ratePlan, nights, taxConfig]);
 
+  const resolveRoomCharge = React.useCallback(
+    (roomId: string, stayNights: number) => {
+      if (!stayNights || stayNights <= 0) {
+        return null;
+      }
+      const room = roomMap.get(roomId);
+      const roomType = room ? roomTypeMap.get(room.roomTypeId) : undefined;
+      const pricingResult = calculateRoomPricing({
+        roomType,
+        ratePlan,
+        nights: stayNights,
+        rooms: 1,
+        taxConfig,
+      });
+      return pricingResult.totalCost;
+    },
+    [roomMap, roomTypeMap, ratePlan, taxConfig]
+  );
+
   const handleRoomToggle = (roomId: string) => {
     const current = form.getValues("roomIds") ?? [];
     if (current.includes(roomId)) {
@@ -404,6 +424,15 @@ export function EditReservationDialog({
       numberOfGuests: totalGuestsSelected,
       notes: notes?.trim() || undefined,
     };
+
+    const stayNights = Math.max(differenceInDays(dateRange.to, dateRange.from), 1);
+    const roomChargeMap = new Map<string, number>();
+    uniqueRoomIds.forEach((roomId) => {
+      const computed = resolveRoomCharge(roomId, stayNights);
+      if (typeof computed === "number" && Number.isFinite(computed)) {
+        roomChargeMap.set(roomId, computed);
+      }
+    });
 
     const remainingReservations = [...activeGroupReservations];
     const assignments: Array<{ reservation: Reservation; roomId: string }> = [];
@@ -464,11 +493,17 @@ export function EditReservationDialog({
         return;
       }
 
+      const taxEnabledSnapshot = Boolean(taxConfig.enabled);
+      const taxRateSnapshot = taxEnabledSnapshot ? taxConfig.percentage : 0;
+
       await Promise.all(
         assignments.map(({ reservation: entry, roomId }) =>
           updateReservation(entry.id, {
             ...perReservationPayload,
             roomId,
+            totalAmount: roomChargeMap.get(roomId) ?? entry.totalAmount,
+            taxEnabledSnapshot,
+            taxRateSnapshot,
           })
         )
       );
@@ -505,6 +540,7 @@ export function EditReservationDialog({
         });
       }
 
+      await refreshReservations();
       toast.success("Reservation updated successfully.");
       handleDialogChange(false);
     } catch (error) {
@@ -532,7 +568,7 @@ export function EditReservationDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="grid gap-6 lg:grid-cols-[2fr_2fr]">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="grid gap-6 lg:grid-cols-[2fr_1fr]">
             <div className="space-y-6">
               <section className="rounded-2xl border border-border/60 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">

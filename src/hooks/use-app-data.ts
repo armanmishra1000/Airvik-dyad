@@ -502,6 +502,8 @@ export function useAppData() {
     fetchData();
   }, [fetchData]);
 
+  const refreshReservations = React.useCallback(() => fetchData(), [fetchData]);
+
   const updateProperty = async (updatedData: Partial<Omit<Property, "id">>) => {
     const { data, error } = property.id === "default-property-id"
       ? await api.createProperty(updatedData)
@@ -873,5 +875,6 @@ export function useAppData() {
     deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout: setDashboardLayout,
     validateBookingRequest,
+    refreshReservations,
   };
 }

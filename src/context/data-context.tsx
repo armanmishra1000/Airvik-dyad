@@ -219,6 +219,7 @@ interface DataContextType {
     children?: number,
     bookingId?: string
   ) => Promise<BookingValidationResult>;
+  refreshReservations: () => Promise<void>;
 }
 
 const DataContext = React.createContext<DataContextType | undefined>(undefined);
