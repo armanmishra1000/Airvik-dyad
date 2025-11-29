@@ -658,13 +658,20 @@ export const getMonthlyAvailability = async (
   );
 };
 
+export type BookingValidationResult = {
+  isValid: boolean;
+  message?: string;
+  conflicts?: Array<Pick<Reservation, "id" | "bookingId" | "roomId" | "checkInDate" | "checkOutDate" | "status" >>;
+};
+
 export const validateBookingRequest = async (
   checkIn: string,
   checkOut: string,
   roomId: string,
   adults: number,
-  children: number = 0
-) => {
+  children: number = 0,
+  bookingId?: string
+): Promise<BookingValidationResult> => {
   const { data, error } = await supabase.rpc('validate_booking_request', {
     p_check_in: checkIn,
     p_check_out: checkOut,
@@ -674,7 +681,41 @@ export const validateBookingRequest = async (
   });
   
   if (error) throw error;
-  return data as { isValid: boolean; message?: string };
+  if (data && data.isValid === false) {
+    return data as BookingValidationResult;
+  }
+
+  let conflictsQuery = supabase
+    .from('reservations')
+    .select('id, booking_id, room_id, check_in_date, check_out_date, status')
+    .eq('room_id', roomId)
+    .neq('status', 'Cancelled')
+    .lt('check_in_date', checkOut)
+    .gt('check_out_date', checkIn);
+
+  if (bookingId) {
+    conflictsQuery = conflictsQuery.neq('booking_id', bookingId);
+  }
+
+  const { data: conflicts, error: conflictsError } = await conflictsQuery;
+  if (conflictsError) throw conflictsError;
+
+  if (conflicts && conflicts.length) {
+    return {
+      isValid: false,
+      message: 'Room unavailable for selected dates',
+      conflicts: conflicts.map((conflict) => ({
+        id: conflict.id,
+        bookingId: conflict.booking_id,
+        roomId: conflict.room_id,
+        checkInDate: conflict.check_in_date,
+        checkOutDate: conflict.check_out_date,
+        status: conflict.status,
+      })),
+    } satisfies BookingValidationResult;
+  }
+
+  return { isValid: true } satisfies BookingValidationResult;
 };
 
 // Blog API

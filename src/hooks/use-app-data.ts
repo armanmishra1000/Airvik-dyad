@@ -373,6 +373,25 @@ type CreateReservationPayload = {
   paymentMethod: Reservation["paymentMethod"];
 };
 
+type AddRoomsToBookingPayload = {
+  bookingId: string;
+  roomIds: string[];
+  guestId: string;
+  ratePlanId: string;
+  checkInDate: string;
+  checkOutDate: string;
+  numberOfGuests: number;
+  adultCount: number;
+  childCount: number;
+  status: ReservationStatus;
+  notes?: string;
+  bookingDate: string;
+  source: Reservation["source"];
+  paymentMethod: Reservation["paymentMethod"];
+  taxEnabledSnapshot: boolean;
+  taxRateSnapshot: number;
+};
+
 type UserProfileUpdate = Partial<Pick<User, "name" | "roleId">>;
 
 const defaultProperty: Property = {
@@ -553,6 +572,39 @@ export function useAppData() {
       sortReservationsByBookingDate([...prev, ...reservationsWithEmptyFolio])
     );
     return reservationsWithEmptyFolio;
+  };
+
+  const addRoomsToBooking = async (payload: AddRoomsToBookingPayload) => {
+    if (!payload.roomIds.length) {
+      return [];
+    }
+
+    const { data, error } = await api.createReservationsWithTotal({
+      p_booking_id: payload.bookingId,
+      p_guest_id: payload.guestId,
+      p_room_ids: payload.roomIds,
+      p_rate_plan_id: payload.ratePlanId || "default-rate-plan",
+      p_check_in_date: payload.checkInDate,
+      p_check_out_date: payload.checkOutDate,
+      p_number_of_guests: payload.numberOfGuests,
+      p_status: payload.status,
+      p_notes: payload.notes ?? null,
+      p_booking_date: payload.bookingDate,
+      p_source: payload.source,
+      p_payment_method: payload.paymentMethod,
+      p_adult_count: payload.adultCount,
+      p_child_count: payload.childCount,
+      p_tax_enabled_snapshot: payload.taxEnabledSnapshot,
+      p_tax_rate_snapshot: payload.taxRateSnapshot,
+    });
+
+    if (error) throw error;
+
+    setReservations((prev) =>
+      sortReservationsByBookingDate([...(prev ?? []), ...data])
+    );
+
+    return data;
   };
 
   const updateReservation = async (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => {
@@ -801,12 +853,25 @@ export function useAppData() {
     console.log("Updating assignment status:", roomId, status);
   };
 
+  const validateBookingRequest = React.useCallback(
+    (
+      checkIn: string,
+      checkOut: string,
+      roomId: string,
+      adults: number,
+      children: number = 0,
+      bookingId?: string
+    ) => api.validateBookingRequest(checkIn, checkOut, roomId, adults, children, bookingId),
+    []
+  );
+
   return {
     isLoading,
     property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
-    updateProperty, addGuest, deleteGuest, addReservation, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
+    updateProperty, addGuest, deleteGuest, addReservation, addRoomsToBooking, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout: setDashboardLayout,
+    validateBookingRequest,
   };
 }

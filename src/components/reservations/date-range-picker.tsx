@@ -19,6 +19,7 @@ type ReservationDateRangePickerProps = {
   onChange: (range: DateRange | undefined) => void;
   className?: string;
   disabled?: boolean;
+  allowPastDates?: boolean;
 };
 
 export function ReservationDateRangePicker({
@@ -26,9 +27,11 @@ export function ReservationDateRangePicker({
   onChange,
   className,
   disabled = false,
+  allowPastDates = false,
 }: ReservationDateRangePickerProps) {
   const [isMobile, setIsMobile] = React.useState(false);
   const [open, setOpen] = React.useState(false);
+  const [displayMonth, setDisplayMonth] = React.useState<Date>(() => value?.from ?? new Date());
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -40,17 +43,30 @@ export function ReservationDateRangePicker({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  React.useEffect(() => {
+    if (value?.from) {
+      setDisplayMonth(value.from);
+      return;
+    }
+    setDisplayMonth(new Date());
+  }, [value?.from]);
+
   const popoverOffset = isMobile ? 12 : 40;
 
   const handleSelect = (range: DateRange | undefined) => {
     onChange(range);
+    if (range?.from) {
+      setDisplayMonth(range.from);
+    }
     if (range?.from && range?.to) {
       setOpen(false);
     }
   };
 
   const handleClear = () => {
-    onChange(undefined);
+    const emptyRange: DateRange = { from: undefined, to: undefined };
+    onChange(emptyRange);
+    setDisplayMonth(new Date());
   };
 
   return (
@@ -116,11 +132,14 @@ export function ReservationDateRangePicker({
         <Calendar
           initialFocus
           mode="range"
-          defaultMonth={value?.from || new Date()}
+          month={displayMonth}
+          onMonthChange={setDisplayMonth}
           selected={value}
           onSelect={handleSelect}
           numberOfMonths={isMobile ? 1 : 2}
-          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+          disabled={(date) =>
+            !allowPastDates && date < new Date(new Date().setHours(0, 0, 0, 0))
+          }
           showOutsideDays
           className="pt-3 pb-4 md:pt-4 md:pb-5 px-1 md:px-5"
           classNames={{
