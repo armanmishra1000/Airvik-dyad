@@ -49,6 +49,10 @@ export function ReservationDateRangePicker({
     }
   };
 
+  const handleClear = () => {
+    onChange(undefined);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -92,18 +96,20 @@ export function ReservationDateRangePicker({
         className="w-full max-w-[min(100vw-1.5rem,640px)] md:max-w-none border border-border/40 rounded-2xl bg-white shadow-xl px-4 py-4 md:px-5 md:py-4 max-h-[80vh] overflow-y-auto"
       >
         <div className="px-5 py-4 border-b border-border/30">
-          <div className="flex gap-4 md:flex-row md:items-start md:justify-between text-sm">
-            <div className="flex-1">
-              <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-in</span>
-              <span className="mt-1 block text-base font-medium text-foreground">
-                {value?.from ? format(value.from, "EEE, MMM d") : "Select date"}
-              </span>
-            </div>
-            <div className="flex-1 text-right">
-              <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-out</span>
-              <span className="mt-1 block text-base font-medium text-foreground">
-                {value?.to ? format(value.to, "EEE, MMM d") : "Select date"}
-              </span>
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4 text-sm">
+            <div className="flex gap-4 md:flex-row md:flex-1">
+              <div className="flex-1">
+                <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-in</span>
+                <span className="mt-1 block text-base font-medium text-foreground">
+                  {value?.from ? format(value.from, "EEE, MMM d") : "Select date"}
+                </span>
+              </div>
+              <div className="flex-1 text-left md:text-right">
+                <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-out</span>
+                <span className="mt-1 block text-base font-medium text-foreground">
+                  {value?.to ? format(value.to, "EEE, MMM d") : "Select date"}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -149,6 +155,18 @@ export function ReservationDateRangePicker({
             day_hidden: "invisible",
           }}
         />
+        <div className="flex justify-end border-t border-border/20 pt-4 mt-2">
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            className="bg-primary text-white hover:bg-primary-hover disabled:opacity-50 text-sm px-4"
+            onClick={handleClear}
+            disabled={!value?.from && !value?.to}
+          >
+            Clear
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

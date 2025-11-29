@@ -22,18 +22,48 @@ import {
 } from "@/components/ui/popover";
 import { ReservationDateRangePicker } from "@/components/reservations/date-range-picker";
 
-const enhancedSearchSchema = z.object({
-  dateRange: z.object({
-    from: z.date({ required_error: "Check-in date is required." }),
-    to: z.date({ required_error: "Check-out date is required." }),
-  }),
-  roomOccupancies: z.array(
-    z.object({
-      adults: z.coerce.number().min(1, "At least one adult is required."),
-      children: z.coerce.number().min(0),
-    })
-  ).min(1, "At least one room is required."),
-});
+const enhancedSearchSchema = z
+  .object({
+    dateRange: z.object({
+      from: z.date({ required_error: "Check-in date is required." }),
+      to: z.date({ required_error: "Check-out date is required." }),
+    }),
+    roomOccupancies: z
+      .array(
+        z.object({
+          adults: z.coerce.number().min(0, "Adults cannot be negative."),
+          children: z.coerce.number().min(0, "Children cannot be negative."),
+        })
+      )
+      .min(1, "At least one room is required."),
+  })
+  .superRefine((data, ctx) => {
+    const totalRooms = data.roomOccupancies.length;
+    const totals = data.roomOccupancies.reduce(
+      (acc, room) => {
+        acc.adults += room.adults;
+        acc.children += room.children;
+        return acc;
+      },
+      { adults: 0, children: 0 }
+    );
+
+    if (totalRooms < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["roomOccupancies"],
+        message: "Select at least one room.",
+      });
+    }
+
+    if (totals.adults + totals.children < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["roomOccupancies"],
+        message: "Add at least one guest (adult or child).",
+      });
+    }
+  });
 
 
 export type EnhancedBookingSearchFormValues = z.infer<typeof enhancedSearchSchema>;
@@ -49,9 +79,9 @@ export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProp
   const hasInitializedRoomState = React.useRef(false);
   
   // Simple state for UI display
-  const [totalGuests, setTotalGuests] = React.useState(2);
+  const [totalAdults, setTotalAdults] = React.useState(0);
   const [totalChildren, setTotalChildren] = React.useState(0);
-  const [totalRooms, setTotalRooms] = React.useState(1);
+  const [totalRooms, setTotalRooms] = React.useState(0);
   
   React.useEffect(() => {
     const checkMobile = () => {
@@ -71,31 +101,44 @@ export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProp
         from: undefined,
         to: undefined,
       },
-      roomOccupancies: [{ adults: 2, children: 0 }],
+      roomOccupancies: [],
     },
   });
 
   const roomOccupancies = form.watch("roomOccupancies");
+  const dateRange = form.watch("dateRange");
+  const hasDatesSelected = Boolean(dateRange?.from && dateRange?.to);
+  const totalGuests = totalAdults + totalChildren;
+  const hasValidGuestSelection = totalRooms > 0 && totalGuests > 0;
+  const canSubmit = hasDatesSelected && hasValidGuestSelection;
   
   // Helper function to distribute guests across rooms
-  const updateRoomOccupancies = React.useCallback((guests: number, children: number, rooms: number) => {
-    const adultsPerRoom = Math.floor(guests / rooms);
-    const extraAdults = guests % rooms;
-    const childrenPerRoom = Math.floor(children / rooms);
-    const extraChildren = children % rooms;
-    
-    const newRoomOccupancies = Array.from({ length: rooms }, (_, index) => ({
-      adults: adultsPerRoom + (index < extraAdults ? 1 : 0),
-      children: childrenPerRoom + (index < extraChildren ? 1 : 0),
-    }));
-    
-    form.setValue("roomOccupancies", newRoomOccupancies);
-  }, [form]);
+  const updateRoomOccupancies = React.useCallback(
+    (adults: number, children: number, rooms: number) => {
+      if (rooms < 1) {
+        form.setValue("roomOccupancies", []);
+        return;
+      }
+
+      const adultsPerRoom = Math.floor(adults / rooms);
+      const extraAdults = adults % rooms;
+      const childrenPerRoom = Math.floor(children / rooms);
+      const extraChildren = children % rooms;
+      
+      const newRoomOccupancies = Array.from({ length: rooms }, (_, index) => ({
+        adults: adultsPerRoom + (index < extraAdults ? 1 : 0),
+        children: childrenPerRoom + (index < extraChildren ? 1 : 0),
+      }));
+      
+      form.setValue("roomOccupancies", newRoomOccupancies);
+    },
+    [form]
+  );
   
   // Update roomOccupancies when simple values change
   React.useEffect(() => {
-    updateRoomOccupancies(totalGuests, totalChildren, totalRooms);
-  }, [totalGuests, totalChildren, totalRooms, updateRoomOccupancies]);
+    updateRoomOccupancies(totalAdults, totalChildren, totalRooms);
+  }, [totalAdults, totalChildren, totalRooms, updateRoomOccupancies]);
   
   // Initialize simple values from roomOccupancies
   React.useEffect(() => {
@@ -104,7 +147,7 @@ export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProp
       const guests = roomOccupancies.reduce((sum, room) => sum + room.adults, 0);
       const children = roomOccupancies.reduce((sum, room) => sum + room.children, 0);
       const rooms = roomOccupancies.length;
-      setTotalGuests(guests);
+      setTotalAdults(guests);
       setTotalChildren(children);
       setTotalRooms(rooms);
       hasInitializedRoomState.current = true;
@@ -154,9 +197,21 @@ export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProp
                                 <Users className="mr-3 h-5 w-5 text-primary" />
                                 <div className="flex flex-col items-start">
                                   <span className="text-xs text-muted-foreground">Guests & Rooms</span>
-                                  <span className="text-sm font-medium">
-                                    {totalGuests} {totalGuests === 1 ? 'Guest' : 'Guests'}{totalChildren > 0 ? `, ${totalChildren} ${totalChildren === 1 ? 'Child' : 'Children'}` : ''}, {totalRooms} {totalRooms === 1 ? 'Room' : 'Rooms'}
-                                  </span>
+                                  {hasValidGuestSelection ? (
+                                    <span className="text-sm font-medium">
+                                      {totalAdults} {totalAdults === 1 ? "Guest" : "Guests"}
+                                      {totalChildren > 0
+                                        ? `, ${totalChildren} ${
+                                            totalChildren === 1 ? "Child" : "Children"
+                                          }`
+                                        : ""}
+                                      , {totalRooms} {totalRooms === 1 ? "Room" : "Rooms"}
+                                    </span>
+                                  ) : (
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                      Select guests & rooms
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -182,8 +237,13 @@ export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProp
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8 rounded-full"
-                                onClick={() => setTotalRooms(Math.max(1, totalRooms - 1))}
-                                disabled={totalRooms <= 1}
+                                onClick={() => {
+                                  const next = Math.max(0, totalRooms - 1);
+                                  if (next !== totalRooms) {
+                                    setTotalRooms(next);
+                                  }
+                                }}
+                                disabled={totalRooms <= 0}
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
@@ -193,7 +253,10 @@ export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProp
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8 rounded-full"
-                                onClick={() => setTotalRooms(totalRooms + 1)}
+                                onClick={() => {
+                                  const next = totalRooms + 1;
+                                  setTotalRooms(next);
+                                }}
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
@@ -212,18 +275,26 @@ export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProp
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8 rounded-full"
-                                onClick={() => setTotalGuests(Math.max(1, totalGuests - 1))}
-                                disabled={totalGuests <= 1}
+                                onClick={() => {
+                                  const next = Math.max(0, totalAdults - 1);
+                                  if (next !== totalAdults) {
+                                    setTotalAdults(next);
+                                  }
+                                }}
+                                disabled={totalAdults <= 0}
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
-                              <span className="w-8 text-center font-medium">{totalGuests}</span>
+                              <span className="w-8 text-center font-medium">{totalAdults}</span>
                               <Button
                                 type="button"
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8 rounded-full"
-                                onClick={() => setTotalGuests(totalGuests + 1)}
+                                onClick={() => {
+                                  const next = totalAdults + 1;
+                                  setTotalAdults(next);
+                                }}
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
@@ -242,7 +313,12 @@ export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProp
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8 rounded-full"
-                                onClick={() => setTotalChildren(Math.max(0, totalChildren - 1))}
+                                onClick={() => {
+                                  const next = Math.max(0, totalChildren - 1);
+                                  if (next !== totalChildren) {
+                                    setTotalChildren(next);
+                                  }
+                                }}
                                 disabled={totalChildren <= 0}
                               >
                                 <Minus className="h-4 w-4" />
@@ -253,7 +329,10 @@ export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProp
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8 rounded-full"
-                                onClick={() => setTotalChildren(totalChildren + 1)}
+                                onClick={() => {
+                                  const next = totalChildren + 1;
+                                  setTotalChildren(next);
+                                }}
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
@@ -272,9 +351,9 @@ export function BookingWidget({ onSearch, isLoading = false }: BookingWidgetProp
 
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full hover:bg-primary-hover" 
               size="lg"
-              disabled={isLoading || !form.watch("dateRange.from") || !form.watch("dateRange.to")}
+              disabled={isLoading || !canSubmit}
             >
               <Search className="h-5 w-5 mr-2" />
               {isLoading ? "Searching..." : "Search Availability"}
