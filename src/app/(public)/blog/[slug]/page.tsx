@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { format } from "date-fns";
-import { getPostBySlug } from "@/lib/api";
+import { getPostBySlug } from "@/lib/server/posts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

@@ -19,6 +19,15 @@ import type {
   BookingRestriction,
 } from "@/data/types";
 import { mapMonthlyAvailabilityRow, MonthlyAvailabilityRow } from "@/lib/availability";
+import {
+  DbCategory,
+  DbPost,
+  DbPostUpdatePayload,
+  DbPostWithCategories,
+  fromDbCategory,
+  fromDbPost,
+  fromDbPostWithCategories,
+} from "@/lib/api/blog-mappers";
 
 type DbGuest = {
   id: string;
@@ -28,53 +37,8 @@ type DbGuest = {
   phone: string;
 };
 
-type DbCategory = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  parent_id: string | null;
-  created_at: string;
-};
-
 type DbCategoryUpdatePayload = Partial<
   Pick<DbCategory, "name" | "slug" | "description" | "parent_id">
->;
-
-type DbPost = {
-  id: string;
-  title: string;
-  slug: string;
-  content: string | null;
-  excerpt: string | null;
-  featured_image: string | null;
-  status: 'draft' | 'published';
-  published_at: string | null;
-  author_id: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-type DbPostCategory = {
-  categories: DbCategory;
-};
-
-type DbPostWithCategories = DbPost & {
-  categories?: DbPostCategory[];
-};
-
-type DbPostUpdatePayload = Partial<
-  Pick<
-    DbPost,
-    | "title"
-    | "slug"
-    | "content"
-    | "excerpt"
-    | "featured_image"
-    | "status"
-    | "published_at"
-    | "updated_at"
-  >
 >;
 
 type GuestUpdatePayload = Partial<
@@ -395,42 +359,6 @@ const fromDbBookingRestriction = (
 });
 
 // --- Blog Transformers ---
-
-const fromDbCategory = (dbCategory: DbCategory): Category => ({
-  id: dbCategory.id,
-  name: dbCategory.name,
-  slug: dbCategory.slug,
-  description: dbCategory.description ?? undefined,
-  parent_id: dbCategory.parent_id ?? undefined,
-  created_at: dbCategory.created_at,
-});
-
-const fromDbPost = (dbPost: DbPost): Post => ({
-  id: dbPost.id,
-  title: dbPost.title,
-  slug: dbPost.slug,
-  content: dbPost.content ?? undefined,
-  excerpt: dbPost.excerpt ?? undefined,
-  featured_image: dbPost.featured_image ?? undefined,
-  status: dbPost.status,
-  published_at: dbPost.published_at ?? undefined,
-  author_id: dbPost.author_id ?? "",
-  created_at: dbPost.created_at,
-  updated_at: dbPost.updated_at,
-});
-
-const fromDbPostWithCategories = (
-  dbPost: DbPostWithCategories
-): Post => {
-  const mapped = fromDbPost(dbPost);
-  if (dbPost.categories) {
-    mapped.categories = dbPost.categories
-      .map((pc) => pc.categories)
-      .filter(Boolean)
-      .map(fromDbCategory);
-  }
-  return mapped;
-};
 
 
 // --- File Upload Helper ---
@@ -806,80 +734,6 @@ export const updateCategory = async (
 export const deleteCategory = async (id: string) => {
   const { error } = await supabase.from('categories').delete().eq('id', id);
   if (error) throw error;
-};
-
-// Posts
-export const getPosts = async (searchParams?: {
-  month?: string;
-  categoryId?: string;
-  search?: string;
-  status?: 'draft' | 'published';
-}) => {
-  let query = supabase.from('posts').select('*, categories:post_categories(categories(*))').order('created_at', { ascending: false });
-
-  if (searchParams?.status) {
-    query = query.eq('status', searchParams.status);
-  }
-  
-  if (searchParams?.search) {
-    query = query.ilike('title', `%${searchParams.search}%`);
-  }
-
-  if (searchParams?.categoryId) {
-    // Filtering by category requires filtering on the joined table which is tricky in simple supabase query builder.
-    // We might need !inner join.
-    // query = query.eq('categories.id', searchParams.categoryId); // This doesn't work directly.
-    // Using !inner on the relation:
-    query = supabase.from('posts').select('*, categories:post_categories!inner(category_id)', { count: 'exact' }).eq('categories.category_id', searchParams.categoryId);
-    // But we also want the other data.
-    // Let's simplify: if categoryId is present, fetch post_ids from junction first.
-    const { data: postIds } = await supabase.from('post_categories').select('post_id').eq('category_id', searchParams.categoryId);
-    if (postIds) {
-      const ids = postIds.map(p => p.post_id);
-      query = supabase.from('posts').select('*, categories:post_categories(categories(*))').in('id', ids).order('created_at', { ascending: false });
-    }
-  }
-  
-  // Month filter (created_at)
-  if (searchParams?.month) {
-      // Format: "YYYY-MM"
-      const startDate = `${searchParams.month}-01`;
-      // Calculate end date (next month)
-      const [year, month] = searchParams.month.split('-').map(Number);
-      const nextMonth = month === 12 ? 1 : month + 1;
-      const nextYear = month === 12 ? year + 1 : year;
-      const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
-      
-      query = query.gte('created_at', startDate).lt('created_at', endDate);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-
-  const typedPosts = (data ?? []) as DbPostWithCategories[];
-  return typedPosts.map(fromDbPostWithCategories);
-};
-
-export const getPostById = async (id: string) => {
-  const { data, error } = await supabase
-    .from('posts')
-    .select('*, categories:post_categories(categories(*))')
-    .eq('id', id)
-    .single();
-  if (error) throw error;
-
-  return fromDbPostWithCategories(data as DbPostWithCategories);
-};
-
-export const getPostBySlug = async (slug: string) => {
-  const { data, error } = await supabase
-    .from('posts')
-    .select('*, categories:post_categories(categories(*))')
-    .eq('slug', slug)
-    .single();
-  if (error) return null;
-
-  return fromDbPostWithCategories(data as DbPostWithCategories);
 };
 
 export const createPost = async (postData: Omit<Post, "id" | "created_at" | "updated_at" | "categories"> & { categoryIds?: string[] }) => {

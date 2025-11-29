@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getPosts, getCategories } from "@/lib/api";
+import { getCategories } from "@/lib/api";
+import { countPosts, getPosts } from "@/lib/server/posts";
 import { PostsTable } from "@/components/admin/posts/posts-table";
 import { PostsFilters } from "@/components/admin/posts/posts-filters";
 
@@ -17,13 +18,23 @@ export default async function PostsPage({
   }>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const categories = await getCategories();
-  const posts = await getPosts({
+  const baseFilters = {
     month: resolvedSearchParams.month,
     categoryId: resolvedSearchParams.category,
     search: resolvedSearchParams.search,
+  };
+  const filters = {
+    ...baseFilters,
     status: resolvedSearchParams.status,
-  });
+  } as const;
+  const activeStatus = resolvedSearchParams.status === "draft" ? "draft" : "all";
+
+  const [categories, posts, totalPosts, draftPosts] = await Promise.all([
+    getCategories(),
+    getPosts(filters),
+    countPosts(baseFilters),
+    countPosts({ ...baseFilters, status: "draft" as const }),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -37,10 +48,14 @@ export default async function PostsPage({
         </Button>
       </div>
 
-      <PostsFilters categories={categories} />
+      <PostsFilters
+        categories={categories}
+        postCounts={{ total: totalPosts, drafts: draftPosts }}
+        activeStatus={activeStatus}
+      />
 
       <Suspense fallback={<div>Loading posts...</div>}>
-        <PostsTable posts={posts} />
+        <PostsTable posts={posts} showDraftBadge={activeStatus !== "draft"} />
       </Suspense>
     </div>
   );

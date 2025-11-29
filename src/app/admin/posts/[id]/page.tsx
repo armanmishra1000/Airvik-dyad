@@ -1,4 +1,5 @@
-import { getCategories, getPostById } from "@/lib/api";
+import { getCategories } from "@/lib/api";
+import { getPostById } from "@/lib/server/posts";
 import { PostForm } from "@/components/admin/posts/post-form";
 
 export default async function EditPostPage({

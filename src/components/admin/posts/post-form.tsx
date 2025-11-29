@@ -173,7 +173,7 @@ export function PostForm({
             name="excerpt"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Excerpt</FormLabel>
+                <FormLabel>Summary</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Short summary..."

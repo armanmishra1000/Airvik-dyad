@@ -11,10 +11,24 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Category } from "@/data/types";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export function PostsFilters({ categories }: { categories: Category[] }) {
+type PostsFiltersProps = {
+  categories: Category[];
+  postCounts: {
+    total: number;
+    drafts: number;
+  };
+  activeStatus: "all" | "draft";
+};
+
+export function PostsFilters({
+  categories,
+  postCounts,
+  activeStatus,
+}: PostsFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = searchParams ?? new URLSearchParams();
@@ -22,28 +36,87 @@ export function PostsFilters({ categories }: { categories: Category[] }) {
   const [search, setSearch] = useState(params.get("search") || "");
   const [category, setCategory] = useState(params.get("category") || "all");
   const [month, setMonth] = useState(params.get("month") || "all");
+  const [status, setStatus] = useState<"all" | "draft">(activeStatus);
+
+  useEffect(() => {
+    setStatus(activeStatus);
+  }, [activeStatus]);
 
   // Helper to generate last 12 months
+  const baseDate = new Date();
+  baseDate.setDate(1);
+
   const months = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
+    const d = new Date(baseDate.getFullYear(), baseDate.getMonth() - i, 1);
     return {
       value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
       label: d.toLocaleString("default", { month: "long", year: "numeric" }),
     };
   });
 
+  const navigateWithParams = (nextParams: URLSearchParams) => {
+    const queryString = nextParams.toString();
+    router.push(queryString ? `/admin/posts?${queryString}` : "/admin/posts");
+  };
+
   const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (category && category !== "all") params.set("category", category);
-    if (month && month !== "all") params.set("month", month);
-    
-    router.push(`/admin/posts?${params.toString()}`);
+    const nextParams = new URLSearchParams();
+    if (search) nextParams.set("search", search);
+    if (category && category !== "all") nextParams.set("category", category);
+    if (month && month !== "all") nextParams.set("month", month);
+    if (status === "draft") nextParams.set("status", "draft");
+
+    navigateWithParams(nextParams);
+  };
+
+  const handleStatusChange = (nextStatus: "all" | "draft") => {
+    setStatus(nextStatus);
+    const nextParams = new URLSearchParams(searchParams?.toString() ?? "");
+    if (nextStatus === "draft") {
+      nextParams.set("status", "draft");
+    } else {
+      nextParams.delete("status");
+    }
+
+    if (search) nextParams.set("search", search);
+    if (category && category !== "all") nextParams.set("category", category);
+    else nextParams.delete("category");
+    if (month && month !== "all") nextParams.set("month", month);
+    else nextParams.delete("month");
+
+    navigateWithParams(nextParams);
+  };
+
+  const handleTabValueChange = (value: string) => {
+    if (value === "all" || value === "draft") {
+      handleStatusChange(value);
+    }
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-4 bg-card p-4 rounded-lg border">
+    <div className="flex flex-col gap-4 rounded-lg border bg-card p-4">
+      <Tabs
+        value={status}
+        onValueChange={handleTabValueChange}
+        className="w-full"
+      >
+        <TabsList className="justify-start gap-2">
+          <TabsTrigger value="all" className="gap-2">
+            All
+            <span className="text-xs text-muted-foreground">
+              ({postCounts.total})
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="draft" className="gap-2">
+            Drafts
+            <span className="text-xs text-muted-foreground">
+              ({postCounts.drafts})
+            </span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div className="flex flex-wrap items-center gap-4">
        <div className="w-[200px]">
         <Select value={month} onValueChange={setMonth}>
           <SelectTrigger>
@@ -87,6 +160,7 @@ export function PostsFilters({ categories }: { categories: Category[] }) {
           <Search className="mr-2 h-4 w-4" />
           Search Posts
         </Button>
+      </div>
       </div>
     </div>
   );
