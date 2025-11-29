@@ -132,8 +132,8 @@ export function RichTextEditor({
   if (!editor) return null;
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-background shadow-sm">
-      <div className="border-b p-2 flex flex-wrap gap-1 items-center bg-muted/30 sticky top-0 z-10 backdrop-blur-sm">
+    <div className="border rounded-lg overflow-hidden bg-background shadow-sm overflow-y-auto max-h-[500px]">
+      <div className="border-b p-2 flex flex-wrap gap-1 items-center bg-muted sticky top-0 z-10">
         <Toggle
           size="sm"
           pressed={editor.isActive("bold")}
@@ -161,7 +161,7 @@ export function RichTextEditor({
         >
           <UnderlineIcon className="h-4 w-4" />
         </Toggle>
-        <Toggle
+        {/* <Toggle
           size="sm"
           pressed={editor.isActive("strike")}
           onPressedChange={() => editor.chain().focus().toggleStrike().run()}
@@ -169,7 +169,7 @@ export function RichTextEditor({
           type="button"
         >
           <Strikethrough className="h-4 w-4" />
-        </Toggle>
+        </Toggle> */}
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 

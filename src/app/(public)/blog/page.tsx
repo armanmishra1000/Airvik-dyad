@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
-import { getPosts } from "@/lib/api";
+import { getPosts } from "@/lib/server/posts";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 

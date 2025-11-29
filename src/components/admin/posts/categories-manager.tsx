@@ -149,7 +149,7 @@ export function CategoriesManager({ initialCategories }: { initialCategories: Ca
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-8rem)]">
+    <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-24rem)]">
       {/* Left Side - Form */}
       <div className="w-full lg:w-[40%] space-y-6 bg-card p-6 rounded-lg border h-fit overflow-y-auto">
         <div className="flex items-center justify-between">
