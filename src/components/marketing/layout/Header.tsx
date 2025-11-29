@@ -197,7 +197,7 @@ export function Header() {
                 rel="noopener noreferrer"
               >
                 <FaWhatsapp className="h-4 w-4" aria-hidden="true" />
-                Ashram Connect
+                Whatapp
               </a>
             </Button>
           </div>
