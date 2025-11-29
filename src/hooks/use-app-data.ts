@@ -339,6 +339,7 @@ import type {
   Amenity,
   StickyNote,
   DashboardComponentId,
+  NewReservationActivityLog,
 } from "@/data/types";
 
 type FolioItemRecord = {
@@ -374,6 +375,8 @@ type CreateReservationPayload = {
 };
 
 type UserProfileUpdate = Partial<Pick<User, "name" | "roleId">>;
+
+type ReservationActivityLogInput = Omit<NewReservationActivityLog, "reservationId">;
 
 const defaultProperty: Property = {
   id: "default-property-id",
@@ -567,7 +570,11 @@ export function useAppData() {
     setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, status } : r));
   };
 
-  const addFolioItem = async (reservationId: string, item: Omit<FolioItem, "id" | "timestamp">) => {
+  const addFolioItem = async (
+    reservationId: string,
+    item: Omit<FolioItem, "id" | "timestamp">,
+    options?: { activityLog?: ReservationActivityLogInput }
+  ) => {
     const { data, error } = await api.addFolioItem({
       reservation_id: reservationId,
       description: item.description,
@@ -595,6 +602,23 @@ export function useAppData() {
           : r
       )
     );
+
+    if (options?.activityLog) {
+      try {
+        await api.createReservationActivityLog({
+          reservation_id: reservationId,
+          actor_user_id: options.activityLog.actorUserId ?? null,
+          actor_role: options.activityLog.actorRole,
+          actor_name: options.activityLog.actorName ?? null,
+          action: options.activityLog.action,
+          amount_minor: options.activityLog.amountMinor ?? null,
+          notes: options.activityLog.notes ?? null,
+          metadata: options.activityLog.metadata ?? null,
+        });
+      } catch (activityError) {
+        console.error("Failed to record reservation activity", activityError);
+      }
+    }
   };
 
   const addRoomType = async (roomTypeData: Omit<RoomType, "id">) => {

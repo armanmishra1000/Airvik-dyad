@@ -34,6 +34,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useDataContext } from "@/context/data-context";
+import { useAuthContext } from "@/context/auth-context";
 import type { Reservation } from "@/data/types";
 import {
   calculateReservationFinancials,
@@ -68,6 +69,7 @@ export function RecordPaymentDialog({
 }: RecordPaymentDialogProps) {
   const [open, setOpen] = React.useState(false);
   const { addFolioItem, reservations, property } = useDataContext();
+  const { currentUser, userRole } = useAuthContext();
   const formatCurrency = useCurrencyFormatter();
 
   const reservation = React.useMemo(
@@ -189,11 +191,32 @@ export function RecordPaymentDialog({
     }
 
     try {
-      await addFolioItem(reservationId, {
-        description: `Payment - ${values.method}`,
-        amount: -Math.abs(values.amount),
-        paymentMethod: values.method,
-      });
+      const actorRole = userRole?.name ?? "Unknown Role";
+      const actorName = currentUser?.name || currentUser?.email || "Unknown User";
+      const paymentAmount = Math.abs(values.amount);
+      await addFolioItem(
+        reservationId,
+        {
+          description: `Payment - ${values.method}`,
+          amount: -paymentAmount,
+          paymentMethod: values.method,
+        },
+        {
+          activityLog: {
+            action: "payment_recorded",
+            actorRole,
+            actorName,
+            actorUserId: currentUser?.id ?? null,
+            amountMinor: Math.round(paymentAmount * 100),
+            notes: `Recorded a payment of ${formatCurrency(paymentAmount)} via ${values.method}`,
+            metadata: {
+              method: values.method,
+              entryMode,
+              percentage: normalizedPercentage,
+            },
+          },
+        }
+      );
       toast.success("Payment recorded successfully!");
       form.reset();
       setOpen(false);

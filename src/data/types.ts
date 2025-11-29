@@ -216,6 +216,30 @@ export interface FolioItem {
   paymentMethod?: string | null;
 }
 
+export interface ReservationActivityLog {
+  id: string;
+  reservationId: string;
+  actorUserId?: string | null;
+  actorRole: string;
+  actorName?: string | null;
+  action: string;
+  amountMinor?: number | null;
+  notes?: string | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface NewReservationActivityLog {
+  reservationId: string;
+  actorUserId?: string | null;
+  actorRole: string;
+  actorName?: string | null;
+  action: string;
+  amountMinor?: number | null;
+  notes?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
 export type DonationFrequency = "one_time" | "monthly";
 export type DonationStatus = "pending" | "paid" | "failed" | "refunded";
 

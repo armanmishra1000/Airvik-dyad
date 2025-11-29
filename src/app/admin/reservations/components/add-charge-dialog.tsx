@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useDataContext } from "@/context/data-context";
+import { useAuthContext } from "@/context/auth-context";
+import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 const amountString = z
   .string()
@@ -57,6 +59,8 @@ export function AddChargeDialog({
 }: AddChargeDialogProps) {
   const [open, setOpen] = React.useState(false);
   const { addFolioItem } = useDataContext();
+  const { currentUser, userRole } = useAuthContext();
+  const formatCurrency = useCurrencyFormatter();
 
   const form = useForm<ChargeFormValues>({
     resolver: zodResolver(chargeSchema),
@@ -66,16 +70,44 @@ export function AddChargeDialog({
     },
   });
 
-  function onSubmit(values: ChargeFormValues) {
+  async function onSubmit(values: ChargeFormValues) {
     const parsedAmount = Number(values.amount.replace(/,/g, ""));
+    const description = values.description.trim();
+    const actorRole = userRole?.name ?? "Unknown Role";
+    const actorName = currentUser?.name || currentUser?.email || "Unknown User";
+    const activitySummary = `Added a charge of ${formatCurrency(parsedAmount)} for ${description}`;
 
-    addFolioItem(reservationId, {
-      description: values.description.trim(),
-      amount: parsedAmount,
-    });
-    toast.success("Charge added successfully!");
-    form.reset();
-    setOpen(false);
+    try {
+      await addFolioItem(
+        reservationId,
+        {
+          description,
+          amount: parsedAmount,
+        },
+        {
+          activityLog: {
+            action: "charge_added",
+            actorRole,
+            actorName,
+            actorUserId: currentUser?.id ?? null,
+            amountMinor: Math.round(parsedAmount * 100),
+            notes: activitySummary,
+            metadata: {
+              description,
+              source: "manual_charge",
+            },
+          },
+        }
+      );
+      toast.success("Charge added successfully!");
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      console.error("Failed to add charge", error);
+      toast.error("Failed to add charge", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    }
   }
 
   return (

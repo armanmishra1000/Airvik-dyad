@@ -17,6 +17,7 @@ import type {
   Post,
   RoomTypeAvailability,
   BookingRestriction,
+  ReservationActivityLog,
 } from "@/data/types";
 import { mapMonthlyAvailabilityRow, MonthlyAvailabilityRow } from "@/lib/availability";
 import {
@@ -203,6 +204,30 @@ type UpdateUserProfilePayload = Partial<{
   roleId: string;
 }>;
 
+type DbReservationActivityLog = {
+  id: string;
+  reservation_id: string;
+  actor_user_id: string | null;
+  actor_role: string;
+  actor_name: string | null;
+  action: string;
+  amount_minor: number | null;
+  notes: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
+
+type ReservationActivityLogInsertPayload = {
+  reservation_id: string;
+  actor_user_id?: string | null;
+  actor_role: string;
+  actor_name?: string | null;
+  action: string;
+  amount_minor?: number | null;
+  notes?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
 
 // --- Validation Helpers ---
 
@@ -356,6 +381,21 @@ const fromDbBookingRestriction = (
   startDate: row.start_date ?? undefined,
   endDate: row.end_date ?? undefined,
   roomTypeId: row.room_type_id ?? undefined,
+});
+
+const fromDbReservationActivityLog = (
+  row: DbReservationActivityLog
+): ReservationActivityLog => ({
+  id: row.id,
+  reservationId: row.reservation_id,
+  actorUserId: row.actor_user_id,
+  actorRole: row.actor_role,
+  actorName: row.actor_name,
+  action: row.action,
+  amountMinor: row.amount_minor,
+  notes: row.notes,
+  metadata: row.metadata ?? null,
+  createdAt: row.created_at,
 });
 
 // --- Blog Transformers ---
@@ -516,6 +556,56 @@ export const addFolioItem = (itemData: FolioItemInsertPayload) =>
     ])
     .select()
     .single();
+
+// Reservation Activity Logs
+export const getReservationActivityLogs = async (reservationId: string) => {
+  const { data, error, ...rest } = await supabase
+    .from('reservation_activity_logs')
+    .select('*')
+    .eq('reservation_id', reservationId)
+    .order('created_at', { ascending: false });
+
+  if (error || !data) {
+    return { data: [] as ReservationActivityLog[], error, ...rest };
+  }
+
+  return {
+    data: (data as DbReservationActivityLog[]).map(fromDbReservationActivityLog),
+    error,
+    ...rest,
+  };
+};
+
+export const createReservationActivityLog = async (
+  payload: ReservationActivityLogInsertPayload
+) => {
+  const { data, error, ...rest } = await supabase
+    .from('reservation_activity_logs')
+    .insert([
+      {
+        reservation_id: payload.reservation_id,
+        actor_user_id: payload.actor_user_id ?? null,
+        actor_role: payload.actor_role,
+        actor_name: payload.actor_name ?? null,
+        action: payload.action,
+        amount_minor: payload.amount_minor ?? null,
+        notes: payload.notes ?? null,
+        metadata: payload.metadata ?? {},
+      },
+    ])
+    .select()
+    .single();
+
+  if (error || !data) {
+    return { data: null, error, ...rest };
+  }
+
+  return {
+    data: fromDbReservationActivityLog(data as DbReservationActivityLog),
+    error,
+    ...rest,
+  };
+};
 
 // Rooms
 export const getRooms = async () => {

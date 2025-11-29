@@ -92,6 +92,7 @@ import type {
   Amenity,
   StickyNote,
   DashboardComponentId,
+  NewReservationActivityLog,
 } from "@/data/types";
 
 type AddReservationPayload = Omit<
@@ -105,6 +106,8 @@ type AddReservationPayload = Omit<
   | "taxEnabledSnapshot"
   | "taxRateSnapshot"
 > & { roomIds: string[] };
+
+type ReservationActivityLogInput = Omit<NewReservationActivityLog, "reservationId">;
 
 // This mirrors the original AppContextType for component compatibility
 interface DataContextType {
@@ -142,8 +145,9 @@ interface DataContextType {
   deleteGuest: (guestId: string) => Promise<boolean>;
   addFolioItem: (
     reservationId: string,
-    item: Omit<FolioItem, "id" | "timestamp">
-  ) => void;
+    item: Omit<FolioItem, "id" | "timestamp">,
+    options?: { activityLog?: ReservationActivityLogInput }
+  ) => Promise<void>;
   assignHousekeeper: (assignment: { roomId: string; userId: string }) => void;
   updateAssignmentStatus: (
     roomId: string,
