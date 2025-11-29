@@ -11,6 +11,7 @@ import { StayDetailsCard } from "./components/StayDetailsCard";
 import { BillingCard } from "./components/BillingCard";
 import { LinkedReservationsCard } from "./components/LinkedReservationsCard";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
+import type { ReservationStatus } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
 
 export default function ReservationDetailsPage() {
@@ -54,6 +55,12 @@ export default function ReservationDetailsPage() {
         })
     : [];
 
+  const inactiveStatuses = new Set<ReservationStatus>(["Cancelled"]);
+
+  const activeBookingReservations = bookingReservationsWithDetails.filter(
+    (entry) => !inactiveStatuses.has(entry.status)
+  );
+
   if (!reservation) {
     return notFound();
   }
@@ -74,8 +81,8 @@ export default function ReservationDetailsPage() {
     fallbackReservationDetails;
 
   const normalizedReservations =
-    bookingReservationsWithDetails.length > 0
-      ? bookingReservationsWithDetails
+    activeBookingReservations.length > 0
+      ? activeBookingReservations
       : [reservationWithDetails];
   const taxesTotal = normalizedReservations.reduce(
     (sum, entry) => sum + calculateReservationTaxAmount(entry, property),

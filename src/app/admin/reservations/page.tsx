@@ -6,7 +6,7 @@ import { differenceInDays, parseISO } from "date-fns";
 import { columns, ReservationWithDetails } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { useDataContext } from "@/context/data-context";
-import type { FolioItem } from "@/data/types";
+import type { FolioItem, ReservationStatus } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
 import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
 
@@ -14,6 +14,15 @@ function sumAdditionalCharges(folioItems: FolioItem[] = []) {
   return folioItems
     .filter((item) => item.amount > 0)
     .reduce((sum, item) => sum + item.amount, 0);
+}
+
+const EXCLUDED_REVENUE_STATUSES = new Set<ReservationStatus>([
+  "Cancelled",
+  "No-show",
+]);
+
+function isRevenueReservation(status: ReservationStatus) {
+  return !EXCLUDED_REVENUE_STATUSES.has(status);
 }
 
 function getReservationDisplayAmount(
@@ -56,7 +65,10 @@ export default function ReservationsPage() {
         displayAmount: 0,
       };
 
-      detailedReservation.displayAmount = getReservationDisplayAmount(detailedReservation, property);
+      const baseDisplayAmount = getReservationDisplayAmount(detailedReservation, property);
+      detailedReservation.displayAmount = isRevenueReservation(detailedReservation.status)
+        ? baseDisplayAmount
+        : 0;
       return detailedReservation;
     });
 
@@ -72,15 +84,20 @@ export default function ReservationsPage() {
     for (const group of bookingGroups.values()) {
       if (group.length > 1) {
         const firstRes = group[0];
-        const roomTotal = group.reduce((sum, r) => sum + r.totalAmount, 0);
-        const combinedFolio = group.flatMap((entry) => entry.folio ?? []);
+        const activeEntries = group.filter((entry) => isRevenueReservation(entry.status));
+        const revenueEntries = activeEntries.length ? activeEntries : [];
+        const roomTotal = revenueEntries.reduce((sum, r) => sum + r.totalAmount, 0);
+        const combinedFolio = revenueEntries.flatMap((entry) => entry.folio ?? []);
+        const displayAmount = revenueEntries.length
+          ? getGroupDisplayAmount(revenueEntries, combinedFolio, property)
+          : 0;
         const parentRow: ReservationWithDetails = {
           ...firstRes,
           id: firstRes.bookingId,
           roomNumber: group.map((r) => r.roomNumber).filter(Boolean).join(", "),
-          roomCount: group.length,
+          roomCount: activeEntries.length || group.length,
           totalAmount: roomTotal,
-          displayAmount: getGroupDisplayAmount(group, combinedFolio, property),
+          displayAmount,
           subRows: group.map((entry) => ({ ...entry, roomCount: 1 })),
         };
         tableData.push(parentRow);

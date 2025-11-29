@@ -19,6 +19,7 @@ type ReservationDateRangePickerProps = {
   onChange: (range: DateRange | undefined) => void;
   className?: string;
   disabled?: boolean;
+  allowPastDates?: boolean;
 };
 
 export function ReservationDateRangePicker({
@@ -26,9 +27,11 @@ export function ReservationDateRangePicker({
   onChange,
   className,
   disabled = false,
+  allowPastDates = false,
 }: ReservationDateRangePickerProps) {
   const [isMobile, setIsMobile] = React.useState(false);
   const [open, setOpen] = React.useState(false);
+  const [displayMonth, setDisplayMonth] = React.useState<Date>(() => value?.from ?? new Date());
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -40,13 +43,30 @@ export function ReservationDateRangePicker({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  React.useEffect(() => {
+    if (value?.from) {
+      setDisplayMonth(value.from);
+      return;
+    }
+    setDisplayMonth(new Date());
+  }, [value?.from]);
+
   const popoverOffset = isMobile ? 12 : 40;
 
   const handleSelect = (range: DateRange | undefined) => {
     onChange(range);
+    if (range?.from) {
+      setDisplayMonth(range.from);
+    }
     if (range?.from && range?.to) {
       setOpen(false);
     }
+  };
+
+  const handleClear = () => {
+    const emptyRange: DateRange = { from: undefined, to: undefined };
+    onChange(emptyRange);
+    setDisplayMonth(new Date());
   };
 
   return (
@@ -92,29 +112,34 @@ export function ReservationDateRangePicker({
         className="w-full max-w-[min(100vw-1.5rem,640px)] md:max-w-none border border-border/40 rounded-2xl bg-white shadow-xl px-4 py-4 md:px-5 md:py-4 max-h-[80vh] overflow-y-auto"
       >
         <div className="px-5 py-4 border-b border-border/30">
-          <div className="flex gap-4 md:flex-row md:items-start md:justify-between text-sm">
-            <div className="flex-1">
-              <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-in</span>
-              <span className="mt-1 block text-base font-medium text-foreground">
-                {value?.from ? format(value.from, "EEE, MMM d") : "Select date"}
-              </span>
-            </div>
-            <div className="flex-1 text-right">
-              <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-out</span>
-              <span className="mt-1 block text-base font-medium text-foreground">
-                {value?.to ? format(value.to, "EEE, MMM d") : "Select date"}
-              </span>
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4 text-sm">
+            <div className="flex gap-4 md:flex-row md:flex-1">
+              <div className="flex-1">
+                <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-in</span>
+                <span className="mt-1 block text-base font-medium text-foreground">
+                  {value?.from ? format(value.from, "EEE, MMM d") : "Select date"}
+                </span>
+              </div>
+              <div className="flex-1 text-left md:text-right">
+                <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">Check-out</span>
+                <span className="mt-1 block text-base font-medium text-foreground">
+                  {value?.to ? format(value.to, "EEE, MMM d") : "Select date"}
+                </span>
+              </div>
             </div>
           </div>
         </div>
         <Calendar
           initialFocus
           mode="range"
-          defaultMonth={value?.from || new Date()}
+          month={displayMonth}
+          onMonthChange={setDisplayMonth}
           selected={value}
           onSelect={handleSelect}
           numberOfMonths={isMobile ? 1 : 2}
-          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+          disabled={(date) =>
+            !allowPastDates && date < new Date(new Date().setHours(0, 0, 0, 0))
+          }
           showOutsideDays
           className="pt-3 pb-4 md:pt-4 md:pb-5 px-1 md:px-5"
           classNames={{
@@ -149,6 +174,18 @@ export function ReservationDateRangePicker({
             day_hidden: "invisible",
           }}
         />
+        <div className="flex justify-end border-t border-border/20 pt-4 mt-2">
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            className="bg-primary text-white hover:bg-primary-hover disabled:opacity-50 text-sm px-4"
+            onClick={handleClear}
+            disabled={!value?.from && !value?.to}
+          >
+            Clear
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

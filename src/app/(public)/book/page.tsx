@@ -23,6 +23,7 @@ interface RoomAvailabilityPanelProps {
   totalGuests: number;
   onUpdateQuantity: (roomTypeId: string, quantity: number) => void;
   showCapacityLockedToast: (guestCount: number) => void;
+  maxSelectableRooms: number;
 }
 
 function RoomAvailabilityPanel({
@@ -33,9 +34,16 @@ function RoomAvailabilityPanel({
   totalGuests,
   onUpdateQuantity,
   showCapacityLockedToast,
+  maxSelectableRooms,
 }: RoomAvailabilityPanelProps) {
   const isSelected = selectedQuantity > 0;
   const checkboxDisabled = !isSelected && !canAddMoreRooms;
+
+  React.useEffect(() => {
+    if (isSelected && selectedQuantity > maxSelectableRooms) {
+      onUpdateQuantity(roomTypeId, Math.max(maxSelectableRooms, 1));
+    }
+  }, [isSelected, maxSelectableRooms, onUpdateQuantity, roomTypeId, selectedQuantity]);
 
   const handleCheckboxClick: React.MouseEventHandler<HTMLLabelElement> = (
     event,
@@ -67,9 +75,7 @@ function RoomAvailabilityPanel({
       return;
     }
 
-    const isIncrease = nextQuantity > selectedQuantity;
-
-    if (isIncrease && !canAddMoreRooms) {
+    if (nextQuantity > maxSelectableRooms) {
       event.target.value = String(selectedQuantity);
       if (totalGuests > 0) {
         showCapacityLockedToast(totalGuests);
@@ -114,13 +120,14 @@ function RoomAvailabilityPanel({
             value={selectedQuantity}
             onChange={handleSelectChange}
           >
-            {Array.from({ length: availableCount }, (_, index) => index + 1).map(
-              (count) => (
-                <option key={count} value={count}>
-                  {count}
-                </option>
-              ),
-            )}
+            {Array.from(
+              { length: Math.max(maxSelectableRooms, 1) },
+              (_, index) => index + 1,
+            ).map((count) => (
+              <option key={count} value={count}>
+                {count}
+              </option>
+            ))}
           </select>
         </div>
       )}
@@ -262,6 +269,34 @@ export default function RoomsPage() {
     if (totalGuests === 0) return true;
     return totalSelectedCapacity < totalGuests;
   }, [searchValues, totalGuests, totalSelectedCapacity]);
+
+  const getMaxSelectableRooms = React.useCallback(
+    (perRoomCapacity: number, selectedQuantity: number, availableCount: number) => {
+      const safeSelection = selectedQuantity > 0 ? selectedQuantity : 1;
+
+      if (availableCount <= 0) {
+        return safeSelection;
+      }
+
+      if (!totalGuests || perRoomCapacity <= 0) {
+        return Math.max(1, Math.min(availableCount, safeSelection));
+      }
+
+      const otherCapacity =
+        totalSelectedCapacity - selectedQuantity * perRoomCapacity;
+      const remainingGuests = totalGuests - otherCapacity;
+
+      if (remainingGuests <= 0) {
+        return Math.max(1, Math.min(availableCount, safeSelection));
+      }
+
+      const roomsNeeded = Math.ceil(remainingGuests / perRoomCapacity);
+      const limit = Math.max(roomsNeeded, safeSelection);
+
+      return Math.max(1, Math.min(limit, availableCount));
+    },
+    [totalGuests, totalSelectedCapacity],
+  );
 
   const totalAvailableCapacityForDates = React.useMemo(() => {
     if (!roomTypeAvailability || roomTypeAvailability.length === 0) {
@@ -523,21 +558,34 @@ export default function RoomsPage() {
                         {hasSearched &&
                           !hasNoInventory &&
                           roomTypeAvailability && (
+                            (() => {
+                              const availableCount =
+                                availabilityByRoomTypeId.get(roomType.id) ?? 0;
+                              const selectedQuantity = getSelectedQuantity(
+                                roomType.id,
+                              );
+                              const perRoomCapacity = roomType.maxOccupancy || 0;
+                              const maxSelectableRooms = getMaxSelectableRooms(
+                                perRoomCapacity,
+                                selectedQuantity,
+                                availableCount,
+                              );
+
+                              return (
                             <RoomAvailabilityPanel
                               roomTypeId={roomType.id}
-                              availableCount={
-                                availabilityByRoomTypeId.get(roomType.id) ?? 0
-                              }
-                              selectedQuantity={getSelectedQuantity(
-                                roomType.id,
-                              )}
+                                availableCount={availableCount}
+                                selectedQuantity={selectedQuantity}
                               canAddMoreRooms={canAddMoreRooms}
                               totalGuests={totalGuests}
                               onUpdateQuantity={updateSelectedQuantity}
                               showCapacityLockedToast={
                                 showCapacityLockedToast
                               }
+                                maxSelectableRooms={maxSelectableRooms}
                             />
+                              );
+                            })()
                           )}
                       </div>
                     ))}
