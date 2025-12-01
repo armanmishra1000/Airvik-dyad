@@ -48,7 +48,7 @@ export function ReservationActivityTimeline({ reservationId }: ReservationActivi
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-semibold text-foreground">
-                      {log.notes ?? log.action.replace(/_/g, " ")}
+                      {log.details ?? log.action.replace(/_/g, " ")}
                     </p>
                     <Badge variant="secondary" className="text-xs">
                       {log.actorRole}

@@ -92,7 +92,7 @@ import type {
   Amenity,
   StickyNote,
   DashboardComponentId,
-  NewReservationActivityLog,
+  AdminActivityLogInput,
 } from "@/data/types";
 
 type AddReservationPayload = Omit<
@@ -106,8 +106,6 @@ type AddReservationPayload = Omit<
   | "taxEnabledSnapshot"
   | "taxRateSnapshot"
 > & { roomIds: string[] };
-
-type ReservationActivityLogInput = Omit<NewReservationActivityLog, "reservationId">;
 
 // This mirrors the original AppContextType for component compatibility
 interface DataContextType {
@@ -145,8 +143,7 @@ interface DataContextType {
   deleteGuest: (guestId: string) => Promise<boolean>;
   addFolioItem: (
     reservationId: string,
-    item: Omit<FolioItem, "id" | "timestamp">,
-    options?: { activityLog?: ReservationActivityLogInput }
+    item: Omit<FolioItem, "id" | "timestamp">
   ) => Promise<void>;
   assignHousekeeper: (assignment: { roomId: string; userId: string }) => void;
   updateAssignmentStatus: (
@@ -192,6 +189,7 @@ interface DataContextType {
   ) => void;
   deleteStickyNote: (noteId: string) => void;
   updateDashboardLayout: (layout: DashboardComponentId[]) => void;
+  logActivity: (entry: AdminActivityLogInput) => Promise<void>;
 }
 
 const DataContext = React.createContext<DataContextType | undefined>(undefined);

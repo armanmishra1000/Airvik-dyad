@@ -2,14 +2,14 @@
 
 import * as React from "react";
 
-import type { ReservationActivityLog } from "@/data/types";
+import type { AdminActivityLog } from "@/data/types";
 import { getReservationActivityLogs } from "@/lib/api";
 
 export function useReservationActivityLogs(
   reservationId: string | null,
   enabled: boolean
 ) {
-  const [logs, setLogs] = React.useState<ReservationActivityLog[]>([]);
+  const [logs, setLogs] = React.useState<AdminActivityLog[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<Error | null>(null);
 

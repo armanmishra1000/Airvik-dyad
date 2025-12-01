@@ -83,7 +83,7 @@ export function BillingCard({ reservation, groupSummary }: BillingCardProps) {
   } = calculateReservationFinancials(billingSource, summaryTaxConfig);
 
   return (
-    <Card className="flex h-full flex-col">
+    <Card className="flex flex-col">
       <CardHeader>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
