@@ -76,6 +76,7 @@
 
 import * as React from "react";
 import { useAppData } from "@/hooks/use-app-data";
+import type { BookingValidationResult } from "@/lib/api";
 import type {
   Reservation,
   Guest,
@@ -107,6 +108,25 @@ type AddReservationPayload = Omit<
   | "taxRateSnapshot"
 > & { roomIds: string[] };
 
+type AddRoomsToBookingPayload = {
+  bookingId: string;
+  roomIds: string[];
+  guestId: string;
+  ratePlanId: string;
+  checkInDate: string;
+  checkOutDate: string;
+  numberOfGuests: number;
+  adultCount: number;
+  childCount: number;
+  status: ReservationStatus;
+  notes?: string;
+  bookingDate: string;
+  source: Reservation["source"];
+  paymentMethod: Reservation["paymentMethod"];
+  taxEnabledSnapshot: boolean;
+  taxRateSnapshot: number;
+};
+
 // This mirrors the original AppContextType for component compatibility
 interface DataContextType {
   isLoading: boolean;
@@ -126,6 +146,9 @@ interface DataContextType {
   updateProperty: (updatedData: Partial<Omit<Property, "id">>) => void;
   addReservation: (
     reservation: AddReservationPayload
+  ) => Promise<Reservation[]>;
+  addRoomsToBooking: (
+    payload: AddRoomsToBookingPayload
   ) => Promise<Reservation[]>;
   updateReservation: (
     reservationId: string,

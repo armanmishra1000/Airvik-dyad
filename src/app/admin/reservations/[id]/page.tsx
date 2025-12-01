@@ -12,27 +12,37 @@ import { BillingCard } from "./components/BillingCard";
 import { LinkedReservationsCard } from "./components/LinkedReservationsCard";
 import { ReservationActivityTimeline } from "./components/ReservationActivityTimeline";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
+import type { ReservationStatus } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ReservationDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { reservations, guests, rooms, property } = useDataContext();
+  const { reservations, guests, rooms, property, isLoading } = useDataContext();
   const reservationIdFromParams = React.useMemo(() => {
     const rawId = params?.id;
     if (!rawId) return "";
     return Array.isArray(rawId) ? rawId[0] ?? "" : rawId;
   }, [params]);
 
+  const reservation = React.useMemo(
+    () => reservations.find((r) => r.id === reservationIdFromParams),
+    [reservations, reservationIdFromParams]
+  );
+
   if (!reservationIdFromParams) {
-    return notFound();
+    return isLoading ? <ReservationDetailsSkeleton /> : notFound();
   }
 
-  const reservation = reservations.find((r) => r.id === reservationIdFromParams);
-  const guest = guests.find((g) => g.id === reservation?.guestId);
+  if (isLoading) {
+    return <ReservationDetailsSkeleton />;
+  }
 
   if (!reservation) {
     return notFound();
   }
+
+  const guest = guests.find((g) => g.id === reservation.guestId);
 
   const bookingReservationsWithDetails: ReservationWithDetails[] = reservation
     ? reservations
@@ -55,9 +65,11 @@ export default function ReservationDetailsPage() {
         })
     : [];
 
-  if (!reservation) {
-    return notFound();
-  }
+  const inactiveStatuses = new Set<ReservationStatus>(["Cancelled", "No-show"]);
+
+  const activeBookingReservations = bookingReservationsWithDetails.filter(
+    (entry) => !inactiveStatuses.has(entry.status)
+  );
 
   const fallbackReservationDetails: ReservationWithDetails = {
     ...reservation,
@@ -75,8 +87,8 @@ export default function ReservationDetailsPage() {
     fallbackReservationDetails;
 
   const normalizedReservations =
-    bookingReservationsWithDetails.length > 0
-      ? bookingReservationsWithDetails
+    activeBookingReservations.length > 0
+      ? activeBookingReservations
       : [reservationWithDetails];
   const taxesTotal = normalizedReservations.reduce(
     (sum, entry) => sum + calculateReservationTaxAmount(entry, property),
@@ -120,6 +132,25 @@ export default function ReservationDetailsPage() {
             groupSummary={groupSummary}
           />
           <ReservationActivityTimeline reservationId={reservation.id} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReservationDetailsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Skeleton className="h-10 w-64" />
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-1 space-y-6">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+        <div className="lg:col-span-2 space-y-6">
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
         </div>
       </div>
     </div>
