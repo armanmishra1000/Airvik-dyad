@@ -12,15 +12,6 @@ import { ReservationDateRangePicker } from "@/components/reservations/date-range
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   Form,
   FormControl,
   FormField,
@@ -110,14 +101,17 @@ type PendingRoomEntry = {
   occupancyLabel?: string;
 };
 
-export function EditReservationDialog({
-  reservation,
-  children,
-}: {
+interface ReservationEditFormProps {
   reservation: ReservationWithDetails;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = React.useState(false);
+  onCancel?: () => void;
+  onSuccess?: () => void;
+}
+
+export function ReservationEditForm({
+  reservation,
+  onCancel,
+  onSuccess,
+}: ReservationEditFormProps) {
   const {
     updateReservation,
     addRoomsToBooking,
@@ -166,9 +160,10 @@ export function EditReservationDialog({
   );
 
   const schema = React.useMemo(() => buildEditReservationSchema(resolveCapacity), [resolveCapacity]);
+  const resolver = React.useMemo(() => zodResolver(schema), [schema]);
 
   const form = useForm<EditFormValues>({
-    resolver: zodResolver(schema),
+    resolver,
     defaultValues: buildDefaultValues(reservation, initialRoomIds),
     mode: "onChange",
     reValidateMode: "onChange",
@@ -177,6 +172,10 @@ export function EditReservationDialog({
   React.useEffect(() => {
     form.reset(buildDefaultValues(reservation, initialRoomIds));
   }, [reservation, form, initialRoomIds]);
+
+  React.useEffect(() => {
+    void form.trigger("roomIds");
+  }, [schema, form]);
 
   const watchedDateRange = form.watch("dateRange");
   const adults = Number(form.watch("adults")) || 0;
@@ -235,17 +234,6 @@ export function EditReservationDialog({
     return allAvailableRooms.filter((room) => room.roomTypeId === selectedRoomTypeId);
   }, [allAvailableRooms, selectedRoomTypeId]);
 
-  const displayRooms = React.useMemo(() => {
-    if (!selectedRoomIds.length) return filteredAvailableRooms;
-    const knownRooms = selectedRoomIds
-      .map((roomId) => roomMap.get(roomId))
-      .filter((room): room is NonNullable<typeof room> => Boolean(room));
-    const missingRooms = knownRooms.filter(
-      (room) => !filteredAvailableRooms.some((available) => available.id === room.id)
-    );
-    return [...missingRooms, ...filteredAvailableRooms];
-  }, [filteredAvailableRooms, selectedRoomIds, roomMap]);
-
   const pendingRoomEntries = React.useMemo<PendingRoomEntry[]>(() => {
     const entries: PendingRoomEntry[] = [];
     const selectedSet = new Set(selectedRoomIds);
@@ -296,31 +284,34 @@ export function EditReservationDialog({
     return entries.sort((a, b) => order[a.kind] - order[b.kind]);
   }, [activeGroupReservations, roomMap, roomTypeMap, selectedRoomIds]);
 
+  const ratePlan = React.useMemo(() => {
+    if (!ratePlans.length) {
+      return undefined;
+    }
+    return ratePlans.find((plan) => plan.id === reservation.ratePlanId);
+  }, [ratePlans, reservation.ratePlanId]);
+  const ratePlanUnavailable = !ratePlan;
+
   const selectedRoomsCapacity = React.useMemo(
     () => resolveCapacity(selectedRoomIds),
     [resolveCapacity, selectedRoomIds]
   );
   const hasCapacity = totalGuests > 0 && selectedRoomsCapacity >= totalGuests;
-  const canSubmit = form.formState.isValid && hasCapacity && selectedRoomIds.length > 0;
+  const canSubmit = form.formState.isValid && hasCapacity && selectedRoomIds.length > 0 && !ratePlanUnavailable;
 
   React.useEffect(() => {
-    if (!displayRooms.length) return;
-    const safeIds = new Set(displayRooms.map((room) => room.id));
+    if (!watchedDateRange?.from || !watchedDateRange?.to) return;
+    const availableIds = new Set(allAvailableRooms.map((room) => room.id));
     const current = form.getValues("roomIds") ?? [];
-    const filtered = current.filter((id) => safeIds.has(id));
+    const filtered = current.filter((id) => availableIds.has(id));
     if (filtered.length !== current.length) {
       form.setValue("roomIds", filtered, { shouldValidate: true });
     }
-  }, [displayRooms, form]);
+  }, [allAvailableRooms, form, watchedDateRange]);
 
   React.useEffect(() => {
     void form.trigger("roomIds");
   }, [adults, childGuests, form]);
-
-  const ratePlan = React.useMemo(
-    () => ratePlans.find((plan) => plan.id === reservation.ratePlanId) ?? ratePlans[0],
-    [ratePlans, reservation.ratePlanId]
-  );
 
   const taxSnapshotSource = React.useMemo(
     () => activeGroupReservations[0] ?? reservation,
@@ -334,6 +325,16 @@ export function EditReservationDialog({
       percentage: config.percentage,
     };
   }, [taxSnapshotSource, property]);
+  const taxSnapshot = React.useMemo(
+    () => {
+      const enabled = Boolean(taxConfig.enabled);
+      return {
+        taxEnabledSnapshot: enabled,
+        taxRateSnapshot: enabled ? taxConfig.percentage : 0,
+      };
+    },
+    [taxConfig]
+  );
 
   const selectedRoomTypes = React.useMemo(() => {
     return selectedRoomIds
@@ -348,7 +349,7 @@ export function EditReservationDialog({
   const formatCurrency = useCurrencyFormatter({ maximumFractionDigits: 0 });
 
   const pricing = React.useMemo(() => {
-    if (!selectedRoomTypes.length || nights <= 0) return null;
+    if (!selectedRoomTypes.length || nights <= 0 || !ratePlan) return null;
     return calculateMultipleRoomPricing({
       roomTypes: selectedRoomTypes,
       ratePlan,
@@ -359,7 +360,7 @@ export function EditReservationDialog({
 
   const resolveRoomCharge = React.useCallback(
     (roomId: string, stayNights: number) => {
-      if (!stayNights || stayNights <= 0) {
+      if (!stayNights || stayNights <= 0 || !ratePlan) {
         return null;
       }
       const room = roomMap.get(roomId);
@@ -377,6 +378,10 @@ export function EditReservationDialog({
   );
 
   const handleRoomToggle = (roomId: string) => {
+    if (ratePlanUnavailable) {
+      toast.error("Assign a rate plan before selecting rooms.");
+      return;
+    }
     const current = form.getValues("roomIds") ?? [];
     if (current.includes(roomId)) {
       form.setValue(
@@ -411,6 +416,10 @@ export function EditReservationDialog({
       form.setError("dateRange", { message: "Select stay dates" });
       return;
     }
+    if (!ratePlan) {
+      toast.error("Assign a rate plan before saving changes.");
+      return;
+    }
 
     const uniqueRoomIds = Array.from(new Set(values.roomIds));
     form.setValue("roomIds", uniqueRoomIds, { shouldValidate: true });
@@ -424,6 +433,7 @@ export function EditReservationDialog({
       numberOfGuests: totalGuestsSelected,
       notes: notes?.trim() || undefined,
     };
+    const { taxEnabledSnapshot, taxRateSnapshot } = taxSnapshot;
 
     const stayNights = Math.max(differenceInDays(dateRange.to, dateRange.from), 1);
     const roomChargeMap = new Map<string, number>();
@@ -465,6 +475,7 @@ export function EditReservationDialog({
       dateRange.to,
       "MMM d, yyyy"
     )}`;
+    const revertStack: Array<() => Promise<unknown> | void> = [];
 
     try {
       const availabilityResults = await Promise.all(
@@ -492,29 +503,47 @@ export function EditReservationDialog({
         });
         return;
       }
-
-      const taxEnabledSnapshot = Boolean(taxConfig.enabled);
-      const taxRateSnapshot = taxEnabledSnapshot ? taxConfig.percentage : 0;
-
-      await Promise.all(
-        assignments.map(({ reservation: entry, roomId }) =>
+      for (const { reservation: entry, roomId } of assignments) {
+        const previousPayload = {
+          checkInDate: entry.checkInDate,
+          checkOutDate: entry.checkOutDate,
+          adultCount: entry.adultCount,
+          childCount: entry.childCount,
+          numberOfGuests: entry.numberOfGuests ?? entry.adultCount + entry.childCount,
+          notes: entry.notes ?? undefined,
+          roomId: entry.roomId,
+          totalAmount: entry.totalAmount,
+          taxEnabledSnapshot: entry.taxEnabledSnapshot ?? false,
+          taxRateSnapshot: entry.taxRateSnapshot ?? 0,
+        };
+        await updateReservation(entry.id, {
+          ...perReservationPayload,
+          roomId,
+          totalAmount: roomChargeMap.get(roomId) ?? entry.totalAmount,
+          taxEnabledSnapshot,
+          taxRateSnapshot,
+        });
+        revertStack.push(() =>
           updateReservation(entry.id, {
-            ...perReservationPayload,
-            roomId,
-            totalAmount: roomChargeMap.get(roomId) ?? entry.totalAmount,
-            taxEnabledSnapshot,
-            taxRateSnapshot,
+            ...previousPayload,
           })
-        )
-      );
+        );
+      }
 
-      await Promise.all(
-        reservationsToCancel.map((entry) =>
+      for (const entry of reservationsToCancel) {
+        if (entry.status === "Cancelled") {
+          continue;
+        }
+        const previousStatus = entry.status;
+        await updateReservation(entry.id, {
+          status: "Cancelled",
+        });
+        revertStack.push(() =>
           updateReservation(entry.id, {
-            status: "Cancelled",
+            status: previousStatus,
           })
-        )
-      );
+        );
+      }
 
       if (roomsToCreate.length) {
         await addRoomsToBooking({
@@ -533,43 +562,45 @@ export function EditReservationDialog({
           source: reservation.source,
           paymentMethod:
             (reservation.paymentMethod as Reservation["paymentMethod"]) ?? "Not specified",
-          taxEnabledSnapshot: Boolean(taxSnapshotSource?.taxEnabledSnapshot),
-          taxRateSnapshot: taxSnapshotSource?.taxEnabledSnapshot
-            ? taxSnapshotSource?.taxRateSnapshot ?? 0
-            : 0,
+          taxEnabledSnapshot,
+          taxRateSnapshot,
         });
       }
 
       await refreshReservations();
       toast.success("Reservation updated successfully.");
-      handleDialogChange(false);
+      onSuccess?.();
     } catch (error) {
+      if (revertStack.length) {
+        for (const revert of revertStack.reverse()) {
+          try {
+            await Promise.resolve(revert());
+          } catch {
+            // Best-effort rollback; ignore failures while reverting.
+          }
+        }
+      }
+      await refreshReservations();
       toast.error("Failed to update reservation", {
-        description: (error as Error).message,
+        description:
+          (error as Error)?.message ?? "We rolled back partial changes. Please try again.",
       });
     }
   };
 
-  const handleDialogChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
-      form.reset(buildDefaultValues(reservation, initialRoomIds));
-    }
-    setOpen(nextOpen);
+  const handleCancel = () => {
+    form.reset(buildDefaultValues(reservation, initialRoomIds));
+    onCancel?.();
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-6xl">
-        <DialogHeader>
-          <DialogTitle>Edit Reservation</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            Modify stay dates, guests, and assigned rooms for this reservation.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <div className="space-y-6">
+    <div className="space-y-6">
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex flex-col gap-6 lg:flex-row lg:items-start"
+        >
+            <div className="flex w-full flex-col gap-6 lg:w-3/5 lg:min-w-0">
               <section className="rounded-2xl border border-border/60 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -707,10 +738,15 @@ export function EditReservationDialog({
                   render={() => (
                     <FormItem>
                       <FormLabel>Select available rooms</FormLabel>
+                      {ratePlanUnavailable && (
+                        <p className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                          Assign a rate plan to enable room selection.
+                        </p>
+                      )}
                       <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
                         {watchedDateRange?.from && watchedDateRange?.to ? (
-                          displayRooms.length ? (
-                            displayRooms.map((room) => {
+                          filteredAvailableRooms.length ? (
+                            filteredAvailableRooms.map((room) => {
                               const roomType = roomTypeMap.get(room.roomTypeId);
                               const statusLabel = ROOM_STATUS_LABELS[room.status] ?? room.status;
                               const isSelected = selectedRoomIds.includes(room.id);
@@ -718,12 +754,14 @@ export function EditReservationDialog({
                                 <label
                                   key={room.id}
                                   className={cn(
-                                    "flex cursor-pointer items-start gap-4 rounded-2xl border px-4 py-3",
-                                    isSelected ? "border-primary bg-primary/5" : "border-border/50"
+                                    "flex items-start gap-4 rounded-2xl border px-4 py-3",
+                                    isSelected ? "border-primary bg-primary/5" : "border-border/50",
+                                    ratePlanUnavailable ? "cursor-not-allowed opacity-60" : "cursor-pointer"
                                   )}
                                 >
                                   <Checkbox
                                     checked={isSelected}
+                                    disabled={ratePlanUnavailable}
                                     onCheckedChange={() => handleRoomToggle(room.id)}
                                   />
                                   <div className="flex flex-1 flex-col">
@@ -743,7 +781,7 @@ export function EditReservationDialog({
                             })
                           ) : (
                             <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
-                              No rooms available for these filters.
+                              No rooms match the selected dates or filters.
                             </p>
                           )
                         ) : (
@@ -758,7 +796,7 @@ export function EditReservationDialog({
                 />
               </section>
 
-              <section className="rounded-2xl border border-border/60 p-4">
+              {/* <section className="rounded-2xl border border-border/60 p-4">
                 <FormField
                   control={form.control}
                   name="notes"
@@ -772,10 +810,15 @@ export function EditReservationDialog({
                     </FormItem>
                   )}
                 />
-              </section>
+              </section> */}
             </div>
 
-            <div className="space-y-6">
+            <div className="flex w-full flex-col gap-6 lg:w-2/5 lg:min-w-0">
+              {ratePlanUnavailable && (
+                <section className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+                  No rate plan is available for this booking. Configure a rate plan to enable pricing and room assignment changes.
+                </section>
+              )}
               <section className="space-y-4 rounded-2xl border border-border/60 p-4 text-sm">
                 <div>
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Summary</p>
@@ -795,6 +838,12 @@ export function EditReservationDialog({
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Rooms Selected</span>
                     <span className="font-medium">{selectedRoomIds.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Rate Plan</span>
+                    <span className={cn("font-medium", ratePlan ? "text-foreground" : "text-destructive")}>
+                      {ratePlan?.name ?? "Unavailable"}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Capacity</span>
@@ -849,14 +898,14 @@ export function EditReservationDialog({
               </section>
 
               <div className="rounded-2xl border border-border/60 p-4">
-                <DialogFooter className="flex flex-col gap-3">
-                  <Button type="button" variant="outline" onClick={() => handleDialogChange(false)}>
+                <div className="flex flex-col gap-3">
+                  <Button type="button" variant="outline" onClick={handleCancel}>
                     Cancel
                   </Button>
                   <Button type="submit" disabled={!canSubmit || form.formState.isSubmitting}>
                     {form.formState.isSubmitting ? "Saving..." : "Save changes"}
                   </Button>
-                </DialogFooter>
+                </div>
               </div>
 
               <section className="space-y-4 rounded-2xl border border-border/60 p-4 text-sm">
@@ -927,11 +976,26 @@ export function EditReservationDialog({
                   )}
                 </div>
               </section>
+
+              <section className="rounded-2xl border border-border/60 p-4">
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notes</FormLabel>
+                      <FormControl>
+                        <Textarea rows={4} placeholder="Optional notes for the front desk" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </section>
             </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+        </form>
+      </Form>
+    </div>
   );
 }
 
