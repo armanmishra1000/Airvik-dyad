@@ -13,49 +13,10 @@ import type {
   RoomTypeAvailability,
   UnitsViewMode,
   Reservation,
-  ReservationStatus,
+  Guest,
 } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { useDataContext } from "@/context/data-context";
-
-const reservationStatusStyles: Record<
-  ReservationStatus,
-  { ribbon: string; dot: string }
-> = {
-  Tentative: {
-    ribbon: "border border-secondary/50 bg-secondary/30 text-secondary-foreground",
-    dot: "bg-secondary/80",
-  },
-  Standby: {
-    ribbon: "border border-amber-400/60 bg-amber-100 text-amber-900",
-    dot: "bg-amber-500",
-  },
-  Confirmed: {
-    ribbon: "border border-primary/40 bg-primary/10 text-primary",
-    dot: "bg-primary/80",
-  },
-  "Checked-in": {
-    ribbon: "border border-accent/50 bg-accent/30 text-accent-foreground",
-    dot: "bg-accent/80",
-  },
-  "Checked-out": {
-    ribbon: "border border-muted/50 bg-muted/40 text-muted-foreground",
-    dot: "bg-muted/70",
-  },
-  Cancelled: {
-    ribbon: "border border-destructive/40 bg-destructive/10 text-destructive",
-    dot: "bg-destructive/80",
-  },
-  "No-show": {
-    ribbon: "border border-destructive/40 bg-destructive/10 text-destructive",
-    dot: "bg-destructive/80",
-  },
-};
-
-const defaultStatusStyle = {
-  ribbon: "border border-muted/40 bg-muted/40 text-muted-foreground",
-  dot: "bg-muted/70",
-};
 
 const availabilityStatusClasses: Record<AvailabilityCellStatus, string> = {
   free: "bg-emerald-50 text-emerald-900 border border-emerald-100",
@@ -63,6 +24,9 @@ const availabilityStatusClasses: Record<AvailabilityCellStatus, string> = {
   busy: "bg-rose-50 text-rose-900 border border-rose-100",
   closed: "bg-muted text-muted-foreground border border-muted-foreground/20",
 };
+
+const BOOKED_CELL_COLOR = "#04d2c2";
+const BOOKED_TEXT_COLOR = "#0f172a";
 
 interface RoomTypeRowProps {
   data: RoomTypeAvailability;
@@ -83,9 +47,17 @@ export function RoomTypeRow({
 }: RoomTypeRowProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const { roomType, availability } = data;
-  const { reservations } = useDataContext();
+  const { reservations, guests } = useDataContext();
 
-  const hasNoRooms = roomType.units === 0;
+  if (roomType.units <= 0) {
+    return null;
+  }
+
+  const canExpand = roomType.rooms.length > 0;
+
+  const guestMap = React.useMemo(() => {
+    return new Map<string, Guest>(guests.map((guest) => [guest.id, guest]));
+  }, [guests]);
 
   const reservationMapByRoom = React.useMemo(() => {
     const map = new Map<string, Reservation[]>();
@@ -97,6 +69,17 @@ export function RoomTypeRow({
     });
     return map;
   }, [reservations]);
+
+  const getGuestName = React.useCallback(
+    (guestId: string) => {
+      const guest = guestMap.get(guestId);
+      if (!guest) {
+        return "Guest";
+      }
+      return `${guest.firstName} ${guest.lastName}`.trim();
+    },
+    [guestMap]
+  );
 
   const getReservationForRoomOnDate = (
     roomId: string,
@@ -117,7 +100,7 @@ export function RoomTypeRow({
   };
 
   const toggleExpand = () => {
-    if (!hasNoRooms) {
+    if (canExpand) {
       setIsExpanded((prev) => !prev);
     }
   };
@@ -150,12 +133,12 @@ export function RoomTypeRow({
             <button
               type="button"
               onClick={toggleExpand}
-              disabled={hasNoRooms}
+              disabled={!canExpand}
               className={cn(
                 "flex items-center justify-center h-6 w-6 rounded transition-colors",
-                hasNoRooms
-                  ? "cursor-not-allowed opacity-40"
-                  : "hover:bg-muted cursor-pointer"
+                canExpand
+                  ? "hover:bg-muted cursor-pointer"
+                  : "cursor-not-allowed opacity-40"
               )}
               aria-label={isExpanded ? "Collapse" : "Expand"}
             >
@@ -173,35 +156,25 @@ export function RoomTypeRow({
                 {roomType.name}
               </span>
               <Badge 
-                variant={hasNoRooms ? "outline" : "secondary"} 
-                className={cn(
-                  "text-xs text-nowrap text-primary border-dashed border-primary",
-                  hasNoRooms && "text-primary border-dashed border-primary"
-                )}
+                variant="secondary"
+                className="text-xs text-nowrap text-primary border-dashed border-primary"
               >
                 {roomType.units} {roomType.units === 1 ? "unit" : "units"}
               </Badge>
             </div>
           </div>
         </TableCell>
-        {hasNoRooms ? (
-          <TableCell colSpan={availability.length} className="bg-background text-center">
-            <div className="flex h-14 items-center justify-center text-sm text-muted-foreground">
-              <span>No rooms configured</span>
-            </div>
-          </TableCell>
-        ) : (
-          availability.map((day) => {
+        {availability.map((day) => {
             const baseStatus = getDisplayStatus(day.status);
             const isSelected =
               selectedCell?.roomTypeId === roomType.id &&
               selectedCell?.date === day.date;
-            const unitsValue =
-              unitsView === "remaining"
-                ? Math.max(day.unitsTotal - day.bookedCount, 0)
-                : day.bookedCount;
+            const bookedUnits = day.bookedCount;
+            const remainingUnits = Math.max(day.unitsTotal - bookedUnits, 0);
             const showNumber =
-              unitsView === "booked" || unitsValue > 0 ? unitsValue : "";
+              unitsView === "booked"
+                ? (bookedUnits > 0 ? bookedUnits : "")
+                : (bookedUnits === 0 ? "" : remainingUnits);
 
             const hasBookings = day.reservationIds && day.reservationIds.length > 0;
 
@@ -238,7 +211,9 @@ export function RoomTypeRow({
 
             return (
               <TableCell key={day.date} className="p-0">
-                {hasBookings ? (
+                {bookedUnits === 0 ? (
+                  cellContent
+                ) : hasBookings ? (
                   <ReservationHoverCard
                     reservationIds={day.reservationIds}
                     date={day.date}
@@ -262,8 +237,7 @@ export function RoomTypeRow({
                 )}
               </TableCell>
             );
-          })
-        )}
+          })}
       </TableRow>
 
       {/* Expanded: Individual Room Number Rows */}
@@ -279,57 +253,72 @@ export function RoomTypeRow({
                 <span className="font-medium">Room {room.roomNumber}</span>
               </div>
             </TableCell>
-            {availability.map((day) => {
-              const reservation = getReservationForRoomOnDate(room.id, day.date);
+            {(() => {
+              const dayCells: React.ReactNode[] = [];
+              for (let index = 0; index < availability.length; index++) {
+                const day = availability[index];
+                const reservation = getReservationForRoomOnDate(room.id, day.date);
+                const isClosed = day.isClosed === true;
 
-              const isClosed = day.isClosed === true;
-              let roomStatus: AvailabilityCellStatus = isClosed ? "closed" : "free";
-              let cellContent: React.ReactNode;
+                if (reservation) {
+                  let span = 0;
+                  for (let offset = index; offset < availability.length; offset++) {
+                    const compareDay = availability[offset];
+                    const compareReservation = getReservationForRoomOnDate(room.id, compareDay.date);
+                    if (!compareReservation || compareReservation.id !== reservation.id) {
+                      break;
+                    }
+                    span += 1;
+                  }
 
-              if (reservation) {
-                const statusStyle =
-                  reservationStatusStyles[reservation.status] ?? defaultStatusStyle;
-                roomStatus = "busy";
-                cellContent = (
-                  <ReservationHoverCard
-                    reservationIds={[reservation.id]}
-                    date={day.date}
-                  >
+                  const guestName = getGuestName(reservation.guestId);
+                  dayCells.push(
+                    <TableCell
+                      key={`${room.id}-${reservation.id}-${day.date}`}
+                      className="p-0"
+                      colSpan={span}
+                    >
+                      <ReservationHoverCard
+                        reservationIds={[reservation.id]}
+                        date={day.date}
+                      >
+                        <div
+                          className="relative flex h-12 w-full items-center justify-center rounded-full px-3 text-xs font-semibold shadow-sm cursor-pointer transition-all hover:shadow-md"
+                          style={{
+                            backgroundColor: BOOKED_CELL_COLOR,
+                            color: BOOKED_TEXT_COLOR,
+                            border: `1px solid ${BOOKED_CELL_COLOR}`,
+                          }}
+                        >
+                          <span className="max-w-full truncate">
+                            {guestName}
+                          </span>
+                        </div>
+                      </ReservationHoverCard>
+                    </TableCell>
+                  );
+                  index += span - 1;
+                  continue;
+                }
+
+                const roomStatus: AvailabilityCellStatus = isClosed ? "closed" : "free";
+                dayCells.push(
+                  <TableCell key={`${room.id}-${day.date}`} className="p-0">
                     <div
                       className={cn(
-                        "relative flex h-12 w-full items-center justify-center truncate px-1 text-xs font-medium shadow-sm cursor-pointer transition-all hover:shadow-md",
-                        statusStyle.ribbon
+                        "relative flex h-12 w-full items-center justify-center border-x border-b border-border/40 text-sm font-semibold transition bg-background",
+                        availabilityStatusClasses[roomStatus]
                       )}
                     >
-                      <span className="max-w-full truncate">
-                        {reservation.guestId.split("-")[0]}
-                      </span>
+                      {isClosed && (
+                        <Lock className="h-3 w-3 text-muted-foreground/60" />
+                      )}
                     </div>
-                  </ReservationHoverCard>
+                  </TableCell>
                 );
               }
-
-              if (!cellContent) {
-                cellContent = (
-                  <div
-                    className={cn(
-                      "relative flex h-12 w-full items-center justify-center border-x border-b border-border/40 text-sm font-semibold transition bg-background",
-                      availabilityStatusClasses[roomStatus]
-                    )}
-                  >
-                    {isClosed && (
-                      <Lock className="h-3 w-3 text-muted-foreground/60" />
-                    )}
-                  </div>
-                );
-              }
-
-              return (
-                <TableCell key={day.date} className="p-0">
-                  {cellContent}
-                </TableCell>
-              );
-            })}
+              return dayCells;
+            })()}
           </TableRow>
         ))}
 

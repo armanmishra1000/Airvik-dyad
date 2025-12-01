@@ -1,0 +1,82 @@
+ <svg width="1440" height="900" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="900" fill="#F8FAFC"/>
+  <rect x="120" y="80" width="1200" height="740" rx="28" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <text x="160" y="140" font-family="'Inter', Arial" font-size="28" font-weight="600" fill="#0F172A">Availability Overview</text>
+  <text x="160" y="170" font-family="'Inter', Arial" font-size="16" fill="#64748B">Clean monthly snapshot of rooms & status</text>
+
+  <!-- Header controls -->
+  <rect x="160" y="200" width="1120" height="90" rx="22" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <rect x="190" y="230" width="44" height="44" rx="22" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <path d="M214 254 L206 246 L214 238" stroke="#4338CA" stroke-width="3" stroke-linecap="round"/>
+  <rect x="250" y="220" width="220" height="60" rx="14" fill="#F8FAFC" stroke="#CBD5F5"/>
+  <text x="270" y="257" font-family="'Inter', Arial" font-size="16" font-weight="600" fill="#0F172A">December 2025</text>
+  <rect x="500" y="220" width="220" height="60" rx="14" fill="#F8FAFC" stroke="#CBD5F5"/>
+  <text x="520" y="257" font-family="'Inter', Arial" font-size="16" font-weight="600" fill="#0F172A">Units left</text>
+  <rect x="750" y="230" width="44" height="44" rx="22" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <path d="M776 238 L784 246 L776 254" stroke="#4338CA" stroke-width="3" stroke-linecap="round"/>
+  <rect x="830" y="220" width="420" height="60" rx="14" fill="#F9FAFB" stroke="#E2E8F0"/>
+  <text x="850" y="253" font-family="'Inter', Arial" font-size="15" fill="#475569">Legend • Insights • Export</text>
+
+  <!-- Table header -->
+  <rect x="160" y="320" width="1120" height="60" fill="#EDF2FA"/>
+  <rect x="160" y="320" width="200" height="60" fill="#E2E8F0"/>
+  <text x="200" y="358" font-family="'Inter', Arial" font-size="14" font-weight="600" fill="#0F172A">Room Type</text>
+  <g font-family="'Inter', Arial" font-size="12" fill="#475569" text-anchor="middle">
+    <text x="400" y="354">Mon 1</text>
+    <text x="480" y="354">Tue 2</text>
+    <text x="560" y="354">Wed 3</text>
+    <text x="640" y="354">Thu 4</text>
+    <text x="720" y="354">Fri 5</text>
+    <text x="800" y="354">Sat 6</text>
+    <text x="880" y="354">Sun 7</text>
+    <text x="960" y="354">Mon 8</text>
+    <text x="1040" y="354">Tue 9</text>
+    <text x="1120" y="354">Wed 10</text>
+    <text x="1200" y="354">Thu 11</text>
+  </g>
+
+  <!-- Sample rows -->
+  <rect x="160" y="380" width="1120" height="64" fill="#FFFFFF"/>
+  <rect x="160" y="380" width="200" height="64" fill="#FFFFFF"/>
+  <text x="200" y="420" font-family="'Inter', Arial" font-size="14" font-weight="600" fill="#0F172A">Garden Deluxe</text>
+  <g>
+    <rect x="380" y="390" width="60" height="44" rx="12" fill="#DCFCE7" stroke="#BBF7D0"/>
+    <text x="410" y="418" font-family="'Inter', Arial" font-size="14" font-weight="600" fill="#065F46">6</text>
+    <rect x="460" y="390" width="60" height="44" rx="12" fill="#FEF3C7" stroke="#FDE68A"/>
+    <text x="490" y="418" font-family="'Inter', Arial" font-size="14" font-weight="600" fill="#92400E">3</text>
+    <rect x="540" y="390" width="60" height="44" rx="12" fill="#FEE2E2" stroke="#FCA5A5"/>
+    <text x="570" y="418" font-family="'Inter', Arial" font-size="14" font-weight="600" fill="#B91C1C">0</text>
+  </g>
+
+  <rect x="160" y="444" width="1120" height="64" fill="#F8FAFC"/>
+  <rect x="160" y="444" width="200" height="64" fill="#F8FAFC"/>
+  <text x="200" y="484" font-family="'Inter', Arial" font-size="14" font-weight="600" fill="#0F172A">Lakefront Villa</text>
+  <g>
+    <rect x="380" y="454" width="60" height="44" rx="12" fill="#E2E8F0" stroke="#CBD5F5"/>
+    <path d="M415 470 L425 480" stroke="#475569" stroke-width="2"/>
+    <path d="M425 470 L415 480" stroke="#475569" stroke-width="2"/>
+    <rect x="460" y="454" width="60" height="44" rx="12" fill="#DCFCE7" stroke="#BBF7D0"/>
+    <text x="490" y="482" font-family="'Inter', Arial" font-size="14" font-weight="600" fill="#065F46">2</text>
+  </g>
+
+  <!-- Legend -->
+  <g>
+    <rect x="900" y="700" width="360" height="60" rx="30" fill="#F1F5F9"/>
+    <circle cx="940" cy="730" r="8" fill="#DCFCE7" stroke="#10B981" stroke-width="2"/>
+    <text x="960" y="735" font-family="'Inter', Arial" font-size="14" fill="#0F172A">Free</text>
+    <circle cx="1040" cy="730" r="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+    <text x="1060" y="735" font-family="'Inter', Arial" font-size="14" fill="#0F172A">Partial</text>
+    <circle cx="1150" cy="730" r="8" fill="#FEE2E2" stroke="#EF4444" stroke-width="2"/>
+    <text x="1170" y="735" font-family="'Inter', Arial" font-size="14" fill="#0F172A">Busy</text>
+    <circle cx="1240" cy="730" r="8" fill="#E2E8F0" stroke="#94A3B8" stroke-width="2"/>
+    <text x="1260" y="735" font-family="'Inter', Arial" font-size="14" fill="#0F172A">Closed</text>
+  </g>
+
+  <!-- Tooltip sample -->
+  <rect x="620" y="560" width="260" height="150" rx="20" fill="#FFFFFF" stroke="#CBD5F5"/>
+  <text x="650" y="600" font-family="'Inter', Arial" font-size="16" font-weight="600" fill="#0F172A">Booking Details</text>
+  <text x="650" y="628" font-family="'Inter', Arial" font-size="13" fill="#475569">Anita Sharma • Room 204</text>
+  <text x="650" y="650" font-family="'Inter', Arial" font-size="13" fill="#0F172A">Check-in 12 Jan • Check-out 14 Jan</text>
+  <rect x="650" y="670" width="120" height="30" rx="15" fill="#D1FAE5"/>
+  <text x="660" y="690" font-family="'Inter', Arial" font-size="13" fill="#065F46">Fully Paid</text>
+</svg>

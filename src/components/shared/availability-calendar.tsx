@@ -129,6 +129,12 @@ export function AvailabilityCalendar() {
   const [useLegacyView, setUseLegacyView] = React.useState(false);
   const [rpcError, setRpcError] = React.useState<Error | null>(null);
   const { data: monthlyAvailability, isLoading, error } = useMonthlyAvailability(currentMonth);
+  const visibleRoomTypes = React.useMemo(() => {
+    if (!monthlyAvailability) {
+      return [] as RoomTypeAvailability[];
+    }
+    return monthlyAvailability.filter((room) => room.roomType.units > 0);
+  }, [monthlyAvailability]);
 
   const reservationMeta = React.useMemo(
     () => buildReservationMeta(reservations, guests, rooms),
@@ -138,10 +144,10 @@ export function AvailabilityCalendar() {
     () => buildMonthOptions(currentMonth),
     [currentMonth]
   );
-  const headerDays = React.useMemo(
-    () => buildHeaderDays(monthlyAvailability, currentMonth),
-    [monthlyAvailability, currentMonth]
-  );
+  const headerDays = React.useMemo(() => {
+    const source = visibleRoomTypes.length > 0 ? visibleRoomTypes : monthlyAvailability;
+    return buildHeaderDays(source, currentMonth);
+  }, [visibleRoomTypes, monthlyAvailability, currentMonth]);
   const todayIso = React.useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
 
   React.useEffect(() => {
@@ -191,7 +197,7 @@ export function AvailabilityCalendar() {
     return <LegacyAvailabilityCalendar />;
   }
 
-  const hasAvailability = (monthlyAvailability?.length ?? 0) > 0;
+  const hasAvailability = visibleRoomTypes.length > 0;
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
@@ -302,7 +308,7 @@ export function AvailabilityCalendar() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {monthlyAvailability!.map((room) => (
+                    {visibleRoomTypes.map((room) => (
                       <RoomTypeRow
                         key={room.roomType.id}
                         data={room}
