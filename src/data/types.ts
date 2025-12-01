@@ -216,6 +216,84 @@ export interface FolioItem {
   paymentMethod?: string | null;
 }
 
+export type ActivitySection =
+  | "reservations"
+  | "guests"
+  | "rooms"
+  | "room_types"
+  | "room_categories"
+  | "rate_plans"
+  | "housekeeping"
+  | "property"
+  | "roles"
+  | "users"
+  | "amenities"
+  | "sticky_notes"
+  | "posts"
+  | "donations"
+  | "feedback"
+  | "dashboard"
+  | "settings"
+  | "system";
+
+export type ActivityEntityType =
+  | "reservation"
+  | "guest"
+  | "room"
+  | "room_type"
+  | "room_category"
+  | "rate_plan"
+  | "housekeeping_assignment"
+  | "property"
+  | "role"
+  | "user"
+  | "amenity"
+  | "sticky_note"
+  | "post"
+  | "donation"
+  | "feedback"
+  | "dashboard_layout";
+
+export interface AdminActivityLog {
+  id: string;
+  actorUserId?: string | null;
+  actorRole: string;
+  actorName?: string | null;
+  section: ActivitySection;
+  entityType?: ActivityEntityType | null;
+  entityId?: string | null;
+  entityLabel?: string | null;
+  action: string;
+  details?: string | null;
+  amountMinor?: number | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface NewAdminActivityLog {
+  actorUserId?: string | null;
+  actorRole?: string | null;
+  actorName?: string | null;
+  section: ActivitySection;
+  entityType?: ActivityEntityType | null;
+  entityId?: string | null;
+  entityLabel?: string | null;
+  action: string;
+  details?: string | null;
+  amountMinor?: number | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export type AdminActivityLogInput = Omit<NewAdminActivityLog, "actorUserId" | "actorRole" | "actorName">;
+
+export interface AdminActivityActor {
+  actorUserId: string;
+  actorRole?: string | null;
+  actorName?: string | null;
+}
+
+export type AdminActivityLogPayload = AdminActivityLogInput & AdminActivityActor;
+
 export type DonationFrequency = "one_time" | "monthly";
 export type DonationStatus = "pending" | "paid" | "failed" | "refunded";
 

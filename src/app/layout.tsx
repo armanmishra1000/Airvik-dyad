@@ -6,6 +6,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/context/session-context";
+import { AuthProvider } from "@/context/auth-context";
 import { DataProvider } from "@/context/data-context";
 import { StickyBookingButton } from "@/components/sticky-booking-button";
 
@@ -50,11 +51,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SessionProvider>
-            <DataProvider>
-              {children}
-              <StickyBookingButton />
-              <Toaster position="top-right" />
-            </DataProvider>
+            <AuthProvider>
+              <DataProvider>
+                {children}
+                <StickyBookingButton />
+                <Toaster position="top-right" />
+              </DataProvider>
+            </AuthProvider>
           </SessionProvider>
         </ThemeProvider>
       </body>

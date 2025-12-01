@@ -10,6 +10,7 @@ import { GuestDetailsCard } from "./components/GuestDetailsCard";
 import { StayDetailsCard } from "./components/StayDetailsCard";
 import { BillingCard } from "./components/BillingCard";
 import { LinkedReservationsCard } from "./components/LinkedReservationsCard";
+import { ReservationActivityTimeline } from "./components/ReservationActivityTimeline";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
 import type { ReservationStatus } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
@@ -125,11 +126,12 @@ export default function ReservationDetailsPage() {
             reservations={groupSummary.reservations}
           />
         </div>
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
           <BillingCard
             reservation={reservationWithDetails}
             groupSummary={groupSummary}
           />
+          <ReservationActivityTimeline reservationId={reservation.id} />
         </div>
       </div>
     </div>

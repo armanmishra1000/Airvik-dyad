@@ -6,18 +6,13 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/auth-context";
-import { AuthProvider } from "@/context/auth-context";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AuthProvider>
-      <AdminLayoutInner>{children}</AdminLayoutInner>
-    </AuthProvider>
-  );
+  return <AdminLayoutInner>{children}</AdminLayoutInner>;
 }
 
 function AdminLayoutInner({
