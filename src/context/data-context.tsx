@@ -92,6 +92,7 @@ import type {
   Amenity,
   StickyNote,
   DashboardComponentId,
+  AdminActivityLogInput,
 } from "@/data/types";
 
 type AddReservationPayload = Omit<
@@ -143,7 +144,7 @@ interface DataContextType {
   addFolioItem: (
     reservationId: string,
     item: Omit<FolioItem, "id" | "timestamp">
-  ) => void;
+  ) => Promise<void>;
   assignHousekeeper: (assignment: { roomId: string; userId: string }) => void;
   updateAssignmentStatus: (
     roomId: string,
@@ -188,6 +189,7 @@ interface DataContextType {
   ) => void;
   deleteStickyNote: (noteId: string) => void;
   updateDashboardLayout: (layout: DashboardComponentId[]) => void;
+  logActivity: (entry: AdminActivityLogInput) => Promise<void>;
 }
 
 const DataContext = React.createContext<DataContextType | undefined>(undefined);

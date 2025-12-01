@@ -189,11 +189,15 @@ export function RecordPaymentDialog({
     }
 
     try {
-      await addFolioItem(reservationId, {
-        description: `Payment - ${values.method}`,
-        amount: -Math.abs(values.amount),
-        paymentMethod: values.method,
-      });
+      const paymentAmount = Math.abs(values.amount);
+      await addFolioItem(
+        reservationId,
+        {
+          description: `Payment - ${values.method}`,
+          amount: -paymentAmount,
+          paymentMethod: values.method,
+        }
+      );
       toast.success("Payment recorded successfully!");
       form.reset();
       setOpen(false);

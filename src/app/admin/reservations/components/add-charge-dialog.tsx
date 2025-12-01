@@ -66,16 +66,27 @@ export function AddChargeDialog({
     },
   });
 
-  function onSubmit(values: ChargeFormValues) {
+  async function onSubmit(values: ChargeFormValues) {
     const parsedAmount = Number(values.amount.replace(/,/g, ""));
+    const description = values.description.trim();
 
-    addFolioItem(reservationId, {
-      description: values.description.trim(),
-      amount: parsedAmount,
-    });
-    toast.success("Charge added successfully!");
-    form.reset();
-    setOpen(false);
+    try {
+      await addFolioItem(
+        reservationId,
+        {
+          description,
+          amount: parsedAmount,
+        }
+      );
+      toast.success("Charge added successfully!");
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      console.error("Failed to add charge", error);
+      toast.error("Failed to add charge", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    }
   }
 
   return (

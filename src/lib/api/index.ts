@@ -17,6 +17,10 @@ import type {
   Post,
   RoomTypeAvailability,
   BookingRestriction,
+  AdminActivityLog,
+  ActivitySection,
+  ActivityEntityType,
+  AdminActivityLogPayload,
 } from "@/data/types";
 import { mapMonthlyAvailabilityRow, MonthlyAvailabilityRow } from "@/lib/availability";
 import {
@@ -203,6 +207,34 @@ type UpdateUserProfilePayload = Partial<{
   roleId: string;
 }>;
 
+type DbAdminActivityLog = {
+  id: string;
+  actor_user_id: string | null;
+  actor_role: string;
+  actor_name: string | null;
+  section: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  entity_label: string | null;
+  action: string;
+  details: string | null;
+  amount_minor: number | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
+
+type AdminActivityLogFilters = {
+  section?: ActivitySection;
+  entityType?: ActivityEntityType;
+  entityId?: string;
+  actorRole?: string;
+  action?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+  page?: number;
+};
+
 
 // --- Validation Helpers ---
 
@@ -358,6 +390,24 @@ const fromDbBookingRestriction = (
   roomTypeId: row.room_type_id ?? undefined,
 });
 
+const fromDbAdminActivityLog = (
+  row: DbAdminActivityLog
+): AdminActivityLog => ({
+  id: row.id,
+  actorUserId: row.actor_user_id,
+  actorRole: row.actor_role,
+  actorName: row.actor_name,
+  section: row.section as ActivitySection,
+  entityType: row.entity_type as ActivityEntityType | null,
+  entityId: row.entity_id,
+  entityLabel: row.entity_label,
+  action: row.action,
+  details: row.details,
+  amountMinor: row.amount_minor,
+  metadata: row.metadata ?? null,
+  createdAt: row.created_at,
+});
+
 // --- Blog Transformers ---
 
 
@@ -381,6 +431,100 @@ export const uploadFile = async (file: File) => {
         .getPublicUrl(filePath);
 
     return publicUrl;
+};
+
+
+// --- Activity Logs ---
+
+export const getAdminActivityLogs = async (
+  filters: AdminActivityLogFilters = {}
+) => {
+  const pageSize = typeof filters.limit === "number" && filters.limit > 0 ? filters.limit : 50;
+  const page = typeof filters.page === "number" && filters.page > 0 ? filters.page : 1;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = supabase
+    .from('admin_activity_logs')
+    .select('*', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to);
+
+  if (filters.section) {
+    query = query.eq('section', filters.section);
+  }
+  if (filters.entityType) {
+    query = query.eq('entity_type', filters.entityType);
+  }
+  if (filters.entityId) {
+    query = query.eq('entity_id', filters.entityId);
+  }
+  if (filters.actorRole) {
+    query = query.eq('actor_role', filters.actorRole);
+  }
+  if (filters.action) {
+    query = query.eq('action', filters.action);
+  }
+  if (filters.from) {
+    query = query.gte('created_at', filters.from);
+  }
+  if (filters.to) {
+    query = query.lte('created_at', filters.to);
+  }
+  const { data, error, count, ...rest } = await query;
+  if (error || !data) {
+    return { data: [] as AdminActivityLog[], count: count ?? 0, error, ...rest };
+  }
+  return {
+    data: (data as DbAdminActivityLog[]).map(fromDbAdminActivityLog),
+    count: count ?? data.length,
+    error,
+    ...rest,
+  };
+};
+
+type EntityActivityLogArgs = {
+  entityType: ActivityEntityType;
+  entityId: string;
+  limit?: number;
+};
+
+export const getEntityActivityLogs = async (
+  args: EntityActivityLogArgs
+) =>
+  getAdminActivityLogs({
+    entityType: args.entityType,
+    entityId: args.entityId,
+    limit: args.limit,
+  });
+
+export const logAdminActivity = async (
+  payload: AdminActivityLogPayload
+) => {
+  const { data, error, ...rest } = await supabase
+    .rpc("log_admin_activity_rpc", {
+      p_actor_user_id: payload.actorUserId,
+      p_section: payload.section,
+      p_action: payload.action,
+      p_actor_role: payload.actorRole ?? null,
+      p_actor_name: payload.actorName ?? null,
+      p_entity_type: payload.entityType ?? null,
+      p_entity_id: payload.entityId ?? null,
+      p_entity_label: payload.entityLabel ?? null,
+      p_details: payload.details ?? null,
+      p_amount_minor: payload.amountMinor ?? null,
+      p_metadata: payload.metadata ?? {},
+    });
+
+  if (error || !data) {
+    return { data: null, error, ...rest };
+  }
+
+  return {
+    data: fromDbAdminActivityLog(data as DbAdminActivityLog),
+    error,
+    ...rest,
+  };
 };
 
 
@@ -516,6 +660,47 @@ export const addFolioItem = (itemData: FolioItemInsertPayload) =>
     ])
     .select()
     .single();
+
+// Reservation Activity Logs (compat helpers)
+export const getReservationActivityLogs = async (reservationId: string) =>
+  getAdminActivityLogs({
+    section: "reservations",
+    entityType: "reservation",
+    entityId: reservationId,
+  });
+
+type LegacyReservationActivityLogInsertPayload = {
+  reservation_id: string;
+  actor_role: string;
+  action: string;
+  actor_user_id?: string | null;
+  actor_name?: string | null;
+  amount_minor?: number | null;
+  notes?: string | null;
+  metadata?: Record<string, unknown> | null;
+};
+
+export const createReservationActivityLog = async (
+  payload: LegacyReservationActivityLogInsertPayload
+) => {
+  if (!payload.actor_user_id) {
+    throw new Error("actor_user_id is required for reservation activity logging");
+  }
+
+  return logAdminActivity({
+    actorUserId: payload.actor_user_id,
+    actorRole: payload.actor_role,
+    actorName: payload.actor_name,
+    section: "reservations",
+    entityType: "reservation",
+    entityId: payload.reservation_id,
+    entityLabel: payload.reservation_id,
+    action: payload.action,
+    details: payload.notes ?? null,
+    amountMinor: payload.amount_minor ?? null,
+    metadata: payload.metadata ?? undefined,
+  });
+};
 
 // Rooms
 export const getRooms = async () => {
