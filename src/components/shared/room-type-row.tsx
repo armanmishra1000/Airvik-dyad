@@ -19,17 +19,17 @@ import { cn } from "@/lib/utils";
 import { useDataContext } from "@/context/data-context";
 
 const availabilityStatusClasses: Record<AvailabilityCellStatus, string> = {
-  free: "bg-white text-emerald-700 border border-emerald-100",
-  partial: "bg-amber-50 text-amber-900 border border-amber-100",
-  busy: "bg-rose-50 text-rose-900 border border-rose-100",
-  closed: "bg-slate-100 text-muted-foreground border border-slate-200",
+  free: "bg-emerald-400 border border-emerald-200",
+  partial: "bg-amber-400 border border-amber-200",
+  busy: "bg-red-400 border border-red-200",
+  closed: "bg-slate-400 border border-slate-200",
 };
 
 const bookedPillClasses =
-  "relative flex h-11 w-full items-center justify-center rounded-xl border border-primary/30 bg-primary/10 px-4 text-xs font-semibold text-primary shadow-sm transition-all";
+  "relative flex h-11 w-full items-center justify-center rounded-xl border border-indigo-300 bg-indigo-300 px-4 text-xs font-semibold text-indigo-900 transition-all";
 
 const cellBaseClasses =
-  "relative flex min-h-[56px] w-full items-center justify-center rounded-none px-2 text-lg font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
+  "relative flex min-h-[60px] w-full items-center justify-center rounded-none px-6 text-lg font-semibold transition focus-visible:outline-none";
 
 interface RoomTypeRowProps {
   data: RoomTypeAvailability;
@@ -192,6 +192,9 @@ export function RoomTypeRow({
                   ? "No units left"
                   : `${remainingUnits} ${remainingUnits === 1 ? "unit" : "units"} left`;
             const ariaLabel = `${metricLabel} on ${formattedDate}`;
+            const columnTextClass = isTodayColumn
+              ? "text-white"
+              : "text-white";
 
             const cellContent = (
               <button
@@ -199,9 +202,10 @@ export function RoomTypeRow({
                 className={cn(
                   cellBaseClasses,
                   availabilityStatusClasses[baseStatus],
-                  isDisabled && "cursor-not-allowed opacity-60",
-                  isSelected && "outline outline-2 outline-offset-[-2px] outline-primary/60",
-                  isTodayColumn && "bg-primary/5 border-primary/40 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.35)]"
+                  columnTextClass,
+                  isDisabled && "cursor-not-allowed",
+                  isSelected && "outline outline-2 outline-offset-[-2px]",
+                  isTodayColumn && "bg-primary border-0 text-white"
                 )}
                 onClick={() =>
                   handleCellClick(day.date, baseStatus, day.isClosed)
@@ -210,18 +214,24 @@ export function RoomTypeRow({
                 aria-label={ariaLabel}
               >
                 <div className="flex items-center justify-center">
+                  {/* — line */}
                   <span
                     className={cn(
                       "leading-none",
-                      showNumber === "" && "text-muted-foreground/70"
+                      columnTextClass
                     )}
                   >
                     {showNumber === "" ? "—" : showNumber}
                   </span>
                 </div>
                 {day.isClosed && (
-                  <div className="absolute inset-x-2 bottom-1 flex items-center justify-center gap-1 text-[10px] font-medium text-muted-foreground">
-                    <Lock className="h-3 w-3" />
+                  <div
+                    className={cn(
+                      "absolute inset-x-2 bottom-1 flex items-center justify-center gap-1 text-[10px] font-medium",
+                      columnTextClass
+                    )}
+                  >
+                    <Lock className={cn("h-3 w-3", columnTextClass)} />
                     <span>Closed</span>
                   </div>
                 )}
@@ -280,6 +290,9 @@ export function RoomTypeRow({
                 const reservation = getReservationForRoomOnDate(room.id, day.date);
                 const isTodayColumn = todayIso === day.date;
                 const isClosed = day.isClosed === true;
+                const columnTextClass = isTodayColumn
+                  ? "text-white"
+                  : "text-muted-foreground/70";
 
                 if (reservation) {
                   let span = 0;
@@ -306,11 +319,12 @@ export function RoomTypeRow({
                         <div
                           className={cn(
                             bookedPillClasses,
+                            columnTextClass,
                             "cursor-pointer",
-                            isTodayColumn && "bg-primary/20 border-primary/40 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.35)]"
+                            isTodayColumn && "bg-primary border-primary text-white shadow-[0_0_0_2px_rgba(15,118,110,0.15)]"
                           )}
                         >
-                          <span className="max-w-full truncate text-sm font-semibold">
+                          <span className={cn("max-w-full truncate text-sm font-semibold", columnTextClass)}>
                             {guestName}
                           </span>
                         </div>
@@ -328,11 +342,12 @@ export function RoomTypeRow({
                       className={cn(
                         cellBaseClasses,
                         availabilityStatusClasses[roomStatus],
-                        isTodayColumn && "bg-primary/5 border-primary/40 shadow-[inset_0_0_0_1px_rgba(14,165,233,0.35)]"
+                        columnTextClass,
+                        isTodayColumn && "bg-primary border-primary text-white shadow-[0_0_0_2px_rgba(15,118,110,0.15)]"
                       )}
                     >
                       {isClosed && (
-                        <Lock className="h-3 w-3 text-muted-foreground/60" />
+                        <Lock className={cn("h-3 w-3", columnTextClass)} />
                       )}
                     </div>
                   </TableCell>

@@ -502,7 +502,7 @@ export function ReservationHoverCard({
                     </div>
 
                     <div className="rounded-xl border border-border/60 bg-background/80 p-3">
-                      <div className="flex items-center justify-between">y
+                      <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-muted-foreground">
                           Payment Status
                         </span>
