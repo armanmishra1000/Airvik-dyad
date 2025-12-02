@@ -12,10 +12,7 @@ import {
   parseISO,
   isSameDay,
 } from "date-fns";
-import {
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -45,12 +42,12 @@ import type {
   UnitsViewMode,
   AvailabilityCellStatus,
   RoomTypeAvailability,
-  Reservation,
-  Guest,
-  Room,
 } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
-import { useMonthlyAvailability } from "@/hooks/use-monthly-availability";
+import {
+  formatMonthStart,
+  useMultiMonthAvailability,
+} from "@/hooks/use-monthly-availability";
 import { RoomTypeRow } from "@/components/shared/room-type-row";
 import { cn } from "@/lib/utils";
 
@@ -59,38 +56,38 @@ const reservationStatusStyles: Record<
   { ribbon: string; dot: string }
 > = {
   Tentative: {
-    ribbon: "border border-secondary/50 bg-secondary/30 text-secondary-foreground",
-    dot: "bg-secondary/80",
-  },
-  Standby: {
-    ribbon: "border border-amber-400/60 bg-amber-100 text-amber-900",
+    ribbon: "border border-amber-200 bg-amber-50 text-amber-900",
     dot: "bg-amber-500",
   },
+  Standby: {
+    ribbon: "border border-sky-200 bg-sky-50 text-sky-900",
+    dot: "bg-sky-500",
+  },
   Confirmed: {
-    ribbon: "border border-primary/40 bg-primary/10 text-primary",
-    dot: "bg-primary/80",
+    ribbon: "border border-emerald-200 bg-emerald-50 text-emerald-900",
+    dot: "bg-emerald-600",
   },
   "Checked-in": {
-    ribbon: "border border-accent/50 bg-accent/30 text-accent-foreground",
-    dot: "bg-accent/80",
+    ribbon: "border border-indigo-200 bg-indigo-50 text-indigo-900",
+    dot: "bg-indigo-600",
   },
   "Checked-out": {
-    ribbon: "border border-muted/50 bg-muted/40 text-muted-foreground",
-    dot: "bg-muted/70",
+    ribbon: "border border-slate-200 bg-slate-50 text-slate-900",
+    dot: "bg-slate-500",
   },
   Cancelled: {
-    ribbon: "border border-destructive/40 bg-destructive/10 text-destructive",
-    dot: "bg-destructive/80",
+    ribbon: "border border-rose-200 bg-rose-500 text-white",
+    dot: "bg-rose-500",
   },
   "No-show": {
-    ribbon: "border border-destructive/40 bg-destructive/10 text-destructive",
-    dot: "bg-destructive/80",
+    ribbon: "border border-rose-200 bg-rose-500 text-white",
+    dot: "bg-rose-600",
   },
 };
 
 const defaultStatusStyle = {
-  ribbon: "border border-muted/40 bg-muted/40 text-muted-foreground",
-  dot: "bg-muted/70",
+  ribbon: "border border-slate-200 bg-slate-50 text-slate-900",
+  dot: "bg-slate-500",
 };
 
 const getStatusStyle = (status: ReservationStatus) =>
@@ -101,17 +98,11 @@ type SelectedCell = {
   date: string;
 };
 
-type ReservationMetaSummary = {
-  guestName: string;
-  roomNumber?: string;
-  status: ReservationStatus;
-};
-
 const availabilityDotClasses: Record<AvailabilityCellStatus, string> = {
   free: "bg-emerald-500",
   partial: "bg-amber-500",
-  busy: "bg-rose-500",
-  closed: "bg-muted-foreground/50",
+  busy: "bg-rose-600",
+  closed: "bg-slate-500",
 };
 
 const legendStatuses: Array<{ key: AvailabilityCellStatus; label: string }> = [
@@ -122,25 +113,42 @@ const legendStatuses: Array<{ key: AvailabilityCellStatus; label: string }> = [
 ];
 
 export function AvailabilityCalendar() {
-  const { reservations, guests, rooms, property } = useDataContext();
-  const [currentMonth, setCurrentMonth] = React.useState(startOfMonth(new Date()));
-  const [selectedCell, setSelectedCell] = React.useState<SelectedCell | null>(null);
-  const [unitsView, setUnitsView] = React.useState<UnitsViewMode>(property.defaultUnitsView);
+  const { property } = useDataContext();
+  const [currentMonth, setCurrentMonth] = React.useState(
+    startOfMonth(new Date())
+  );
+  const [selectedCell, setSelectedCell] = React.useState<SelectedCell | null>(
+    null
+  );
+  const [unitsView, setUnitsView] = React.useState<UnitsViewMode>(
+    property.defaultUnitsView
+  );
   const [useLegacyView, setUseLegacyView] = React.useState(false);
   const [rpcError, setRpcError] = React.useState<Error | null>(null);
-  const { data: monthlyAvailability, isLoading, error } = useMonthlyAvailability(currentMonth);
-
-  const reservationMeta = React.useMemo(
-    () => buildReservationMeta(reservations, guests, rooms),
-    [reservations, guests, rooms]
+  const [visibleMonths, setVisibleMonths] = React.useState(1);
+  const monthSequence = React.useMemo(() => {
+    return Array.from({ length: visibleMonths }, (_, index) =>
+      startOfMonth(addMonths(currentMonth, index))
+    );
+  }, [currentMonth, visibleMonths]);
+  const { dataByMonth, isLoading, error } = useMultiMonthAvailability(
+    currentMonth,
+    visibleMonths
   );
+  const hasAvailability = React.useMemo(() => {
+    return monthSequence.some((monthDate) => {
+      const monthKey = formatMonthStart(monthDate);
+      const availability = dataByMonth[monthKey];
+      if (!availability) {
+        return false;
+      }
+      return availability.some((room) => room.roomType.units > 0);
+    });
+  }, [dataByMonth, monthSequence]);
+
   const monthOptions = React.useMemo(
     () => buildMonthOptions(currentMonth),
     [currentMonth]
-  );
-  const headerDays = React.useMemo(
-    () => buildHeaderDays(monthlyAvailability, currentMonth),
-    [monthlyAvailability, currentMonth]
   );
   const todayIso = React.useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
 
@@ -160,11 +168,19 @@ export function AvailabilityCalendar() {
 
   React.useEffect(() => {
     setSelectedCell(null);
-  }, [currentMonth]);
+  }, [currentMonth, visibleMonths]);
 
   const handleMonthSelect = (value: string) => {
     const parsed = parseISO(value);
     setCurrentMonth(startOfMonth(parsed));
+  };
+
+  const handleVisibleMonthsChange = (value: string) => {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) {
+      return;
+    }
+    setVisibleMonths(Math.max(1, Math.min(12, parsed)));
   };
 
   const handleCellSelection = (
@@ -191,23 +207,16 @@ export function AvailabilityCalendar() {
     return <LegacyAvailabilityCalendar />;
   }
 
-  const hasAvailability = (monthlyAvailability?.length ?? 0) > 0;
-
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-      <div className="border-b border-border/50 p-3 sm:p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
-              Availability Overview
-            </h2>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-            <div className="flex items-center gap-2">
+    <div className="rounded-3xl border border-border/60 bg-card shadow-xl">
+      <div className="border-b border-border/50 px-4 py-5 sm:px-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card/60 p-1">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg"
+                className="h-9 w-9 rounded-xl flex-shrink-0"
                 onClick={() => setCurrentMonth((prev) => subMonths(prev, 1))}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -216,7 +225,7 @@ export function AvailabilityCalendar() {
                 value={format(currentMonth, "yyyy-MM-dd")}
                 onValueChange={handleMonthSelect}
               >
-                <SelectTrigger className="min-w-[160px] rounded-lg">
+                <SelectTrigger className="min-w-[160px] rounded-xl border bg-transparent focus:outline-none text-sm font-semibold">
                   <SelectValue placeholder="Select month" />
                 </SelectTrigger>
                 <SelectContent>
@@ -228,19 +237,41 @@ export function AvailabilityCalendar() {
                 </SelectContent>
               </Select>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg"
+                className="h-9 w-9 rounded-xl flex-shrink-0"
                 onClick={() => setCurrentMonth((prev) => addMonths(prev, 1))}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
+            <div className="flex flex-col gap-1">
+              <Select
+                value={String(visibleMonths)}
+                onValueChange={handleVisibleMonthsChange}
+              >
+                <SelectTrigger
+                  id="availability-months"
+                  className="h-14 min-w-[130px] rounded-xl border border-border/60 bg-card/60 text-sm font-semibold text-foreground"
+                >
+                  <SelectValue placeholder="Months" />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {Array.from({ length: 12 }, (_, index) => index + 1).map(
+                    (count) => (
+                      <SelectItem key={count} value={String(count)}>
+                        {count} {count === 1 ? "Month" : "Months"}
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
             <Select
               value={unitsView}
               onValueChange={(value) => setUnitsView(value as UnitsViewMode)}
             >
-              <SelectTrigger className="h-9 min-w-[130px] rounded-lg text-xs font-medium">
+              <SelectTrigger className="h-14 min-w-[150px] rounded-xl border border-border/60 bg-card/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -249,14 +280,37 @@ export function AvailabilityCalendar() {
               </SelectContent>
             </Select>
           </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-muted-foreground">
+            {legendStatuses
+              .filter(
+                (status) => property.showPartialDays || status.key !== "partial"
+              )
+              .map((status) => (
+                <div
+                  key={status.key}
+                  className="flex items-center gap-2 rounded-full border border-border/60 bg-card px-3 py-1.5 shadow-sm"
+                >
+                  <span
+                    className={cn(
+                      "h-2.5 w-2.5 rounded-full",
+                      availabilityDotClasses[status.key]
+                    )}
+                  />
+                  <span>{status.label}</span>
+                </div>
+              ))}
+          </div>
         </div>
       </div>
       <div className="p-4 sm:p-6 space-y-5">
         {rpcError && (
           <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-            <p className="font-medium">Unable to load aggregated availability.</p>
+            <p className="font-medium">
+              Unable to load aggregated availability.
+            </p>
             <p className="mt-1 text-destructive/80">
-              Change the month to retry, or switch to the legacy room-by-room view for immediate access.
+              Change the month to retry, or switch to the legacy room-by-room
+              view for immediate access.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={handleUseLegacyView}>
@@ -274,65 +328,90 @@ export function AvailabilityCalendar() {
           </div>
         )}
         {isLoading ? (
-          <Skeleton className="h-[260px] w-full rounded-2xl" />
+          <Skeleton className="h-[500px] w-full rounded-2xl" />
         ) : hasAvailability ? (
           <TooltipProvider delayDuration={0}>
-            {/* Single Unified Table */}
-            <div className="rounded-2xl border border-border/50 bg-background/60 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table className="min-w-max">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="sticky left-0 z-20 w-56 bg-muted/80 border-r border-border/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <span>{format(currentMonth, "MMMM yyyy")}</span>
+            <div className="space-y-6">
+              {monthSequence.map((monthDate, index) => {
+                const monthKey = formatMonthStart(monthDate);
+                const monthAvailability = dataByMonth[monthKey] ?? [];
+                const visibleMonthRooms = monthAvailability.filter(
+                  (room) => room.roomType.units > 0
+                );
+                const headerSource =
+                  visibleMonthRooms.length > 0
+                    ? visibleMonthRooms
+                    : monthAvailability;
+                const headerDays = buildHeaderDays(headerSource, monthDate);
+                const monthLabel = format(monthDate, "MMMM yyyy");
+
+                return (
+                  <section
+                    key={monthKey}
+                    className="overflow-hidden rounded-3xl border border-border/50 bg-card shadow-md"
+                  >
+                    {visibleMonthRooms.length > 0 ? (
+                      <DragScrollContainer
+                        ariaLabel={`Availability grid for ${monthLabel}`}
+                      >
+                        <div className="min-w-max">
+                          <Table className="min-w-max">
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="sticky left-0 z-20 w-56 border-r border-border/40 bg-card px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+                                  <div>
+                                    <p className="text-[11px]">Month</p>
+                                    <p className="text-base font-semibold text-foreground">
+                                      {monthLabel}
+                                    </p>
+                                  </div>
+                                </TableHead>
+                                {headerDays.map((day) => {
+                                  const isTodayColumn = day.iso === todayIso;
+                                  return (
+                                    <TableHead
+                                      key={day.iso}
+                                      className={cn(
+                                        "min-w-[3.5rem] border-l border-border/60 px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide",
+                                        isTodayColumn
+                                          ? "bg-primary text-white shadow-[0_4px_20px_rgba(16,185,129,0.2)]"
+                                          : "text-foreground"
+                                      )}
+                                    >
+                                      <div>{format(day.date, "EEE")}</div>
+                                      <div>{format(day.date, "d")}</div>
+                                    </TableHead>
+                                  );
+                                })}
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {visibleMonthRooms.map((room) => (
+                                <RoomTypeRow
+                                  key={`${monthKey}-${room.roomType.id}`}
+                                  data={room}
+                                  unitsView={unitsView}
+                                  showPartialDays={property.showPartialDays}
+                                  todayIso={todayIso}
+                                  onCellClick={handleCellSelection}
+                                  selectedCell={selectedCell}
+                                />
+                              ))}
+                            </TableBody>
+                          </Table>
                         </div>
-                      </TableHead>
-                      {headerDays.map((day) => (
-                        <TableHead
-                          key={day.iso}
-                          className="w-14 text-center text-[11px] uppercase text-muted-foreground bg-muted/60"
-                        >
-                          <div>{format(day.date, "EEE")}</div>
-                          <div className="font-semibold text-foreground">
-                            {format(day.date, "d")}
-                          </div>
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {monthlyAvailability!.map((room) => (
-                      <RoomTypeRow
-                        key={room.roomType.id}
-                        data={room}
-                        unitsView={unitsView}
-                        showPartialDays={property.showPartialDays}
-                        todayIso={todayIso}
-                        onCellClick={handleCellSelection}
-                        selectedCell={selectedCell}
-                      />
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-            
-            {/* Legend */}
-            <div className="flex flex-wrap items-center gap-4 text-sm pt-2">
-              {legendStatuses
-                .filter((status) => property.showPartialDays || status.key !== "partial")
-                .map((status) => (
-                  <div key={status.key} className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "h-4 w-4 rounded-full",
-                        availabilityDotClasses[status.key]
-                      )}
-                    />
-                    <span className="text-muted-foreground">{status.label}</span>
-                  </div>
-                ))}
+                      </DragScrollContainer>
+                    ) : (
+                      <div className="px-4 pb-6">
+                        <div className="rounded-2xl border border-dashed border-border/60 bg-background/40 p-6 text-center text-sm text-muted-foreground">
+                          Configure rooms to display availability for this
+                          month.
+                        </div>
+                      </div>
+                    )}
+                  </section>
+                );
+              })}
             </div>
           </TooltipProvider>
         ) : !rpcError ? (
@@ -345,26 +424,116 @@ export function AvailabilityCalendar() {
   );
 }
 
-function buildReservationMeta(
-  reservations: Reservation[],
-  guests: Guest[],
-  rooms: Room[]
-) {
-  const guestMap = new Map(guests.map((guest) => [guest.id, guest]));
-  const roomMap = new Map(rooms.map((room) => [room.id, room]));
-  const meta = new Map<string, ReservationMetaSummary>();
+type DragScrollContainerProps = {
+  children: React.ReactNode;
+  ariaLabel: string;
+};
 
-  reservations.forEach((reservation) => {
-    const guest = guestMap.get(reservation.guestId);
-    const room = roomMap.get(reservation.roomId);
-    meta.set(reservation.id, {
-      guestName: guest ? `${guest.firstName} ${guest.lastName}` : "Guest",
-      roomNumber: room?.roomNumber,
-      status: reservation.status,
-    });
+function DragScrollContainer({
+  children,
+  ariaLabel,
+}: DragScrollContainerProps) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const dragState = React.useRef({
+    isPointerDown: false,
+    startX: 0,
+    scrollLeft: 0,
+    dragged: false,
+    pointerId: null as number | null,
+    shouldPreventClick: false,
+    hasCapture: false,
   });
 
-  return meta;
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) {
+      return;
+    }
+    const container = containerRef.current;
+    if (!container) return;
+    dragState.current.isPointerDown = true;
+    dragState.current.startX = event.clientX;
+    dragState.current.scrollLeft = container.scrollLeft;
+    dragState.current.dragged = false;
+    dragState.current.shouldPreventClick = false;
+    dragState.current.pointerId = event.pointerId;
+    dragState.current.hasCapture = false;
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragState.current.isPointerDown) {
+      return;
+    }
+    const container = containerRef.current;
+    if (!container) return;
+    const deltaX = event.clientX - dragState.current.startX;
+    if (!dragState.current.dragged && Math.abs(deltaX) > 3) {
+      dragState.current.dragged = true;
+      if (!dragState.current.hasCapture) {
+        container.setPointerCapture(event.pointerId);
+        dragState.current.hasCapture = true;
+        container.classList.add("cursor-grabbing");
+      }
+    }
+    if (dragState.current.dragged) {
+      event.preventDefault();
+      container.scrollLeft = dragState.current.scrollLeft - deltaX;
+    }
+  };
+
+  const endDrag = () => {
+    const container = containerRef.current;
+    if (dragState.current.pointerId !== null && container && dragState.current.hasCapture) {
+      container.releasePointerCapture(dragState.current.pointerId);
+    }
+    if (container) {
+      container.classList.remove("cursor-grabbing");
+    }
+    if (dragState.current.dragged) {
+      dragState.current.shouldPreventClick = true;
+    }
+    dragState.current.isPointerDown = false;
+    dragState.current.pointerId = null;
+    dragState.current.dragged = false;
+    dragState.current.hasCapture = false;
+  };
+
+  const handlePointerUp = () => {
+    endDrag();
+  };
+
+  const handlePointerLeave = () => {
+    if (!dragState.current.isPointerDown) {
+      return;
+    }
+    endDrag();
+  };
+
+  const handleClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (dragState.current.shouldPreventClick) {
+      event.preventDefault();
+      event.stopPropagation();
+      dragState.current.shouldPreventClick = false;
+    }
+  };
+
+  return (
+    <div className="relative">
+      <div
+        ref={containerRef}
+        className="overflow-x-auto"
+        aria-label={ariaLabel}
+        role="region"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
+        onPointerCancel={handlePointerUp}
+        onClickCapture={handleClickCapture}
+      >
+        {children}
+      </div>
+    </div>
+  );
 }
 
 function buildHeaderDays(
@@ -391,7 +560,8 @@ function buildHeaderDays(
 
 function buildMonthOptions(currentMonth: Date) {
   const todayStart = startOfMonth(new Date());
-  const anchor = currentMonth < todayStart ? startOfMonth(currentMonth) : todayStart;
+  const anchor =
+    currentMonth < todayStart ? startOfMonth(currentMonth) : todayStart;
   return Array.from({ length: 12 }, (_, index) => {
     const monthDate = addMonths(anchor, index);
     return {
@@ -399,16 +569,6 @@ function buildMonthOptions(currentMonth: Date) {
       value: format(monthDate, "yyyy-MM-dd"),
     };
   });
-}
-
-function getDisplayStatus(
-  status: AvailabilityCellStatus,
-  showPartialDays: boolean
-): AvailabilityCellStatus {
-  if (!showPartialDays && status === "partial") {
-    return "free";
-  }
-  return status;
 }
 
 function LegacyAvailabilityCalendar() {
@@ -483,7 +643,9 @@ function LegacyAvailabilityCalendar() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="sticky left-0 z-20 w-16 sm:w-24 border-r border-border/30 bg-muted/60 backdrop-blur">
-                      <span className="text-xs sm:text-sm font-semibold">Room</span>
+                      <span className="text-xs sm:text-sm font-semibold">
+                        Room
+                      </span>
                     </TableHead>
                     {daysInMonth.map((day) => (
                       <TableHead
@@ -531,8 +693,8 @@ function LegacyAvailabilityCalendar() {
                         let span = 0;
                         for (let j = i; j < daysInMonth.length; j++) {
                           if (
-                            getReservationForDate(room.id, daysInMonth[j])?.id ===
-                            reservation.id
+                            getReservationForDate(room.id, daysInMonth[j])
+                              ?.id === reservation.id
                           ) {
                             span++;
                           } else {
@@ -544,7 +706,9 @@ function LegacyAvailabilityCalendar() {
                           const guest = guests.find(
                             (g) => g.id === reservation.guestId
                           );
-                          const statusStyle = getStatusStyle(reservation.status);
+                          const statusStyle = getStatusStyle(
+                            reservation.status
+                          );
                           dayCells.push(
                             <TableCell
                               key={day.toString()}
@@ -571,10 +735,11 @@ function LegacyAvailabilityCalendar() {
                                   <p className="font-bold">
                                     {guest?.firstName} {guest?.lastName}
                                   </p>
-                                  <p className="text-sm">Status: {reservation.status}</p>
                                   <p className="text-sm">
-                                    Check-in:{" "}
-                                    {format(checkIn, "MMM d, yyyy")}
+                                    Status: {reservation.status}
+                                  </p>
+                                  <p className="text-sm">
+                                    Check-in: {format(checkIn, "MMM d, yyyy")}
                                   </p>
                                   <p className="text-sm">
                                     Check-out:{" "}
@@ -617,7 +782,9 @@ function LegacyAvailabilityCalendar() {
                   getStatusStyle("Confirmed").dot
                 )}
               />
-              <span className="text-xs sm:text-sm text-muted-foreground">Confirmed</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Confirmed
+              </span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <div
@@ -626,7 +793,9 @@ function LegacyAvailabilityCalendar() {
                   getStatusStyle("Checked-in").dot
                 )}
               />
-              <span className="text-xs sm:text-sm text-muted-foreground">Checked-in</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Checked-in
+              </span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <div
@@ -635,7 +804,9 @@ function LegacyAvailabilityCalendar() {
                   getStatusStyle("Tentative").dot
                 )}
               />
-              <span className="text-xs sm:text-sm text-muted-foreground">Tentative</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">
+                Tentative
+              </span>
             </div>
           </div>
         </TooltipProvider>
