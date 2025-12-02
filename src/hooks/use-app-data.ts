@@ -323,6 +323,7 @@ import * as React from "react";
 import { useSessionContext } from "@/context/session-context";
 import { useActivityLogger } from "@/hooks/use-activity-logger";
 import * as api from "@/lib/api";
+import { extractChangedFields } from "@/lib/activity/change-detector";
 import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
 import type {
   Reservation,
@@ -517,6 +518,7 @@ export function useAppData() {
   const refreshReservations = React.useCallback(() => fetchData(), [fetchData]);
 
   const updateProperty = async (updatedData: Partial<Omit<Property, "id">>) => {
+    const changedFields = extractChangedFields(property, updatedData);
     const { data, error } = property.id === "default-property-id"
       ? await api.createProperty(updatedData)
       : await api.updateProperty(property.id, updatedData);
@@ -531,7 +533,7 @@ export function useAppData() {
       details: property.id === "default-property-id"
         ? "Created property configuration"
         : "Updated property settings",
-      metadata: { changedFields: Object.keys(updatedData) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
@@ -553,10 +555,12 @@ export function useAppData() {
   };
 
   const updateGuest = async (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => {
+    const previousGuest = guests.find((g) => g.id === guestId);
     const { data, error } = await api.updateGuest(guestId, updatedData);
     if (error) throw error;
     setGuests(prev => prev.map(g => g.id === guestId ? data : g));
     const label = formatName(data.firstName, data.lastName) || data.email;
+    const changedFields = extractChangedFields(previousGuest, updatedData);
     recordActivity({
       section: "guests",
       entityType: "guest",
@@ -564,7 +568,7 @@ export function useAppData() {
       entityLabel: label,
       action: "guest_updated",
       details: `Updated guest ${label}`,
-      metadata: { changedFields: Object.keys(updatedData) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
@@ -683,9 +687,11 @@ export function useAppData() {
   };
 
   const updateReservation = async (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => {
+    const previousReservation = reservations.find((reservation) => reservation.id === reservationId);
     const { data, error } = await api.updateReservation(reservationId, updatedData);
     if (error) throw error;
     setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, ...data } : r));
+    const changedFields = extractChangedFields(previousReservation, updatedData);
     recordActivity({
       section: "reservations",
       entityType: "reservation",
@@ -693,7 +699,7 @@ export function useAppData() {
       entityLabel: data.bookingId,
       action: "reservation_updated",
       details: `Updated reservation ${data.bookingId}`,
-      metadata: { changedFields: Object.keys(updatedData) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
@@ -809,6 +815,7 @@ export function useAppData() {
       data as Parameters<typeof api.fromDbRoomType>[0]
     );
     setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? updatedRoomType : rt));
+    const changedFields = extractChangedFields(existingRoomType, updatedData);
     recordActivity({
       section: "room_types",
       entityType: "room_type",
@@ -816,7 +823,7 @@ export function useAppData() {
       entityLabel: updatedRoomType.name,
       action: "room_type_updated",
       details: `Updated room type ${updatedRoomType.name}`,
-      metadata: { changedFields: Object.keys(updatedData) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
@@ -836,9 +843,11 @@ export function useAppData() {
   };
 
   const updateRoom = async (roomId: string, updatedData: Partial<Omit<Room, "id">>) => {
+    const previousRoom = rooms.find((room) => room.id === roomId);
     const { data: updatedRoom, error } = await api.updateRoom(roomId, updatedData);
     if (error) throw error;
     setRooms(prev => prev.map(r => r.id === roomId ? updatedRoom : r));
+    const changedFields = extractChangedFields(previousRoom, updatedData);
     recordActivity({
       section: "rooms",
       entityType: "room",
@@ -846,7 +855,7 @@ export function useAppData() {
       entityLabel: updatedRoom.roomNumber,
       action: "room_updated",
       details: `Updated room ${updatedRoom.roomNumber}`,
-      metadata: { changedFields: Object.keys(updatedData) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
@@ -901,9 +910,11 @@ export function useAppData() {
   };
 
   const updateRoomCategory = async (roomCategoryId: string, updatedData: Partial<Omit<RoomCategory, "id">>): Promise<void> => {
+    const previousRoomCategory = roomCategories.find((rc) => rc.id === roomCategoryId);
     const { data, error } = await api.updateRoomCategory(roomCategoryId, updatedData);
     if (error) throw error;
     setRoomCategories(prev => prev.map(rc => rc.id === roomCategoryId ? data : rc));
+    const changedFields = extractChangedFields(previousRoomCategory, updatedData);
     recordActivity({
       section: "room_categories",
       entityType: "room_category",
@@ -911,7 +922,7 @@ export function useAppData() {
       entityLabel: data.name,
       action: "room_category_updated",
       details: `Updated room category ${data.name}`,
-      metadata: { changedFields: Object.keys(updatedData) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
@@ -948,9 +959,11 @@ export function useAppData() {
   };
 
   const updateRatePlan = async (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => {
+    const previousRatePlan = ratePlans.find((rp) => rp.id === ratePlanId);
     const { data, error } = await api.updateRatePlan(ratePlanId, updatedData);
     if (error) throw error;
     setRatePlans(prev => prev.map(rp => rp.id === ratePlanId ? data : rp));
+    const changedFields = extractChangedFields(previousRatePlan, updatedData);
     recordActivity({
       section: "rate_plans",
       entityType: "rate_plan",
@@ -958,7 +971,7 @@ export function useAppData() {
       entityLabel: data.name,
       action: "rate_plan_updated",
       details: `Updated rate plan ${data.name}`,
-      metadata: { changedFields: Object.keys(updatedData) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
@@ -996,9 +1009,11 @@ export function useAppData() {
   };
 
   const updateRole = async (roleId: string, updatedData: Partial<Omit<Role, "id">>) => {
+    const previousRole = roles.find((role) => role.id === roleId);
     const { data, error } = await api.updateRole(roleId, updatedData);
     if (error) throw error;
     setRoles(prev => prev.map(r => r.id === roleId ? data : r));
+    const changedFields = extractChangedFields(previousRole, updatedData);
     recordActivity({
       section: "roles",
       entityType: "role",
@@ -1006,7 +1021,7 @@ export function useAppData() {
       entityLabel: data.name,
       action: "role_updated",
       details: `Updated role ${data.name}`,
-      metadata: { changedFields: Object.keys(updatedData) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
@@ -1029,6 +1044,7 @@ export function useAppData() {
   };
 
   const updateUser = async (userId: string, updatedData: Partial<Omit<User, "id">>) => {
+    const targetUser = users.find((user) => user.id === userId);
     const payload: UserProfileUpdate = {};
     if (typeof updatedData.name !== "undefined") {
       payload.name = updatedData.name;
@@ -1044,6 +1060,7 @@ export function useAppData() {
     const { data, error } = await api.updateUserProfile(userId, payload);
     if (error || !data) throw error ?? new Error("Failed to update user profile");
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, name: data.name, roleId: data.role_id } : u));
+    const changedFields = extractChangedFields(targetUser, payload);
     recordActivity({
       section: "users",
       entityType: "user",
@@ -1051,7 +1068,7 @@ export function useAppData() {
       entityLabel: data.name ?? userId,
       action: "user_updated",
       details: `Updated user ${data.name ?? userId}`,
-      metadata: { changedFields: Object.keys(payload) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
@@ -1095,9 +1112,11 @@ export function useAppData() {
   };
 
   const updateAmenity = async (amenityId: string, updatedData: Partial<Omit<Amenity, "id">>) => {
+    const previousAmenity = amenities.find((amenity) => amenity.id === amenityId);
     const { data, error } = await api.updateAmenity(amenityId, updatedData);
     if (error) throw error;
     setAmenities(prev => prev.map(a => a.id === amenityId ? data : a));
+    const changedFields = extractChangedFields(previousAmenity, updatedData);
     recordActivity({
       section: "amenities",
       entityType: "amenity",
@@ -1105,7 +1124,7 @@ export function useAppData() {
       entityLabel: data.name,
       action: "amenity_updated",
       details: `Updated amenity ${data.name}`,
-      metadata: { changedFields: Object.keys(updatedData) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
@@ -1143,9 +1162,11 @@ export function useAppData() {
   };
 
   const updateStickyNote = async (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt">>) => {
+    const previousNote = stickyNotes.find((note) => note.id === noteId);
     const { data, error } = await api.updateStickyNote(noteId, updatedData);
     if (error) throw error;
     setStickyNotes(prev => prev.map(n => n.id === noteId ? data : n));
+    const changedFields = extractChangedFields(previousNote, updatedData);
     recordActivity({
       section: "sticky_notes",
       entityType: "sticky_note",
@@ -1153,7 +1174,7 @@ export function useAppData() {
       entityLabel: data.title,
       action: "sticky_note_updated",
       details: `Updated note ${data.title}`,
-      metadata: { changedFields: Object.keys(updatedData) },
+      metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
 
