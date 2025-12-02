@@ -45,9 +45,6 @@ import type {
   UnitsViewMode,
   AvailabilityCellStatus,
   RoomTypeAvailability,
-  Reservation,
-  Guest,
-  Room,
 } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
 import { useMonthlyAvailability } from "@/hooks/use-monthly-availability";
@@ -101,17 +98,11 @@ type SelectedCell = {
   date: string;
 };
 
-type ReservationMetaSummary = {
-  guestName: string;
-  roomNumber?: string;
-  status: ReservationStatus;
-};
-
 const availabilityDotClasses: Record<AvailabilityCellStatus, string> = {
-  free: "bg-emerald-500",
-  partial: "bg-amber-500",
+  free: "bg-emerald-400",
+  partial: "bg-amber-400",
   busy: "bg-rose-500",
-  closed: "bg-muted-foreground/50",
+  closed: "bg-slate-400",
 };
 
 const legendStatuses: Array<{ key: AvailabilityCellStatus; label: string }> = [
@@ -122,7 +113,7 @@ const legendStatuses: Array<{ key: AvailabilityCellStatus; label: string }> = [
 ];
 
 export function AvailabilityCalendar() {
-  const { reservations, guests, rooms, property } = useDataContext();
+  const { property } = useDataContext();
   const [currentMonth, setCurrentMonth] = React.useState(startOfMonth(new Date()));
   const [selectedCell, setSelectedCell] = React.useState<SelectedCell | null>(null);
   const [unitsView, setUnitsView] = React.useState<UnitsViewMode>(property.defaultUnitsView);
@@ -136,10 +127,6 @@ export function AvailabilityCalendar() {
     return monthlyAvailability.filter((room) => room.roomType.units > 0);
   }, [monthlyAvailability]);
 
-  const reservationMeta = React.useMemo(
-    () => buildReservationMeta(reservations, guests, rooms),
-    [reservations, guests, rooms]
-  );
   const monthOptions = React.useMemo(
     () => buildMonthOptions(currentMonth),
     [currentMonth]
@@ -200,20 +187,28 @@ export function AvailabilityCalendar() {
   const hasAvailability = visibleRoomTypes.length > 0;
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
-      <div className="border-b border-border/50 p-3 sm:p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-lg sm:text-xl font-semibold tracking-tight">
-              Availability Overview
-            </h2>
+    <div className="rounded-3xl border border-border/60 bg-card shadow-xl">
+      <div className="border-b border-border/50 px-4 py-5 sm:px-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              Admin Calendar
+            </p>
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+                Availability Overview
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Track occupancy, closures, and payments for every room type in real-time.
+              </p>
+            </div>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-2 rounded-2xl border border-border/60 bg-card/60 p-1">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg"
+                className="h-9 w-9 rounded-xl"
                 onClick={() => setCurrentMonth((prev) => subMonths(prev, 1))}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -222,7 +217,7 @@ export function AvailabilityCalendar() {
                 value={format(currentMonth, "yyyy-MM-dd")}
                 onValueChange={handleMonthSelect}
               >
-                <SelectTrigger className="min-w-[160px] rounded-lg">
+                <SelectTrigger className="min-w-[160px] rounded-xl border-0 bg-transparent text-sm font-semibold">
                   <SelectValue placeholder="Select month" />
                 </SelectTrigger>
                 <SelectContent>
@@ -234,9 +229,9 @@ export function AvailabilityCalendar() {
                 </SelectContent>
               </Select>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg"
+                className="h-9 w-9 rounded-xl"
                 onClick={() => setCurrentMonth((prev) => addMonths(prev, 1))}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -246,7 +241,7 @@ export function AvailabilityCalendar() {
               value={unitsView}
               onValueChange={(value) => setUnitsView(value as UnitsViewMode)}
             >
-              <SelectTrigger className="h-9 min-w-[130px] rounded-lg text-xs font-medium">
+              <SelectTrigger className="h-10 min-w-[150px] rounded-xl border border-border/60 bg-card/60 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -284,20 +279,26 @@ export function AvailabilityCalendar() {
         ) : hasAvailability ? (
           <TooltipProvider delayDuration={0}>
             {/* Single Unified Table */}
-            <div className="rounded-2xl border border-border/50 bg-background/60 shadow-sm overflow-hidden">
+            <div className="rounded-3xl border border-border/50 bg-card shadow-md overflow-hidden">
               <div className="overflow-x-auto">
                 <Table className="min-w-max">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="sticky left-0 z-20 w-56 bg-muted/80 border-r border-border/40 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <span>{format(currentMonth, "MMMM yyyy")}</span>
+                      <TableHead className="sticky left-0 z-20 w-56 border-r border-border/40 bg-card/90 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                        <div>
+                          <p className="text-[11px]">Month</p>
+                          <p className="text-base font-semibold text-foreground">
+                            {format(currentMonth, "MMMM yyyy")}
+                          </p>
                         </div>
                       </TableHead>
                       {headerDays.map((day) => (
                         <TableHead
                           key={day.iso}
-                          className="w-14 text-center text-[11px] uppercase text-muted-foreground bg-muted/60"
+                          className={cn(
+                            "min-w-[3.5rem] border-b border-border/40 px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-muted-foreground",
+                            day.iso === todayIso && "bg-primary/10 text-primary shadow-[0_4px_20px_rgba(13,148,136,0.15)]"
+                          )}
                         >
                           <div>{format(day.date, "EEE")}</div>
                           <div className="font-semibold text-foreground">
@@ -325,20 +326,28 @@ export function AvailabilityCalendar() {
             </div>
             
             {/* Legend */}
-            <div className="flex flex-wrap items-center gap-4 text-sm pt-2">
-              {legendStatuses
-                .filter((status) => property.showPartialDays || status.key !== "partial")
-                .map((status) => (
-                  <div key={status.key} className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "h-4 w-4 rounded-full",
-                        availabilityDotClasses[status.key]
-                      )}
-                    />
-                    <span className="text-muted-foreground">{status.label}</span>
-                  </div>
-                ))}
+            <div className="rounded-2xl border border-border/60 bg-secondary/30 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                Legend
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-muted-foreground">
+                {legendStatuses
+                  .filter((status) => property.showPartialDays || status.key !== "partial")
+                  .map((status) => (
+                    <div
+                      key={status.key}
+                      className="flex items-center gap-2 rounded-full border border-border/50 bg-card px-3 py-1.5 shadow-sm"
+                    >
+                      <span
+                        className={cn(
+                          "h-2.5 w-2.5 rounded-full",
+                          availabilityDotClasses[status.key]
+                        )}
+                      />
+                      <span>{status.label}</span>
+                    </div>
+                  ))}
+              </div>
             </div>
           </TooltipProvider>
         ) : !rpcError ? (
@@ -349,28 +358,6 @@ export function AvailabilityCalendar() {
       </div>
     </div>
   );
-}
-
-function buildReservationMeta(
-  reservations: Reservation[],
-  guests: Guest[],
-  rooms: Room[]
-) {
-  const guestMap = new Map(guests.map((guest) => [guest.id, guest]));
-  const roomMap = new Map(rooms.map((room) => [room.id, room]));
-  const meta = new Map<string, ReservationMetaSummary>();
-
-  reservations.forEach((reservation) => {
-    const guest = guestMap.get(reservation.guestId);
-    const room = roomMap.get(reservation.roomId);
-    meta.set(reservation.id, {
-      guestName: guest ? `${guest.firstName} ${guest.lastName}` : "Guest",
-      roomNumber: room?.roomNumber,
-      status: reservation.status,
-    });
-  });
-
-  return meta;
 }
 
 function buildHeaderDays(

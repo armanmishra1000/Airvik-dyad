@@ -12,7 +12,11 @@ import {
 } from "@/components/ui/hover-card";
 import { useDataContext } from "@/context/data-context";
 import type { Reservation, ReservationStatus } from "@/data/types";
-import { calculateReservationFinancials, resolveReservationTaxConfig } from "@/lib/reservations/calculate-financials";
+import {
+  calculateReservationFinancials,
+  resolveReservationTaxConfig,
+} from "@/lib/reservations/calculate-financials";
+import type { PaymentStatus } from "@/lib/reservations/calculate-financials";
 import { cn } from "@/lib/utils";
 import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyValue } from "@/lib/currency";
 
@@ -56,6 +60,11 @@ const getStatusStyle = (status: ReservationStatus) =>
     dot: "bg-muted/70",
   };
 
+const mixedStatusStyle = {
+  ribbon: "border border-muted/50 bg-muted/30 text-muted-foreground",
+  dot: "bg-muted/70",
+};
+
 interface ReservationDetail {
   reservation: Reservation;
   guestName: string;
@@ -66,6 +75,29 @@ interface ReservationDetail {
   children?: number | null;
   roomNumber?: string;
   roomTypeName?: string;
+}
+
+interface ReservationGroupSummary {
+  bookingId: string;
+  guestName: string;
+  guestsText?: string | null;
+  bookingDate: Date;
+  checkIn: Date;
+  checkOut: Date;
+  nights: number;
+  rooms: Array<{ id: string; roomNumber?: string; roomTypeName?: string }>;
+  totalCharges: number;
+  totalPaid: number;
+  balance: number;
+  paymentStatus: PaymentStatus;
+  statusLabel: ReservationStatus | "Mixed";
+  statusStyle: { ribbon: string; dot: string };
+}
+
+interface GroupedRoomType {
+  label: string;
+  count: number;
+  roomNumbers: string[];
 }
 
 interface ReservationHoverCardProps {
@@ -120,6 +152,43 @@ function formatGuests(detail: ReservationDetail): string | null {
   return parts.join(", ");
 }
 
+function groupRoomsByType(
+  rooms: ReservationGroupSummary["rooms"]
+): GroupedRoomType[] {
+  const groups = new Map<string, GroupedRoomType>();
+
+  rooms.forEach((room) => {
+    const label = room.roomTypeName?.trim() || "Room";
+    const roomNumber = room.roomNumber?.trim();
+    const existing = groups.get(label);
+
+    if (existing) {
+      existing.count += 1;
+      if (roomNumber) {
+        existing.roomNumbers.push(roomNumber);
+      }
+      return;
+    }
+
+    groups.set(label, {
+      label,
+      count: 1,
+      roomNumbers: roomNumber ? [roomNumber] : [],
+    });
+  });
+
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      roomNumbers: [...group.roomNumbers].sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" })
+      ),
+    }))
+    .sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+    );
+}
+
 export function ReservationHoverCard({
   children,
   reservationIds,
@@ -127,21 +196,39 @@ export function ReservationHoverCard({
 }: ReservationHoverCardProps) {
   const { reservations, guests, rooms, roomTypes, property } = useDataContext();
   const currencyCode = property.currency || DEFAULT_CURRENCY;
+  const hoverDate = React.useMemo(() => {
+    const parsed = parseISO(date);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }, [date]);
 
   const reservationDetails = React.useMemo<ReservationDetail[]>(() => {
     const guestMap = new Map(guests.map((guest) => [guest.id, guest]));
     const roomMap = new Map(rooms.map((room) => [room.id, room]));
     const roomTypeMap = new Map(roomTypes.map((rt) => [rt.id, rt]));
+    const reservationMap = new Map(reservations.map((reservation) => [reservation.id, reservation]));
 
-    const details = reservationIds.map<ReservationDetail | null>((id) => {
-      const reservation = reservations.find((r) => r.id === id);
-      if (!reservation) return null;
+    const details: ReservationDetail[] = [];
+    const targetBookingIds = new Set<string>();
+    const seenReservationIds = new Set<string>();
+
+    const includeReservationDetail = (reservation: Reservation | undefined) => {
+      if (!reservation || seenReservationIds.has(reservation.id)) {
+        return;
+      }
+
+      if (hoverDate) {
+        const checkIn = parseISO(reservation.checkInDate);
+        const checkOut = parseISO(reservation.checkOutDate);
+        if (!(hoverDate >= checkIn && hoverDate < checkOut)) {
+          return;
+        }
+      }
 
       const guest = guestMap.get(reservation.guestId);
       const room = roomMap.get(reservation.roomId);
       const roomType = room ? roomTypeMap.get(room.roomTypeId) : undefined;
 
-      return {
+      details.push({
         reservation,
         guestName: guest ? `${guest.firstName} ${guest.lastName}` : "Unknown Guest",
         customerTitle: null,
@@ -151,13 +238,137 @@ export function ReservationHoverCard({
         children: null,
         roomNumber: room?.roomNumber,
         roomTypeName: roomType?.name,
-      };
+      });
+
+      seenReservationIds.add(reservation.id);
+      const bookingKey = reservation.bookingId || reservation.id;
+      if (bookingKey) {
+        targetBookingIds.add(bookingKey);
+      }
+    };
+
+    reservationIds.forEach((id) => {
+      includeReservationDetail(reservationMap.get(id));
     });
 
-    return details.filter((detail): detail is ReservationDetail => detail !== null);
-  }, [reservationIds, reservations, guests, rooms, roomTypes]);
+    if (targetBookingIds.size > 0) {
+      reservationMap.forEach((reservation) => {
+        const bookingKey = reservation.bookingId || reservation.id;
+        if (targetBookingIds.has(bookingKey)) {
+          includeReservationDetail(reservation);
+        }
+      });
+    }
 
-  if (reservationDetails.length === 0) {
+    return details;
+  }, [reservationIds, reservations, guests, rooms, roomTypes, hoverDate]);
+
+  const reservationGroups = React.useMemo<ReservationGroupSummary[]>(() => {
+    if (reservationDetails.length === 0) {
+      return [];
+    }
+
+    const groups = new Map<string, {
+      bookingId: string;
+      guestName: string;
+      guestsText?: string | null;
+      bookingDate: Date;
+      checkIn: Date;
+      checkOut: Date;
+      nights: number;
+      rooms: Array<{ id: string; roomNumber?: string; roomTypeName?: string }>;
+      totalCharges: number;
+      totalPaid: number;
+      statuses: Set<ReservationStatus>;
+    }>();
+
+    reservationDetails.forEach((detail) => {
+      const { reservation } = detail;
+      const bookingId = reservation.bookingId || reservation.id;
+      const checkIn = parseISO(reservation.checkInDate);
+      const checkOut = parseISO(reservation.checkOutDate);
+      const bookingDate = parseISO(reservation.bookingDate);
+      const nights = Math.max(differenceInDays(checkOut, checkIn), 1);
+      const reservationTaxConfig = resolveReservationTaxConfig(reservation, property);
+      const { totalCharges, totalPaid } = calculateReservationFinancials(
+        reservation,
+        reservationTaxConfig
+      );
+
+      const existing = groups.get(bookingId);
+      if (!existing) {
+        groups.set(bookingId, {
+          bookingId,
+          guestName: formatCustomerName(detail),
+          guestsText: formatGuests(detail),
+          bookingDate,
+          checkIn,
+          checkOut,
+          nights,
+          rooms: [
+            {
+              id: reservation.id,
+              roomNumber: detail.roomNumber,
+              roomTypeName: detail.roomTypeName,
+            },
+          ],
+          totalCharges,
+          totalPaid,
+          statuses: new Set<ReservationStatus>([reservation.status]),
+        });
+        return;
+      }
+
+      existing.rooms.push({
+        id: reservation.id,
+        roomNumber: detail.roomNumber,
+        roomTypeName: detail.roomTypeName,
+      });
+      existing.checkIn = checkIn < existing.checkIn ? checkIn : existing.checkIn;
+      existing.checkOut = checkOut > existing.checkOut ? checkOut : existing.checkOut;
+      existing.nights = Math.max(existing.nights, nights);
+      existing.totalCharges += totalCharges;
+      existing.totalPaid += totalPaid;
+      existing.statuses.add(reservation.status);
+    });
+
+    return Array.from(groups.values()).map((group) => {
+      const balance = group.totalCharges - group.totalPaid;
+      const paymentStatus: PaymentStatus =
+        balance <= 0 ? "Fully Paid" : group.totalPaid > 0 ? "Partially Paid" : "Unpaid";
+      const statusLabel = group.statuses.size === 1 ? [...group.statuses][0] : "Mixed";
+      const statusStyle =
+        statusLabel === "Mixed"
+          ? mixedStatusStyle
+          : getStatusStyle(statusLabel as ReservationStatus);
+
+      return {
+        bookingId: group.bookingId,
+        guestName: group.guestName,
+        guestsText: group.guestsText,
+        bookingDate: group.bookingDate,
+        checkIn: group.checkIn,
+        checkOut: group.checkOut,
+        nights: group.nights,
+          rooms: [...group.rooms].sort((a, b) => {
+            const typeCompare = (a.roomTypeName || "").localeCompare(b.roomTypeName || "");
+            if (typeCompare !== 0) return typeCompare;
+            return (a.roomNumber || "").localeCompare(b.roomNumber || "", undefined, {
+              numeric: true,
+              sensitivity: "base",
+            });
+          }),
+        totalCharges: group.totalCharges,
+        totalPaid: group.totalPaid,
+        balance,
+        paymentStatus,
+        statusLabel,
+        statusStyle,
+      } satisfies ReservationGroupSummary;
+    });
+  }, [reservationDetails, property]);
+
+  if (reservationGroups.length === 0) {
     return <>{children}</>;
   }
 
@@ -166,159 +377,171 @@ export function ReservationHoverCard({
       <HoverCardTrigger asChild>
         {children}
       </HoverCardTrigger>
-      <HoverCardContent className="w-80 max-w-sm p-0" align="start" sideOffset={5}>
-        <div className="space-y-4 p-4">
+      <HoverCardContent
+        className="w-96 max-w-lg max-h-[26rem] overflow-hidden rounded-2xl"
+        align="start"
+        sideOffset={5}
+      >
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold leading-tight">
-              {format(parseISO(date), "MMMM d, yyyy")}
-            </h4>
-            <Badge variant="secondary" className="text-xs">
-              {reservationDetails.length} Booking
-              {reservationDetails.length > 1 ? "s" : ""}
+            <div>
+              <p className="text-sm uppercase tracking-wide text-muted-foreground">Date</p>
+              <h4 className="text-sm font-semibold leading-tight">
+                {format(parseISO(date), "MMMM d, yyyy")}
+              </h4>
+            </div>
+            <Badge variant="secondary" className="text-sm font-medium">
+              {reservationDetails.length} Room
+              {reservationDetails.length !== 1 ? "s" : ""}
             </Badge>
           </div>
           <Separator />
 
-          <ScrollArea className="h-60 w-full">
-            <div className="space-y-4 pr-3 text-sm">
-              {reservationDetails.map((detail) => {
-                const { reservation, roomNumber, roomTypeName } = detail;
-                const checkIn = parseISO(reservation.checkInDate);
-                const checkOut = parseISO(reservation.checkOutDate);
-                const nights = differenceInDays(checkOut, checkIn);
-                const bookingDate = parseISO(reservation.bookingDate);
-                const statusStyle = getStatusStyle(reservation.status);
-                const reservationTaxConfig = resolveReservationTaxConfig(reservation, property);
-                const {
-                  totalCharges,
-                  totalPaid,
-                  balance,
-                  paymentStatus,
-                } = calculateReservationFinancials(reservation, reservationTaxConfig);
-
-                const paymentStatusBadgeVariant = 
-                  paymentStatus === "Fully Paid" ? "default" :
-                  paymentStatus === "Partially Paid" ? "secondary" : "destructive";
-
-                const guestDisplayName = formatCustomerName(detail);
-                const guestsText = formatGuests(detail);
+          <div
+            
+            className="w-full max-h-[18rem] [&_[data-radix-scroll-area-viewport]]:max-h-[18rem] overflow-y-auto scrollbar-hide"
+          >
+            <div className="space-y-4 text-sm">
+              {reservationGroups.map((group) => {
+                const paymentStatusBadgeVariant =
+                  group.paymentStatus === "Fully Paid"
+                    ? "default"
+                    : group.paymentStatus === "Partially Paid"
+                      ? "secondary"
+                      : "destructive";
+                const groupedRoomTypes = groupRoomsByType(group.rooms);
 
                 return (
                   <div
-                    key={reservation.id}
-                    className="space-y-3 rounded-lg border bg-background/80 p-3 shadow-sm"
+                    key={group.bookingId}
+                    className="space-y-4 rounded-2xl border border-border/60 bg-card/80 p-4 shadow-sm"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-semibold leading-snug">
-                          {guestDisplayName}
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-base font-semibold leading-snug text-foreground">
+                          {group.guestName}
+                        </p>
+                        {group.guestsText && (
+                          <p className="text-sm text-muted-foreground">
+                            {group.guestsText}
+                          </p>
+                        )}
+                        <p className="text-sm text-muted-foreground">
+                          Booking ID: {formatBookingId(group.bookingId)}
                         </p>
                       </div>
-                      <Badge className={cn("text-xs", statusStyle.ribbon)}>
-                        {reservation.status}
+                      <Badge className={cn("text-sm", group.statusStyle.ribbon)}>
+                        {group.statusLabel}
                       </Badge>
                     </div>
 
-                    <div className="space-y-1">
-                      <div className="flex items-baseline justify-between gap-4">
-                        <span className="font-medium text-primary">Booking ID</span>
-                        <span
-                          className="truncate text-foreground text-right"
-                          title={reservation.bookingId}
-                        >
-                          {formatBookingId(reservation.bookingId)}
-                        </span>
+                    <div className="grid grid-cols-2 gap-3 text-sm font-medium text-muted-foreground">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide">Booking Date</p>
+                        <p className="text-foreground">
+                          {format(group.bookingDate, "MMM d, yyyy")}
+                        </p>
                       </div>
-
-                      <div className="flex items-baseline justify-between gap-4">
-                        <span className="font-medium text-primary">Booking Date</span>
-                        <span className="text-foreground text-right">
-                          {format(bookingDate, "MMM d, yyyy")}
-                        </span>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide">Nights</p>
+                        <p className="text-foreground">{group.nights}</p>
                       </div>
-
-                      <div className="flex items-baseline justify-between gap-4">
-                        <span className="font-medium text-primary">Nights</span>
-                        <span className="text-foreground text-right">{nights}</span>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide">Check-in</p>
+                        <p className="text-foreground">
+                          {format(group.checkIn, "MMM d, yyyy")}
+                        </p>
                       </div>
-
-                      <div className="flex items-baseline justify-between gap-4">
-                        <span className="font-medium text-primary">Room</span>
-                        <span className="text-foreground text-right">
-                          {roomNumber || "N/A"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-baseline justify-between gap-4">
-                        <span className="font-medium text-primary">Room Type</span>
-                        <span className="text-foreground text-right truncate" title={roomTypeName || undefined}>
-                          {roomTypeName || "N/A"}
-                        </span>
-                      </div>
-
-                      {guestsText && (
-                        <div className="flex items-baseline justify-between gap-4">
-                          <span className="font-medium text-primary">Guests</span>
-                          <span className="text-foreground text-right">
-                            {guestsText}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-2 space-y-2 border-t pt-2 text-muted-foreground">
-                      <div className="space-y-1">
-                        <div className="flex justify-between ">
-                          <span className="font-medium text-primary">Check-in</span>
-                          <span className="font-medium text-foreground">
-                            {format(checkIn, "MMM d, yyyy")}
-                          </span>
-                        </div>
-                        <div className="flex justify-between ">
-                          <span className="font-medium text-primary">Check-out</span>
-                          <span className="font-medium text-foreground">
-                            {format(checkOut, "MMM d, yyyy")}
-                          </span>
-                        </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wide">Check-out</p>
+                        <p className="text-foreground">
+                          {format(group.checkOut, "MMM d, yyyy")}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="mt-2 space-y-1 border-t pt-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-primary">Payment Status:</span>
-                        <Badge variant={paymentStatusBadgeVariant} className="text-xs">
-                          {paymentStatus}
+                    <div className="rounded-xl bg-secondary/40 p-3">
+                      <div className="flex items-center justify-between text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                        <span>Rooms</span>
+                        <span>
+                          {group.rooms.length} room
+                          {group.rooms.length > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      <div className="mt-3 divide-y divide-border/40 rounded-lg border border-border/40 bg-background/70">
+                        {groupedRoomTypes.map((roomType) => {
+                          const roomList =
+                            roomType.roomNumbers.length > 0
+                              ? roomType.roomNumbers.join(", ")
+                              : "Pending assignment";
+
+                          return (
+                            <div
+                              key={roomType.label}
+                              className="flex flex-col gap-1 px-3 py-3"
+                              aria-label={`${roomType.label} with ${roomType.count} room${
+                                roomType.count > 1 ? "s" : ""
+                              }. Rooms: ${roomList}`}
+                            >
+                              <div className="flex items-center justify-between text-sm font-semibold text-foreground">
+                                <span>{roomType.label}</span>
+                                <span className="text-sm font-medium text-primary">
+                                  {roomType.count}x
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+                                <span className="font-medium text-foreground/80">
+                                  Rooms:
+                                </span>
+                                <span>{roomList}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-border/60 bg-background/80 p-3">
+                      <div className="flex items-center justify-between">y
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Payment Status
+                        </span>
+                        <Badge variant={paymentStatusBadgeVariant} className="text-sm">
+                          {group.paymentStatus}
                         </Badge>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-primary">Total Charges:</span>
-                        <span className="font-semibold">
-                          {formatCurrencyValue(totalCharges, currencyCode)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-primary">Total Paid:</span>
-                        <span className="font-semibold text-emerald-600">
-                          {formatCurrencyValue(totalPaid, currencyCode)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-muted-foreground">
-                        <span className="font-medium text-primary">Balance:</span>
-                        <span
-                          className={cn(
-                            "font-semibold",
-                            balance > 0 ? "text-rose-600" : "text-emerald-600"
-                          )}
-                        >
-                          {formatCurrencyValue(balance, currencyCode)}
-                        </span>
+                      <Separator className="my-3" />
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between text-foreground">
+                          <span>Total Charges</span>
+                          <span className="font-semibold">
+                            {formatCurrencyValue(group.totalCharges, currencyCode)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-emerald-600">
+                          <span>Total Paid</span>
+                          <span className="font-semibold">
+                            {formatCurrencyValue(group.totalPaid, currencyCode)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Balance Due (Total)</span>
+                          <span
+                            className={cn(
+                              "font-semibold",
+                              group.balance > 0 ? "text-rose-600" : "text-emerald-600"
+                            )}
+                          >
+                            {formatCurrencyValue(group.balance, currencyCode)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </ScrollArea>
+          </div>
         </div>
       </HoverCardContent>
     </HoverCard>
