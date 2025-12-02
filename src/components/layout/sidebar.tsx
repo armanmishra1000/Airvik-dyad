@@ -19,6 +19,7 @@ import {
   ChevronRight,
   MessageSquare,
   HeartHandshake,
+  History,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import * as React from "react";
@@ -40,7 +41,15 @@ import {
 } from "@/components/ui/collapsible";
 import type { Permission } from "@/data/types";
 
-const navItems = [
+type SidebarNavItem = {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  requiredPermission: Permission;
+  subItems?: Array<{ label: string; href: string }>;
+};
+
+const navItems: SidebarNavItem[] = [
   { href: "/admin", icon: Home, label: "Dashboard", requiredPermission: "read:reservation" },
   { href: "/admin/reservations", icon: Calendar, label: "Reservations", requiredPermission: "read:reservation" },
   { href: "/admin/calendar", icon: Calendar, label: "Calendar", requiredPermission: "read:reservation" },
@@ -64,13 +73,7 @@ const navItems = [
   { href: "/admin/feedback", icon: MessageSquare, label: "Feedback", requiredPermission: "read:feedback" },
   { href: "/admin/reports", icon: BarChart3, label: "Reports", requiredPermission: "read:report" },
   { href: "/admin/donations", icon: HeartHandshake, label: "Donations", requiredPermission: "read:report" },
-] satisfies Array<{
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  requiredPermission: Permission;
-  subItems?: Array<{ label: string; href: string }>;
-}>;
+] satisfies SidebarNavItem[];
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -79,10 +82,20 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname() ?? "";
-  const { hasPermission } = useAuthContext();
+  const { hasPermission, userRole } = useAuthContext();
   const { property } = useDataContext();
 
-  const accessibleNavItems = navItems.filter((item) => hasPermission(item.requiredPermission));
+  const baseNavItems = navItems.filter((item) => hasPermission(item.requiredPermission));
+  const canViewActivity = userRole?.name === "Hotel Owner" || userRole?.name === "Hotel Manager";
+  const activityNavItem: SidebarNavItem = {
+    href: "/admin/activity",
+    icon: History,
+    label: "Activity",
+    requiredPermission: "read:reservation",
+  };
+  const accessibleNavItems: SidebarNavItem[] = canViewActivity
+    ? [...baseNavItems, activityNavItem]
+    : baseNavItems;
 
   return (
     <aside className="hidden h-screen flex-col border-r border-border/50 bg-card/80 shadow-lg transition-colors duration-300 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:flex">

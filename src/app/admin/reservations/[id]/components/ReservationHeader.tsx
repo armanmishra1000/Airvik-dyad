@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { useDataContext } from "@/context/data-context";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
 import { CancelReservationDialog } from "@/app/admin/reservations/components/cancel-reservation-dialog";
-import { EditReservationDialog } from "@/app/admin/reservations/components/edit-reservation-dialog";
 import * as React from "react";
 
 interface ReservationHeaderProps {
@@ -61,12 +60,24 @@ export function ReservationHeader({ reservation }: ReservationHeaderProps) {
           </Badge>
         )}
         <div className="hidden items-center gap-2 md:ml-auto md:flex">
-          <EditReservationDialog reservation={reservation}>
-            <Button variant="outline" size="sm" disabled={!canBeModified}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          </EditReservationDialog>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canBeModified}
+            asChild={canBeModified}
+          >
+            {canBeModified ? (
+              <Link href={`/admin/reservations/${reservation.id}/edit`}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Link>
+            ) : (
+              <>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </>
+            )}
+          </Button>
           <Button
             variant="outline"
             size="sm"

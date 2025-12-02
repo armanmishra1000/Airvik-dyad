@@ -13,7 +13,7 @@ interface AuthContextType {
   hasPermission: (permission: Permission) => boolean;
 }
 
-const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
@@ -30,4 +30,8 @@ export function useAuthContext() {
     throw new Error("useAuthContext must be used within an AuthProvider");
   }
   return context;
+}
+
+export function useOptionalAuthContext() {
+  return React.useContext(AuthContext);
 }

@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { Feedback } from "@/data/types";
 import { createServerSupabaseClient } from "@/integrations/supabase/server";
 import { HttpError, requirePermission } from "@/lib/server/auth";
+import { logAdminActivityFromProfile } from "@/lib/activity/server";
 
 const feedbackStatusValues = ["new", "in_review", "resolved"] as const;
 
@@ -23,7 +24,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requirePermission(request, "update:feedback");
+    const profile = await requirePermission(request, "update:feedback");
     const body = await request.json();
     const payload = UpdateSchema.parse(body);
     const { id } = await params;
@@ -68,7 +69,29 @@ export async function PATCH(
       return NextResponse.json({ message: "Feedback not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ data: mapFeedbackRow(data) });
+    const mapped = mapFeedbackRow(data);
+
+    await logAdminActivityFromProfile({
+      profile,
+      entry: {
+        section: "feedback",
+        entityType: "feedback",
+        entityId: mapped.id,
+        entityLabel: mapped.name ?? mapped.email ?? mapped.id,
+        action: "feedback_updated",
+        details: payload.status
+          ? `Updated feedback status to ${payload.status}`
+          : "Updated feedback metadata",
+        metadata: {
+          status: mapped.status,
+          hasInternalNote: Boolean(
+            typeof payload.internalNote === "string" && payload.internalNote.length > 0
+          ),
+        },
+      },
+    });
+
+    return NextResponse.json({ data: mapped });
   } catch (error) {
     if (error instanceof HttpError) {
       return NextResponse.json({ message: error.message }, { status: error.status });

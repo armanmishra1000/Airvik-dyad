@@ -1,5 +1,6 @@
 import type { Permission } from "@/data/types";
 import { createServerSupabaseClient } from "@/integrations/supabase/server";
+import { ADMIN_ROLES, ROLE_NAMES } from "@/constants/roles";
 
 export class HttpError extends Error {
   constructor(public status: number, message: string) {
@@ -20,6 +21,53 @@ export async function requirePermission(
   request: Request,
   requiredPermission: Permission
 ): Promise<AuthorizedProfile> {
+  const context = await resolveProfileContext(request);
+
+  if (!hasPermission(context.roleName, context.permissions, requiredPermission)) {
+    throw new HttpError(403, "Insufficient permissions");
+  }
+
+  return {
+    userId: context.profileId,
+    roleName: context.roleName,
+    permissions: context.permissions,
+  };
+}
+
+export async function requireAdminProfile(
+  request: Request
+): Promise<AuthorizedProfile> {
+  const context = await resolveProfileContext(request);
+  const allowedRoles = new Set<string>([...ADMIN_ROLES, ROLE_NAMES.GUEST]);
+
+  if (!context.roleName || !allowedRoles.has(context.roleName)) {
+    throw new HttpError(403, "Insufficient permissions");
+  }
+
+  return {
+    userId: context.profileId,
+    roleName: context.roleName,
+    permissions: context.permissions,
+  };
+}
+
+function extractAccessToken(header: string | null): string | null {
+  if (!header) return null;
+  const normalized = header.trim();
+  if (normalized.length === 0) return null;
+  if (normalized.toLowerCase().startsWith(BEARER_PREFIX)) {
+    return normalized.slice(BEARER_PREFIX.length).trim();
+  }
+  return normalized;
+}
+
+type ProfileContext = {
+  profileId: string;
+  roleName: string | null;
+  permissions: Permission[];
+};
+
+async function resolveProfileContext(request: Request): Promise<ProfileContext> {
   const token = extractAccessToken(request.headers.get("authorization"));
   if (!token) {
     throw new HttpError(401, "Missing or invalid Authorization header");
@@ -47,25 +95,11 @@ export async function requirePermission(
   const roleName: string | null = roleRecord?.name ?? null;
   const permissions: Permission[] = roleRecord?.permissions ?? [];
 
-  if (!hasPermission(roleName, permissions, requiredPermission)) {
-    throw new HttpError(403, "Insufficient permissions");
-  }
-
   return {
-    userId: profile.id,
+    profileId: profile.id,
     roleName,
     permissions,
   };
-}
-
-function extractAccessToken(header: string | null): string | null {
-  if (!header) return null;
-  const normalized = header.trim();
-  if (normalized.length === 0) return null;
-  if (normalized.toLowerCase().startsWith(BEARER_PREFIX)) {
-    return normalized.slice(BEARER_PREFIX.length).trim();
-  }
-  return normalized;
 }
 
 function hasPermission(
