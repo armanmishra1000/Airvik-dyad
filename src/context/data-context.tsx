@@ -212,6 +212,15 @@ interface DataContextType {
   ) => void;
   deleteStickyNote: (noteId: string) => void;
   updateDashboardLayout: (layout: DashboardComponentId[]) => void;
+  validateBookingRequest: (
+    checkIn: string,
+    checkOut: string,
+    roomId: string,
+    adults: number,
+    children?: number,
+    bookingId?: string
+  ) => Promise<BookingValidationResult>;
+  refreshReservations: () => Promise<void>;
   logActivity: (entry: AdminActivityLogInput) => Promise<void>;
 }
 
