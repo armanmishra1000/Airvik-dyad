@@ -1,39 +1,48 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { useAuthContext } from "@/context/auth-context";
 import { useAdminActivityLogs } from "@/hooks/use-admin-activity-logs";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
-
-const SECTION_OPTIONS = [
-  { label: "All sections", value: "all" },
-  { label: "Reservations", value: "reservations" },
-  { label: "Guests", value: "guests" },
-  { label: "Rooms", value: "rooms" },
-  { label: "Room Types", value: "room_types" },
-  { label: "Room Categories", value: "room_categories" },
-  { label: "Rate Plans", value: "rate_plans" },
-  { label: "Housekeeping", value: "housekeeping" },
-  { label: "Property", value: "property" },
-  { label: "Roles", value: "roles" },
-  { label: "Users", value: "users" },
-  { label: "Amenities", value: "amenities" },
-  { label: "Sticky Notes", value: "sticky_notes" },
-  { label: "Posts", value: "posts" },
-  { label: "Donations", value: "donations" },
-  { label: "Feedback", value: "feedback" },
-  { label: "Dashboard", value: "dashboard" },
-  { label: "Settings", value: "settings" },
-  { label: "System", value: "system" },
-] as const;
+import {
+  formatActivityActor,
+  formatActivityOutcome,
+  formatActivityResource,
+  formatActivitySummary,
+  formatActivityTimestamp,
+} from "@/lib/activity/format";
 
 const ROLE_OPTIONS = [
   "all",
@@ -48,7 +57,8 @@ const LIMIT_OPTIONS = [10, 25, 50, 100, 200] as const;
 
 export default function ActivityPage() {
   const { userRole } = useAuthContext();
-  const canView = userRole?.name === "Hotel Owner" || userRole?.name === "Hotel Manager";
+  const canView =
+    userRole?.name === "Hotel Owner" || userRole?.name === "Hotel Manager";
   const {
     logs,
     filters,
@@ -61,46 +71,34 @@ export default function ActivityPage() {
     isLoading,
     error,
     refetch,
-  } = useAdminActivityLogs(
-    { limit: 10 },
-    { enabled: canView }
-  );
+  } = useAdminActivityLogs({ limit: 10 }, { enabled: canView });
   const formatCurrency = useCurrencyFormatter();
-
-  const showPagination = canView && totalPages > 1;
-
-  const handleNextPage = () => {
-    if (!canNext) return;
-    setPage((prev) => prev + 1);
-  };
-
-  const handlePreviousPage = () => {
-    if (!canPrevious) return;
-    setPage((prev) => prev - 1);
-  };
-
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTextFilterChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const { name, value } = event.target;
-    if (name === "search") {
-      setFilters({ search: value });
-      return;
-    }
-    if (name === "from") {
-      setFilters({ from: value || undefined });
-      return;
-    }
-    if (name === "to") {
-      setFilters({ to: value || undefined });
-      return;
+    setFilters({ [name]: value } as Partial<typeof filters>);
+  };
+
+  const handleDateFilterChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = event.target;
+    if (name === "from" || name === "to") {
+      setFilters({ [name]: value || undefined } as Partial<typeof filters>);
     }
   };
+
+  const tableHasRows = !isLoading && !error && logs.length > 0;
 
   if (!canView) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Activity Log</CardTitle>
-          <CardDescription>Only hotel owners and managers can view this page.</CardDescription>
+          <CardDescription>
+            Only hotel owners and managers can view this page.
+          </CardDescription>
         </CardHeader>
       </Card>
     );
@@ -111,107 +109,76 @@ export default function ActivityPage() {
       <Card>
         <CardHeader>
           <CardTitle>Activity Filters</CardTitle>
-          <CardDescription>Scope the log by section, role, action, or date range.</CardDescription>
+          <CardDescription>
+            Match the table columns to narrow down the activity feed.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="section">Section</Label>
-            <Select
-              value={filters.section}
-              onValueChange={(value) => setFilters({ section: value as typeof filters.section })}
-            >
-              <SelectTrigger id="section">
-                <SelectValue placeholder="Select section" />
-              </SelectTrigger>
-              <SelectContent>
-                {SECTION_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Time</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                id="from"
+                name="from"
+                type="date"
+                value={filters.from ?? ""}
+                onChange={handleDateFilterChange}
+              />
+              <Input
+                id="to"
+                name="to"
+                type="date"
+                value={filters.to ?? ""}
+                onChange={handleDateFilterChange}
+              />
+            </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="actorRole">Role</Label>
-            <Select
-              value={filters.actorRole}
-              onValueChange={(value) => setFilters({ actorRole: value })}
-            >
-              <SelectTrigger id="actorRole">
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLE_OPTIONS.map((role) => (
-                  <SelectItem key={role} value={role}>{role === "all" ? "All roles" : role}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="actorName">Actor (Role)</Label>
+            <div className="grid gap-2">
+              <Select
+                value={filters.actorRole}
+                onValueChange={(value) => setFilters({ actorRole: value })}
+              >
+                <SelectTrigger id="actorRole">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role === "all" ? "All roles" : role}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="action">Action contains</Label>
+            <Label htmlFor="action">Action</Label>
             <Input
               id="action"
               name="action"
-              placeholder="e.g. reservation_created"
-              value={filters.action === "all" ? "" : filters.action}
-              onChange={(event) => setFilters({ action: event.target.value || "all" })}
+              placeholder="e.g. RESERVATION_ADD"
+              value={filters.action}
+              onChange={handleTextFilterChange}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="from">From</Label>
-            <Input
-              id="from"
-              name="from"
-              type="date"
-              value={filters.from ?? ""}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="to">To</Label>
-            <Input
-              id="to"
-              name="to"
-              type="date"
-              value={filters.to ?? ""}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="search">Search</Label>
-            <Input
-              id="search"
-              name="search"
-              placeholder="Search message, entity, or actor"
-              value={filters.search ?? ""}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="limit">Limit</Label>
-            <Select
-              value={String(filters.limit)}
-              onValueChange={(value) => setFilters({ limit: Number(value) })}
-            >
-              <SelectTrigger id="limit">
-                <SelectValue placeholder="Select limit" />
-              </SelectTrigger>
-              <SelectContent>
-                {LIMIT_OPTIONS.map((limit) => (
-                  <SelectItem key={limit} value={String(limit)}>{limit} entries</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           <div className="flex items-end gap-3">
-            <Button type="button" variant="secondary" onClick={() => setFilters({
-              section: "all",
-              actorRole: "all",
-              action: "all",
-              from: undefined,
-              to: undefined,
-              search: "",
-              limit: filters.limit,
-            })}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                setFilters({
+                  actorRole: "all",
+                  actorName: "",
+                  action: "",
+                  resource: "",
+                  summary: "",
+                  outcome: "",
+                  from: undefined,
+                  to: undefined,
+                })
+              }
             >
               Reset
             </Button>
@@ -226,71 +193,159 @@ export default function ActivityPage() {
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
           <CardDescription>
-            Showing {logs.length} entr{logs.length === 1 ? "y" : "ies"} {filters.section !== "all" && `for ${filters.section.replace(/_/g, " ")}`}
+            Showing {logs.length} entr{logs.length === 1 ? "y" : "ies"} on page{" "}
+            {page} of {totalPages}.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isLoading && <p className="text-sm text-muted-foreground">Loading activity…</p>}
-          {!isLoading && error && (
-            <p className="text-sm text-destructive">{error.message}</p>
-          )}
-          {!isLoading && !error && logs.length === 0 && (
-            <p className="text-sm text-muted-foreground">No activity found for the selected filters.</p>
-          )}
-          {!isLoading && !error && logs.length > 0 && (
-            <div className="space-y-4">
-              {logs.map((log) => (
-                <div key={log.id} className="rounded-xl border border-border/40 p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <p className="font-medium text-foreground">{log.details ?? log.action}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(log.createdAt), "MMM d, yyyy • h:mm a")} • {log.actorName ?? "Unknown user"} ({log.actorRole})
-                      </p>
-                      {log.entityLabel && (
-                        <p className="text-xs text-muted-foreground">Entity: {log.entityLabel}</p>
-                      )}
-                    </div>
-                    <Badge variant="secondary" className="text-xs capitalize">{log.section.replace(/_/g, " ")}</Badge>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    {log.entityType && <span>Type: {log.entityType}</span>}
-                    {typeof log.amountMinor === "number" && (
-                      <span>Amount: {formatCurrency(log.amountMinor / 100)}</span>
-                    )}
-                  </div>
-                  {log.metadata && Object.keys(log.metadata).length > 0 && (
-                    <pre className="mt-3 overflow-x-auto rounded bg-muted/30 p-3 text-xs text-muted-foreground">
-                      {JSON.stringify(log.metadata, null, 2)}
-                    </pre>
-                  )}
-                </div>
-              ))}
-              {showPagination && (
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={!canPrevious || isLoading}
-                    onClick={handlePreviousPage}
-                  >
-                    Previous
-                  </Button>
-                  <p className="text-sm text-muted-foreground">
-                    Page {page} of {totalPages}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={!canNext || isLoading}
-                    onClick={handleNextPage}
-                  >
-                    Next
-                  </Button>
-                </div>
-              )}
+          <div className="overflow-hidden rounded-xl border border-border/40">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[140px]">Time</TableHead>
+                  <TableHead>Actor (Role)</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Resource</TableHead>
+                  <TableHead>Summary</TableHead>
+                  <TableHead>Outcome</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-8 text-center text-sm text-muted-foreground"
+                    >
+                      Loading activity…
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isLoading && error && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-8 text-center text-sm text-destructive"
+                    >
+                      {error.message}
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isLoading && !error && logs.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className="py-8 text-center text-sm text-muted-foreground"
+                    >
+                      No activity found for the selected filters.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isLoading &&
+                  !error &&
+                  logs.length > 0 &&
+                  logs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                        {formatActivityTimestamp(log.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-sm font-medium text-foreground">
+                        {formatActivityActor(log)}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs uppercase tracking-wide text-muted-foreground">
+                        {log.action}
+                      </TableCell>
+                      <TableCell className="text-sm text-foreground">
+                        {formatActivityResource(log)}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatActivitySummary(log)}
+                      </TableCell>
+                      <TableCell className="text-sm font-medium text-foreground">
+                        {formatActivityOutcome(log, {
+                          formatAmount: (amount) => formatCurrency(amount),
+                        })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {tableHasRows && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Label
+                  htmlFor="rowsPerPage"
+                  className="text-sm font-normal text-muted-foreground"
+                >
+                  Rows per page
+                </Label>
+                <Select
+                  value={String(filters.limit)}
+                  onValueChange={(value) =>
+                    setFilters({ limit: Number(value) })
+                  }
+                >
+                  <SelectTrigger id="rowsPerPage" className="h-9 w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LIMIT_OPTIONS.map((limit) => (
+                      <SelectItem key={limit} value={String(limit)}>
+                        {limit}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+              </p>
+              <div>
+                {totalPages > 1 ? (
+                  <Pagination className="w-auto">
+                    <PaginationContent className="gap-2">
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          aria-disabled={!canPrevious || isLoading}
+                          className={`px-4 py-2 text-sm hover:bg-primary/10 ${
+                            !canPrevious || isLoading
+                              ? "pointer-events-none opacity-50"
+                              : ""
+                          }`}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            if (canPrevious && !isLoading) {
+                              setPage((prev) => prev - 1);
+                            }
+                          }}
+                        />
+                      </PaginationItem>
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          aria-disabled={!canNext || isLoading}
+                          className={`px-4 py-2 text-sm hover:bg-primary/10 ${
+                            !canNext || isLoading
+                              ? "pointer-events-none opacity-50"
+                              : ""
+                          }`}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            if (canNext && !isLoading) {
+                              setPage((prev) => prev + 1);
+                            }
+                          }}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                ) : (
+                  <div />
+                )}
+              </div>
             </div>
           )}
         </CardContent>
