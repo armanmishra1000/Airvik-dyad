@@ -1,26 +1,20 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function getUserRole(supabaseClient: SupabaseClient, userId: string): Promise<string | null> {
-  const { data, error } = await supabaseClient
-    .from('profiles')
-    .select('roles(name)')
-    .eq('id', userId)
-    .single();
-
-  if (error || !data || !data.roles) {
-    console.error('Error fetching user role:', error?.message);
-    return null;
+const getAccessToken = (req: Request) => {
+  const authHeader = req.headers.get('Authorization') ?? req.headers.get('authorization');
+  if (!authHeader) return null;
+  const parts = authHeader.trim().split(' ');
+  if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
+    return parts[1];
   }
-  
-  // @ts-ignore
-  return data.roles.name;
-}
+  return authHeader.trim();
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -33,23 +27,38 @@ serve(async (req) => {
       throw new Error("User ID to delete is required.");
     }
 
-    const authHeader = req.headers.get('Authorization')!
+    const token = getAccessToken(req);
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
     )
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError) throw userError;
-    if (!user) throw new Error("Could not identify the calling user.");
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 401,
+      });
+    }
 
     if (user.id === userIdToDelete) {
         throw new Error("Users are not allowed to delete themselves.");
     }
 
-    const role = await getUserRole(supabaseClient, user.id);
-    if (role !== 'Hotel Owner' && role !== 'Hotel Manager') {
+    const { data: hasPermission, error: permissionError } = await supabaseClient.rpc('user_has_permission', {
+      user_id: user.id,
+      permission_text: 'delete:user',
+    });
+
+    if (permissionError || !hasPermission) {
       return new Response(JSON.stringify({ error: "User not authorized to delete users." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 403,

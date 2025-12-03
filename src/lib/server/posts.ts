@@ -1,9 +1,11 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { Post } from "@/data/types";
-import { createServerSupabaseClient } from "@/integrations/supabase/server";
 import {
   DbPostWithCategories,
   fromDbPostWithCategories,
 } from "@/lib/api/blog-mappers";
+import { getServerSupabaseClient } from "@/lib/server/supabase";
+import type { Database } from "@/lib/types/supabase";
 
 type PostSearchParams = {
   month?: string;
@@ -22,7 +24,7 @@ type PostCategoryRow = {
 };
 
 const attachAuthors = async (
-  supabase: ReturnType<typeof createServerSupabaseClient>,
+  supabase: SupabaseClient<Database>,
   posts: Post[]
 ): Promise<Post[]> => {
   const uniqueAuthorIds = Array.from(
@@ -83,7 +85,7 @@ const getMonthRange = (month?: string) => {
 };
 
 const buildPostsQuery = (
-  supabase: ReturnType<typeof createServerSupabaseClient>,
+  supabase: SupabaseClient<Database>,
   searchParams?: PostSearchParams,
   selectOptions?: { head?: boolean; count?: "exact" | "planned" | "estimated" }
 ) => {
@@ -109,7 +111,7 @@ const buildPostsQuery = (
 };
 
 const getPostIdsForCategory = async (
-  supabase: ReturnType<typeof createServerSupabaseClient>,
+  supabase: SupabaseClient<Database>,
   categoryId?: string
 ): Promise<string[] | null> => {
   if (!categoryId) {
@@ -132,7 +134,7 @@ const getPostIdsForCategory = async (
 export const getPosts = async (
   searchParams?: PostSearchParams
 ): Promise<Post[]> => {
-  const supabase = createServerSupabaseClient();
+  const supabase = getServerSupabaseClient();
   let query = buildPostsQuery(supabase, searchParams);
   const postIds = await getPostIdsForCategory(supabase, searchParams?.categoryId);
 
@@ -155,7 +157,7 @@ export const getPosts = async (
 };
 
 export const getPostById = async (id: string): Promise<Post> => {
-  const supabase = createServerSupabaseClient();
+  const supabase = getServerSupabaseClient();
   const { data, error } = await supabase
     .from("posts")
     .select("*, categories:post_categories(categories(*))")
@@ -172,7 +174,7 @@ export const getPostById = async (id: string): Promise<Post> => {
 };
 
 export const getPostBySlug = async (slug: string): Promise<Post | null> => {
-  const supabase = createServerSupabaseClient();
+  const supabase = getServerSupabaseClient();
   const { data, error } = await supabase
     .from("posts")
     .select("*, categories:post_categories(categories(*))")
@@ -196,7 +198,7 @@ export const getPostBySlug = async (slug: string): Promise<Post | null> => {
 export const countPosts = async (
   searchParams?: PostSearchParams
 ): Promise<number> => {
-  const supabase = createServerSupabaseClient();
+  const supabase = getServerSupabaseClient();
   let query = buildPostsQuery(supabase, searchParams, {
     head: true,
     count: "exact",

@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
 import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { PermissionGate } from "@/components/admin/permission-gate";
 
 const paymentMethodOptions = [
   "Not specified",
@@ -285,14 +286,17 @@ export default function CreateReservationPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-12 w-72 rounded-xl bg-muted animate-pulse" />
-        <div className="h-96 rounded-2xl bg-muted animate-pulse" />
-      </div>
+      <PermissionGate feature="reservationCreate">
+        <div className="space-y-4">
+          <div className="h-12 w-72 rounded-xl bg-muted animate-pulse" />
+          <div className="h-96 rounded-2xl bg-muted animate-pulse" />
+        </div>
+      </PermissionGate>
     );
   }
 
   return (
+    <PermissionGate feature="reservationCreate">
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -684,5 +688,6 @@ export default function CreateReservationPage() {
         </form>
       </Form>
     </div>
+    </PermissionGate>
   );
 }

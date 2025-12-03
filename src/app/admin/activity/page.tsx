@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useAuthContext } from "@/context/auth-context";
 import { useAdminActivityLogs } from "@/hooks/use-admin-activity-logs";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { PermissionGate } from "@/components/admin/permission-gate";
 
 const SECTION_OPTIONS = [
   { label: "All sections", value: "all" },
@@ -47,8 +48,8 @@ const ROLE_OPTIONS = [
 const LIMIT_OPTIONS = [10, 25, 50, 100, 200] as const;
 
 export default function ActivityPage() {
-  const { userRole } = useAuthContext();
-  const canView = userRole?.name === "Hotel Owner" || userRole?.name === "Hotel Manager";
+  const { hasFeatureAccess } = useAuthContext();
+  const canView = hasFeatureAccess("activity");
   const {
     logs,
     filters,
@@ -95,18 +96,17 @@ export default function ActivityPage() {
     }
   };
 
-  if (!canView) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Activity Log</CardTitle>
-          <CardDescription>Only hotel owners and managers can view this page.</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
+  const noAccessCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Activity Log</CardTitle>
+        <CardDescription>Only hotel owners and managers can view this page.</CardDescription>
+      </CardHeader>
+    </Card>
+  );
 
   return (
+    <PermissionGate feature="activity" fallback={noAccessCard}>
     <div className="space-y-6">
       <Card>
         <CardHeader>
@@ -296,5 +296,6 @@ export default function ActivityPage() {
         </CardContent>
       </Card>
     </div>
+    </PermissionGate>
   );
 }

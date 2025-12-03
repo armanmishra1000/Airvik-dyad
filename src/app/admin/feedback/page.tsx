@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { PermissionGate } from "@/components/admin/permission-gate";
 
 const CLEAR_FILTER_VALUE = "__all";
 
@@ -225,6 +226,7 @@ export default function AdminFeedbackPage() {
   };
 
   return (
+    <PermissionGate feature="feedback">
     <div className="space-y-8">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
@@ -498,6 +500,7 @@ export default function AdminFeedbackPage() {
         isSaving={isUpdatingDetail}
       />
     </div>
+    </PermissionGate>
   );
 }
 

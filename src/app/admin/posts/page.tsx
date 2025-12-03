@@ -6,6 +6,7 @@ import { getCategories } from "@/lib/api";
 import { countPosts, getPosts } from "@/lib/server/posts";
 import { PostsTable } from "@/components/admin/posts/posts-table";
 import { PostsFilters } from "@/components/admin/posts/posts-filters";
+import { requirePageFeature } from "@/lib/server/page-auth";
 
 export default async function PostsPage({
   searchParams,
@@ -17,6 +18,7 @@ export default async function PostsPage({
     status?: "draft" | "published";
   }>;
 }) {
+  await requirePageFeature("posts");
   const resolvedSearchParams = await searchParams;
   const baseFilters = {
     month: resolvedSearchParams.month,

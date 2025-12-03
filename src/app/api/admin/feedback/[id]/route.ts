@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import type { Feedback } from "@/data/types";
-import { createServerSupabaseClient } from "@/integrations/supabase/server";
-import { HttpError, requirePermission } from "@/lib/server/auth";
+import { getServerSupabaseClient } from "@/lib/server/supabase";
+import { HttpError, requireFeature } from "@/lib/server/auth";
 import { logAdminActivityFromProfile } from "@/lib/activity/server";
 
 const feedbackStatusValues = ["new", "in_review", "resolved"] as const;
@@ -24,7 +24,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const profile = await requirePermission(request, "update:feedback");
+    const profile = await requireFeature(request, "feedbackManage");
     const body = await request.json();
     const payload = UpdateSchema.parse(body);
     const { id } = await params;
@@ -49,7 +49,7 @@ export async function PATCH(
       return NextResponse.json({ message: "Nothing to update" }, { status: 400 });
     }
 
-    const supabase = createServerSupabaseClient();
+    const supabase = getServerSupabaseClient();
     const { data, error } = await supabase
       .from("feedback")
       .update(updates)

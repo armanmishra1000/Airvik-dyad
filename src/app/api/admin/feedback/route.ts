@@ -6,8 +6,8 @@ import {
   ROOM_OR_FACILITY_OPTIONS,
 } from "@/constants/feedback";
 import type { Feedback } from "@/data/types";
-import { createServerSupabaseClient } from "@/integrations/supabase/server";
-import { requirePermission, HttpError } from "@/lib/server/auth";
+import { getServerSupabaseClient } from "@/lib/server/supabase";
+import { requireFeature, HttpError } from "@/lib/server/auth";
 
 const feedbackTypeValues = ["suggestion", "praise", "complaint", "question"] as const;
 const feedbackStatusValues = ["new", "in_review", "resolved"] as const;
@@ -30,7 +30,7 @@ function coerceOptional(param: string | null): string | undefined {
 
 export async function GET(request: Request) {
   try {
-    await requirePermission(request, "read:feedback");
+    await requireFeature(request, "feedback");
     const { searchParams } = new URL(request.url);
     const parsed = QuerySchema.parse({
       page: searchParams.get("page"),
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
       endDate: coerceOptional(searchParams.get("endDate")),
     });
 
-    const supabase = createServerSupabaseClient();
+    const supabase = getServerSupabaseClient();
     const start = (parsed.page - 1) * parsed.pageSize;
     const end = start + parsed.pageSize - 1;
 

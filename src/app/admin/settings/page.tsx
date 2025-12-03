@@ -12,11 +12,13 @@ import { RolesPermissions } from "./components/roles-permissions";
 import { UsersManagement } from "./components/users-management";
 import { PropertySettingsForm } from "./components/property-settings-form";
 import { AmenitiesManagement } from "./components/amenities-management";
+import { PermissionGate } from "@/components/admin/permission-gate";
 
 export default function SettingsPage() {
   const { hasPermission } = useAuthContext();
 
   return (
+    <PermissionGate feature="settings">
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight font-serif">Settings</h2>
@@ -59,5 +61,6 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </PermissionGate>
   );
 }

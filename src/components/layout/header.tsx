@@ -23,23 +23,38 @@ import { useAuthContext } from "@/context/auth-context";
 import { ThemeToggle } from "../theme-toggle";
 import { supabase } from "@/integrations/supabase/client";
 import type { Permission } from "@/data/types";
+import { getPermissionsForFeature, type PermissionFeature } from "@/lib/permissions/map";
 
-const navItems = [
-  { href: "/admin", label: "Dashboard", requiredPermission: "read:reservation" },
-  { href: "/admin/reservations", label: "Reservations", requiredPermission: "read:reservation" },
-  { href: "/admin/calendar", label: "Calendar", requiredPermission: "read:reservation" },
-  { href: "/admin/housekeeping", label: "Housekeeping", requiredPermission: "read:room" },
-  { href: "/admin/guests", label: "Guests", requiredPermission: "read:guest" },
-  { href: "/admin/feedback", label: "Feedback", requiredPermission: "read:feedback" },
-  { href: "/admin/reports", label: "Reports", requiredPermission: "read:report" },
-] satisfies Array<{ href: string; label: string; requiredPermission: Permission }>;
+type HeaderNavItem = {
+  href: string;
+  label: string;
+  feature?: PermissionFeature;
+  permissions?: Permission[];
+};
+
+const navItems: HeaderNavItem[] = [
+  { href: "/admin", label: "Dashboard", feature: "dashboard" },
+  { href: "/admin/reservations", label: "Reservations", feature: "reservations" },
+  { href: "/admin/calendar", label: "Calendar", feature: "calendar" },
+  { href: "/admin/housekeeping", label: "Housekeeping", feature: "housekeeping" },
+  { href: "/admin/guests", label: "Guests", feature: "guests" },
+  { href: "/admin/feedback", label: "Feedback", feature: "feedback" },
+  { href: "/admin/reports", label: "Reports", feature: "reports" },
+] satisfies HeaderNavItem[];
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { property, roles } = useDataContext();
-  const { currentUser, hasPermission } = useAuthContext();
-  const accessibleNavItems = navItems.filter((item) => hasPermission(item.requiredPermission));
+  const { currentUser, hasAnyPermission } = useAuthContext();
+  const accessibleNavItems = navItems.filter(({ feature, permissions }) => {
+    const featurePermissions = feature ? getPermissionsForFeature(feature) : [];
+    const required = [...featurePermissions, ...(permissions ?? [])];
+    if (required.length === 0) {
+      return true;
+    }
+    return hasAnyPermission(required);
+  });
   const activeNavItem = accessibleNavItems.find((item) => item.href === pathname);
   const pageTitle = activeNavItem?.label || "Dashboard";
   const userRole = roles.find(r => r.id === currentUser?.roleId);
