@@ -214,6 +214,9 @@ export interface FolioItem {
   amount: number;
   timestamp: string;
   paymentMethod?: string | null;
+  externalSource?: string | null;
+  externalReference?: string | null;
+  externalMetadata?: Record<string, unknown> | null;
 }
 
 export type ActivitySection =
@@ -325,12 +328,14 @@ export interface DonationStats {
   lastDonationAt?: string;
 }
 
+export type ReservationSource = 'reception' | 'website' | 'vikbooking';
+
 export interface Reservation {
   id: string;
   bookingId: string; // Shared ID for multi-room bookings
   guestId: string;
   roomId: string;
-  ratePlanId: string;
+  ratePlanId: string | null;
   checkInDate: string;
   checkOutDate: string;
   numberOfGuests: number;
@@ -339,12 +344,62 @@ export interface Reservation {
   folio: FolioItem[];
   totalAmount: number;
   bookingDate: string;
-  source: 'reception' | 'website';
+  source: ReservationSource;
   paymentMethod: ReservationPaymentMethod;
   adultCount: number;
   childCount: number;
   taxEnabledSnapshot: boolean;
   taxRateSnapshot: number;
+  externalSource?: string;
+  externalId?: string | null;
+  externalMetadata?: Record<string, unknown> | null;
+}
+
+export interface ExternalRoomLink {
+  id: string;
+  source: string;
+  externalLabel: string;
+  roomId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ImportJobStatus =
+  | 'pending'
+  | 'validating'
+  | 'requires_mapping'
+  | 'running'
+  | 'completed'
+  | 'failed';
+
+export type ImportJobEntryStatus = 'pending' | 'skipped' | 'imported' | 'error';
+
+export interface ImportJob {
+  id: string;
+  source: string;
+  status: ImportJobStatus;
+  fileName?: string;
+  fileHash?: string;
+  totalRows: number;
+  processedRows: number;
+  errorRows: number;
+  summary: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  createdBy?: string | null;
+  createdAt: string;
+  completedAt?: string | null;
+  lastError?: string | null;
+}
+
+export interface ImportJobEntry {
+  id: string;
+  jobId: string;
+  rowNumber: number;
+  status: ImportJobEntryStatus;
+  message?: string | null;
+  payload: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface HousekeepingAssignment {

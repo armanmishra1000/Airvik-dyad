@@ -12,6 +12,7 @@ import { RolesPermissions } from "./components/roles-permissions";
 import { UsersManagement } from "./components/users-management";
 import { PropertySettingsForm } from "./components/property-settings-form";
 import { AmenitiesManagement } from "./components/amenities-management";
+import { CsvImportPanel } from "./components/data-tools/csv-import-panel";
 
 export default function SettingsPage() {
   const { hasPermission } = useAuthContext();
@@ -25,12 +26,13 @@ export default function SettingsPage() {
         </p>
       </div>
       <Tabs defaultValue="property" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="property">Property</TabsTrigger>
           <TabsTrigger value="amenities">Amenities</TabsTrigger>
           <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
           <TabsTrigger value="users" disabled={!hasPermission("read:user")}>Users</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
+          <TabsTrigger value="data-tools">Data tools</TabsTrigger>
         </TabsList>
         <TabsContent value="property">
           <PropertySettingsForm />
@@ -56,6 +58,9 @@ export default function SettingsPage() {
               <p>Billing management is not yet implemented.</p>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="data-tools">
+          <CsvImportPanel />
         </TabsContent>
       </Tabs>
     </div>

@@ -12,7 +12,12 @@ import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
 
 function sumAdditionalCharges(folioItems: FolioItem[] = []) {
   return folioItems
-    .filter((item) => item.amount > 0)
+    .filter(
+      (item) =>
+        item.amount > 0 &&
+        item.externalMetadata?.type !== "payment" &&
+        !item.externalReference?.startsWith("payment-")
+    )
     .reduce((sum, item) => sum + item.amount, 0);
 }
 

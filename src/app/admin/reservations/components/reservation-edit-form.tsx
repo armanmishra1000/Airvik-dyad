@@ -550,7 +550,7 @@ export function ReservationEditForm({
           bookingId: reservation.bookingId,
           roomIds: roomsToCreate,
           guestId: reservation.guestId,
-          ratePlanId: reservation.ratePlanId,
+          ratePlanId: reservation.ratePlanId ?? "",
           checkInDate: perReservationPayload.checkInDate,
           checkOutDate: perReservationPayload.checkOutDate,
           numberOfGuests: totalGuestsSelected,
