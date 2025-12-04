@@ -42,7 +42,11 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
     }
   );
 
-  await supabase.auth.getClaims();
+  try {
+    await supabase.auth.getClaims();
+  } catch (error) {
+    console.error("Failed to resolve Supabase session claims", error);
+  }
 
   return supabaseResponse;
 }
