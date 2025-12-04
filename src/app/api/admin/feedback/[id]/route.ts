@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Feedback } from "@/data/types";
 import { getServerSupabaseClient } from "@/lib/server/supabase";
@@ -7,6 +8,55 @@ import { HttpError, requireFeature } from "@/lib/server/auth";
 import { logAdminActivityFromProfile } from "@/lib/activity/server";
 
 const feedbackStatusValues = ["new", "in_review", "resolved"] as const;
+
+type FeedbackTableRow = {
+  id: string;
+  feedback_type: Feedback["feedbackType"];
+  message: string;
+  name: string | null;
+  is_anonymous: boolean;
+  email: string | null;
+  room_or_facility: string | null;
+  rating: number | null;
+  status: Feedback["status"];
+  internal_note: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type FeedbackTableInsert = {
+  id?: string;
+  feedback_type: FeedbackTableRow["feedback_type"];
+  message: string;
+  name?: string | null;
+  is_anonymous?: boolean;
+  email?: string | null;
+  room_or_facility?: string | null;
+  rating?: number | null;
+  status?: FeedbackTableRow["status"];
+  internal_note?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+type FeedbackTableUpdate = Partial<FeedbackTableRow>;
+
+type FeedbackSchema = {
+  public: {
+    Tables: {
+      feedback: {
+        Row: FeedbackTableRow;
+        Insert: FeedbackTableInsert;
+        Update: FeedbackTableUpdate;
+        Relationships: never[];
+      };
+    };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
+  };
+};
 
 const UpdateSchema = z.object({
   status: z.enum(feedbackStatusValues).optional(),
@@ -33,7 +83,7 @@ export async function PATCH(
       return NextResponse.json({ message: "Missing feedback id" }, { status: 400 });
     }
 
-    const updates: Record<string, unknown> = {
+    const updates: FeedbackTableUpdate = {
       updated_at: new Date().toISOString(),
     };
 
@@ -50,7 +100,8 @@ export async function PATCH(
     }
 
     const supabase = await getServerSupabaseClient();
-    const { data, error } = await supabase
+    const feedbackClient = supabase as unknown as SupabaseClient<FeedbackSchema>;
+    const { data, error } = await feedbackClient
       .from("feedback")
       .update(updates)
       .eq("id", id)
@@ -69,7 +120,7 @@ export async function PATCH(
       return NextResponse.json({ message: "Feedback not found" }, { status: 404 });
     }
 
-    const mapped = mapFeedbackRow(data);
+    const mapped = mapFeedbackRow(data as FeedbackTableRow);
 
     await logAdminActivityFromProfile({
       profile,
@@ -110,22 +161,7 @@ export async function PATCH(
   }
 }
 
-type FeedbackRow = {
-  id: string;
-  feedback_type: Feedback["feedbackType"];
-  message: string;
-  name: string | null;
-  is_anonymous: boolean;
-  email: string | null;
-  room_or_facility: string | null;
-  rating: number | null;
-  status: Feedback["status"];
-  internal_note: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-function mapFeedbackRow(row: FeedbackRow): Feedback {
+function mapFeedbackRow(row: FeedbackTableRow): Feedback {
   return {
     id: row.id,
     feedbackType: row.feedback_type,

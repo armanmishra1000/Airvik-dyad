@@ -1,6 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/types/supabase";
+// import type { Database } from "@/lib/types/supabase";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -13,13 +13,13 @@ if (!supabaseAnonKey) {
   throw new Error("Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable.");
 }
 
-type BrowserSupabaseClient = SupabaseClient<Database, "public", "public">;
+type BrowserSupabaseClient = SupabaseClient;
 
 let cachedClient: BrowserSupabaseClient | undefined;
 
 function createBrowserSupabaseClient(): BrowserSupabaseClient {
   if (!cachedClient) {
-    cachedClient = createBrowserClient<Database>(supabaseUrl!, supabaseAnonKey!);
+    cachedClient = createBrowserClient(supabaseUrl!, supabaseAnonKey!);
   }
   return cachedClient;
 }

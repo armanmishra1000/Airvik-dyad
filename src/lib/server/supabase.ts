@@ -3,7 +3,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
-import type { Database } from "@/lib/types/supabase";
+// import type { Database } from "@/lib/types/supabase";
 
 export async function getServerSupabaseClient() {
   const cookieStore = await cookies();
@@ -18,7 +18,7 @@ export async function getServerSupabaseClient() {
     throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not set");
   }
 
-  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

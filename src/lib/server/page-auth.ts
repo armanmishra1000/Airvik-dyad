@@ -39,7 +39,7 @@ export async function getServerProfile(): Promise<ServerProfile | null> {
     return null;
   }
 
-  const typedProfile = profile as ProfileRecord;
+  const typedProfile = profile as unknown as ProfileRecord;
   const roleName = typedProfile.roles?.name ?? null;
   const permissions = typedProfile.roles?.permissions ?? [];
 

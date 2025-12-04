@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieMethodsServer } from "@supabase/ssr";
-import type { Database } from "@/lib/types/supabase";
+// import type { Database } from "@/lib/types/supabase";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -21,7 +21,7 @@ const resolvedSupabaseAnonKey = supabaseAnonKey as string;
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let supabaseResponse: NextResponse = NextResponse.next({ request });
 
-  const supabase = await createServerClient<Database>(
+  const supabase = await createServerClient(
     resolvedSupabaseUrl,
     resolvedSupabaseAnonKey,
     {
