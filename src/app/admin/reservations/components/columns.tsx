@@ -1,7 +1,8 @@
 "use client"
 
+import React from "react"
 import { ColumnDef, Table, type CellContext } from "@tanstack/react-table"
-import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User, ChevronDown, ChevronRight, Clock3 } from "lucide-react"
+import { MoreHorizontal, CheckCircle2, XCircle, LogIn, LogOut, HelpCircle, AlertCircle, Monitor, User, ChevronDown, ChevronRight, Clock3, DownloadCloud } from "lucide-react"
 import { format } from "date-fns"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -22,14 +23,14 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { FolioItem, ReservationStatus } from "@/data/types"
+import type { FolioItem, ReservationSource, ReservationStatus } from "@/data/types"
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 
 export type ReservationWithDetails = {
     id: string;
     guestId: string;
     roomId: string;
-    ratePlanId: string;
+    ratePlanId: string | null;
     checkInDate: string;
     checkOutDate: string;
     numberOfGuests: number;
@@ -42,7 +43,7 @@ export type ReservationWithDetails = {
     roomNumber: string;
     bookingDate: string;
     bookingId: string;
-    source: 'reception' | 'website';
+    source: ReservationSource;
     nights: number;
     paymentMethod: string;
     adultCount: number;
@@ -51,6 +52,8 @@ export type ReservationWithDetails = {
     subRows?: ReservationWithDetails[];
     taxEnabledSnapshot: boolean;
     taxRateSnapshot: number;
+    externalSource?: string;
+    externalId?: string | null;
 }
 
 export const statuses = [
@@ -116,9 +119,17 @@ function ReservationActions({ reservation, table }: { reservation: ReservationWi
   )
 }
 
-function AmountCell({ row }: CellContext<ReservationWithDetails, number>) {
+function AmountCell({ row }: CellContext<ReservationWithDetails, unknown>) {
   const formatCurrency = useCurrencyFormatter();
-  const amount = (row.original.displayAmount ?? Number(row.getValue("totalAmount"))) || 0;
+  const rawValue = row.getValue("totalAmount");
+  const normalizedTotal =
+    typeof rawValue === "number"
+      ? rawValue
+      : Number.parseFloat(String(rawValue ?? "")) || 0;
+  const amount =
+    typeof row.original.displayAmount === "number"
+      ? row.original.displayAmount
+      : normalizedTotal;
   return <div className="text-right font-medium">{formatCurrency(amount)}</div>;
 }
 
@@ -300,9 +311,22 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     header: "Source",
     cell: ({ row }) => {
         if (row.depth > 0) return null;
-        const source = row.getValue("source") as string;
-        const Icon = source === 'website' ? Monitor : User;
-        const label = source ? source.charAt(0).toUpperCase() + source.slice(1) : "Unknown";
+        const source = row.getValue("source") as ReservationSource;
+        const iconMap: Record<
+          ReservationSource,
+          React.ComponentType<React.SVGProps<SVGSVGElement>>
+        > = {
+          website: Monitor,
+          reception: User,
+          vikbooking: DownloadCloud,
+        };
+        const Icon = iconMap[source] ?? User;
+        const label =
+          source === "vikbooking"
+            ? "Imported from VikBooking"
+            : source === "website"
+            ? "Website"
+            : "Reception";
 
         return (
             <TooltipProvider>
