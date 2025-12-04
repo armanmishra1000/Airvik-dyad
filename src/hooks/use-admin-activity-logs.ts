@@ -2,16 +2,19 @@
 
 import * as React from "react";
 
-import type { ActivitySection, AdminActivityLog } from "@/data/types";
+import type { AdminActivityLog } from "@/data/types";
+import { formatActivityActor, formatActivityOutcome, formatActivityResource, formatActivitySummary } from "@/lib/activity/format";
 import { getAdminActivityLogs } from "@/lib/api";
 
 type AdminActivityFilterState = {
-  section: ActivitySection | "all";
   actorRole: string | "all";
-  action: string | "all";
+  actorName: string;
+  action: string;
+  resource: string;
+  summary: string;
+  outcome: string;
   from?: string;
   to?: string;
-  search?: string;
   limit: number;
 };
 
@@ -23,10 +26,12 @@ export function useAdminActivityLogs(
 ) {
   const enabled = options?.enabled ?? true;
   const [filters, setFilters] = React.useState<AdminActivityFilterState>({
-    section: "all",
     actorRole: "all",
-    action: "all",
-    search: "",
+    actorName: "",
+    action: "",
+    resource: "",
+    summary: "",
+    outcome: "",
     limit: 50,
     ...initial,
   });
@@ -58,9 +63,8 @@ export function useAdminActivityLogs(
     setIsLoading(true);
     try {
       const { data, count, error: fetchError } = await getAdminActivityLogs({
-        section: filters.section === "all" ? undefined : filters.section,
         actorRole: filters.actorRole === "all" ? undefined : filters.actorRole,
-        action: filters.action === "all" ? undefined : filters.action,
+        action: filters.action.trim().length > 0 ? filters.action.trim() : undefined,
         from: filters.from,
         to: filters.to,
         limit: filters.limit,
@@ -77,7 +81,7 @@ export function useAdminActivityLogs(
     } finally {
       setIsLoading(false);
     }
-  }, [enabled, filters.action, filters.actorRole, filters.from, filters.limit, filters.section, filters.to, page]);
+  }, [enabled, filters.action, filters.actorRole, filters.from, filters.limit, filters.to, page]);
 
   React.useEffect(() => {
     if (!enabled) {
@@ -99,23 +103,47 @@ export function useAdminActivityLogs(
   }, [enabled, filters.limit, page, setPage, totalCount]);
 
   const filteredLogs = React.useMemo(() => {
-    if (!filters.search) {
+    const actorFilter = filters.actorName.trim().toLowerCase();
+    const resourceFilter = filters.resource.trim().toLowerCase();
+    const summaryFilter = filters.summary.trim().toLowerCase();
+    const outcomeFilter = filters.outcome.trim().toLowerCase();
+
+    if (!actorFilter && !resourceFilter && !summaryFilter && !outcomeFilter) {
       return logs;
     }
-    const searchValue = filters.search.toLowerCase();
+
     return logs.filter((log) => {
-      const haystack = [
-        log.action,
-        log.details ?? "",
-        log.entityLabel ?? "",
-        log.actorName ?? "",
-        log.actorRole ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(searchValue);
+      if (actorFilter) {
+        const actorValue = formatActivityActor(log).toLowerCase();
+        if (!actorValue.includes(actorFilter)) {
+          return false;
+        }
+      }
+
+      if (resourceFilter) {
+        const resourceValue = formatActivityResource(log).toLowerCase();
+        if (!resourceValue.includes(resourceFilter)) {
+          return false;
+        }
+      }
+
+      if (summaryFilter) {
+        const summaryValue = formatActivitySummary(log).toLowerCase();
+        if (!summaryValue.includes(summaryFilter)) {
+          return false;
+        }
+      }
+
+      if (outcomeFilter) {
+        const outcomeValue = formatActivityOutcome(log).toLowerCase();
+        if (!outcomeValue.includes(outcomeFilter)) {
+          return false;
+        }
+      }
+
+      return true;
     });
-  }, [filters.search, logs]);
+  }, [filters.actorName, filters.outcome, filters.resource, filters.summary, logs]);
 
   const updateFilters = React.useCallback((updates: AdminActivityFilterUpdate) => {
     setFilters((prev) => ({ ...prev, ...updates }));
