@@ -18,6 +18,10 @@ import {
 } from "@/lib/importers/vikbooking/room-links";
 import { buildRpcRows } from "@/lib/importers/vikbooking/transformers";
 import { chunkArray } from "@/lib/importers/vikbooking/utils";
+import {
+  assignRoomIdsFromNumbers,
+  fetchRoomNumberMap,
+} from "@/lib/importers/vikbooking/room-number-map";
 import { requireAdminProfile, HttpError } from "@/lib/server/auth";
 
 const ImportRunSchema = z.object({
@@ -48,9 +52,24 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
+      const roomNumberMap = await fetchRoomNumberMap(supabase);
+      const autoAssignments = assignRoomIdsFromNumbers(
+        parseResult.rows,
+        roomNumberMap,
+        (row) => String(row.rowNumber),
+        (row) => row.roomNumber ?? null
+      );
+      const autoMatchedCount = autoAssignments.size;
+      const autoMatchedRowKeys = new Set(autoAssignments.keys());
+      const rowsNeedingMapping = parseResult.rows.filter(
+        (row) => !autoMatchedRowKeys.has(String(row.rowNumber))
+      );
+      const manualLabels = Array.from(
+        new Set(rowsNeedingMapping.map((row) => row.roomLabel?.trim() ?? ""))
+      );
       const links = await fetchExternalRoomLinks(supabase, VIKBOOKING_SOURCE);
       const { missing: missingRoomLabels } = resolveRoomMappings(
-        parseResult.uniqueRoomLabels,
+        manualLabels,
         links
       );
 
@@ -71,9 +90,11 @@ export async function POST(request: Request) {
         summary: {
           issues: parseResult.issues,
           preview: parseResult.rows.slice(0, PREVIEW_ROW_LIMIT),
+          autoMatchedCount,
         },
         metadata: {
           roomLabels: parseResult.uniqueRoomLabels,
+          autoMatchedCount,
         },
       });
 
@@ -92,6 +113,7 @@ export async function POST(request: Request) {
         missingRoomLabels,
         preview: parseResult.rows.slice(0, PREVIEW_ROW_LIMIT),
         totalRows: parseResult.rows.length,
+        autoMatchedCount,
       });
     }
 
@@ -125,14 +147,23 @@ export async function POST(request: Request) {
     }
 
     const links = await fetchExternalRoomLinks(supabase, VIKBOOKING_SOURCE);
+    const roomNumberMap = await fetchRoomNumberMap(supabase);
+    const entryPayloads = entries.map((entry) => ({
+      entry,
+      payload: extractStoredPayload(entry),
+    }));
+    const autoAssignments = assignRoomIdsFromNumbers(
+      entryPayloads,
+      roomNumberMap,
+      ({ entry }) => entry.id,
+      ({ payload }) => payload.roomNumber ?? null
+    );
+    const needsManual = entryPayloads.filter(
+      ({ entry }) => !autoAssignments.has(entry.id)
+    );
     const uniqueLabels = Array.from(
-      new Set(
-        entries.map((entry) => {
-          const payload = extractStoredPayload(entry);
-          return payload.roomLabel?.trim() ?? "";
-        })
-      )
-    ).filter(Boolean);
+      new Set(needsManual.map(({ payload }) => payload.roomLabel?.trim() ?? ""))
+    );
 
     const { mapped, missing } = resolveRoomMappings(uniqueLabels, links);
 
@@ -148,9 +179,23 @@ export async function POST(request: Request) {
 
     await updateImportJob(supabase, jobId, { status: "running" });
 
+    const roomAssignments = new Map(autoAssignments);
+    needsManual.forEach(({ entry, payload }) => {
+      const normalized = payload.roomLabel?.trim() ?? "";
+      const roomId = mapped.get(normalized);
+      if (!roomId) {
+        throw new Error(`Missing mapped room for label "${payload.roomLabel ?? ""}"`);
+      }
+      roomAssignments.set(entry.id, roomId);
+    });
+
+    if (roomAssignments.size !== entries.length) {
+      throw new Error("Unable to resolve room assignments for all rows");
+    }
+
     const rpcRows = buildRpcRows({
       entries,
-      roomMap: mapped,
+      roomAssignments,
       actorUserId: profile.userId,
     });
 

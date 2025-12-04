@@ -141,6 +141,8 @@ function buildNormalizedRow(input: z.infer<typeof RequiredRowSchema>): {
   const bookingId = `vik-${externalId}`;
 
   const roomLabel = getField(row, "room");
+  const roomNumber = getField(row, "room number") || null;
+  const roomLabelDisplay = getField(row, "room label") || null;
   if (!roomLabel) {
     issues.push({
       rowNumber,
@@ -242,6 +244,8 @@ function buildNormalizedRow(input: z.infer<typeof RequiredRowSchema>): {
     checkOutDate: checkOutDate ?? new Date().toISOString(),
     nights,
     roomLabel,
+    roomNumber,
+    roomLabelDisplay,
     guest,
     people,
     email: email || undefined,

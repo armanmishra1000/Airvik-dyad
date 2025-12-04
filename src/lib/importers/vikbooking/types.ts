@@ -47,6 +47,8 @@ export interface VikBookingNormalizedRow {
   checkOutDate: string;
   nights: number;
   roomLabel: string;
+  roomNumber?: string | null;
+  roomLabelDisplay?: string | null;
   guest: VikBookingGuestInfo;
   people: PeopleBreakdown;
   email?: string;

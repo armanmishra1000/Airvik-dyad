@@ -5,23 +5,22 @@ import type { ImportJobEntry } from "@/data/types";
 
 type BuildRowsArgs = {
   entries: ImportJobEntry[];
-  roomMap: Map<string, string>;
+  roomAssignments: Map<string, string>;
   actorUserId: string;
   defaultRatePlanId?: string | null;
 };
 
 export function buildRpcRows({
   entries,
-  roomMap,
+  roomAssignments,
   actorUserId,
   defaultRatePlanId = null,
 }: BuildRowsArgs): RpcImportRow[] {
   return entries.map((entry, index) => {
     const payload = extractStoredPayload(entry);
-    const normalizedLabel = payload.roomLabel?.trim() ?? "";
-    const roomId = roomMap.get(normalizedLabel);
+    const roomId = roomAssignments.get(entry.id);
     if (!roomId) {
-      throw new Error(`Missing mapped room for label "${payload.roomLabel}"`);
+      throw new Error(`Missing mapped room for entry ${entry.id}`);
     }
 
     const notes = buildNotes(payload);
@@ -126,7 +125,7 @@ function buildFolioItems(
   payload.paymentLines.forEach((line, idx) => {
     items.push({
       description: line.description,
-      amount: line.amount,
+      amount: -Math.abs(line.amount),
       payment_method: payload.paymentMethod,
       timestamp: payload.bookingDate,
       external_source: VIKBOOKING_SOURCE,
