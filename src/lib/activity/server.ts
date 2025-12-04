@@ -8,7 +8,7 @@ import type { AuthorizedProfile } from "@/lib/server/auth";
 export async function logAdminActivityServer(
   payload: AdminActivityLogPayload
 ) {
-  const supabase = getServerSupabaseClient();
+  const supabase = await getServerSupabaseClient();
   const { error } = await supabase.rpc("log_admin_activity_rpc", {
     p_actor_user_id: payload.actorUserId,
     p_section: payload.section,

@@ -66,7 +66,7 @@ const fromDbStats = (row: DbDonationStats | null): DonationStats => ({
 export async function getAdminDonations(
   filters: DonationListFilters = {}
 ): Promise<Donation[]> {
-  const supabase = getServerSupabaseClient();
+  const supabase = await getServerSupabaseClient();
   let query = supabase
     .from("donations")
     .select("*")
@@ -114,7 +114,7 @@ export async function getAdminDonations(
 }
 
 export async function getAdminDonationStats(): Promise<DonationStats> {
-  const supabase = getServerSupabaseClient();
+  const supabase = await getServerSupabaseClient();
   const { data, error } = await supabase.from("donation_stats").select("*").maybeSingle();
 
   if (error) {

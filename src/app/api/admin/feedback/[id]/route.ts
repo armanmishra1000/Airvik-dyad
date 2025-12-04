@@ -49,7 +49,7 @@ export async function PATCH(
       return NextResponse.json({ message: "Nothing to update" }, { status: 400 });
     }
 
-    const supabase = getServerSupabaseClient();
+    const supabase = await getServerSupabaseClient();
     const { data, error } = await supabase
       .from("feedback")
       .update(updates)

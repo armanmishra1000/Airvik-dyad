@@ -19,7 +19,7 @@ const LOGIN_PATH = "/admin/login";
 const UNAUTHORIZED_PATH = "/admin";
 
 export async function getServerProfile(): Promise<ServerProfile | null> {
-  const supabase = getServerSupabaseClient();
+  const supabase = await getServerSupabaseClient();
   const {
     data: { user },
     error,

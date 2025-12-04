@@ -43,7 +43,7 @@ export async function GET(request: Request) {
       endDate: coerceOptional(searchParams.get("endDate")),
     });
 
-    const supabase = getServerSupabaseClient();
+    const supabase = await getServerSupabaseClient();
     const start = (parsed.page - 1) * parsed.pageSize;
     const end = start + parsed.pageSize - 1;
 

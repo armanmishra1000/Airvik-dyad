@@ -4,7 +4,7 @@ import { getServerSupabaseClient } from "@/lib/server/supabase";
 
 export async function getPropertyCurrency(): Promise<string> {
   try {
-    const supabase = getServerSupabaseClient();
+    const supabase = await getServerSupabaseClient();
     const { data } = await supabase.from("properties").select("currency").limit(1).maybeSingle();
     return data?.currency ?? DEFAULT_CURRENCY;
   } catch {
