@@ -223,9 +223,9 @@ ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow managers to manage properties" ON public.properties;
 
-CREATE POLICY "Properties require settings permission" ON public.properties
+CREATE POLICY "Properties require read permission" ON public.properties
   FOR SELECT TO authenticated
-  USING (public.user_has_permission(auth.uid(), 'update:setting'));
+  USING (public.user_has_permission(auth.uid(), 'read:property'));
 
 CREATE POLICY "Properties updates require permission" ON public.properties
   FOR UPDATE TO authenticated

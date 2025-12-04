@@ -89,7 +89,7 @@ export async function getAdminDonations(
   }
 
   if (filters.query) {
-    const sanitized = filters.query.trim();
+    const sanitized = filters.query.trim().replace(/[,]/g, "");
     if (sanitized.length > 0) {
       const like = `%${sanitized}%`;
       query = query.or(
@@ -110,7 +110,8 @@ export async function getAdminDonations(
     throw new Error(error.message ?? "Unable to fetch donations");
   }
 
-  return (data as DbDonation[]).map(fromDbDonation);
+  const rows = (data ?? []) as DbDonation[];
+  return rows.map(fromDbDonation);
 }
 
 export async function getAdminDonationStats(): Promise<DonationStats> {

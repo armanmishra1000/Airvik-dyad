@@ -87,7 +87,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const { hasPermission, hasAnyPermission } = useAuthContext();
   const { property } = useDataContext();
 
-  const canAccessItem = (item: SidebarNavItem): boolean => {
+  const canAccessItem = (item: Pick<SidebarNavItem, "feature" | "permissions">): boolean => {
     const featurePermissions = item.feature ? getPermissionsForFeature(item.feature) : [];
     const required = [...featurePermissions, ...(item.permissions ?? [])];
     if (required.length === 0) {
@@ -97,7 +97,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   };
 
   const accessibleNavItems = navItems.filter(canAccessItem);
-  if (canAccessItem({ href: "/admin/activity", icon: History, label: "Activity", feature: "activity" })) {
+  if (canAccessItem({ feature: "activity" })) {
     accessibleNavItems.push({ href: "/admin/activity", icon: History, label: "Activity", feature: "activity" });
   }
 
@@ -162,7 +162,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             }
 
             if (subItems) {
-              const visibleSubItems = subItems.filter((subItem) => canAccessItem({ ...item, ...subItem }));
+              const visibleSubItems = subItems.filter((subItem) => canAccessItem(subItem));
               if (visibleSubItems.length === 0) {
                 return null;
               }

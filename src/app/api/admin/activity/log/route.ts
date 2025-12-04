@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import type { AdminActivityLogInput, ActivitySection, ActivityEntityType } from "@/data/types";
-import { requireProfile, HttpError } from "@/lib/server/auth";
+import { requireAdminProfile, HttpError } from "@/lib/server/auth";
 import { logAdminActivityFromProfile } from "@/lib/activity/server";
 
 const BodySchema = z.object({
@@ -18,7 +18,7 @@ const BodySchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const profile = await requireProfile(request);
+    const profile = await requireAdminProfile(request);
     const payload = BodySchema.parse(await request.json());
 
     const entry: AdminActivityLogInput = {
