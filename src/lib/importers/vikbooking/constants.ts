@@ -58,4 +58,4 @@ export const PAYMENT_METHOD_MAP: Record<string, ReservationPaymentMethod> =
   paymentDefaults;
 
 export const DEFAULT_PAYMENT_METHOD: ReservationPaymentMethod = "Not specified";
-export const PREVIEW_ROW_LIMIT = 25;
+export const SUMMARY_PREVIEW_LIMIT = 25;

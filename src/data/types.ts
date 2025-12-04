@@ -364,6 +364,16 @@ export interface ExternalRoomLink {
   updatedAt: string;
 }
 
+export interface RoomNumberLink {
+  id: string;
+  source: string;
+  externalNumber: string;
+  externalNumberNormalized: string;
+  roomId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type ImportJobStatus =
   | 'pending'
   | 'validating'

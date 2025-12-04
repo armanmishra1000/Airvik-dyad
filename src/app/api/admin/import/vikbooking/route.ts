@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import type { ImportJobEntry } from "@/data/types";
 import { createServerSupabaseClient } from "@/integrations/supabase/server";
-import { PREVIEW_ROW_LIMIT, IMPORT_CHUNK_SIZE, VIKBOOKING_SOURCE } from "@/lib/importers/vikbooking/constants";
+import { SUMMARY_PREVIEW_LIMIT, IMPORT_CHUNK_SIZE, VIKBOOKING_SOURCE } from "@/lib/importers/vikbooking/constants";
 import { parseVikBookingCsv } from "@/lib/importers/vikbooking/parser";
 import {
   createImportJobRecord,
@@ -16,17 +17,34 @@ import {
   fetchExternalRoomLinks,
   resolveRoomMappings,
 } from "@/lib/importers/vikbooking/room-links";
+import {
+  fetchRoomNumberLinks,
+  buildRoomNumberAliasMap,
+} from "@/lib/importers/vikbooking/room-number-links";
 import { buildRpcRows } from "@/lib/importers/vikbooking/transformers";
 import { chunkArray } from "@/lib/importers/vikbooking/utils";
 import {
   assignRoomIdsFromNumbers,
   fetchRoomNumberMap,
+  normalizeRoomNumber,
 } from "@/lib/importers/vikbooking/room-number-map";
+import type { SkipReportEntry, StoredImportPayload } from "@/lib/importers/vikbooking/types";
 import { requireAdminProfile, HttpError } from "@/lib/server/auth";
 
 const ImportRunSchema = z.object({
   jobId: z.string().uuid(),
 });
+
+const DUPLICATE_LOOKUP_CHUNK = 200;
+const SKIP_REASON_ALREADY_IMPORTED = "already_imported";
+const SKIP_REASON_DUPLICATE_IN_FILE = "duplicate_in_file";
+
+const buildAssignmentKey = (payload: StoredImportPayload, roomId: string): string => {
+  if (payload.externalId) {
+    return `${payload.externalId}::${roomId}`;
+  }
+  return `${payload.bookingId}::${roomId}::${payload.rowNumber}`;
+};
 
 export async function POST(request: Request) {
   try {
@@ -53,9 +71,13 @@ export async function POST(request: Request) {
         );
       }
       const roomNumberMap = await fetchRoomNumberMap(supabase);
+      const roomNumberLinks = await fetchRoomNumberLinks(supabase, VIKBOOKING_SOURCE);
+      const aliasMap = buildRoomNumberAliasMap(roomNumberLinks);
+      const combinedRoomNumberMap = new Map(roomNumberMap);
+      aliasMap.forEach((roomId, key) => combinedRoomNumberMap.set(key, roomId));
       const autoAssignments = assignRoomIdsFromNumbers(
         parseResult.rows,
-        roomNumberMap,
+        combinedRoomNumberMap,
         (row) => String(row.rowNumber),
         (row) => row.roomNumber ?? null
       );
@@ -73,9 +95,26 @@ export async function POST(request: Request) {
         links
       );
 
+      const missingRoomNumberSet = new Set<string>();
+      rowsNeedingMapping.forEach((row) => {
+        if (!row.roomNumber) {
+          return;
+        }
+        const normalized = normalizeRoomNumber(row.roomNumber);
+        if (!normalized) {
+          return;
+        }
+        if (!combinedRoomNumberMap.has(normalized)) {
+          missingRoomNumberSet.add(row.roomNumber.trim());
+        }
+      });
+      const missingRoomNumbers = Array.from(missingRoomNumberSet);
+
       const hasBlockingIssues = parseResult.issues.some(
         (issue) => issue.severity === "error"
       );
+
+      const summaryPreview = parseResult.rows.slice(0, SUMMARY_PREVIEW_LIMIT);
 
       const job = await createImportJobRecord(supabase, {
         source: VIKBOOKING_SOURCE,
@@ -84,17 +123,20 @@ export async function POST(request: Request) {
         fileHash: parseResult.hash,
         totalRows: parseResult.rows.length,
         status:
-          missingRoomLabels.length > 0 || hasBlockingIssues
+          missingRoomLabels.length > 0 || missingRoomNumbers.length > 0 || hasBlockingIssues
             ? "requires_mapping"
             : "pending",
         summary: {
           issues: parseResult.issues,
-          preview: parseResult.rows.slice(0, PREVIEW_ROW_LIMIT),
+          preview: summaryPreview,
           autoMatchedCount,
+          missingRoomLabels,
+          missingRoomNumbers,
         },
         metadata: {
           roomLabels: parseResult.uniqueRoomLabels,
           autoMatchedCount,
+          missingRoomNumbersCount: missingRoomNumbers.length,
         },
       });
 
@@ -111,7 +153,8 @@ export async function POST(request: Request) {
         job,
         issues: parseResult.issues,
         missingRoomLabels,
-        preview: parseResult.rows.slice(0, PREVIEW_ROW_LIMIT),
+        missingRoomNumbers,
+        preview: parseResult.rows,
         totalRows: parseResult.rows.length,
         autoMatchedCount,
       });
@@ -148,16 +191,39 @@ export async function POST(request: Request) {
 
     const links = await fetchExternalRoomLinks(supabase, VIKBOOKING_SOURCE);
     const roomNumberMap = await fetchRoomNumberMap(supabase);
+    const roomNumberLinks = await fetchRoomNumberLinks(supabase, VIKBOOKING_SOURCE);
+    const roomNumberAliases = buildRoomNumberAliasMap(roomNumberLinks);
+    const combinedRoomNumberMap = new Map(roomNumberMap);
+    roomNumberAliases.forEach((roomId, key) => combinedRoomNumberMap.set(key, roomId));
     const entryPayloads = entries.map((entry) => ({
       entry,
       payload: extractStoredPayload(entry),
     }));
     const autoAssignments = assignRoomIdsFromNumbers(
       entryPayloads,
-      roomNumberMap,
+      combinedRoomNumberMap,
       ({ entry }) => entry.id,
       ({ payload }) => payload.roomNumber ?? null
     );
+    const rowsMissingNumberMapping = entryPayloads.filter(
+      ({ entry, payload }) => Boolean(payload.roomNumber) && !autoAssignments.has(entry.id)
+    );
+    if (rowsMissingNumberMapping.length > 0) {
+      const missingRoomNumbers = Array.from(
+        new Set(
+          rowsMissingNumberMapping
+            .map(({ payload }) => payload.roomNumber?.trim() ?? "")
+            .filter(Boolean)
+        )
+      );
+      return NextResponse.json(
+        {
+          message: "Room number mappings are incomplete",
+          missingRoomNumbers,
+        },
+        { status: 400 }
+      );
+    }
     const needsManual = entryPayloads.filter(
       ({ entry }) => !autoAssignments.has(entry.id)
     );
@@ -193,8 +259,165 @@ export async function POST(request: Request) {
       throw new Error("Unable to resolve room assignments for all rows");
     }
 
+    let summaryState: Record<string, unknown> = { ...(job.summary ?? {}) };
+    let processedRowTally = job.processedRows ?? 0;
+
+    type AssignmentRow = {
+      entry: ImportJobEntry;
+      payload: StoredImportPayload;
+      roomId: string;
+    };
+
+    const appendSkippedRows = async (
+      rowsToSkip: AssignmentRow[],
+      options: { reasonCode: string; buildReason: (row: AssignmentRow) => string }
+    ) => {
+      if (!rowsToSkip.length) {
+        return;
+      }
+      const timestamp = new Date().toISOString();
+      const skipReportEntries: SkipReportEntry[] = rowsToSkip.map((row) => {
+        const guestParts = [row.payload.guest.firstName, row.payload.guest.lastName]
+          .map((part) => (part ?? "").trim())
+          .filter(Boolean);
+        const roomLabel = row.payload.roomLabelDisplay ?? row.payload.roomLabel ?? null;
+        const reason = options.buildReason(row);
+        return {
+          entryId: row.entry.id,
+          rowNumber: row.entry.rowNumber,
+          bookingId: row.payload.bookingId,
+          roomLabel,
+          guestName: guestParts.length ? guestParts.join(" ") : undefined,
+          reason,
+          reasonCode: options.reasonCode,
+          skippedAt: timestamp,
+        } satisfies SkipReportEntry;
+      });
+
+      const existingSkippedRaw = (summaryState as { skippedRows?: unknown }).skippedRows;
+      const existingSkipped = Array.isArray(existingSkippedRaw)
+        ? (existingSkippedRaw as SkipReportEntry[])
+        : [];
+
+      summaryState = {
+        ...summaryState,
+        skippedRows: [...existingSkipped, ...skipReportEntries],
+      };
+
+      processedRowTally += rowsToSkip.length;
+
+      for (const report of skipReportEntries) {
+        const { error } = await supabase
+          .from("import_job_entries")
+          .update({
+            status: "skipped",
+            message: report.reason,
+            skip_reason_code: options.reasonCode,
+            updated_at: timestamp,
+          })
+          .eq("id", report.entryId);
+        if (error) {
+          throw error;
+        }
+      }
+
+      await updateImportJob(supabase, jobId, {
+        summary: summaryState,
+        processedRows: processedRowTally,
+      });
+    };
+
+    const rowsWithAssignments: AssignmentRow[] = entryPayloads.map(({ entry, payload }) => {
+      const roomId = roomAssignments.get(entry.id);
+      if (!roomId) {
+        throw new Error(`Missing room assignment for entry ${entry.id}`);
+      }
+      return { entry, payload, roomId };
+    });
+
+    const assignmentByKey = new Map<string, AssignmentRow>();
+    const duplicateWithinJob: AssignmentRow[] = [];
+    rowsWithAssignments.forEach((row) => {
+      const key = buildAssignmentKey(row.payload, row.roomId);
+      if (assignmentByKey.has(key)) {
+        duplicateWithinJob.push(row);
+      } else {
+        assignmentByKey.set(key, row);
+      }
+    });
+
+    if (duplicateWithinJob.length > 0) {
+      await appendSkippedRows(duplicateWithinJob, {
+        reasonCode: SKIP_REASON_DUPLICATE_IN_FILE,
+        buildReason: (row) => {
+          const roomLabel = row.payload.roomLabelDisplay ?? row.payload.roomLabel;
+          return roomLabel
+            ? `Duplicate booking for ${roomLabel} in CSV`
+            : "Duplicate booking in CSV";
+        },
+      });
+    }
+
+    const uniqueRowsWithAssignments = Array.from(assignmentByKey.values());
+
+    const externalIds = Array.from(
+      new Set(uniqueRowsWithAssignments.map(({ payload }) => payload.externalId).filter(Boolean))
+    );
+
+    const duplicateKeys = new Set<string>();
+    if (externalIds.length > 0) {
+      const idChunks = chunkArray(externalIds, DUPLICATE_LOOKUP_CHUNK);
+      for (const chunk of idChunks) {
+        if (!chunk.length) continue;
+        const { data, error } = await supabase
+          .from("reservations")
+          .select("external_id, room_id")
+          .eq("external_source", VIKBOOKING_SOURCE)
+          .in("external_id", chunk);
+        if (error) {
+          throw error;
+        }
+        (data ?? []).forEach((row) => {
+          if (row.external_id && row.room_id) {
+            duplicateKeys.add(`${row.external_id}::${row.room_id}`);
+          }
+        });
+      }
+    }
+
+    const skippedRows = uniqueRowsWithAssignments.filter(
+      ({ payload, roomId }) => Boolean(payload.externalId) && duplicateKeys.has(`${payload.externalId}::${roomId}`)
+    );
+    const rowsToImport = uniqueRowsWithAssignments.filter(
+      ({ payload, roomId }) => !payload.externalId || !duplicateKeys.has(`${payload.externalId}::${roomId}`)
+    );
+
+    if (skippedRows.length > 0) {
+      await appendSkippedRows(skippedRows, {
+        reasonCode: SKIP_REASON_ALREADY_IMPORTED,
+        buildReason: (row) => {
+          const roomLabel = row.payload.roomLabelDisplay ?? row.payload.roomLabel;
+          return roomLabel
+            ? `Booking already imported for ${roomLabel}`
+            : "Booking already imported";
+        },
+      });
+    }
+
+    if (rowsToImport.length === 0) {
+      const completedJob = await updateImportJob(supabase, jobId, {
+        status: "completed",
+        summary: summaryState,
+        processedRows: processedRowTally,
+        completedAt: new Date().toISOString(),
+      });
+      return NextResponse.json({ job: completedJob });
+    }
+
+    const entriesForImport = rowsToImport.map(({ entry }) => entry);
+
     const rpcRows = buildRpcRows({
-      entries,
+      entries: entriesForImport,
       roomAssignments,
       actorUserId: profile.userId,
     });

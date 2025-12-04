@@ -133,3 +133,14 @@ export interface RpcImportRow {
 }
 
 export type RoomMapping = Record<string, string>;
+
+export interface SkipReportEntry {
+  entryId: string;
+  rowNumber: number;
+  bookingId: string;
+  roomLabel?: string | null;
+  guestName?: string | null;
+  reason: string;
+  reasonCode?: string;
+  skippedAt: string;
+}

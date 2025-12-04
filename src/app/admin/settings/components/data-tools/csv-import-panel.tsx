@@ -2,6 +2,7 @@
 
 import React from "react";
 import { AlertCircle, CheckCircle2, Loader2, UploadCloud } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useDataContext } from "@/context/data-context";
 import type { ImportJob, ImportJobEntryStatus, Room } from "@/data/types";
-import { PREVIEW_ROW_LIMIT } from "@/lib/importers/vikbooking/constants";
-import type { ImportIssue } from "@/lib/importers/vikbooking/types";
+import type { ImportIssue, SkipReportEntry } from "@/lib/importers/vikbooking/types";
 import { authorizedFetch } from "@/lib/auth/client-session";
 
 type PreviewRow = Record<string, unknown>;
@@ -19,6 +19,7 @@ type JobStatusResponse = {
   job: ImportJob;
   statusCounts: Record<string, number>;
   errors: Array<{ id: string; rowNumber: number; message?: string | null }>;
+  skippedEntries: SkipReportEntry[];
 };
 
 export function CsvImportPanel() {
@@ -29,6 +30,7 @@ export function CsvImportPanel() {
   const [job, setJob] = React.useState<ImportJob | null>(null);
   const [issues, setIssues] = React.useState<ImportIssue[]>([]);
   const [missingRooms, setMissingRooms] = React.useState<string[]>([]);
+  const [missingRoomNumbers, setMissingRoomNumbers] = React.useState<string[]>([]);
   const [previewRows, setPreviewRows] = React.useState<PreviewRow[]>([]);
   const [isUploading, setIsUploading] = React.useState(false);
   const [isImporting, setIsImporting] = React.useState(false);
@@ -36,6 +38,9 @@ export function CsvImportPanel() {
   const [recentErrors, setRecentErrors] = React.useState<
     Array<{ id: string; rowNumber: number; message?: string | null }>
   >([]);
+  const [skipReport, setSkipReport] = React.useState<SkipReportEntry[]>([]);
+  const [lastCompletedJobId, setLastCompletedJobId] = React.useState<string | null>(null);
+  const [activeImportJobId, setActiveImportJobId] = React.useState<string | null>(null);
 
   const hasBlockingIssues = React.useMemo(
     () => issues.some((issue) => issue.severity === "error"),
@@ -66,8 +71,11 @@ export function CsvImportPanel() {
     setPreviewRows([]);
     setJob(null);
     setMissingRooms([]);
+    setMissingRoomNumbers([]);
     setStatusCounts({});
     setRecentErrors([]);
+    setSkipReport([]);
+    setActiveImportJobId(null);
 
     const formData = new FormData();
     formData.append("file", selectedFile);
@@ -91,6 +99,7 @@ export function CsvImportPanel() {
       setIssues(result.issues ?? []);
       setPreviewRows(result.preview ?? []);
       setMissingRooms(result.missingRoomLabels ?? []);
+      setMissingRoomNumbers(result.missingRoomNumbers ?? []);
     } catch (error) {
       console.error(error);
       alert((error as Error).message ?? "Validation failed");
@@ -117,6 +126,24 @@ export function CsvImportPanel() {
     }
   };
 
+  const handleMapRoomNumber = async (value: string, roomId: string) => {
+    try {
+      await authorizedFetch("/api/admin/external-room-links/room-numbers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source: "vikbooking",
+          externalNumber: value,
+          roomId,
+        }),
+      });
+      setMissingRoomNumbers((prev) => prev.filter((number) => number !== value));
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save room number mapping");
+    }
+  };
+
   const pollJob = React.useCallback(
     async (jobId: string) => {
       const response = await authorizedFetch(
@@ -129,13 +156,34 @@ export function CsvImportPanel() {
       setJob(payload.job);
       setStatusCounts(payload.statusCounts ?? {});
       setRecentErrors(payload.errors ?? []);
+      setSkipReport(payload.skippedEntries ?? []);
       return payload.job;
     },
     []
   );
 
+  React.useEffect(() => {
+    if (!job || job.status !== "completed") {
+      return;
+    }
+    if (job.id !== activeImportJobId) {
+      return;
+    }
+    if (job.id === lastCompletedJobId) {
+      return;
+    }
+    toast.success("VikBooking import completed");
+    setLastCompletedJobId(job.id);
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setActiveImportJobId(null);
+  }, [job, lastCompletedJobId, activeImportJobId]);
+
   const handleImport = async () => {
     if (!job) return;
+    setActiveImportJobId(job.id);
     setIsImporting(true);
     try {
       const response = await authorizedFetch("/api/admin/import/vikbooking", {
@@ -145,6 +193,9 @@ export function CsvImportPanel() {
       });
       if (!response.ok) {
         const payload = await response.json();
+        if (Array.isArray(payload?.missingRoomNumbers)) {
+          setMissingRoomNumbers(payload.missingRoomNumbers);
+        }
         throw new Error(payload.message ?? "Import failed");
       }
       await pollJob(job.id);
@@ -169,6 +220,7 @@ export function CsvImportPanel() {
       pollIntervalRef.current = intervalId;
     } catch (error) {
       console.error(error);
+      setActiveImportJobId(null);
       alert((error as Error).message ?? "Import failed");
     } finally {
       setIsImporting(false);
@@ -195,8 +247,22 @@ export function CsvImportPanel() {
     );
   };
 
+  const formatSkippedAt = React.useCallback((value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date.toLocaleString();
+  }, []);
+
+  const jobLocked = job ? ["running", "completed"].includes(job.status) : false;
   const canImport = Boolean(
-    job && !hasBlockingIssues && missingRooms.length === 0 && job.totalRows > 0
+    job &&
+      !jobLocked &&
+      !hasBlockingIssues &&
+      missingRooms.length === 0 &&
+      missingRoomNumbers.length === 0 &&
+      job.totalRows > 0
   );
 
   return (
@@ -270,7 +336,7 @@ export function CsvImportPanel() {
                     </tr>
                   </thead>
                   <tbody>
-                    {previewRows.slice(0, PREVIEW_ROW_LIMIT).map((row) => {
+                    {previewRows.map((row) => {
                       const rowNumber = Number(row.rowNumber ?? 0);
                       return (
                         <tr key={rowNumber} className="border-t">
@@ -297,27 +363,54 @@ export function CsvImportPanel() {
         <CardHeader>
           <CardTitle>Step 2 · Map rooms</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {missingRooms.length === 0 ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              All room labels are mapped to Airvik rooms.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                The following room labels need to be mapped to Airvik rooms:
-              </p>
-              {missingRooms.map((label) => (
-                <RoomMappingRow
-                  key={label}
-                  label={label}
-                  rooms={rooms}
-                  onSave={handleMapRoom}
-                />
-              ))}
-            </div>
-          )}
+        <CardContent className="space-y-6">
+          <section>
+            <h4 className="mb-2 font-semibold">Room label mappings</h4>
+            {missingRooms.length === 0 ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                All room labels are mapped to Airvik rooms.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  The following room labels need to be mapped to Airvik rooms:
+                </p>
+                {missingRooms.map((label) => (
+                  <RoomMappingRow
+                    key={label}
+                    label={label}
+                    rooms={rooms}
+                    onSave={handleMapRoom}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section>
+            <h4 className="mb-2 font-semibold">Room number mappings</h4>
+            {missingRoomNumbers.length === 0 ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                All room numbers are mapped to Airvik rooms.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  The following VikBooking room numbers need to be mapped to specific Airvik rooms:
+                </p>
+                {missingRoomNumbers.map((roomNumber) => (
+                  <RoomNumberMappingRow
+                    key={roomNumber}
+                    roomNumber={roomNumber}
+                    rooms={rooms}
+                    onSave={handleMapRoomNumber}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
         </CardContent>
       </Card>
 
@@ -369,6 +462,58 @@ export function CsvImportPanel() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Skip report
+            {skipReport.length > 0 ? ` (${skipReport.length} rows)` : ""}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {skipReport.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No skipped rows recorded for this import job yet.
+            </p>
+          ) : (
+            <div className="max-h-64 overflow-auto text-xs sm:text-sm">
+              <table className="min-w-full text-left">
+                <thead>
+                  <tr className="text-muted-foreground">
+                    <th className="px-2 py-1">Row</th>
+                    <th className="px-2 py-1">Booking ID</th>
+                    <th className="px-2 py-1">Room</th>
+                    <th className="px-2 py-1">Guest</th>
+                    <th className="px-2 py-1">Reason</th>
+                    <th className="px-2 py-1">Skipped at</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {skipReport.map((entry) => (
+                    <tr key={entry.entryId} className="border-t">
+                      <td className="px-2 py-1">{entry.rowNumber}</td>
+                      <td className="px-2 py-1">{entry.bookingId}</td>
+                      <td className="px-2 py-1">{entry.roomLabel ?? "—"}</td>
+                      <td className="px-2 py-1">{entry.guestName ?? "—"}</td>
+                    <td className="px-2 py-1">
+                      <div className="flex flex-col gap-1">
+                        <span>{entry.reason}</span>
+                        {entry.reasonCode && (
+                          <Badge variant="outline" className="w-fit text-[10px] uppercase tracking-wide">
+                            {entry.reasonCode}
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
+                      <td className="px-2 py-1">{formatSkippedAt(entry.skippedAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -404,6 +549,62 @@ function RoomMappingRow({ label, rooms, onSave }: RoomMappingRowProps) {
       <div className="flex-1">
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">Map to an Airvik room</p>
+      </div>
+      {rooms.length > 0 ? (
+        <select
+          value={roomId}
+          onChange={(event) => setRoomId(event.target.value)}
+          className="flex-1 rounded-md border border-input bg-background p-2 text-sm"
+        >
+          {rooms.map((room) => (
+            <option key={room.id} value={room.id}>
+              Room {room.roomNumber}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <p className="text-sm text-destructive">
+          No rooms are available. Add rooms before mapping.
+        </p>
+      )}
+      <Button onClick={handleSave} disabled={isSaving || !roomId}>
+        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+      </Button>
+    </div>
+  );
+}
+
+type RoomNumberMappingRowProps = {
+  roomNumber: string;
+  rooms: Room[];
+  onSave: (roomNumber: string, roomId: string) => Promise<void>;
+};
+
+function RoomNumberMappingRow({ roomNumber, rooms, onSave }: RoomNumberMappingRowProps) {
+  const [roomId, setRoomId] = React.useState<string>(rooms[0]?.id ?? "");
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!roomId && rooms[0]) {
+      setRoomId(rooms[0].id);
+    }
+  }, [roomId, rooms]);
+
+  const handleSave = async () => {
+    if (!roomId) return;
+    setIsSaving(true);
+    try {
+      await onSave(roomNumber, roomId);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border border-border p-3 md:flex-row md:items-center">
+      <div className="flex-1">
+        <p className="text-sm font-medium">Room #{roomNumber}</p>
+        <p className="text-xs text-muted-foreground">Map to an Airvik room number</p>
       </div>
       {rooms.length > 0 ? (
         <select
