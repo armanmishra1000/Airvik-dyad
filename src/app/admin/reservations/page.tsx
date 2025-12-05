@@ -9,6 +9,7 @@ import { useDataContext } from "@/context/data-context";
 import type { FolioItem, ReservationStatus } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
 import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
+import { PermissionGate } from "@/components/admin/permission-gate";
 
 function sumAdditionalCharges(folioItems: FolioItem[] = []) {
   return folioItems
@@ -124,14 +125,16 @@ export default function ReservationsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <DataTable
-        columns={columns}
-        data={groupedReservations}
-        onCancelReservation={handleCancelReservation}
-        onCheckInReservation={handleCheckInReservation}
-        onCheckOutReservation={handleCheckOutReservation}
-      />
-    </div>
+    <PermissionGate feature="reservations">
+      <div className="space-y-6">
+        <DataTable
+          columns={columns}
+          data={groupedReservations}
+          onCancelReservation={handleCancelReservation}
+          onCheckInReservation={handleCheckInReservation}
+          onCheckOutReservation={handleCheckOutReservation}
+        />
+      </div>
+    </PermissionGate>
   );
 }

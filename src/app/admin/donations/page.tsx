@@ -1,9 +1,11 @@
-import { getDonations, getDonationStats, type DonationListFilters } from "@/lib/api/donations";
+import type { DonationListFilters } from "@/lib/api/donations";
 import { getPropertyCurrency } from "@/lib/server/property";
 import { DonationStatsGrid } from "@/components/admin/donations/donation-stats";
 import { DonationFilters } from "@/components/admin/donations/donation-filters";
 import { DonationsTable } from "@/components/admin/donations/donations-table";
 import type { DonationFrequency, DonationStatus } from "@/data/types";
+import { requirePageFeature } from "@/lib/server/page-auth";
+import { getAdminDonationStats, getAdminDonations } from "@/lib/server/donations";
 
 export const metadata = {
   title: "Donations | Admin",
@@ -31,6 +33,7 @@ export default async function AdminDonationsPage({
 }: {
   searchParams?: Promise<SearchParamRecord>;
 }) {
+  await requirePageFeature("donations");
   const resolvedParams = (await searchParams) ?? {};
   const query = getParamValue(resolvedParams, "query");
   const status = getParamValue(resolvedParams, "status");
@@ -49,8 +52,8 @@ export default async function AdminDonationsPage({
   };
 
   const [stats, donations, currency] = await Promise.all([
-    getDonationStats(),
-    getDonations(filters),
+    getAdminDonationStats(),
+    getAdminDonations(filters),
     getPropertyCurrency(),
   ]);
 

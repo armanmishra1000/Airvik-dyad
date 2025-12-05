@@ -7,6 +7,7 @@ import type { RoomStatus } from "@/data/types";
 import { HousekeepingToolbar } from "./components/housekeeping-toolbar";
 import { RoomStatusCard } from "./components/room-status-card";
 import { useDataContext } from "@/context/data-context";
+import { PermissionGate } from "@/components/admin/permission-gate";
 
 export default function HousekeepingPage() {
   const {
@@ -63,27 +64,29 @@ export default function HousekeepingPage() {
   }, [statusFilter, roomsWithDetails]);
 
   return (
-    <div className="space-y-6">
-      <HousekeepingToolbar
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-      />
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredRooms.map((room) => (
-          <RoomStatusCard
-            key={room.id}
-            room={room}
-            onStatusUpdate={handleStatusUpdate}
-          />
-        ))}
-      </div>
-      {filteredRooms.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-border/40 bg-card/60 py-16 text-center text-muted-foreground">
-          <p className="text-sm font-medium uppercase tracking-wide">
-            No rooms match the selected status
-          </p>
+    <PermissionGate feature="housekeeping">
+      <div className="space-y-6">
+        <HousekeepingToolbar
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+        />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredRooms.map((room) => (
+            <RoomStatusCard
+              key={room.id}
+              room={room}
+              onStatusUpdate={handleStatusUpdate}
+            />
+          ))}
         </div>
-      )}
-    </div>
+        {filteredRooms.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-border/40 bg-card/60 py-16 text-center text-muted-foreground">
+            <p className="text-sm font-medium uppercase tracking-wide">
+              No rooms match the selected status
+            </p>
+          </div>
+        )}
+      </div>
+    </PermissionGate>
   );
 }

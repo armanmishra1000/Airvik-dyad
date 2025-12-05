@@ -1,7 +1,9 @@
 import { getCategories } from "@/lib/api";
 import { PostForm } from "@/components/admin/posts/post-form";
+import { requirePageFeature } from "@/lib/server/page-auth";
 
 export default async function CreatePostPage() {
+  await requirePageFeature("postsCreate");
   const categories = await getCategories();
 
   return (

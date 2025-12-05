@@ -531,7 +531,22 @@ export const logAdminActivity = async (
 // --- API Functions ---
 
 // Property
-export const getProperty = () => supabase.from('properties').select('*').limit(1).single();
+export const getProperty = async (): Promise<{
+  data: Property | null;
+  error: PostgrestError | null;
+}> => {
+  const { data, error } = await supabase
+    .from('properties')
+    .select('*')
+    .limit(1)
+    .single();
+
+  if (error || !data) {
+    return { data: null, error: error ?? null };
+  }
+
+  return { data: data as Property, error: null };
+};
 export const updateProperty = (id: string, updatedData: Partial<Property>) => supabase.from('properties').update(updatedData).eq('id', id).select().single();
 export const createProperty = (propertyData: Partial<Property>) => supabase.from('properties').insert([propertyData]).select().single();
 

@@ -1,9 +1,10 @@
-import { createServerSupabaseClient } from "@/integrations/supabase/server";
+import "server-only";
 import { DEFAULT_CURRENCY } from "@/lib/currency";
+import { getServerSupabaseClient } from "@/lib/server/supabase";
 
 export async function getPropertyCurrency(): Promise<string> {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await getServerSupabaseClient();
     const { data } = await supabase.from("properties").select("currency").limit(1).maybeSingle();
     return data?.currency ?? DEFAULT_CURRENCY;
   } catch {

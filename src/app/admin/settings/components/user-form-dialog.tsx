@@ -83,7 +83,7 @@ export function UserFormDialog({
         setOpen(false);
       } else {
         const selectedRole = roles.find(r => r.id === values.roleId);
-        const { error } = await supabase.functions.invoke('create-user', {
+        const { error } = await supabase.functions.invoke("create-user", {
           body: {
             email: values.email,
             password: values.password,
