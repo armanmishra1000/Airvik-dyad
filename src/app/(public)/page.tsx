@@ -11,6 +11,7 @@ import { TestimonialSection } from "@/components/marketing/home/TestimonialSecti
 import { GallerySection } from "@/components/marketing/home/GallerySection";
 import { SupportActionsSection, type SupportAction } from "@/components/marketing/home/SupportActionsSection";
 import { Marquee } from "@/components/marketing/layout/Marquee";
+import { EventBannerModal } from "@/components/marketing/home/EventBannerModal";
 
 type Feature = {
   title: string;
@@ -105,6 +106,7 @@ export default function HomePage() {
   const newLocal = "relative mb-10 md:mb-20";
   return (
     <div className="bg-background text-foreground">
+      <EventBannerModal />
       {/* Hero Section */}
       <section className="relative w-full h-[70vh] min-h-[500px]">
         <Image
@@ -160,7 +162,7 @@ export default function HomePage() {
 
       {/* Features Section */}
       <section className={newLocal}>
-        <div className="container mx-auto px-4 -mt-20">
+        <div className="container mx-auto px-4 -mt-16">
           <motion.div
             className="grid grid-cols-1 lg:grid-cols-3 xl:gap-8 gap-6 items-center"
             initial="hidden"

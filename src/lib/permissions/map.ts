@@ -17,6 +17,7 @@ export const FEATURE_PERMISSIONS = {
   donations: ["read:report"],
   feedback: ["read:feedback"],
   feedbackManage: ["update:feedback", "delete:feedback"],
+  eventBanner: ["update:setting"],
   reports: ["read:report"],
   activity: ["read:report"],
   settings: ["update:setting"],
