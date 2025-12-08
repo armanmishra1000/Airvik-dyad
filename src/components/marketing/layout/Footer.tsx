@@ -8,8 +8,10 @@ import {
   Facebook,
   Instagram,
   Linkedin,
+  Youtube,
 } from "lucide-react";
 import { FaXTwitter } from "react-icons/fa6";
+import { BsThreads } from "react-icons/bs";
 
 const quickLinks = [
   { href: "/book", label: "Rooms" },
@@ -33,10 +35,12 @@ type SocialLink = {
 };
 
 const socialLinks: SocialLink[] = [
-  { href: "https://instagram.com/rishikeshdhamofficial", icon: Instagram },
   { href: "https://facebook.com/Rishikeshdhamofficial", icon: Facebook },
-  { href: "https://linkedin.com/company/rishikeshdham", icon: Linkedin },
+  { href: "https://instagram.com/rishikeshdhamofficial", icon: Instagram },
+  { href: "https://www.youtube.com/@rishikeshdham", icon: Youtube },
   { href: "https://x.com/Rishikeshdham", icon: FaXTwitter },
+  { href: "https://www.threads.net/@rishikeshdhamofficial", icon: BsThreads },
+  { href: "https://linkedin.com/company/rishikeshdham", icon: Linkedin },
 ];
 
 /**
@@ -55,22 +59,22 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mb-5 gap-10">
           {/* Column 1: Logo and Subtitle */}
           <div>
-             <Link
-            href="/"
-            className="flex items-center shrink-0 focus-visible:outline-none"
-          >
-            {/* Header-logo */}
-            <Image
-              src="/logo.png"
-              alt="SahajAnand Wellness Logo"
-              width={360}
-              height={160}
-              quality={100}
-              priority
-              sizes="(max-width: 640px) 128px, (max-width: 1024px) 176px, (max-width: 1280px) 208px, 240px"
-              className="h-auto w-52 xl:w-56 max-w-full"
-            />
-          </Link>
+            <Link
+              href="/"
+              className="flex items-center shrink-0 focus-visible:outline-none"
+            >
+              {/* Header-logo */}
+              <Image
+                src="/logo.png"
+                alt="SahajAnand Wellness Logo"
+                width={360}
+                height={160}
+                quality={100}
+                priority
+                sizes="(max-width: 640px) 128px, (max-width: 1024px) 176px, (max-width: 1280px) 208px, 240px"
+                className="h-auto w-52 xl:w-56 max-w-full"
+              />
+            </Link>
             <p className="text-muted-foreground max-w-md mt-3">
               A registered religious trust in Uttarakhand, dedicated to
               religious, educational, and health-related activities.
@@ -88,7 +92,9 @@ export function Footer() {
                 className="flex min-w-0 items-start gap-3 hover:text-primary transition-colors focus-visible:outline-none"
               >
                 <Mail className="h-5 w-5 text-primary flex-shrink-0" />
-                <span className="w-full break-all">ashram@swaminarayan.yoga</span>
+                <span className="w-full break-all">
+                  ashram@swaminarayan.yoga
+                </span>
               </a>
               <a
                 href="tel:+918511151708"
@@ -168,19 +174,30 @@ export function Footer() {
 
         {/* Second Row */}
         <div className="flex flex-col sm:flex-row items-center justify-between">
-          <p className="text-sm text-muted-foreground mb-4 sm:mb-0">
-            Made by Apexture Pvt. Ltd.
-          </p>
-          <div className="flex items-center space-x-4">
+          <Link
+            href="https://apexture.in/"
+            className="text-muted-foreground mb-4 sm:mb-0"
+          >
+            Made with{" "}
+            <img
+              draggable="false"
+              role="img"
+              className="size-5 inline-block align-middle mx-0.5"
+              alt="❤️"
+              src="https://s.w.org/images/core/emoji/17.0.2/svg/2764.svg"
+            ></img>
+            ️ by Apexture Pvt. Ltd.
+          </Link>
+          <div className="flex items-center space-x-3">
             {socialLinks.map((link, index) => (
               <a
                 key={index}
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none"
+                className="text-muted-foreground hover:text-primary bg-card lg:size-10 size-8 rounded-full flex items-center justify-center transition-colors focus-visible:outline-none"
               >
-                <link.icon className="h-5 w-5" />
+                <link.icon className="lg:size-5 size-4" />
               </a>
             ))}
           </div>

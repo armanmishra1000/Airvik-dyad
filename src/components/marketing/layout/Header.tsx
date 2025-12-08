@@ -34,7 +34,16 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-import { MdEmojiEvents } from "react-icons/md";
+import {
+  MdDialpad,
+  MdEmojiEvents,
+  MdEvent,
+  MdOutlineEvent,
+} from "react-icons/md";
+import { TbCalendarEvent } from "react-icons/tb";
+
+import { FaRegCalendarAlt } from "react-icons/fa";
+import { FiPhone } from "react-icons/fi";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -100,7 +109,17 @@ export function Header() {
             <p className="text-sm font-medium text-white/90">
               Swaminarayan Ashram (Estd: 2002)
             </p>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 ">
+
+              {/* contact number add */}
+              <a 
+                href="tel:+918511151708" 
+                className="text-sm font-medium text-white/90 flex items-center gap-1.5 hover:text-white transition-colors"
+              >
+                <FiPhone className="size-5" aria-hidden="true" />
+                +91 85111 51708
+              </a>
+              
               {/* event button */}
               <Button
                 asChild
@@ -108,7 +127,7 @@ export function Header() {
               >
                 <Link href="/events">
                   {" "}
-                  <MdEmojiEvents className="size-4" />
+                  <FaRegCalendarAlt />
                   Events
                 </Link>
               </Button>
