@@ -24,6 +24,7 @@ const AshramLinks = [
   { href: "/feedback", label: "Feedback" },
   { href: "/donate", label: "Donate" },
   { href: "/blog", label: "News" },
+  { href: "/events", label: "Events" },
 ];
 
 type SocialLink = {

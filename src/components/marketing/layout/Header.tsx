@@ -104,12 +104,12 @@ export function Header() {
               {/* event button */}
               <Button
                 asChild
-                className="bg-primary/20 hover:bg-primary/50 capitalize text-primary-foreground justify-center text-center gap-2"
+                className="bg-primary/40 hover:bg-primary/60 capitalize text-primary-foreground justify-center text-center gap-2"
               >
-                <Link href="/event">
+                <Link href="/events">
                   {" "}
                   <MdEmojiEvents className="size-4" />
-                  Event
+                  Events
                 </Link>
               </Button>
             </div>

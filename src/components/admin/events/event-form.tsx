@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 import type { EventBanner } from "@/data/types";
 import { Button } from "@/components/ui/button";
@@ -23,11 +24,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ImageUpload } from "@/components/shared/image-upload";
-import { authorizedFetch } from "@/lib/auth/client-session";
+import { createEvent, updateEvent } from "@/lib/server/events";
 
 const formSchema = z
   .object({
-    id: z.string().uuid().optional(),
     title: z.string().trim().min(1, "Title is required").max(200),
     description: z.string().trim().max(500).optional(),
     imageUrl: z.string().trim().min(1, "Image is required"),
@@ -43,7 +43,7 @@ const formSchema = z
     { path: ["startsAt"], message: "Start date must be before end date" }
   );
 
-type EventBannerFormValues = z.infer<typeof formSchema>;
+type EventFormValues = z.infer<typeof formSchema>;
 
 const toLocalInputValue = (iso?: string) => {
   if (!iso) return "";
@@ -61,26 +61,26 @@ const toIsoOrUndefined = (value?: string) => {
 };
 
 type Props = {
-  initialBanner: EventBanner | null;
+  initialData?: EventBanner | null;
 };
 
-export function EventBannerForm({ initialBanner }: Props) {
-  const [isSaving, setIsSaving] = useState(false);
+export function EventForm({ initialData }: Props) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
-  const defaultValues: EventBannerFormValues = useMemo(
+  const defaultValues: EventFormValues = useMemo(
     () => ({
-      id: initialBanner?.id,
-      title: initialBanner?.title ?? "",
-      description: initialBanner?.description ?? "",
-      imageUrl: initialBanner?.imageUrl ?? "",
-      isActive: initialBanner?.isActive ?? true,
-      startsAt: toLocalInputValue(initialBanner?.startsAt),
-      endsAt: toLocalInputValue(initialBanner?.endsAt),
+      title: initialData?.title ?? "",
+      description: initialData?.description ?? "",
+      imageUrl: initialData?.imageUrl ?? "",
+      isActive: initialData?.isActive ?? false,
+      startsAt: toLocalInputValue(initialData?.startsAt),
+      endsAt: toLocalInputValue(initialData?.endsAt),
     }),
-    [initialBanner]
+    [initialData]
   );
 
-  const form = useForm<EventBannerFormValues>({
+  const form = useForm<EventFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
@@ -89,53 +89,35 @@ export function EventBannerForm({ initialBanner }: Props) {
     form.reset(defaultValues);
   }, [defaultValues, form]);
 
-  const onSubmit = async (values: EventBannerFormValues) => {
-    setIsSaving(true);
-    try {
-      const payload = {
-        ...values,
-        description: values.description?.trim() || undefined,
-        startsAt: toIsoOrUndefined(values.startsAt),
-        endsAt: toIsoOrUndefined(values.endsAt),
-      };
+  const onSubmit = (values: EventFormValues) => {
+    startTransition(async () => {
+      try {
+        const payload = {
+          ...values,
+          description: values.description?.trim() || undefined,
+          startsAt: toIsoOrUndefined(values.startsAt),
+          endsAt: toIsoOrUndefined(values.endsAt),
+        };
 
-      const response = await authorizedFetch("/api/admin/event-banner", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        const message = data?.message ?? "Unable to save banner";
-        throw new Error(message);
+        if (initialData?.id) {
+          await updateEvent(initialData.id, payload);
+          toast.success("Event updated");
+        } else {
+          await createEvent(payload);
+          toast.success("Event created");
+        }
+        router.push("/admin/events");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unable to save event";
+        toast.error(message);
       }
-
-      const saved = data.data as EventBanner;
-      form.reset({
-        id: saved.id,
-        title: saved.title,
-        description: saved.description ?? "",
-        imageUrl: saved.imageUrl,
-        isActive: saved.isActive,
-        startsAt: toLocalInputValue(saved.startsAt),
-        endsAt: toLocalInputValue(saved.endsAt),
-      });
-      toast.success("Event banner saved");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to save banner";
-      toast.error(message);
-    } finally {
-      setIsSaving(false);
-    }
+    });
   };
 
   return (
     <Card className="max-w-4xl">
       <CardHeader>
-        <CardTitle>Banner content</CardTitle>
+        <CardTitle>{initialData ? "Edit Event" : "Create Event"}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -174,7 +156,7 @@ export function EventBannerForm({ initialBanner }: Props) {
                   <FormItem>
                     <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="Upcoming event title" {...field} />
+                      <Input placeholder="Event title" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -187,8 +169,14 @@ export function EventBannerForm({ initialBanner }: Props) {
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-1">
-                      <FormLabel>Enable banner</FormLabel>
-                      <FormDescription>When enabled, it will appear on the homepage.</FormDescription>
+                      <FormLabel>Enable Banner</FormLabel>
+                      <FormDescription>
+                        Set as the <strong>active</strong> homepage banner.
+                        <br />
+                        <span className="text-xs text-muted-foreground">
+                          (Will disable any other active banner)
+                        </span>
+                      </FormDescription>
                     </div>
                     <FormControl>
                       <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -222,11 +210,11 @@ export function EventBannerForm({ initialBanner }: Props) {
                 name="startsAt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Show from</FormLabel>
+                    <FormLabel>Start Date</FormLabel>
                     <FormControl>
                       <Input type="datetime-local" {...field} />
                     </FormControl>
-                    <FormDescription>Optional start date/time to begin showing.</FormDescription>
+                    <FormDescription>Optional start date/time.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -237,11 +225,11 @@ export function EventBannerForm({ initialBanner }: Props) {
                 name="endsAt"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Hide after</FormLabel>
+                    <FormLabel>End Date</FormLabel>
                     <FormControl>
                       <Input type="datetime-local" {...field} />
                     </FormControl>
-                    <FormDescription>Optional end date/time to stop showing.</FormDescription>
+                    <FormDescription>Optional end date/time.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -249,16 +237,16 @@ export function EventBannerForm({ initialBanner }: Props) {
             </div>
 
             <div className="flex gap-3">
-              <Button type="submit" disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save banner"}
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Saving..." : "Save Event"}
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => form.reset(defaultValues)}
-                disabled={isSaving}
+                onClick={() => router.push("/admin/events")}
+                disabled={isPending}
               >
-                Reset
+                Cancel
               </Button>
             </div>
           </form>
