@@ -34,6 +34,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import { MdEmojiEvents } from "react-icons/md";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -95,28 +96,22 @@ export function Header() {
       <header className="border-b border-border bg-white sticky top-0 z-40 w-full">
         {/* topbar content */}
         <div className="hidden md:block bg-primary-hover">
-          <div className="container mx-auto flex h-12 items-center justify-between px-4">
+          <div className="container mx-auto flex h-14 items-center justify-between px-4">
             <p className="text-sm font-medium text-white/90">
-              Swaminarayan Ashram (Estd: 1987)
+              Swaminarayan Ashram (Estd: 2002)
             </p>
             <div className="flex items-center space-x-4">
-              {socialLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/90 focus-visible:outline-none"
-                  aria-label={link.name}
-                  title={link.name}
-                >
-                  <link.icon
-                    className="size-5"
-                    aria-hidden="true"
-                    focusable="false"
-                  />
-                </a>
-              ))}
+              {/* event button */}
+              <Button
+                asChild
+                className="bg-primary/20 hover:bg-primary/50 capitalize text-primary-foreground justify-center text-center gap-2"
+              >
+                <Link href="/event">
+                  {" "}
+                  <MdEmojiEvents className="size-4" />
+                  Event
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
