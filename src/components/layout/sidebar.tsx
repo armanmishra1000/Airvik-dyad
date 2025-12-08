@@ -73,7 +73,16 @@ const navItems: SidebarNavItem[] = [
   { href: "/admin/room-types", icon: Layers, label: "Room Types", feature: "roomTypes" },
   { href: "/admin/rooms", icon: BedDouble, label: "Rooms", feature: "rooms" },
   { href: "/admin/rates", icon: DollarSign, label: "Rate Plans", feature: "ratePlans" },
-  { href: "/admin/events", icon: Megaphone, label: "Events", feature: "eventBanner" },
+  {
+    href: "/admin/events",
+    icon: Megaphone,
+    label: "Events",
+    feature: "eventBanner",
+    subItems: [
+      { label: "All Events", href: "/admin/events", feature: "eventBanner" },
+      { label: "Add Event", href: "/admin/events/create", feature: "eventBanner" },
+    ],
+  },
   { href: "/admin/feedback", icon: MessageSquare, label: "Feedback", feature: "feedback" },
   { href: "/admin/reports", icon: BarChart3, label: "Reports", feature: "reports" },
   { href: "/admin/donations", icon: HeartHandshake, label: "Donations", feature: "donations" },
