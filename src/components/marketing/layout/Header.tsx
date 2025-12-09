@@ -34,6 +34,16 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import {
+  MdDialpad,
+  MdEmojiEvents,
+  MdEvent,
+  MdOutlineEvent,
+} from "react-icons/md";
+import { TbCalendarEvent } from "react-icons/tb";
+
+import { FaRegCalendarAlt } from "react-icons/fa";
+import { FiPhone } from "react-icons/fi";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -95,28 +105,32 @@ export function Header() {
       <header className="border-b border-border bg-white sticky top-0 z-40 w-full">
         {/* topbar content */}
         <div className="hidden md:block bg-primary-hover">
-          <div className="container mx-auto flex h-12 items-center justify-between px-4">
+          <div className="container mx-auto flex h-14 items-center justify-between px-4">
             <p className="text-sm font-medium text-white/90">
-              Swaminarayan Ashram (Estd: 1987)
+              Swaminarayan Ashram (Estd: 2002)
             </p>
-            <div className="flex items-center space-x-4">
-              {socialLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/90 focus-visible:outline-none"
-                  aria-label={link.name}
-                  title={link.name}
-                >
-                  <link.icon
-                    className="size-5"
-                    aria-hidden="true"
-                    focusable="false"
-                  />
-                </a>
-              ))}
+            <div className="flex items-center space-x-4 ">
+
+              {/* contact number add */}
+              <a 
+                href="tel:+918511151708" 
+                className="text-sm font-medium text-white/90 flex items-center gap-1.5 hover:text-white transition-colors"
+              >
+                <FiPhone className="size-5" aria-hidden="true" />
+                +91 85111 51708
+              </a>
+              
+              {/* event button */}
+              <Button
+                asChild
+                className="bg-primary/40 hover:bg-primary/60 capitalize text-primary-foreground justify-center text-center gap-2"
+              >
+                <Link href="/events">
+                  {" "}
+                  <FaRegCalendarAlt />
+                  Events
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
