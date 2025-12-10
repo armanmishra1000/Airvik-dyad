@@ -324,6 +324,10 @@ import { useSessionContext } from "@/context/session-context";
 import { useActivityLogger } from "@/hooks/use-activity-logger";
 import * as api from "@/lib/api";
 import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
+import {
+  buildRoomOccupancyAssignments,
+  type RoomOccupancyAssignment,
+} from "@/lib/reservations/guest-allocation";
 import type {
   Reservation,
   Guest,
@@ -350,12 +354,16 @@ type FolioItemRecord = {
   amount: number;
   timestamp: string | null;
   payment_method?: string | null;
+  external_source?: string | null;
+  external_reference?: string | null;
+  external_metadata?: Record<string, unknown> | null;
 };
 type RoomTypeAmenityRecord = { room_type_id: string; amenity_id: string };
 
 type CreateReservationPayload = {
   guestId: string;
   roomIds: string[];
+  roomOccupancies?: RoomOccupancyAssignment[];
   ratePlanId: string;
   checkInDate: string;
   checkOutDate: string;
@@ -378,6 +386,7 @@ type CreateReservationPayload = {
 type AddRoomsToBookingPayload = {
   bookingId: string;
   roomIds: string[];
+  roomOccupancies?: RoomOccupancyAssignment[];
   guestId: string;
   ratePlanId: string;
   checkInDate: string;
@@ -395,6 +404,109 @@ type AddRoomsToBookingPayload = {
 };
 
 type UserProfileUpdate = Partial<Pick<User, "name" | "roleId">>;
+
+const normalizeRoomOccupancies = (
+  roomIds: string[],
+  totalAdults: number,
+  totalChildren: number,
+  explicit?: RoomOccupancyAssignment[]
+): RoomOccupancyAssignment[] => {
+  if (!roomIds.length) {
+    return [];
+  }
+
+  if (!explicit?.length) {
+    return buildRoomOccupancyAssignments(roomIds, totalAdults, totalChildren);
+  }
+
+  const fallback = buildRoomOccupancyAssignments(roomIds, totalAdults, totalChildren);
+  const byRoomId = new Map<string, RoomOccupancyAssignment>();
+
+  explicit.forEach((entry, index) => {
+    const key = entry.roomId ?? roomIds[index];
+    if (!key) return;
+    byRoomId.set(key, {
+      roomId: key,
+      adults: Math.max(entry.adults, 0),
+      children: Math.max(entry.children, 0),
+    });
+  });
+
+  return roomIds.map((roomId, index) => {
+    const direct = byRoomId.get(roomId);
+    if (direct) {
+      return direct;
+    }
+
+    const positional = explicit[index];
+    if (positional) {
+      return {
+        roomId,
+        adults: Math.max(positional.adults, 0),
+        children: Math.max(positional.children, 0),
+      };
+    }
+
+    return fallback[index];
+  });
+};
+
+const applyRoomOccupancyAssignments = async (
+  reservationsList: Reservation[],
+  assignments: RoomOccupancyAssignment[]
+): Promise<Reservation[]> => {
+  if (!assignments.length) {
+    return reservationsList;
+  }
+
+  const byRoomId = new Map<string | undefined, RoomOccupancyAssignment>();
+  assignments.forEach((assignment) => {
+    if (assignment.roomId) {
+      byRoomId.set(assignment.roomId, assignment);
+    }
+  });
+
+  const updated = await Promise.all(
+    reservationsList.map(async (reservation, index) => {
+      const assignment = reservation.roomId
+        ? byRoomId.get(reservation.roomId) ?? assignments[index]
+        : assignments[index];
+
+      if (!assignment) {
+        return reservation;
+      }
+
+      const adults = Math.max(assignment.adults, 0);
+      const children = Math.max(assignment.children, 0);
+      const guests = adults + children;
+
+      if (
+        reservation.adultCount === adults &&
+        reservation.childCount === children &&
+        reservation.numberOfGuests === guests
+      ) {
+        return reservation;
+      }
+
+      const { data, error } = await api.updateReservation(reservation.id, {
+        adultCount: adults,
+        childCount: children,
+        numberOfGuests: guests,
+      });
+
+      if (error || !data) {
+        return reservation;
+      }
+
+      return {
+        ...data,
+        folio: reservation.folio,
+      };
+    })
+  );
+
+  return updated;
+};
 
 const defaultProperty: Property = {
   id: "default-property-id",
@@ -588,7 +700,7 @@ export function useAppData() {
   };
 
   const addReservation = async (payload: CreateReservationPayload) => {
-    const { roomIds, ...reservationDetails } = payload;
+    const { roomIds, roomOccupancies, ...reservationDetails } = payload;
     const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     // Check if rate plan exists, but don't fail if it doesn't
@@ -624,8 +736,23 @@ export function useAppData() {
 
     if (error) throw error;
 
-    const reservationsWithEmptyFolio = data.map((r) => ({ ...r, folio: [] }));
-    setReservations(prev =>
+    const normalizedOccupancies = normalizeRoomOccupancies(
+      roomIds,
+      reservationDetails.adultCount,
+      reservationDetails.childCount,
+      roomOccupancies
+    );
+
+    let reservationsWithEmptyFolio: Reservation[] = data.map((r) => ({
+      ...r,
+      folio: [],
+    }));
+    reservationsWithEmptyFolio = await applyRoomOccupancyAssignments(
+      reservationsWithEmptyFolio,
+      normalizedOccupancies
+    );
+
+    setReservations((prev) =>
       sortReservationsByBookingDate([...prev, ...reservationsWithEmptyFolio])
     );
     const primaryReservation = reservationsWithEmptyFolio[0];
@@ -654,6 +781,8 @@ export function useAppData() {
       return [];
     }
 
+    const { roomOccupancies } = payload;
+
     const { data, error } = await api.createReservationsWithTotal({
       p_booking_id: payload.bookingId,
       p_guest_id: payload.guestId,
@@ -675,11 +804,28 @@ export function useAppData() {
 
     if (error) throw error;
 
-    setReservations((prev) =>
-      sortReservationsByBookingDate([...(prev ?? []), ...data])
+    const normalizedOccupancies = normalizeRoomOccupancies(
+      payload.roomIds,
+      payload.adultCount,
+      payload.childCount,
+      roomOccupancies
     );
 
-    return data;
+    let createdReservations: Reservation[] = data.map((reservation) => ({
+      ...reservation,
+      folio: reservation.folio ?? [],
+    }));
+
+    createdReservations = await applyRoomOccupancyAssignments(
+      createdReservations,
+      normalizedOccupancies
+    );
+
+    setReservations((prev) =>
+      sortReservationsByBookingDate([...(prev ?? []), ...createdReservations])
+    );
+
+    return createdReservations;
   };
 
   const updateReservation = async (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => {
@@ -721,6 +867,9 @@ export function useAppData() {
       description: item.description,
       amount: item.amount,
       payment_method: item.paymentMethod ?? null,
+      external_source: item.externalSource ?? undefined,
+      external_reference: item.externalReference ?? null,
+      external_metadata: item.externalMetadata ?? undefined,
     });
     if (error || !data) {
       if (error && typeof error === "object" && "message" in error) {
@@ -735,6 +884,9 @@ export function useAppData() {
       amount: inserted.amount,
       timestamp: inserted.timestamp ?? new Date().toISOString(),
       paymentMethod: inserted.payment_method ?? undefined,
+      externalSource: inserted.external_source ?? undefined,
+      externalReference: inserted.external_reference ?? undefined,
+      externalMetadata: inserted.external_metadata ?? undefined,
     };
     setReservations(prev =>
       prev.map(r =>

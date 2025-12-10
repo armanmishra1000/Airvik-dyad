@@ -33,6 +33,8 @@ import {
   fromDbPostWithCategories,
 } from "@/lib/api/blog-mappers";
 
+const INTERNAL_FOLIO_SOURCE = "internal" as const;
+
 type DbGuest = {
   id: string;
   first_name: string;
@@ -728,7 +730,7 @@ export const addFolioItem = (itemData: FolioItemInsertPayload) =>
         amount: itemData.amount,
         payment_method: itemData.payment_method ?? null,
         timestamp: itemData.timestamp,
-        external_source: itemData.external_source ?? null,
+        external_source: itemData.external_source ?? INTERNAL_FOLIO_SOURCE,
         external_reference: itemData.external_reference ?? null,
         external_metadata: itemData.external_metadata ?? {},
       },

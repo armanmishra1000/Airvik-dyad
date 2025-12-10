@@ -165,6 +165,16 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     accessorKey: "id",
     header: "Booking ID",
+    filterFn: (row, id, value) => {
+        const input = String(value ?? "").trim().toLowerCase();
+        if (!input) return true;
+        const rawValue = String(row.getValue(id) ?? "");
+        const normalized = rawValue
+          .replace(/^booking-/i, "")
+          .replace(/^vik-/i, "")
+          .toLowerCase();
+        return normalized.includes(input);
+    },
     cell: ({ row }) => {
         if (row.depth > 0) {
             return null;
@@ -199,6 +209,12 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
   {
     accessorKey: "guestName",
     header: "Customer Name",
+    filterFn: (row, id, value) => {
+        const input = String(value ?? "").trim().toLowerCase();
+        if (!input) return true;
+        const guestName = String(row.getValue(id) ?? "").toLowerCase();
+        return guestName.includes(input);
+    },
     cell: ({ row, getValue }) => {
         if (row.depth > 0) return null;
         return getValue();

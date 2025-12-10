@@ -53,7 +53,7 @@ function getGroupDisplayAmount(
 export default function ReservationsPage() {
   const { reservations, guests, updateReservationStatus, rooms, property } = useDataContext();
 
-  const { flatReservations, groupedReservations } = React.useMemo(() => {
+  const groupedReservations = React.useMemo(() => {
     const reservationsWithDetails = sortReservationsByBookingDate(reservations).map((res) => {
       const guest = guests.find((g) => g.id === res.guestId);
       const room = rooms.find((r) => r.id === res.roomId);
@@ -96,6 +96,10 @@ export default function ReservationsPage() {
         const displayAmount = revenueEntries.length
           ? getGroupDisplayAmount(revenueEntries, combinedFolio, property)
           : 0;
+        const guestSource = activeEntries.length ? activeEntries : group;
+        const totalGuests = guestSource.reduce((sum, entry) => sum + (entry.numberOfGuests ?? 0), 0);
+        const totalAdults = guestSource.reduce((sum, entry) => sum + (entry.adultCount ?? 0), 0);
+        const totalChildren = guestSource.reduce((sum, entry) => sum + (entry.childCount ?? 0), 0);
         const parentRow: ReservationWithDetails = {
           ...firstRes,
           id: firstRes.bookingId,
@@ -103,6 +107,9 @@ export default function ReservationsPage() {
           roomCount: activeEntries.length || group.length,
           totalAmount: roomTotal,
           displayAmount,
+          numberOfGuests: totalGuests,
+          adultCount: totalAdults,
+          childCount: totalChildren,
           subRows: group.map((entry) => ({ ...entry, roomCount: 1 })),
         };
         tableData.push(parentRow);
@@ -111,14 +118,8 @@ export default function ReservationsPage() {
       }
     }
 
-    return {
-      flatReservations: reservationsWithDetails,
-      groupedReservations: tableData,
-    };
+    return tableData;
   }, [reservations, guests, rooms, property]);
-
-  const [viewMode, setViewMode] = React.useState<"flat" | "grouped">("flat");
-  const tableData = viewMode === "flat" ? flatReservations : groupedReservations;
 
   const handleCancelReservation = (reservationId: string) => {
     updateReservationStatus(reservationId, "Cancelled");
@@ -139,11 +140,7 @@ export default function ReservationsPage() {
     <div className="space-y-6">
       <DataTable
         columns={columns}
-        data={tableData}
-        viewMode={viewMode}
-        onViewModeChange={(mode) => setViewMode(mode)}
-        flatCount={flatReservations.length}
-        groupedCount={groupedReservations.length}
+        data={groupedReservations}
         onCancelReservation={handleCancelReservation}
         onCheckInReservation={handleCheckInReservation}
         onCheckOutReservation={handleCheckOutReservation}

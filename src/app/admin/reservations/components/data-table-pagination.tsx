@@ -27,8 +27,9 @@ export function DataTablePagination<TData>({
   return (
     <div className="flex flex-col gap-4 px-2 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-4">
       <div className="text-sm text-muted-foreground">
-        {table.getFilteredSelectedRowModel().rows.length} of{" "}
-        {table.getFilteredRowModel().rows.length} row(s) selected.
+        Showing {table.getPaginationRowModel().rows.length} of{" "}
+        {table.getFilteredRowModel().rows.length} booking
+        {table.getFilteredRowModel().rows.length === 1 ? "" : "s"}.
       </div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
         <div className="flex items-center gap-2">

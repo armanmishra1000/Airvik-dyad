@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
 import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { buildRoomOccupancyAssignments } from "@/lib/reservations/guest-allocation";
 
 const paymentMethodOptions = [
   "Not specified",
@@ -253,6 +254,12 @@ export default function CreateReservationPage() {
     }
 
     try {
+      const roomOccupancies = buildRoomOccupancyAssignments(
+        values.roomIds,
+        values.adults,
+        values.children
+      );
+
       const result = await addReservation({
         guestId: values.guestId,
         roomIds: values.roomIds,
@@ -267,6 +274,7 @@ export default function CreateReservationPage() {
         bookingDate: new Date().toISOString(),
         source: "reception",
         paymentMethod: values.paymentMethod,
+        roomOccupancies,
       });
 
       if (!result.length) {

@@ -33,10 +33,6 @@ import type { ReservationWithDetails } from "./columns"
 interface DataTableProps {
   columns: ColumnDef<ReservationWithDetails, unknown>[]
   data: ReservationWithDetails[]
-  viewMode: "flat" | "grouped"
-  onViewModeChange: (mode: "flat" | "grouped") => void
-  flatCount: number
-  groupedCount: number
   onCancelReservation: (reservationId: string) => void
   onCheckInReservation: (reservationId: string) => void
   onCheckOutReservation: (reservationId: string) => void
@@ -45,10 +41,6 @@ interface DataTableProps {
 export function DataTable({
   columns,
   data,
-  viewMode,
-  onViewModeChange,
-  flatCount,
-  groupedCount,
   onCancelReservation,
   onCheckInReservation,
   onCheckOutReservation,
@@ -126,10 +118,7 @@ export function DataTable({
     <div className="space-y-6">
       <DataTableToolbar
         table={table}
-        viewMode={viewMode}
-        onViewModeChange={onViewModeChange}
-        reservationCount={flatCount}
-        bookingCount={groupedCount}
+        bookingCount={data.length}
       />
       <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
         <Table>
@@ -154,10 +143,7 @@ export function DataTable({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+              <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

@@ -4,7 +4,6 @@ import * as React from "react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   HoverCard,
   HoverCardContent,
@@ -12,13 +11,7 @@ import {
 } from "@/components/ui/hover-card";
 import { useDataContext } from "@/context/data-context";
 import type { Reservation, ReservationStatus } from "@/data/types";
-import {
-  calculateReservationFinancials,
-  resolveReservationTaxConfig,
-} from "@/lib/reservations/calculate-financials";
-import type { PaymentStatus } from "@/lib/reservations/calculate-financials";
 import { cn } from "@/lib/utils";
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyValue } from "@/lib/currency";
 
 const reservationStatusStyles: Record<
   ReservationStatus,
@@ -86,10 +79,6 @@ interface ReservationGroupSummary {
   checkOut: Date;
   nights: number;
   rooms: Array<{ id: string; roomNumber?: string; roomTypeName?: string }>;
-  totalCharges: number;
-  totalPaid: number;
-  balance: number;
-  paymentStatus: PaymentStatus;
   statusLabel: ReservationStatus | "Mixed";
   statusStyle: { ribbon: string; dot: string };
 }
@@ -194,8 +183,7 @@ export function ReservationHoverCard({
   reservationIds,
   date,
 }: ReservationHoverCardProps) {
-  const { reservations, guests, rooms, roomTypes, property } = useDataContext();
-  const currencyCode = property.currency || DEFAULT_CURRENCY;
+  const { reservations, guests, rooms, roomTypes } = useDataContext();
   const hoverDate = React.useMemo(() => {
     const parsed = parseISO(date);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
@@ -277,8 +265,6 @@ export function ReservationHoverCard({
       checkOut: Date;
       nights: number;
       rooms: Array<{ id: string; roomNumber?: string; roomTypeName?: string }>;
-      totalCharges: number;
-      totalPaid: number;
       statuses: Set<ReservationStatus>;
     }>();
 
@@ -289,12 +275,6 @@ export function ReservationHoverCard({
       const checkOut = parseISO(reservation.checkOutDate);
       const bookingDate = parseISO(reservation.bookingDate);
       const nights = Math.max(differenceInDays(checkOut, checkIn), 1);
-      const reservationTaxConfig = resolveReservationTaxConfig(reservation, property);
-      const { totalCharges, totalPaid } = calculateReservationFinancials(
-        reservation,
-        reservationTaxConfig
-      );
-
       const existing = groups.get(bookingId);
       if (!existing) {
         groups.set(bookingId, {
@@ -312,8 +292,6 @@ export function ReservationHoverCard({
               roomTypeName: detail.roomTypeName,
             },
           ],
-          totalCharges,
-          totalPaid,
           statuses: new Set<ReservationStatus>([reservation.status]),
         });
         return;
@@ -327,15 +305,10 @@ export function ReservationHoverCard({
       existing.checkIn = checkIn < existing.checkIn ? checkIn : existing.checkIn;
       existing.checkOut = checkOut > existing.checkOut ? checkOut : existing.checkOut;
       existing.nights = Math.max(existing.nights, nights);
-      existing.totalCharges += totalCharges;
-      existing.totalPaid += totalPaid;
       existing.statuses.add(reservation.status);
     });
 
     return Array.from(groups.values()).map((group) => {
-      const balance = group.totalCharges - group.totalPaid;
-      const paymentStatus: PaymentStatus =
-        balance <= 0 ? "Fully Paid" : group.totalPaid > 0 ? "Partially Paid" : "Unpaid";
       const statusLabel = group.statuses.size === 1 ? [...group.statuses][0] : "Mixed";
       const statusStyle =
         statusLabel === "Mixed"
@@ -358,15 +331,11 @@ export function ReservationHoverCard({
               sensitivity: "base",
             });
           }),
-        totalCharges: group.totalCharges,
-        totalPaid: group.totalPaid,
-        balance,
-        paymentStatus,
         statusLabel,
         statusStyle,
       } satisfies ReservationGroupSummary;
     });
-  }, [reservationDetails, property]);
+  }, [reservationDetails]);
 
   if (reservationGroups.length === 0) {
     return <>{children}</>;
@@ -403,12 +372,6 @@ export function ReservationHoverCard({
           >
             <div className="space-y-4 text-sm">
               {reservationGroups.map((group) => {
-                const paymentStatusBadgeVariant =
-                  group.paymentStatus === "Fully Paid"
-                    ? "default"
-                    : group.paymentStatus === "Partially Paid"
-                      ? "secondary"
-                      : "destructive";
                 const groupedRoomTypes = groupRoomsByType(group.rooms);
 
                 return (
@@ -501,42 +464,6 @@ export function ReservationHoverCard({
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-border/60 bg-background/80 p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          Payment Status
-                        </span>
-                        <Badge variant={paymentStatusBadgeVariant} className="text-sm">
-                          {group.paymentStatus}
-                        </Badge>
-                      </div>
-                      <Separator className="my-3" />
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center justify-between text-foreground">
-                          <span>Total Charges</span>
-                          <span className="font-semibold">
-                            {formatCurrencyValue(group.totalCharges, currencyCode)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-emerald-600">
-                          <span>Total Paid</span>
-                          <span className="font-semibold">
-                            {formatCurrencyValue(group.totalPaid, currencyCode)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Balance Due (Total)</span>
-                          <span
-                            className={cn(
-                              "font-semibold",
-                              group.balance > 0 ? "text-rose-600" : "text-emerald-600"
-                            )}
-                          >
-                            {formatCurrencyValue(group.balance, currencyCode)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 );
               })}

@@ -114,13 +114,42 @@ export default function ReservationDetailsPage() {
     appliedTaxRate: hasMixedTaxRates ? null : appliedTaxRate,
   };
 
+  const aggregateCounts = normalizedReservations.reduce(
+    (acc, entry) => {
+      acc.guests += entry.numberOfGuests ?? 0;
+      acc.adults += entry.adultCount ?? 0;
+      acc.children += entry.childCount ?? 0;
+      return acc;
+    },
+    { guests: 0, adults: 0, children: 0 }
+  );
+
+  const shouldUseAggregatedCounts =
+    normalizedReservations.length > 1 ||
+    aggregateCounts.guests > 0 ||
+    aggregateCounts.adults > 0 ||
+    aggregateCounts.children > 0;
+
+  const stayDetailsReservation: ReservationWithDetails = {
+    ...reservationWithDetails,
+    numberOfGuests: shouldUseAggregatedCounts
+      ? aggregateCounts.guests
+      : reservationWithDetails.numberOfGuests,
+    adultCount: shouldUseAggregatedCounts
+      ? aggregateCounts.adults
+      : reservationWithDetails.adultCount,
+    childCount: shouldUseAggregatedCounts
+      ? aggregateCounts.children
+      : reservationWithDetails.childCount,
+  };
+
   return (
     <div className="space-y-6">
       <ReservationHeader reservation={reservationWithDetails} />
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1 space-y-6">
           <GuestDetailsCard guest={guest} />
-          <StayDetailsCard reservation={reservationWithDetails} />
+          <StayDetailsCard reservation={stayDetailsReservation} />
           <LinkedReservationsCard
             activeReservationId={reservation.id}
             reservations={groupSummary.reservations}
