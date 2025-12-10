@@ -53,7 +53,7 @@ function getGroupDisplayAmount(
 export default function ReservationsPage() {
   const { reservations, guests, updateReservationStatus, rooms, property } = useDataContext();
 
-  const groupedReservations = React.useMemo(() => {
+  const { flatReservations, groupedReservations } = React.useMemo(() => {
     const reservationsWithDetails = sortReservationsByBookingDate(reservations).map((res) => {
       const guest = guests.find((g) => g.id === res.guestId);
       const room = rooms.find((r) => r.id === res.roomId);
@@ -78,7 +78,7 @@ export default function ReservationsPage() {
     });
 
     const bookingGroups = new Map<string, typeof reservationsWithDetails>();
-    reservationsWithDetails.forEach(res => {
+    reservationsWithDetails.forEach((res) => {
       if (!bookingGroups.has(res.bookingId)) {
         bookingGroups.set(res.bookingId, []);
       }
@@ -110,8 +110,15 @@ export default function ReservationsPage() {
         tableData.push(group[0]);
       }
     }
-    return tableData;
+
+    return {
+      flatReservations: reservationsWithDetails,
+      groupedReservations: tableData,
+    };
   }, [reservations, guests, rooms, property]);
+
+  const [viewMode, setViewMode] = React.useState<"flat" | "grouped">("flat");
+  const tableData = viewMode === "flat" ? flatReservations : groupedReservations;
 
   const handleCancelReservation = (reservationId: string) => {
     updateReservationStatus(reservationId, "Cancelled");
@@ -132,7 +139,11 @@ export default function ReservationsPage() {
     <div className="space-y-6">
       <DataTable
         columns={columns}
-        data={groupedReservations}
+        data={tableData}
+        viewMode={viewMode}
+        onViewModeChange={(mode) => setViewMode(mode)}
+        flatCount={flatReservations.length}
+        groupedCount={groupedReservations.length}
         onCancelReservation={handleCancelReservation}
         onCheckInReservation={handleCheckInReservation}
         onCheckOutReservation={handleCheckOutReservation}

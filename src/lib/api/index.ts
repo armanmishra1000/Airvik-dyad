@@ -602,14 +602,63 @@ export const updateGuest = async (id: string, updatedData: Partial<Guest>) => {
 export const deleteGuest = (id: string) => supabase.from('guests').delete().eq('id', id);
 
 // Reservations
+const RESERVATION_PAGE_SIZE = 500;
+
 export const getReservations = async () => {
-    const { data, error, ...rest } = await supabase
-      .from('reservations')
-      .select('*')
-      .order('booking_date', { ascending: false, nullsFirst: false })
-      .order('id', { ascending: false });
-    if (error || !data) return { data, error, ...rest };
-    return { data: data.map(fromDbReservation), error, ...rest };
+    const aggregatedRows: DbReservation[] = [];
+    let fromIndex = 0;
+    let toIndex = RESERVATION_PAGE_SIZE - 1;
+    let status: number | undefined;
+    let statusText: string | undefined;
+    let count: number | null | undefined;
+
+    while (true) {
+        const includeCount = fromIndex === 0;
+        const { data, error, status: pageStatus, statusText: pageStatusText, count: pageCount } = await supabase
+            .from('reservations')
+            .select('*', includeCount ? { count: 'estimated' } : undefined)
+            .order('booking_date', { ascending: false, nullsFirst: false })
+            .order('id', { ascending: false })
+            .range(fromIndex, toIndex);
+
+        if (typeof status === 'undefined') {
+            status = pageStatus;
+        }
+        if (typeof statusText === 'undefined') {
+            statusText = pageStatusText;
+        }
+        if (includeCount) {
+            count = typeof pageCount === 'number' ? pageCount : null;
+        }
+
+        if (error) {
+            return {
+                data: null,
+                error,
+                status,
+                statusText,
+                count,
+            };
+        }
+
+        const pageRows = (data ?? []) as DbReservation[];
+        aggregatedRows.push(...pageRows);
+
+        if (pageRows.length < RESERVATION_PAGE_SIZE) {
+            break;
+        }
+
+        fromIndex += RESERVATION_PAGE_SIZE;
+        toIndex += RESERVATION_PAGE_SIZE;
+    }
+
+    return {
+        data: aggregatedRows.map(fromDbReservation),
+        error: null,
+        status,
+        statusText,
+        count,
+    };
 };
 
 export const getReservationById = async (id: string) => {
