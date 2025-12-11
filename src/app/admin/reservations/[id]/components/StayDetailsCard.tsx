@@ -19,7 +19,14 @@ interface StayDetailsCardProps {
 
 export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
   const { ratePlans } = useDataContext();
-  const ratePlan = ratePlans.find((rp) => rp.id === reservation.ratePlanId);
+  const ratePlan = reservation.ratePlanId
+    ? ratePlans.find((rp) => rp.id === reservation.ratePlanId)
+    : null;
+  const ratePlanLabel = ratePlan
+    ? ratePlan.name
+    : reservation.externalSource === "vikbooking"
+    ? "Imported from VikBooking"
+    : "Not assigned";
 
   return (
     <Card>
@@ -54,7 +61,7 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
           </div>
           <div className="flex items-center gap-3">
             <BedDouble className="h-4 w-4 text-muted-foreground" />
-            <span>{ratePlan?.name}</span>
+            <span>{ratePlanLabel}</span>
           </div>
           <div className="flex items-center gap-3">
             <CreditCard className="h-4 w-4 text-muted-foreground" />

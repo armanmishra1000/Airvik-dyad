@@ -95,6 +95,7 @@ import type {
   DashboardComponentId,
   AdminActivityLogInput,
 } from "@/data/types";
+import type { RoomOccupancyAssignment } from "@/lib/reservations/guest-allocation";
 
 type AddReservationPayload = Omit<
   Reservation,
@@ -106,7 +107,7 @@ type AddReservationPayload = Omit<
   | "totalAmount"
   | "taxEnabledSnapshot"
   | "taxRateSnapshot"
-> & { roomIds: string[] };
+> & { roomIds: string[]; roomOccupancies?: RoomOccupancyAssignment[] };
 
 type AddRoomsToBookingPayload = {
   bookingId: string;
@@ -125,11 +126,13 @@ type AddRoomsToBookingPayload = {
   paymentMethod: Reservation["paymentMethod"];
   taxEnabledSnapshot: boolean;
   taxRateSnapshot: number;
+  roomOccupancies?: RoomOccupancyAssignment[];
 };
 
 // This mirrors the original AppContextType for component compatibility
 interface DataContextType {
   isLoading: boolean;
+  isRefreshing: boolean;
   property: Property;
   reservations: Reservation[];
   guests: Guest[];
@@ -156,6 +159,10 @@ interface DataContextType {
   ) => void;
   updateReservationStatus: (
     reservationId: string,
+    status: ReservationStatus
+  ) => void;
+  updateBookingReservationStatus: (
+    bookingId: string,
     status: ReservationStatus
   ) => void;
   addGuest: (guest: Omit<Guest, "id">) => Promise<Guest>;

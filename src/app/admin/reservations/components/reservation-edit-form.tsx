@@ -34,6 +34,9 @@ import { cn } from "@/lib/utils";
 import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
 import { calculateMultipleRoomPricing, calculateRoomPricing } from "@/lib/pricing-calculator";
 import { resolveReservationTaxConfig } from "@/lib/reservations/calculate-financials";
+import { buildRoomOccupancyAssignments } from "@/lib/reservations/guest-allocation";
+import { isActiveReservationStatus } from "@/lib/reservations/status";
+import { markReservationAsRemoved } from "@/lib/reservations/filters";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import type { Reservation } from "@/data/types";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
@@ -101,6 +104,11 @@ type PendingRoomEntry = {
   occupancyLabel?: string;
 };
 
+type GuestTotals = {
+  adults: number;
+  children: number;
+};
+
 interface ReservationEditFormProps {
   reservation: ReservationWithDetails;
   onCancel?: () => void;
@@ -133,9 +141,26 @@ export function ReservationEditForm({
   );
 
   const activeGroupReservations = React.useMemo(
-    () => groupReservations.filter((entry) => entry.status !== "Cancelled"),
+    () => groupReservations.filter((entry) => isActiveReservationStatus(entry.status)),
     [groupReservations]
   );
+
+  const bookingGuestTotals = React.useMemo<GuestTotals>(() => {
+    if (activeGroupReservations.length) {
+      return activeGroupReservations.reduce(
+        (acc, entry) => {
+          const totals = resolveReservationGuestTotals(entry);
+          return {
+            adults: acc.adults + totals.adults,
+            children: acc.children + totals.children,
+          };
+        },
+        { adults: 0, children: 0 }
+      );
+    }
+
+    return resolveReservationGuestTotals(reservation);
+  }, [activeGroupReservations, reservation]);
 
   const initialRoomIds = React.useMemo(() => {
     const ids = activeGroupReservations.map((entry) => entry.roomId);
@@ -144,6 +169,11 @@ export function ReservationEditForm({
     }
     return [reservation.roomId];
   }, [activeGroupReservations, reservation.roomId]);
+
+  const normalizedInitialRoomIds = React.useMemo(
+    () => [...initialRoomIds].sort(),
+    [initialRoomIds]
+  );
 
   const roomMap = React.useMemo(() => new Map(rooms.map((room) => [room.id, room])), [rooms]);
   const roomTypeMap = React.useMemo(() => new Map(roomTypes.map((type) => [type.id, type])), [roomTypes]);
@@ -161,17 +191,48 @@ export function ReservationEditForm({
 
   const schema = React.useMemo(() => buildEditReservationSchema(resolveCapacity), [resolveCapacity]);
   const resolver = React.useMemo(() => zodResolver(schema), [schema]);
+  const formDefaultValues = React.useMemo(
+    () => buildDefaultValues(reservation, initialRoomIds, bookingGuestTotals),
+    [reservation, initialRoomIds, bookingGuestTotals]
+  );
 
   const form = useForm<EditFormValues>({
     resolver,
-    defaultValues: buildDefaultValues(reservation, initialRoomIds),
+    defaultValues: formDefaultValues,
     mode: "onChange",
     reValidateMode: "onChange",
   });
 
+  const lastResetSignatureRef = React.useRef<string | null>(null);
+
+  const defaultValuesSignature = React.useMemo(
+    () =>
+      JSON.stringify({
+        id: reservation.id,
+        checkIn: reservation.checkInDate,
+        checkOut: reservation.checkOutDate,
+        adults: bookingGuestTotals.adults,
+        children: bookingGuestTotals.children,
+        roomIds: normalizedInitialRoomIds,
+        notes: reservation.notes ?? "",
+      }),
+    [
+      reservation.id,
+      reservation.checkInDate,
+      reservation.checkOutDate,
+      bookingGuestTotals.adults,
+      bookingGuestTotals.children,
+      normalizedInitialRoomIds,
+      reservation.notes,
+    ]
+  );
+
   React.useEffect(() => {
-    form.reset(buildDefaultValues(reservation, initialRoomIds));
-  }, [reservation, form, initialRoomIds]);
+    if (form.formState.isSubmitting) return;
+    if (lastResetSignatureRef.current === defaultValuesSignature) return;
+    form.reset(formDefaultValues);
+    lastResetSignatureRef.current = defaultValuesSignature;
+  }, [form, formDefaultValues, defaultValuesSignature]);
 
   React.useEffect(() => {
     void form.trigger("roomIds");
@@ -191,8 +252,8 @@ export function ReservationEditForm({
   }, [watchedDateRange]);
 
   const bookingRoomIds = React.useMemo(
-    () => new Set(groupReservations.map((entry) => entry.roomId)),
-    [groupReservations]
+    () => new Set(activeGroupReservations.map((entry) => entry.roomId)),
+    [activeGroupReservations]
   );
 
   const allAvailableRooms = React.useMemo(() => {
@@ -425,14 +486,19 @@ export function ReservationEditForm({
     form.setValue("roomIds", uniqueRoomIds, { shouldValidate: true });
 
     const totalGuestsSelected = adultCount + childCount;
-    const perReservationPayload = {
+    const baseReservationPayload = {
       checkInDate: formatISO(dateRange.from, { representation: "date" }),
       checkOutDate: formatISO(dateRange.to, { representation: "date" }),
-      adultCount,
-      childCount,
-      numberOfGuests: totalGuestsSelected,
       notes: notes?.trim() || undefined,
     };
+    const roomOccupancies = buildRoomOccupancyAssignments(
+      uniqueRoomIds,
+      adultCount,
+      childCount
+    );
+    const occupancyByRoomId = new Map(
+      roomOccupancies.map((entry) => [entry.roomId, entry])
+    );
     const { taxEnabledSnapshot, taxRateSnapshot } = taxSnapshot;
 
     const stayNights = Math.max(differenceInDays(dateRange.to, dateRange.from), 1);
@@ -479,17 +545,25 @@ export function ReservationEditForm({
 
     try {
       const availabilityResults = await Promise.all(
-        uniqueRoomIds.map(async (roomId) => ({
-          roomId,
-          result: await validateBookingRequest(
-            perReservationPayload.checkInDate,
-            perReservationPayload.checkOutDate,
+        uniqueRoomIds.map(async (roomId, index) => {
+          const allocation =
+            occupancyByRoomId.get(roomId) ?? roomOccupancies[index] ?? {
+              adults: adultCount,
+              children: childCount,
+            };
+
+          return {
             roomId,
-            adultCount,
-            childCount,
-            reservation.bookingId
-          ),
-        }))
+            result: await validateBookingRequest(
+              baseReservationPayload.checkInDate,
+              baseReservationPayload.checkOutDate,
+              roomId,
+              allocation.adults,
+              allocation.children,
+              reservation.bookingId
+            ),
+          };
+        })
       );
 
       const unavailable = availabilityResults.find(({ result }) => !result.isValid);
@@ -516,9 +590,17 @@ export function ReservationEditForm({
           taxEnabledSnapshot: entry.taxEnabledSnapshot ?? false,
           taxRateSnapshot: entry.taxRateSnapshot ?? 0,
         };
+        const allocation =
+          occupancyByRoomId.get(roomId) ?? {
+            adults: adultCount,
+            children: childCount,
+          };
         await updateReservation(entry.id, {
-          ...perReservationPayload,
+          ...baseReservationPayload,
           roomId,
+          adultCount: allocation.adults,
+          childCount: allocation.children,
+          numberOfGuests: allocation.adults + allocation.children,
           totalAmount: roomChargeMap.get(roomId) ?? entry.totalAmount,
           taxEnabledSnapshot,
           taxRateSnapshot,
@@ -530,40 +612,66 @@ export function ReservationEditForm({
         );
       }
 
-      for (const entry of reservationsToCancel) {
-        if (entry.status === "Cancelled") {
-          continue;
-        }
-        const previousStatus = entry.status;
-        await updateReservation(entry.id, {
-          status: "Cancelled",
-        });
-        revertStack.push(() =>
-          updateReservation(entry.id, {
-            status: previousStatus,
-          })
+      const hasExplicitRoomRemoval =
+        uniqueRoomIds.length > 0 &&
+        activeGroupReservations.some(
+          (entry) => !uniqueRoomIds.includes(entry.roomId)
         );
+
+      if (hasExplicitRoomRemoval) {
+        for (const entry of reservationsToCancel) {
+          if (entry.status === "Cancelled") {
+            continue;
+          }
+          const previousStatus = entry.status;
+          const previousMetadata = entry.externalMetadata
+            ? { ...entry.externalMetadata }
+            : null;
+          await updateReservation(entry.id, {
+            status: "Cancelled",
+            externalMetadata: markReservationAsRemoved(entry.externalMetadata),
+          });
+          revertStack.push(() =>
+            updateReservation(entry.id, {
+              status: previousStatus,
+              externalMetadata: previousMetadata ?? {},
+            })
+          );
+        }
       }
 
       if (roomsToCreate.length) {
+        const newRoomOccupancies = roomsToCreate.map((roomId) => {
+          const allocation = occupancyByRoomId.get(roomId) ?? {
+            adults: adultCount,
+            children: childCount,
+          };
+          return {
+            roomId,
+            adults: allocation.adults,
+            children: allocation.children,
+          };
+        });
+
         await addRoomsToBooking({
           bookingId: reservation.bookingId,
           roomIds: roomsToCreate,
           guestId: reservation.guestId,
-          ratePlanId: reservation.ratePlanId,
-          checkInDate: perReservationPayload.checkInDate,
-          checkOutDate: perReservationPayload.checkOutDate,
+          ratePlanId: reservation.ratePlanId ?? "",
+          checkInDate: baseReservationPayload.checkInDate,
+          checkOutDate: baseReservationPayload.checkOutDate,
           numberOfGuests: totalGuestsSelected,
           adultCount,
           childCount,
           status: reservation.status,
-          notes: perReservationPayload.notes,
+          notes: baseReservationPayload.notes,
           bookingDate: reservation.bookingDate,
           source: reservation.source,
           paymentMethod:
             (reservation.paymentMethod as Reservation["paymentMethod"]) ?? "Not specified",
           taxEnabledSnapshot,
           taxRateSnapshot,
+          roomOccupancies: newRoomOccupancies,
         });
       }
 
@@ -1001,17 +1109,33 @@ export function ReservationEditForm({
 
 function buildDefaultValues(
   reservation: ReservationWithDetails,
-  roomIds: string[]
+  roomIds: string[],
+  guestTotals?: GuestTotals
 ): EditFormValues {
+  const fallbackTotals = resolveReservationGuestTotals(reservation);
   return {
     dateRange: {
       from: parseISO(reservation.checkInDate),
       to: parseISO(reservation.checkOutDate),
     },
-    adults: reservation.adultCount,
-    children: reservation.childCount,
+    adults: guestTotals?.adults ?? fallbackTotals.adults,
+    children: guestTotals?.children ?? fallbackTotals.children,
     roomIds,
     roomTypeId: undefined,
     notes: reservation.notes ?? "",
+  };
+}
+
+function resolveReservationGuestTotals(
+  reservation: Pick<Reservation, "adultCount" | "childCount" | "numberOfGuests">
+): GuestTotals {
+  const children = typeof reservation.childCount === "number" ? reservation.childCount : 0;
+  const adults = typeof reservation.adultCount === "number"
+    ? reservation.adultCount
+    : Math.max((reservation.numberOfGuests ?? 0) - children, 0);
+
+  return {
+    adults,
+    children,
   };
 }

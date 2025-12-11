@@ -22,6 +22,7 @@ import { InlineAlert } from "@/components/public/inline-alert";
 import { BookingPolicies } from "@/components/public/booking-policies";
 import { calculateRoomPricing, calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { distributeGuestsAcrossRooms } from "@/lib/reservations/guest-allocation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -122,7 +123,7 @@ function BookingReviewContent() {
         from: null,
         to: null,
         guests: null,
-        rooms: null,
+        children: "0",
         specialRequests: "",
       };
     }
@@ -131,52 +132,31 @@ function BookingReviewContent() {
       from: searchParams.get("from"),
       to: searchParams.get("to"),
       guests: searchParams.get("guests"),
-      rooms: searchParams.get("rooms"),
+      children: searchParams.get("children") ?? "0",
       specialRequests: searchParams.get("specialRequests")?.trim() ?? "",
     };
   }, [searchParams]);
 
-  const normalizedRoomTypeIds = React.useMemo(() => {
-    const ids = bookingDetails.roomTypeIds ?? [];
-    const requestedRooms = Number(bookingDetails.rooms ?? "0");
-
-    if (ids.length === 0 || requestedRooms <= ids.length) {
-      return ids;
-    }
-
-    const firstId = ids[0];
-    if (!firstId) {
-      return ids;
-    }
-
-    const allSame = ids.every((id) => id === firstId);
-    if (!allSame) {
-      return ids;
-    }
-
-    const padded = [...ids];
-    while (padded.length < requestedRooms) {
-      padded.push(firstId);
-    }
-
-    return padded;
-  }, [bookingDetails.roomTypeIds, bookingDetails.rooms]);
+  const selectedRoomTypeIds = React.useMemo(
+    () => bookingDetails.roomTypeIds ?? [],
+    [bookingDetails.roomTypeIds]
+  );
 
   const selectedRoomTypes = React.useMemo(() => {
-    if (!normalizedRoomTypeIds.length) return [];
-    return normalizedRoomTypeIds
+    if (!selectedRoomTypeIds.length) return [];
+    return selectedRoomTypeIds
       .map((id) => visibleRoomTypes.find((rt) => rt.id === id))
       .filter(Boolean) as RoomType[];
-  }, [normalizedRoomTypeIds, visibleRoomTypes]);
+  }, [selectedRoomTypeIds, visibleRoomTypes]);
 
   const groupedRoomTypes: SelectedRoomTypeSummary[] = React.useMemo(() => {
-    if (!normalizedRoomTypeIds.length) {
+    if (!selectedRoomTypeIds.length) {
       return [];
     }
 
     const counts = new Map<string, number>();
 
-    for (const id of normalizedRoomTypeIds) {
+    for (const id of selectedRoomTypeIds) {
       counts.set(id, (counts.get(id) ?? 0) + 1);
     }
 
@@ -189,7 +169,7 @@ function BookingReviewContent() {
     });
 
     return groups;
-  }, [normalizedRoomTypeIds, visibleRoomTypes]);
+  }, [selectedRoomTypeIds, visibleRoomTypes]);
 
   const ratePlan =
     ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
@@ -242,14 +222,22 @@ function BookingReviewContent() {
     [groupedRoomTypes],
   );
 
-  const totalGuests = React.useMemo(() => {
-    const guestsParam = bookingDetails.guests;
-    const parsed = guestsParam ? Number(guestsParam) : 0;
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      return 0;
-    }
-    return parsed;
-  }, [bookingDetails.guests]);
+  const guestCounts = React.useMemo(() => {
+    const totalParam = Number(bookingDetails.guests ?? "0");
+    const childrenParam = Number(bookingDetails.children ?? "0");
+    const normalizedChildren = Number.isFinite(childrenParam)
+      ? Math.max(childrenParam, 0)
+      : 0;
+    const normalizedTotal = Number.isFinite(totalParam)
+      ? Math.max(totalParam, 0)
+      : 0;
+    const adults = Math.max(normalizedTotal - normalizedChildren, 0);
+    return {
+      total: adults + normalizedChildren,
+      adults,
+      children: normalizedChildren,
+    };
+  }, [bookingDetails.guests, bookingDetails.children]);
 
   const taxConfig = React.useMemo(
     () => ({
@@ -448,20 +436,30 @@ function BookingReviewContent() {
 
       const additionalRequest = bookingDetails.specialRequests?.trim();
 
+      const occupancySlices = distributeGuestsAcrossRooms(
+        guestCounts.adults,
+        guestCounts.children,
+        assignedRoomIds.length
+      ).map((slice, index) => ({
+        roomId: assignedRoomIds[index],
+        ...slice,
+      }));
+
       const newReservations = await addReservation({
         guestId: guest.id,
         roomIds: assignedRoomIds,
         ratePlanId: ratePlan.id,
         checkInDate: bookingDetails.from!,
         checkOutDate: bookingDetails.to!,
-        numberOfGuests: Number(bookingDetails.guests),
-        adultCount: Number(bookingDetails.guests ?? "1"),
-        childCount: 0,
+        numberOfGuests: guestCounts.total,
+        adultCount: guestCounts.adults,
+        childCount: guestCounts.children,
         status: "Confirmed",
         notes: additionalRequest || undefined,
         bookingDate: new Date().toISOString(),
         source: "website",
         paymentMethod: "Pay with UPI",
+        roomOccupancies: occupancySlices,
       });
 
       // Redirect to the confirmation page of the first reservation in the group
@@ -544,8 +542,22 @@ function BookingReviewContent() {
                   <div className="inline-flex gap-2 items-center rounded-full border border-border/60 bg-background px-3 py-1.5">
                     <Users className="h-4 w-4" />
                     <span>
-                      {bookingDetails.guests || "0"} guest
-                      {parseInt(bookingDetails.guests || "0", 10) > 1 ? "s" : ""}
+                      {guestCounts.total} guest
+                      {guestCounts.total === 1 ? "" : "s"}
+                      {guestCounts.total > 0 && (
+                        <>
+                          {" "}({guestCounts.adults} adult
+                          {guestCounts.adults === 1 ? "" : "s"}
+                          {guestCounts.children > 0 && (
+                            <>
+                              {", "}
+                              {guestCounts.children} child
+                              {guestCounts.children === 1 ? "" : "ren"}
+                            </>
+                          )}
+                          )
+                        </>
+                      )}
                     </span>
                   </div>
                   <div className="inline-flex gap-2 items-center rounded-full border border-border/60 bg-background px-3 py-1.5">
@@ -662,8 +674,21 @@ function BookingReviewContent() {
                   <Separator className="my-3" />
                   <p className="text-base font-semibold">
                     Total: {totalRooms} room{totalRooms === 1 ? "" : "s"}
-                    {totalGuests > 0 && (
-                      <> · {totalGuests} guest{totalGuests === 1 ? "" : "s"}</>
+                    {guestCounts.total > 0 && (
+                      <> · {guestCounts.total} guest{guestCounts.total === 1 ? "" : "s"}</>
+                    )}
+                    {guestCounts.total > 0 && (
+                      <span className="text-sm text-muted-foreground">
+                        {" "}({guestCounts.adults} adult{guestCounts.adults === 1 ? "" : "s"}
+                        {guestCounts.children > 0 && (
+                          <>
+                            {", "}
+                            {guestCounts.children} child
+                            {guestCounts.children === 1 ? "" : "ren"}
+                          </>
+                        )}
+                        )
+                      </span>
                     )}
                   </p>
                 </>

@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
 import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { buildRoomOccupancyAssignments } from "@/lib/reservations/guest-allocation";
 import { PermissionGate } from "@/components/admin/permission-gate";
 
 const paymentMethodOptions = [
@@ -254,6 +255,12 @@ export default function CreateReservationPage() {
     }
 
     try {
+      const roomOccupancies = buildRoomOccupancyAssignments(
+        values.roomIds,
+        values.adults,
+        values.children
+      );
+
       const result = await addReservation({
         guestId: values.guestId,
         roomIds: values.roomIds,
@@ -268,6 +275,7 @@ export default function CreateReservationPage() {
         bookingDate: new Date().toISOString(),
         source: "reception",
         paymentMethod: values.paymentMethod,
+        roomOccupancies,
       });
 
       if (!result.length) {
@@ -297,68 +305,68 @@ export default function CreateReservationPage() {
 
   return (
     <PermissionGate feature="reservationCreate">
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-serif font-semibold">Create Reservation</h1>
-          <p className="text-sm text-muted-foreground">
-            Capture reservation details using the same experience guests see online.
-          </p>
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-serif font-semibold">Create Reservation</h1>
+            <p className="text-sm text-muted-foreground">
+              Capture reservation details using the same experience guests see online.
+            </p>
+          </div>
+          <Button variant="outline" asChild>
+            <Link href="/admin/reservations">Back to Reservations</Link>
+          </Button>
         </div>
-        <Button variant="outline" asChild>
-          <Link href="/admin/reservations">Back to Reservations</Link>
-        </Button>
-      </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Guest</CardTitle>
-                <CardDescription>Select an existing guest or add a new one.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <FormField
-                    control={form.control}
-                    name="guestId"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormLabel>Guest</FormLabel>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <FormControl>
-                            <SelectTrigger className="h-12 rounded-xl">
-                              <SelectValue placeholder="Select guest" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {guests.map((guest) => (
-                              <SelectItem key={guest.id} value={guest.id}>
-                                {guest.firstName} {guest.lastName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button variant="outline" asChild>
-                    <Link href={guestCreationUrl}>
-                      Add New Guest
-                    </Link>
-                  </Button>
-                </div>
-                {selectedGuest && (
-                  <div className="rounded-xl border border-border/40 bg-muted/20 p-4 text-sm">
-                    <div className="font-medium">{selectedGuest.firstName} {selectedGuest.lastName}</div>
-                    <div className="text-muted-foreground">{selectedGuest.email}</div>
-                    <div className="text-muted-foreground">{selectedGuest.phone}</div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Guest</CardTitle>
+                  <CardDescription>Select an existing guest or add a new one.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <FormField
+                      control={form.control}
+                      name="guestId"
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormLabel>Guest</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger className="h-12 rounded-xl">
+                                <SelectValue placeholder="Select guest" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {guests.map((guest) => (
+                                <SelectItem key={guest.id} value={guest.id}>
+                                  {guest.firstName} {guest.lastName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button variant="outline" asChild>
+                      <Link href={guestCreationUrl}>
+                        Add New Guest
+                      </Link>
+                    </Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  {selectedGuest && (
+                    <div className="rounded-xl border border-border/40 bg-muted/20 p-4 text-sm">
+                      <div className="font-medium">{selectedGuest.firstName} {selectedGuest.lastName}</div>
+                      <div className="text-muted-foreground">{selectedGuest.email}</div>
+                      <div className="text-muted-foreground">{selectedGuest.phone}</div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
             <Card>
               <CardHeader>

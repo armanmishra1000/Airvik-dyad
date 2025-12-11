@@ -2,9 +2,9 @@
 
 import * as React from "react";
 import { format, parseISO, differenceInDays } from "date-fns";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   HoverCard,
   HoverCardContent,
@@ -12,13 +12,8 @@ import {
 } from "@/components/ui/hover-card";
 import { useDataContext } from "@/context/data-context";
 import type { Reservation, ReservationStatus } from "@/data/types";
-import {
-  calculateReservationFinancials,
-  resolveReservationTaxConfig,
-} from "@/lib/reservations/calculate-financials";
-import type { PaymentStatus } from "@/lib/reservations/calculate-financials";
 import { cn } from "@/lib/utils";
-import { DEFAULT_CURRENCY, formatCurrency as formatCurrencyValue } from "@/lib/currency";
+import { isActiveReservationStatus } from "@/lib/reservations/status";
 
 const reservationStatusStyles: Record<
   ReservationStatus,
@@ -71,8 +66,8 @@ interface ReservationDetail {
   customerTitle?: string | null;
   customerFirstName?: string | null;
   customerLastName?: string | null;
-  adults?: number | null;
-  children?: number | null;
+  adultCount: number;
+  childCount: number;
   roomNumber?: string;
   roomTypeName?: string;
 }
@@ -86,10 +81,6 @@ interface ReservationGroupSummary {
   checkOut: Date;
   nights: number;
   rooms: Array<{ id: string; roomNumber?: string; roomTypeName?: string }>;
-  totalCharges: number;
-  totalPaid: number;
-  balance: number;
-  paymentStatus: PaymentStatus;
   statusLabel: ReservationStatus | "Mixed";
   statusStyle: { ribbon: string; dot: string };
 }
@@ -133,23 +124,43 @@ function formatCustomerName(detail: ReservationDetail): string {
   return detail.guestName || "Guest";
 }
 
-function formatGuests(detail: ReservationDetail): string | null {
-  const adults = detail.adults ?? 0;
-  const children = detail.children ?? 0;
+type GuestTotals = {
+  adults: number;
+  children: number;
+};
 
-  const parts: string[] = [];
+function formatGuestTotals(adults: number, children: number): string | null {
+  const safeAdults = Math.max(0, adults);
+  const safeChildren = Math.max(0, children);
+  const totalGuests = safeAdults + safeChildren;
 
-  if (adults > 0) {
-    parts.push(`${adults} adult${adults === 1 ? "" : "s"}`);
+  if (totalGuests === 0) {
+    return null;
   }
 
-  if (children > 0) {
-    parts.push(`${children} child${children === 1 ? "" : "ren"}`);
+  const breakdownSegments: string[] = [];
+  if (safeAdults > 0) {
+    breakdownSegments.push(`${safeAdults} adult${safeAdults === 1 ? "" : "s"}`);
+  }
+  if (safeChildren > 0) {
+    breakdownSegments.push(`${safeChildren} child${safeChildren === 1 ? "" : "ren"}`);
   }
 
-  if (parts.length === 0) return null;
+  const breakdown = breakdownSegments.length
+    ? ` (${breakdownSegments.join(", ")})`
+    : "";
 
-  return parts.join(", ");
+  return `${totalGuests} guest${totalGuests === 1 ? "" : "s"}${breakdown}`;
+}
+
+function accumulateGuestTotals(
+  totals: GuestTotals,
+  detail: ReservationDetail
+): GuestTotals {
+  return {
+    adults: totals.adults + detail.adultCount,
+    children: totals.children + detail.childCount,
+  };
 }
 
 function groupRoomsByType(
@@ -194,8 +205,7 @@ export function ReservationHoverCard({
   reservationIds,
   date,
 }: ReservationHoverCardProps) {
-  const { reservations, guests, rooms, roomTypes, property } = useDataContext();
-  const currencyCode = property.currency || DEFAULT_CURRENCY;
+  const { reservations, guests, rooms, roomTypes } = useDataContext();
   const hoverDate = React.useMemo(() => {
     const parsed = parseISO(date);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
@@ -234,8 +244,12 @@ export function ReservationHoverCard({
         customerTitle: null,
         customerFirstName: guest?.firstName ?? null,
         customerLastName: guest?.lastName ?? null,
-        adults: reservation.numberOfGuests ?? null,
-        children: null,
+        adultCount: Number.isFinite(reservation.adultCount)
+          ? reservation.adultCount
+          : reservation.numberOfGuests ?? 0,
+        childCount: Number.isFinite(reservation.childCount)
+          ? reservation.childCount
+          : 0,
         roomNumber: room?.roomNumber,
         roomTypeName: roomType?.name,
       });
@@ -263,44 +277,42 @@ export function ReservationHoverCard({
     return details;
   }, [reservationIds, reservations, guests, rooms, roomTypes, hoverDate]);
 
+  const displayedReservationDetails = React.useMemo(() => {
+    const active = reservationDetails.filter((detail) =>
+      isActiveReservationStatus(detail.reservation.status)
+    );
+    return active.length ? active : reservationDetails;
+  }, [reservationDetails]);
+
   const reservationGroups = React.useMemo<ReservationGroupSummary[]>(() => {
-    if (reservationDetails.length === 0) {
+    if (displayedReservationDetails.length === 0) {
       return [];
     }
 
     const groups = new Map<string, {
       bookingId: string;
       guestName: string;
-      guestsText?: string | null;
       bookingDate: Date;
       checkIn: Date;
       checkOut: Date;
       nights: number;
       rooms: Array<{ id: string; roomNumber?: string; roomTypeName?: string }>;
-      totalCharges: number;
-      totalPaid: number;
       statuses: Set<ReservationStatus>;
+      totals: GuestTotals;
     }>();
 
-    reservationDetails.forEach((detail) => {
+    displayedReservationDetails.forEach((detail) => {
       const { reservation } = detail;
       const bookingId = reservation.bookingId || reservation.id;
       const checkIn = parseISO(reservation.checkInDate);
       const checkOut = parseISO(reservation.checkOutDate);
       const bookingDate = parseISO(reservation.bookingDate);
       const nights = Math.max(differenceInDays(checkOut, checkIn), 1);
-      const reservationTaxConfig = resolveReservationTaxConfig(reservation, property);
-      const { totalCharges, totalPaid } = calculateReservationFinancials(
-        reservation,
-        reservationTaxConfig
-      );
-
       const existing = groups.get(bookingId);
       if (!existing) {
         groups.set(bookingId, {
           bookingId,
           guestName: formatCustomerName(detail),
-          guestsText: formatGuests(detail),
           bookingDate,
           checkIn,
           checkOut,
@@ -312,9 +324,11 @@ export function ReservationHoverCard({
               roomTypeName: detail.roomTypeName,
             },
           ],
-          totalCharges,
-          totalPaid,
           statuses: new Set<ReservationStatus>([reservation.status]),
+          totals: {
+            adults: detail.adultCount,
+            children: detail.childCount,
+          },
         });
         return;
       }
@@ -327,25 +341,25 @@ export function ReservationHoverCard({
       existing.checkIn = checkIn < existing.checkIn ? checkIn : existing.checkIn;
       existing.checkOut = checkOut > existing.checkOut ? checkOut : existing.checkOut;
       existing.nights = Math.max(existing.nights, nights);
-      existing.totalCharges += totalCharges;
-      existing.totalPaid += totalPaid;
       existing.statuses.add(reservation.status);
+      existing.totals = accumulateGuestTotals(existing.totals, detail);
     });
 
     return Array.from(groups.values()).map((group) => {
-      const balance = group.totalCharges - group.totalPaid;
-      const paymentStatus: PaymentStatus =
-        balance <= 0 ? "Fully Paid" : group.totalPaid > 0 ? "Partially Paid" : "Unpaid";
       const statusLabel = group.statuses.size === 1 ? [...group.statuses][0] : "Mixed";
       const statusStyle =
         statusLabel === "Mixed"
           ? mixedStatusStyle
           : getStatusStyle(statusLabel as ReservationStatus);
+      const guestsText = formatGuestTotals(
+        group.totals.adults,
+        group.totals.children
+      );
 
       return {
         bookingId: group.bookingId,
         guestName: group.guestName,
-        guestsText: group.guestsText,
+        guestsText,
         bookingDate: group.bookingDate,
         checkIn: group.checkIn,
         checkOut: group.checkOut,
@@ -358,15 +372,11 @@ export function ReservationHoverCard({
               sensitivity: "base",
             });
           }),
-        totalCharges: group.totalCharges,
-        totalPaid: group.totalPaid,
-        balance,
-        paymentStatus,
         statusLabel,
         statusStyle,
       } satisfies ReservationGroupSummary;
     });
-  }, [reservationDetails, property]);
+  }, [displayedReservationDetails]);
 
   if (reservationGroups.length === 0) {
     return <>{children}</>;
@@ -390,9 +400,9 @@ export function ReservationHoverCard({
                 {format(parseISO(date), "MMMM d, yyyy")}
               </h4>
             </div>
-            <Badge variant="secondary" className="text-sm font-medium">
-              {reservationDetails.length} Room
-              {reservationDetails.length !== 1 ? "s" : ""}
+              <Badge variant="secondary" className="text-sm font-medium">
+              {displayedReservationDetails.length} Room
+              {displayedReservationDetails.length !== 1 ? "s" : ""}
             </Badge>
           </div>
           <Separator />
@@ -403,12 +413,6 @@ export function ReservationHoverCard({
           >
             <div className="space-y-4 text-sm">
               {reservationGroups.map((group) => {
-                const paymentStatusBadgeVariant =
-                  group.paymentStatus === "Fully Paid"
-                    ? "default"
-                    : group.paymentStatus === "Partially Paid"
-                      ? "secondary"
-                      : "destructive";
                 const groupedRoomTypes = groupRoomsByType(group.rooms);
 
                 return (
@@ -429,6 +433,17 @@ export function ReservationHoverCard({
                         <p className="text-sm text-muted-foreground">
                           Booking ID: {formatBookingId(group.bookingId)}
                         </p>
+                        {group.rooms[0]?.id && (
+                          <div>
+                            <Link
+                              href={`/admin/reservations/${group.rooms[0].id}`}
+                              className="text-sm font-semibold text-primary hover:underline"
+                              aria-label={`View reservation ${formatBookingId(group.bookingId)}`}
+                            >
+                              View reservation details
+                            </Link>
+                          </div>
+                        )}
                       </div>
                       <Badge className={cn("text-sm", group.statusStyle.ribbon)}>
                         {group.statusLabel}
@@ -501,42 +516,6 @@ export function ReservationHoverCard({
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-border/60 bg-background/80 p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">
-                          Payment Status
-                        </span>
-                        <Badge variant={paymentStatusBadgeVariant} className="text-sm">
-                          {group.paymentStatus}
-                        </Badge>
-                      </div>
-                      <Separator className="my-3" />
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center justify-between text-foreground">
-                          <span>Total Charges</span>
-                          <span className="font-semibold">
-                            {formatCurrencyValue(group.totalCharges, currencyCode)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-emerald-600">
-                          <span>Total Paid</span>
-                          <span className="font-semibold">
-                            {formatCurrencyValue(group.totalPaid, currencyCode)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Balance Due (Total)</span>
-                          <span
-                            className={cn(
-                              "font-semibold",
-                              group.balance > 0 ? "text-rose-600" : "text-emerald-600"
-                            )}
-                          >
-                            {formatCurrencyValue(group.balance, currencyCode)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 );
               })}

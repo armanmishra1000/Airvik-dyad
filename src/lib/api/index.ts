@@ -33,6 +33,8 @@ import {
   fromDbPostWithCategories,
 } from "@/lib/api/blog-mappers";
 
+const INTERNAL_FOLIO_SOURCE = "internal" as const;
+
 type DbGuest = {
   id: string;
   first_name: string;
@@ -86,7 +88,7 @@ type DbReservation = {
   booking_id: string;
   guest_id: string;
   room_id: string;
-  rate_plan_id: string;
+  rate_plan_id: string | null;
   check_in_date: string;
   check_out_date: string;
   number_of_guests: number;
@@ -101,6 +103,9 @@ type DbReservation = {
   child_count: number | null;
   tax_enabled_snapshot: boolean | null;
   tax_rate_snapshot: number | null;
+  external_source: string | null;
+  external_id: string | null;
+  external_metadata: Record<string, unknown> | null;
 };
 
 type ReservationUpdatePayload = Partial<
@@ -124,6 +129,9 @@ type ReservationUpdatePayload = Partial<
     | "child_count"
     | "tax_enabled_snapshot"
     | "tax_rate_snapshot"
+    | "external_source"
+    | "external_id"
+    | "external_metadata"
   >
 >;
 
@@ -192,6 +200,9 @@ type FolioItemInsertPayload = {
   amount: number;
   payment_method?: string | null;
   timestamp?: string;
+  external_source?: string | null;
+  external_reference?: string | null;
+  external_metadata?: Record<string, unknown> | null;
 };
 
 type StickyNoteInsertPayload = Omit<StickyNote, "id" | "createdAt"> & {
@@ -316,7 +327,7 @@ const fromDbReservation = (dbReservation: DbReservation): Reservation => ({
   bookingId: dbReservation.booking_id,
   guestId: dbReservation.guest_id,
   roomId: dbReservation.room_id,
-  ratePlanId: dbReservation.rate_plan_id,
+  ratePlanId: dbReservation.rate_plan_id ?? null,
   checkInDate: dbReservation.check_in_date,
   checkOutDate: dbReservation.check_out_date,
   numberOfGuests: dbReservation.number_of_guests,
@@ -337,6 +348,9 @@ const fromDbReservation = (dbReservation: DbReservation): Reservation => ({
       : 0,
   taxEnabledSnapshot: Boolean(dbReservation.tax_enabled_snapshot ?? false),
   taxRateSnapshot: dbReservation.tax_rate_snapshot ?? 0,
+  externalSource: dbReservation.external_source ?? undefined,
+  externalId: dbReservation.external_id,
+  externalMetadata: dbReservation.external_metadata ?? undefined,
 });
 
 const toDbReservation = (
@@ -346,7 +360,9 @@ const toDbReservation = (
   if (appReservation.bookingId) dbData.booking_id = appReservation.bookingId;
   if (appReservation.guestId) dbData.guest_id = appReservation.guestId;
   if (appReservation.roomId) dbData.room_id = appReservation.roomId;
-  if (appReservation.ratePlanId) dbData.rate_plan_id = appReservation.ratePlanId;
+  if (typeof appReservation.ratePlanId !== "undefined") {
+    dbData.rate_plan_id = appReservation.ratePlanId;
+  }
   if (appReservation.checkInDate) dbData.check_in_date = appReservation.checkInDate;
   if (appReservation.checkOutDate) dbData.check_out_date = appReservation.checkOutDate;
   if (typeof appReservation.numberOfGuests === "number") {
@@ -374,6 +390,15 @@ const toDbReservation = (
   }
   if (typeof appReservation.taxRateSnapshot === "number") {
     dbData.tax_rate_snapshot = appReservation.taxRateSnapshot;
+  }
+  if (typeof appReservation.externalSource === "string") {
+    dbData.external_source = appReservation.externalSource;
+  }
+  if (typeof appReservation.externalId !== "undefined") {
+    dbData.external_id = appReservation.externalId ?? null;
+  }
+  if (typeof appReservation.externalMetadata !== "undefined") {
+    dbData.external_metadata = appReservation.externalMetadata ?? {};
   }
   return dbData;
 };
@@ -594,14 +619,63 @@ export const updateGuest = async (id: string, updatedData: Partial<Guest>) => {
 export const deleteGuest = (id: string) => supabase.from('guests').delete().eq('id', id);
 
 // Reservations
+const RESERVATION_PAGE_SIZE = 500;
+
 export const getReservations = async () => {
-    const { data, error, ...rest } = await supabase
-      .from('reservations')
-      .select('*')
-      .order('booking_date', { ascending: false, nullsFirst: false })
-      .order('id', { ascending: false });
-    if (error || !data) return { data, error, ...rest };
-    return { data: data.map(fromDbReservation), error, ...rest };
+    const aggregatedRows: DbReservation[] = [];
+    let fromIndex = 0;
+    let toIndex = RESERVATION_PAGE_SIZE - 1;
+    let status: number | undefined;
+    let statusText: string | undefined;
+    let count: number | null | undefined;
+
+    while (true) {
+        const includeCount = fromIndex === 0;
+        const { data, error, status: pageStatus, statusText: pageStatusText, count: pageCount } = await supabase
+            .from('reservations')
+            .select('*', includeCount ? { count: 'estimated' } : undefined)
+            .order('booking_date', { ascending: false, nullsFirst: false })
+            .order('id', { ascending: false })
+            .range(fromIndex, toIndex);
+
+        if (typeof status === 'undefined') {
+            status = pageStatus;
+        }
+        if (typeof statusText === 'undefined') {
+            statusText = pageStatusText;
+        }
+        if (includeCount) {
+            count = typeof pageCount === 'number' ? pageCount : null;
+        }
+
+        if (error) {
+            return {
+                data: null,
+                error,
+                status,
+                statusText,
+                count,
+            };
+        }
+
+        const pageRows = (data ?? []) as DbReservation[];
+        aggregatedRows.push(...pageRows);
+
+        if (pageRows.length < RESERVATION_PAGE_SIZE) {
+            break;
+        }
+
+        fromIndex += RESERVATION_PAGE_SIZE;
+        toIndex += RESERVATION_PAGE_SIZE;
+    }
+
+    return {
+        data: aggregatedRows.map(fromDbReservation),
+        error: null,
+        status,
+        statusText,
+        count,
+    };
 };
 
 export const getReservationById = async (id: string) => {
@@ -657,7 +731,25 @@ export const updateReservation = async (id: string, updatedData: Partial<Reserva
     if (error || !data) return { data, error, ...rest };
     return { data: fromDbReservation(data), error, ...rest };
 };
-export const updateReservationStatus = (id: string, status: string) => supabase.from('reservations').update({ status }).eq('id', id);
+export const updateReservationStatus = (id: string, status: string) =>
+  supabase.from("reservations").update({ status }).eq("id", id);
+
+export const updateBookingReservationsStatus = async (
+  bookingId: string,
+  status: ReservationStatus
+) => {
+  const { data, error } = await supabase
+    .from("reservations")
+    .update({ status })
+    .eq("booking_id", bookingId)
+    .select();
+
+  if (error || !data) {
+    return { data: [], error };
+  }
+
+  return { data: data.map(fromDbReservation), error: null };
+};
 
 // Folio Items
 export const getFolioItems = () => supabase.from('folio_items').select('*');
@@ -671,6 +763,9 @@ export const addFolioItem = (itemData: FolioItemInsertPayload) =>
         amount: itemData.amount,
         payment_method: itemData.payment_method ?? null,
         timestamp: itemData.timestamp,
+        external_source: itemData.external_source ?? INTERNAL_FOLIO_SOURCE,
+        external_reference: itemData.external_reference ?? null,
+        external_metadata: itemData.external_metadata ?? {},
       },
     ])
     .select()

@@ -50,12 +50,14 @@ interface RoomFormDialogProps {
 
 const statuses: RoomStatus[] = ["Clean", "Dirty", "Inspected", "Maintenance"];
 
+const normalizeRoomNumber = (value: string) => value.trim().toLowerCase();
+
 export function RoomFormDialog({
   room,
   children,
 }: RoomFormDialogProps) {
   const [open, setOpen] = React.useState(false);
-  const { addRoom, updateRoom, roomTypes } = useDataContext();
+  const { rooms, addRoom, updateRoom, roomTypes } = useDataContext();
   const isEditing = !!room;
 
   const form = useForm<z.infer<typeof roomSchema>>({
@@ -69,7 +71,31 @@ export function RoomFormDialog({
   });
 
   async function onSubmit(values: z.infer<typeof roomSchema>) {
-    const roomData = { ...values, status: values.status as RoomStatus, photos: values.photos || [] };
+    const trimmedRoomNumber = values.roomNumber.trim();
+    const roomData = {
+      ...values,
+      roomNumber: trimmedRoomNumber,
+      status: values.status as RoomStatus,
+      photos: values.photos || [],
+    };
+    const normalizedInputNumber = normalizeRoomNumber(trimmedRoomNumber);
+    const duplicateInRoomType = rooms.some((existingRoom) => {
+      if (isEditing && room && existingRoom.id === room.id) {
+        return false;
+      }
+      return (
+        existingRoom.roomTypeId === roomData.roomTypeId &&
+        normalizeRoomNumber(existingRoom.roomNumber) === normalizedInputNumber
+      );
+    });
+
+    if (duplicateInRoomType) {
+      toast.error("Room number already exists", {
+        description: `Room number ${roomData.roomNumber} already exists in this room type.`,
+      });
+      return;
+    }
+
     try {
       if (isEditing && room) {
         await updateRoom(room.id, roomData);

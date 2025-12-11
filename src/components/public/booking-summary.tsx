@@ -78,7 +78,7 @@ export function BookingSummary({
       0,
     );
     const totalGuests = adults + children;
-    const rooms = searchValues.roomOccupancies.length;
+    const rooms = selection.length;
     
     const query = new URLSearchParams();
     selection.forEach((rt) => query.append("roomTypeId", rt.id));

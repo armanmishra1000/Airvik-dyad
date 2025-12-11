@@ -104,20 +104,26 @@ export default function BookingConfirmationPage() {
     [confirmedRoomSummaries]
   );
 
-  const totalGuests = React.useMemo(() => {
+  const guestBreakdown = React.useMemo(() => {
     if (bookingReservations.length === 0) {
-      return 0;
+      return { adults: 0, children: 0, total: 0 };
     }
 
-    const currentId = reservation?.id;
-    const primaryReservation =
-      (currentId
-        ? bookingReservations.find((resItem) => resItem.id === currentId)
-        : undefined) ?? bookingReservations[0];
+    const sums = bookingReservations.reduce(
+      (acc, entry) => {
+        acc.adults += entry.adultCount ?? 0;
+        acc.children += entry.childCount ?? 0;
+        return acc;
+      },
+      { adults: 0, children: 0 }
+    );
 
-    const guests = primaryReservation.numberOfGuests ?? 0;
-    return guests > 0 ? guests : 0;
-  }, [bookingReservations, reservation?.id]);
+    return {
+      adults: sums.adults,
+      children: sums.children,
+      total: sums.adults + sums.children,
+    };
+  }, [bookingReservations]);
 
   const primaryRoomType = React.useMemo(() => {
     if (confirmedRoomSummaries.length > 0) {
@@ -466,7 +472,20 @@ export default function BookingConfirmationPage() {
                         Total: {totalRooms} room{totalRooms === 1 ? "" : "s"}
                       </span>
                       <span>
-                        · {totalGuests} guest{totalGuests === 1 ? "" : "s"}
+                        · {guestBreakdown.total} guest
+                        {guestBreakdown.total === 1 ? "" : "s"}
+                        {guestBreakdown.total > 0 && (
+                          <> ({guestBreakdown.adults} adult
+                          {guestBreakdown.adults === 1 ? "" : "s"}
+                          {guestBreakdown.children > 0 && (
+                            <>
+                              {", "}
+                              {guestBreakdown.children} child
+                              {guestBreakdown.children === 1 ? "" : "ren"}
+                            </>
+                          )}
+                          )</>
+                        )}
                       </span>
                       <span>
                         · {nights} night{nights === 1 ? "" : "s"}
