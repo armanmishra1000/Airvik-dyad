@@ -35,6 +35,8 @@ import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
 import { calculateMultipleRoomPricing, calculateRoomPricing } from "@/lib/pricing-calculator";
 import { resolveReservationTaxConfig } from "@/lib/reservations/calculate-financials";
 import { buildRoomOccupancyAssignments } from "@/lib/reservations/guest-allocation";
+import { isActiveReservationStatus } from "@/lib/reservations/status";
+import { markReservationAsRemoved } from "@/lib/reservations/filters";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import type { Reservation } from "@/data/types";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
@@ -139,7 +141,7 @@ export function ReservationEditForm({
   );
 
   const activeGroupReservations = React.useMemo(
-    () => groupReservations.filter((entry) => entry.status !== "Cancelled"),
+    () => groupReservations.filter((entry) => isActiveReservationStatus(entry.status)),
     [groupReservations]
   );
 
@@ -167,6 +169,11 @@ export function ReservationEditForm({
     }
     return [reservation.roomId];
   }, [activeGroupReservations, reservation.roomId]);
+
+  const normalizedInitialRoomIds = React.useMemo(
+    () => [...initialRoomIds].sort(),
+    [initialRoomIds]
+  );
 
   const roomMap = React.useMemo(() => new Map(rooms.map((room) => [room.id, room])), [rooms]);
   const roomTypeMap = React.useMemo(() => new Map(roomTypes.map((type) => [type.id, type])), [roomTypes]);
@@ -196,9 +203,36 @@ export function ReservationEditForm({
     reValidateMode: "onChange",
   });
 
+  const lastResetSignatureRef = React.useRef<string | null>(null);
+
+  const defaultValuesSignature = React.useMemo(
+    () =>
+      JSON.stringify({
+        id: reservation.id,
+        checkIn: reservation.checkInDate,
+        checkOut: reservation.checkOutDate,
+        adults: bookingGuestTotals.adults,
+        children: bookingGuestTotals.children,
+        roomIds: normalizedInitialRoomIds,
+        notes: reservation.notes ?? "",
+      }),
+    [
+      reservation.id,
+      reservation.checkInDate,
+      reservation.checkOutDate,
+      bookingGuestTotals.adults,
+      bookingGuestTotals.children,
+      normalizedInitialRoomIds,
+      reservation.notes,
+    ]
+  );
+
   React.useEffect(() => {
+    if (form.formState.isSubmitting) return;
+    if (lastResetSignatureRef.current === defaultValuesSignature) return;
     form.reset(formDefaultValues);
-  }, [form, formDefaultValues]);
+    lastResetSignatureRef.current = defaultValuesSignature;
+  }, [form, formDefaultValues, defaultValuesSignature]);
 
   React.useEffect(() => {
     void form.trigger("roomIds");
@@ -218,8 +252,8 @@ export function ReservationEditForm({
   }, [watchedDateRange]);
 
   const bookingRoomIds = React.useMemo(
-    () => new Set(groupReservations.map((entry) => entry.roomId)),
-    [groupReservations]
+    () => new Set(activeGroupReservations.map((entry) => entry.roomId)),
+    [activeGroupReservations]
   );
 
   const allAvailableRooms = React.useMemo(() => {
@@ -578,19 +612,32 @@ export function ReservationEditForm({
         );
       }
 
-      for (const entry of reservationsToCancel) {
-        if (entry.status === "Cancelled") {
-          continue;
-        }
-        const previousStatus = entry.status;
-        await updateReservation(entry.id, {
-          status: "Cancelled",
-        });
-        revertStack.push(() =>
-          updateReservation(entry.id, {
-            status: previousStatus,
-          })
+      const hasExplicitRoomRemoval =
+        uniqueRoomIds.length > 0 &&
+        activeGroupReservations.some(
+          (entry) => !uniqueRoomIds.includes(entry.roomId)
         );
+
+      if (hasExplicitRoomRemoval) {
+        for (const entry of reservationsToCancel) {
+          if (entry.status === "Cancelled") {
+            continue;
+          }
+          const previousStatus = entry.status;
+          const previousMetadata = entry.externalMetadata
+            ? { ...entry.externalMetadata }
+            : null;
+          await updateReservation(entry.id, {
+            status: "Cancelled",
+            externalMetadata: markReservationAsRemoved(entry.externalMetadata),
+          });
+          revertStack.push(() =>
+            updateReservation(entry.id, {
+              status: previousStatus,
+              externalMetadata: previousMetadata ?? {},
+            })
+          );
+        }
       }
 
       if (roomsToCreate.length) {

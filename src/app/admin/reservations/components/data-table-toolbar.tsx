@@ -18,19 +18,14 @@ export function DataTableToolbar<TData>({
   table,
   bookingCount,
 }: DataTableToolbarProps<TData>) {
-  const guestColumn = table.getColumn("guestName")
-  const bookingColumn = table.getColumn("id")
-  const searchValue =
-    (guestColumn?.getFilterValue() as string) ||
-    (bookingColumn?.getFilterValue() as string) ||
-    ""
+  const searchValue = String(table.getState().globalFilter ?? "")
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
-    guestColumn?.setFilterValue(value)
-    bookingColumn?.setFilterValue(value)
+    table.setGlobalFilter(value)
+    table.getColumn("guestName")?.setFilterValue(undefined)
+    table.getColumn("id")?.setFilterValue(undefined)
   }
-
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">

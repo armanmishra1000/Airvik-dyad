@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { format, parseISO, differenceInDays } from "date-fns";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -12,6 +13,7 @@ import {
 import { useDataContext } from "@/context/data-context";
 import type { Reservation, ReservationStatus } from "@/data/types";
 import { cn } from "@/lib/utils";
+import { isActiveReservationStatus } from "@/lib/reservations/status";
 
 const reservationStatusStyles: Record<
   ReservationStatus,
@@ -251,8 +253,15 @@ export function ReservationHoverCard({
     return details;
   }, [reservationIds, reservations, guests, rooms, roomTypes, hoverDate]);
 
+  const displayedReservationDetails = React.useMemo(() => {
+    const active = reservationDetails.filter((detail) =>
+      isActiveReservationStatus(detail.reservation.status)
+    );
+    return active.length ? active : reservationDetails;
+  }, [reservationDetails]);
+
   const reservationGroups = React.useMemo<ReservationGroupSummary[]>(() => {
-    if (reservationDetails.length === 0) {
+    if (displayedReservationDetails.length === 0) {
       return [];
     }
 
@@ -268,7 +277,7 @@ export function ReservationHoverCard({
       statuses: Set<ReservationStatus>;
     }>();
 
-    reservationDetails.forEach((detail) => {
+    displayedReservationDetails.forEach((detail) => {
       const { reservation } = detail;
       const bookingId = reservation.bookingId || reservation.id;
       const checkIn = parseISO(reservation.checkInDate);
@@ -335,7 +344,7 @@ export function ReservationHoverCard({
         statusStyle,
       } satisfies ReservationGroupSummary;
     });
-  }, [reservationDetails]);
+  }, [displayedReservationDetails]);
 
   if (reservationGroups.length === 0) {
     return <>{children}</>;
@@ -359,9 +368,9 @@ export function ReservationHoverCard({
                 {format(parseISO(date), "MMMM d, yyyy")}
               </h4>
             </div>
-            <Badge variant="secondary" className="text-sm font-medium">
-              {reservationDetails.length} Room
-              {reservationDetails.length !== 1 ? "s" : ""}
+              <Badge variant="secondary" className="text-sm font-medium">
+              {displayedReservationDetails.length} Room
+              {displayedReservationDetails.length !== 1 ? "s" : ""}
             </Badge>
           </div>
           <Separator />
@@ -392,6 +401,17 @@ export function ReservationHoverCard({
                         <p className="text-sm text-muted-foreground">
                           Booking ID: {formatBookingId(group.bookingId)}
                         </p>
+                        {group.rooms[0]?.id && (
+                          <div>
+                            <Link
+                              href={`/admin/reservations/${group.rooms[0].id}`}
+                              className="text-sm font-semibold text-primary hover:underline"
+                              aria-label={`View reservation ${formatBookingId(group.bookingId)}`}
+                            >
+                              View reservation details
+                            </Link>
+                          </div>
+                        )}
                       </div>
                       <Badge className={cn("text-sm", group.statusStyle.ribbon)}>
                         {group.statusLabel}

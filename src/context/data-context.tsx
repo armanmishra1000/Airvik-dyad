@@ -132,6 +132,7 @@ type AddRoomsToBookingPayload = {
 // This mirrors the original AppContextType for component compatibility
 interface DataContextType {
   isLoading: boolean;
+  isRefreshing: boolean;
   property: Property;
   reservations: Reservation[];
   guests: Guest[];
@@ -158,6 +159,10 @@ interface DataContextType {
   ) => void;
   updateReservationStatus: (
     reservationId: string,
+    status: ReservationStatus
+  ) => void;
+  updateBookingReservationStatus: (
+    bookingId: string,
     status: ReservationStatus
   ) => void;
   addGuest: (guest: Omit<Guest, "id">) => Promise<Guest>;

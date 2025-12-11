@@ -16,32 +16,25 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useDataContext } from "@/context/data-context";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
-import { cn } from "@/lib/utils";
 
 interface LinkedReservationsCardProps {
   reservations: ReservationWithDetails[];
-  activeReservationId: string;
 }
 
-export function LinkedReservationsCard({ reservations, activeReservationId }: LinkedReservationsCardProps) {
+export function LinkedReservationsCard({ reservations }: LinkedReservationsCardProps) {
   const { rooms, roomTypes } = useDataContext();
 
-  if (reservations.length === 0) {
-    return null;
-  }
-
   const sortedReservations = [...reservations].sort((a, b) => {
-    if (a.id === activeReservationId) return -1;
-    if (b.id === activeReservationId) return 1;
     const roomA = a.roomNumber || "";
     const roomB = b.roomNumber || "";
     return roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: "base" });
   });
 
-  const description =
+  const descriptionPrefix =
     reservations.length === 1
-      ? "This booking currently includes 1 room."
-      : `This booking currently includes ${reservations.length} rooms.`;
+      ? "This booking currently includes 1 confirmed room."
+      : `This booking currently includes ${reservations.length} confirmed rooms.`;
+  const description = `${descriptionPrefix} Rooms listed here reflect the latest selection for this booking.`;
 
   return (
     <Card>
@@ -52,35 +45,37 @@ export function LinkedReservationsCard({ reservations, activeReservationId }: Li
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="rounded-2xl border border-border/40">
-          <Table>
-          <TableBody>
-            {sortedReservations.map((res) => {
-              const room = rooms.find((r) => r.id === res.roomId);
-              const roomType = roomTypes.find(rt => rt.id === room?.roomTypeId);
-              const isActive = res.id === activeReservationId;
-              const roomLabel = room?.roomNumber || res.roomNumber || "N/A";
-              return (
-                <TableRow
-                  key={res.id}
-                  className={cn(isActive && "bg-primary/5")}
-                >
-                  <TableCell className="space-y-1">
-                    <p className="font-medium">
-                      {(roomType?.name || "Room type")} · Room {roomLabel}
-                    </p>
-                  </TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant="outline" className="capitalize">
-                        {res.status}
-                      </Badge>
-                    </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-          </Table>
-        </div>
+        {sortedReservations.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
+            No rooms are currently assigned to this booking.
+          </p>
+        ) : (
+          <div className="rounded-2xl border border-border/40">
+            <Table>
+              <TableBody>
+                {sortedReservations.map((res) => {
+                  const room = rooms.find((r) => r.id === res.roomId);
+                  const roomType = roomTypes.find((rt) => rt.id === room?.roomTypeId);
+                  const roomLabel = room?.roomNumber || res.roomNumber || "N/A";
+                  return (
+                    <TableRow key={res.id}>
+                      <TableCell className="space-y-1">
+                        <p className="font-medium">
+                          {(roomType?.name || "Room type")} · Room {roomLabel}
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="outline" className="capitalize">
+                          {res.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

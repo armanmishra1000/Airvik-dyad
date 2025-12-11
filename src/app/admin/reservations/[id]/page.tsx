@@ -12,9 +12,13 @@ import { BillingCard } from "./components/BillingCard";
 import { LinkedReservationsCard } from "./components/LinkedReservationsCard";
 import { ReservationActivityTimeline } from "./components/ReservationActivityTimeline";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
-import type { ReservationStatus } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  isActiveReservationStatus,
+  resolveAggregateStatus,
+} from "@/lib/reservations/status";
+import { isReservationRemovedDuringEdit } from "@/lib/reservations/filters";
 
 export default function ReservationDetailsPage() {
   const params = useParams<{ id: string }>();
@@ -65,12 +69,6 @@ export default function ReservationDetailsPage() {
         })
     : [];
 
-  const inactiveStatuses = new Set<ReservationStatus>(["Cancelled", "No-show"]);
-
-  const activeBookingReservations = bookingReservationsWithDetails.filter(
-    (entry) => !inactiveStatuses.has(entry.status)
-  );
-
   const fallbackReservationDetails: ReservationWithDetails = {
     ...reservation,
     guestName: guest ? `${guest.firstName} ${guest.lastName}` : "N/A",
@@ -86,15 +84,34 @@ export default function ReservationDetailsPage() {
     bookingReservationsWithDetails.find((entry) => entry.id === reservation.id) ??
     fallbackReservationDetails;
 
-  const normalizedReservations =
+  const allBookingReservations =
+    bookingReservationsWithDetails.length > 0
+      ? bookingReservationsWithDetails
+      : [reservationWithDetails];
+
+  const retainedBookingReservations = allBookingReservations.filter(
+    (entry) => !isReservationRemovedDuringEdit(entry)
+  );
+
+  const bookingReservationPool =
+    retainedBookingReservations.length > 0
+      ? retainedBookingReservations
+      : allBookingReservations;
+
+  const activeBookingReservations = bookingReservationPool.filter((entry) =>
+    isActiveReservationStatus(entry.status)
+  );
+
+  const displayBookingReservations =
     activeBookingReservations.length > 0
       ? activeBookingReservations
-      : [reservationWithDetails];
-  const taxesTotal = normalizedReservations.reduce(
+      : bookingReservationPool;
+
+  const taxesTotal = displayBookingReservations.reduce(
     (sum, entry) => sum + calculateReservationTaxAmount(entry, property),
     0
   );
-  const enabledRates = normalizedReservations
+  const enabledRates = displayBookingReservations
     .map((entry) => (entry.taxEnabledSnapshot ? entry.taxRateSnapshot ?? 0 : 0))
     .filter((rate) => rate > 0);
   const uniqueRates = new Set(enabledRates.map((rate) => rate.toFixed(4)));
@@ -102,19 +119,19 @@ export default function ReservationDetailsPage() {
   const appliedTaxRate = enabledRates.length === 1 ? enabledRates[0] : 0;
 
   const groupSummary = {
-    reservations: normalizedReservations,
-    roomCount: normalizedReservations.length,
-    totalAmount: normalizedReservations.reduce(
+    reservations: displayBookingReservations,
+    roomCount: displayBookingReservations.length,
+    totalAmount: displayBookingReservations.reduce(
       (sum, entry) => sum + entry.totalAmount,
       0
     ),
-    folio: normalizedReservations.flatMap((entry) => entry.folio ?? []),
+    folio: displayBookingReservations.flatMap((entry) => entry.folio ?? []),
     taxesTotal,
     hasMixedTaxRates,
     appliedTaxRate: hasMixedTaxRates ? null : appliedTaxRate,
   };
 
-  const aggregateCounts = normalizedReservations.reduce(
+  const aggregateCounts = displayBookingReservations.reduce(
     (acc, entry) => {
       acc.guests += entry.numberOfGuests ?? 0;
       acc.adults += entry.adultCount ?? 0;
@@ -125,7 +142,7 @@ export default function ReservationDetailsPage() {
   );
 
   const shouldUseAggregatedCounts =
-    normalizedReservations.length > 1 ||
+    displayBookingReservations.length > 1 ||
     aggregateCounts.guests > 0 ||
     aggregateCounts.adults > 0 ||
     aggregateCounts.children > 0;
@@ -143,15 +160,26 @@ export default function ReservationDetailsPage() {
       : reservationWithDetails.childCount,
   };
 
+  const aggregateStatusSource =
+    activeBookingReservations.length > 0
+      ? activeBookingReservations
+      : bookingReservationPool;
+
+  const bookingAggregateStatus = resolveAggregateStatus(
+    aggregateStatusSource.map((entry) => entry.status)
+  );
+
   return (
     <div className="space-y-6">
-      <ReservationHeader reservation={reservationWithDetails} />
+      <ReservationHeader
+        reservation={reservationWithDetails}
+        bookingStatus={bookingAggregateStatus}
+      />
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-1 space-y-6">
           <GuestDetailsCard guest={guest} />
           <StayDetailsCard reservation={stayDetailsReservation} />
           <LinkedReservationsCard
-            activeReservationId={reservation.id}
             reservations={groupSummary.reservations}
           />
         </div>

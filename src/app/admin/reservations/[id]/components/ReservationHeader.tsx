@@ -9,26 +9,36 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useDataContext } from "@/context/data-context";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
+import type { ReservationStatus } from "@/data/types";
 import { CancelReservationDialog } from "@/app/admin/reservations/components/cancel-reservation-dialog";
 import * as React from "react";
 
 interface ReservationHeaderProps {
   reservation: ReservationWithDetails;
+  bookingStatus?: ReservationStatus;
 }
 
-export function ReservationHeader({ reservation }: ReservationHeaderProps) {
-  const { updateReservationStatus } = useDataContext();
+export function ReservationHeader({ reservation, bookingStatus }: ReservationHeaderProps) {
+  const { updateReservationStatus, updateBookingReservationStatus } = useDataContext();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
   const searchParams = useSearchParams();
   const isNewlyCreated = searchParams?.get("createdBooking") === "1";
 
-  const handleStatusUpdate = (status: "Checked-in" | "Checked-out" | "Cancelled") => {
-    updateReservationStatus(reservation.id, status);
-    toast.success(`Reservation status updated to ${status}.`);
+  const handleStatusUpdate = async (
+    status: "Checked-in" | "Checked-out" | "Cancelled"
+  ) => {
     if (status === "Cancelled") {
+      await updateBookingReservationStatus(reservation.bookingId, "Cancelled");
+      toast.success("All rooms for this booking have been cancelled.");
       setIsCancelDialogOpen(false);
+      return;
     }
+
+    await updateReservationStatus(reservation.id, status);
+    toast.success(`Reservation status updated to ${status}.`);
   };
+
+  const effectiveStatus = bookingStatus ?? reservation.status;
 
   const canBeModified = !["Checked-in", "Checked-out", "Cancelled", "No-show"].includes(
     reservation.status
@@ -52,7 +62,7 @@ export function ReservationHeader({ reservation }: ReservationHeaderProps) {
           Reservation Details
         </h1>
         <Badge variant="outline" className="ml-auto rounded-full px-3 py-1 text-xs font-medium sm:ml-0">
-          {reservation.status}
+          {effectiveStatus}
         </Badge>
         {isNewlyCreated && (
           <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs font-semibold text-primary">
@@ -81,7 +91,9 @@ export function ReservationHeader({ reservation }: ReservationHeaderProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleStatusUpdate("Checked-in")}
+            onClick={() => {
+              void handleStatusUpdate("Checked-in");
+            }}
             disabled={!canBeCheckedIn}
           >
             <LogIn className="h-4 w-4 mr-2" />
@@ -90,7 +102,9 @@ export function ReservationHeader({ reservation }: ReservationHeaderProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleStatusUpdate("Checked-out")}
+            onClick={() => {
+              void handleStatusUpdate("Checked-out");
+            }}
             disabled={!canBeCheckedOut}
           >
             <LogOut className="h-4 w-4 mr-2" />
@@ -110,7 +124,9 @@ export function ReservationHeader({ reservation }: ReservationHeaderProps) {
       <CancelReservationDialog
         isOpen={isCancelDialogOpen}
         onOpenChange={setIsCancelDialogOpen}
-        onConfirm={() => handleStatusUpdate("Cancelled")}
+        onConfirm={() => {
+          void handleStatusUpdate("Cancelled");
+        }}
       />
     </>
   );

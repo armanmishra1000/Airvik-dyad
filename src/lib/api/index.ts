@@ -716,7 +716,25 @@ export const updateReservation = async (id: string, updatedData: Partial<Reserva
     if (error || !data) return { data, error, ...rest };
     return { data: fromDbReservation(data), error, ...rest };
 };
-export const updateReservationStatus = (id: string, status: string) => supabase.from('reservations').update({ status }).eq('id', id);
+export const updateReservationStatus = (id: string, status: string) =>
+  supabase.from("reservations").update({ status }).eq("id", id);
+
+export const updateBookingReservationsStatus = async (
+  bookingId: string,
+  status: ReservationStatus
+) => {
+  const { data, error } = await supabase
+    .from("reservations")
+    .update({ status })
+    .eq("booking_id", bookingId)
+    .select();
+
+  if (error || !data) {
+    return { data: [], error };
+  }
+
+  return { data: data.map(fromDbReservation), error: null };
+};
 
 // Folio Items
 export const getFolioItems = () => supabase.from('folio_items').select('*');

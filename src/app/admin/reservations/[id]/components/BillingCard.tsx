@@ -60,9 +60,6 @@ export function BillingCard({ reservation, groupSummary }: BillingCardProps) {
         taxesOverride: groupSummary.taxesTotal,
       }
     : baseTaxConfig;
-  const taxPercentDisplay = !hasGroupData || !groupSummary.hasMixedTaxRates
-    ? (summaryTaxConfig.percentage * 100)
-    : null;
   const sortedFolio = [...folioEntries].sort((a, b) => {
     if (!a.timestamp && !b.timestamp) return 0;
     if (!a.timestamp) return 1;
@@ -81,6 +78,20 @@ export function BillingCard({ reservation, groupSummary }: BillingCardProps) {
     totalPaid,
     balance,
   } = calculateReservationFinancials(billingSource, summaryTaxConfig);
+
+  const derivedTaxRate = taxesAndFees > 0 && billingSource.totalAmount > 0
+    ? taxesAndFees / billingSource.totalAmount
+    : null;
+  const effectiveTaxRate = !hasGroupData || !groupSummary.hasMixedTaxRates
+    ? (summaryTaxConfig.percentage > 0
+        ? summaryTaxConfig.percentage
+        : derivedTaxRate && derivedTaxRate > 0
+          ? derivedTaxRate
+          : null)
+    : null;
+  const taxPercentDisplay = typeof effectiveTaxRate === "number"
+    ? effectiveTaxRate * 100
+    : null;
 
   return (
     <Card className="flex flex-col">

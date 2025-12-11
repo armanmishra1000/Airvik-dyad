@@ -54,6 +54,7 @@ export type ReservationWithDetails = {
     taxRateSnapshot: number;
     externalSource?: string;
     externalId?: string | null;
+    externalMetadata?: Record<string, unknown> | null;
 }
 
 export const statuses = [

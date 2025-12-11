@@ -9,6 +9,8 @@ import { useDataContext } from "@/context/data-context";
 import type { FolioItem, ReservationStatus } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
 import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
+import { isActiveReservationStatus, resolveAggregateStatus } from "@/lib/reservations/status";
+import { isReservationRemovedDuringEdit } from "@/lib/reservations/filters";
 
 function sumAdditionalCharges(folioItems: FolioItem[] = []) {
   return folioItems
@@ -51,7 +53,14 @@ function getGroupDisplayAmount(
 }
 
 export default function ReservationsPage() {
-  const { reservations, guests, updateReservationStatus, rooms, property } = useDataContext();
+  const {
+    reservations,
+    guests,
+    updateReservationStatus,
+    updateBookingReservationStatus,
+    rooms,
+    property,
+  } = useDataContext();
 
   const groupedReservations = React.useMemo(() => {
     const reservationsWithDetails = sortReservationsByBookingDate(reservations).map((res) => {
@@ -88,29 +97,41 @@ export default function ReservationsPage() {
     const tableData: ReservationWithDetails[] = [];
     for (const group of bookingGroups.values()) {
       if (group.length > 1) {
-        const firstRes = group[0];
-        const activeEntries = group.filter((entry) => isRevenueReservation(entry.status));
-        const revenueEntries = activeEntries.length ? activeEntries : [];
+        const retainedEntries = group.filter(
+          (entry) => !isReservationRemovedDuringEdit(entry)
+        );
+        const normalizedGroup = retainedEntries.length > 0 ? retainedEntries : group;
+        const activeEntries = normalizedGroup.filter((entry) => isActiveReservationStatus(entry.status));
+        const displayEntries = activeEntries.length ? activeEntries : normalizedGroup;
+        const revenueEntries = displayEntries.filter((entry) => isRevenueReservation(entry.status));
         const roomTotal = revenueEntries.reduce((sum, r) => sum + r.totalAmount, 0);
         const combinedFolio = revenueEntries.flatMap((entry) => entry.folio ?? []);
         const displayAmount = revenueEntries.length
           ? getGroupDisplayAmount(revenueEntries, combinedFolio, property)
           : 0;
-        const guestSource = activeEntries.length ? activeEntries : group;
-        const totalGuests = guestSource.reduce((sum, entry) => sum + (entry.numberOfGuests ?? 0), 0);
-        const totalAdults = guestSource.reduce((sum, entry) => sum + (entry.adultCount ?? 0), 0);
-        const totalChildren = guestSource.reduce((sum, entry) => sum + (entry.childCount ?? 0), 0);
+        const totalGuests = displayEntries.reduce((sum, entry) => sum + (entry.numberOfGuests ?? 0), 0);
+        const totalAdults = displayEntries.reduce((sum, entry) => sum + (entry.adultCount ?? 0), 0);
+        const totalChildren = displayEntries.reduce((sum, entry) => sum + (entry.childCount ?? 0), 0);
+        const roomNumbers = displayEntries.map((r) => r.roomNumber).filter(Boolean);
+        const aggregateStatus = resolveAggregateStatus(displayEntries.map((entry) => entry.status));
+        const primaryReservation = displayEntries[0] ?? group[0];
         const parentRow: ReservationWithDetails = {
-          ...firstRes,
-          id: firstRes.bookingId,
-          roomNumber: group.map((r) => r.roomNumber).filter(Boolean).join(", "),
-          roomCount: activeEntries.length || group.length,
+          ...primaryReservation,
+          id: primaryReservation.bookingId,
+          status: aggregateStatus,
+          roomNumber:
+            roomNumbers.length === 0
+              ? "N/A"
+              : roomNumbers.length === 1
+              ? roomNumbers[0]
+              : roomNumbers.join(", "),
+          roomCount: displayEntries.length,
           totalAmount: roomTotal,
           displayAmount,
           numberOfGuests: totalGuests,
           adultCount: totalAdults,
           childCount: totalChildren,
-          subRows: group.map((entry) => ({ ...entry, roomCount: 1 })),
+          subRows: displayEntries.map((entry) => ({ ...entry, roomCount: 1 })),
         };
         tableData.push(parentRow);
       } else {
@@ -121,9 +142,9 @@ export default function ReservationsPage() {
     return tableData;
   }, [reservations, guests, rooms, property]);
 
-  const handleCancelReservation = (reservationId: string) => {
-    updateReservationStatus(reservationId, "Cancelled");
-    toast.success("Reservation cancelled successfully.");
+  const handleCancelReservation = async (bookingId: string) => {
+    await updateBookingReservationStatus(bookingId, "Cancelled");
+    toast.success("All rooms in this booking have been cancelled.");
   };
 
   const handleCheckInReservation = (reservationId: string) => {

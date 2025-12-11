@@ -540,6 +540,8 @@ export function useAppData() {
       .trim();
   const userId = session?.user?.id ?? null;
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const hasHydratedRef = React.useRef(false);
   const [property, setProperty] = React.useState<Property>(defaultProperty);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
   const [guests, setGuests] = React.useState<Guest[]>([]);
@@ -554,8 +556,17 @@ export function useAppData() {
   const [housekeepingAssignments, setHousekeepingAssignments] = React.useState<HousekeepingAssignment[]>([]);
   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(['stats', 'tables', 'calendar', 'notes']);
 
-  const fetchData = React.useCallback(async () => {
-    setIsLoading(true);
+  const fetchData = React.useCallback(async (options?: { keepExisting?: boolean }) => {
+    const keepExisting = options?.keepExisting ?? false;
+    const alreadyHydrated = hasHydratedRef.current;
+    const shouldUseLoadingState = !alreadyHydrated || !keepExisting;
+
+    if (shouldUseLoadingState) {
+      setIsLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
+
     try {
       const [
         propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
@@ -615,10 +626,17 @@ export function useAppData() {
       setRoomTypes(roomTypesData);
       setRoomCategories(roomCategoriesRes.data || []);
 
+      if (!alreadyHydrated) {
+        hasHydratedRef.current = true;
+      }
     } catch (error) {
       console.error("Failed to load app data:", error);
     } finally {
-      setIsLoading(false);
+      if (shouldUseLoadingState) {
+        setIsLoading(false);
+      } else {
+        setIsRefreshing(false);
+      }
     }
   }, [userId]);
 
@@ -626,7 +644,7 @@ export function useAppData() {
     fetchData();
   }, [fetchData]);
 
-  const refreshReservations = React.useCallback(() => fetchData(), [fetchData]);
+  const refreshReservations = React.useCallback(() => fetchData({ keepExisting: true }), [fetchData]);
 
   const updateProperty = async (updatedData: Partial<Omit<Property, "id">>) => {
     const { data, error } = property.id === "default-property-id"
@@ -855,6 +873,61 @@ export function useAppData() {
       action: "reservation_status_updated",
       details: `Changed reservation status to ${status}`,
       metadata: { status },
+    });
+  };
+
+  const updateBookingReservationStatus = async (
+    bookingId: string,
+    status: ReservationStatus
+  ) => {
+    const { data, error } = await api.updateBookingReservationsStatus(
+      bookingId,
+      status
+    );
+    if (error) throw error;
+    if (!data?.length) {
+      return;
+    }
+
+    const updatesById = new Map(data.map((entry) => [entry.id, entry]));
+    setReservations((prev) =>
+      prev.map((reservation) => {
+        const updated = updatesById.get(reservation.id);
+        if (!updated) {
+          return reservation;
+        }
+        return {
+          ...reservation,
+          ...updated,
+          folio: reservation.folio,
+        };
+      })
+    );
+
+    data.forEach((updatedReservation) => {
+      recordActivity({
+        section: "reservations",
+        entityType: "reservation",
+        entityId: updatedReservation.id,
+        entityLabel: updatedReservation.bookingId,
+        action: "reservation_status_updated",
+        details: `Changed reservation status to ${status}`,
+        metadata: {
+          status,
+          bookingId,
+          roomId: updatedReservation.roomId,
+        },
+      });
+    });
+
+    recordActivity({
+      section: "reservations",
+      entityType: "reservation",
+      entityId: bookingId,
+      entityLabel: bookingId,
+      action: "reservation_status_updated",
+      details: `Changed booking ${bookingId} status to ${status} for ${data.length} rooms`,
+      metadata: { status, bookingId, affectedReservations: data.length },
     });
   };
 
@@ -1380,8 +1453,9 @@ export function useAppData() {
 
   return {
     isLoading,
+    isRefreshing,
     property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
-    updateProperty, addGuest, deleteGuest, addReservation, addRoomsToBooking, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
+    updateProperty, addGuest, deleteGuest, addReservation, addRoomsToBooking, refetchUsers, updateGuest, updateReservation, updateReservationStatus, updateBookingReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout: updateDashboardLayoutState,

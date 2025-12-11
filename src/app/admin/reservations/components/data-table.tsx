@@ -5,6 +5,7 @@ import {
   ColumnDef,
   ColumnFiltersState,
   ExpandedState,
+  Row,
   SortingState,
   VisibilityState,
   flexRender,
@@ -33,7 +34,7 @@ import type { ReservationWithDetails } from "./columns"
 interface DataTableProps {
   columns: ColumnDef<ReservationWithDetails, unknown>[]
   data: ReservationWithDetails[]
-  onCancelReservation: (reservationId: string) => void
+  onCancelReservation: (bookingId: string) => Promise<void> | void
   onCheckInReservation: (reservationId: string) => void
   onCheckOutReservation: (reservationId: string) => void
 }
@@ -51,6 +52,7 @@ export function DataTable({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
+  const [globalFilter, setGlobalFilter] = React.useState("")
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [expanded, setExpanded] = React.useState<ExpandedState>({})
@@ -66,11 +68,8 @@ export function DataTable({
       return
     }
 
-    const reservations = reservationToCancel.subRows?.length
-      ? reservationToCancel.subRows
-      : [reservationToCancel]
-
-    reservations.forEach((reservation) => onCancelReservation(reservation.id))
+    const bookingId = reservationToCancel.bookingId ?? reservationToCancel.id
+    void onCancelReservation(bookingId)
     setReservationToCancel(null)
   };
 
@@ -84,6 +83,37 @@ export function DataTable({
 
     reservations.forEach((item) => action(item.id))
   }
+
+  const reservationGlobalFilter = React.useCallback(
+    (row: Row<ReservationWithDetails>, _columnId: string, filterValue: string): boolean => {
+      const term = String(filterValue ?? "").trim().toLowerCase()
+      if (!term) return true
+
+      const bookingIdRaw = String(row.original.bookingId ?? row.getValue("id") ?? "").toLowerCase()
+      const normalizedBookingId = bookingIdRaw
+        .replace(/^booking-/i, "")
+        .replace(/^vik-/i, "")
+      const guestName = String(row.original.guestName ?? row.getValue("guestName") ?? "")
+        .trim()
+        .toLowerCase()
+
+      const matchesCurrent =
+        bookingIdRaw.includes(term) ||
+        normalizedBookingId.includes(term) ||
+        guestName.includes(term)
+
+      if (matchesCurrent) return true
+
+      if (row.subRows?.length) {
+        return row.subRows.some((subRow) =>
+          reservationGlobalFilter(subRow as Row<ReservationWithDetails>, _columnId, term)
+        )
+      }
+
+      return false
+    },
+    []
+  )
 
   const table = useReactTable<ReservationWithDetails>({
     data,
@@ -99,9 +129,12 @@ export function DataTable({
     getFacetedUniqueValues: getFacetedUniqueValues(),
     onExpandedChange: setExpanded,
     getExpandedRowModel: getExpandedRowModel(),
+    globalFilterFn: reservationGlobalFilter,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       columnFilters,
+      globalFilter,
       columnVisibility,
       expanded,
     },
