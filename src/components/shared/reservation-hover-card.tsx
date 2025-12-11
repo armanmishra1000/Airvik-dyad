@@ -66,8 +66,8 @@ interface ReservationDetail {
   customerTitle?: string | null;
   customerFirstName?: string | null;
   customerLastName?: string | null;
-  adults?: number | null;
-  children?: number | null;
+  adultCount: number;
+  childCount: number;
   roomNumber?: string;
   roomTypeName?: string;
 }
@@ -124,23 +124,43 @@ function formatCustomerName(detail: ReservationDetail): string {
   return detail.guestName || "Guest";
 }
 
-function formatGuests(detail: ReservationDetail): string | null {
-  const adults = detail.adults ?? 0;
-  const children = detail.children ?? 0;
+type GuestTotals = {
+  adults: number;
+  children: number;
+};
 
-  const parts: string[] = [];
+function formatGuestTotals(adults: number, children: number): string | null {
+  const safeAdults = Math.max(0, adults);
+  const safeChildren = Math.max(0, children);
+  const totalGuests = safeAdults + safeChildren;
 
-  if (adults > 0) {
-    parts.push(`${adults} adult${adults === 1 ? "" : "s"}`);
+  if (totalGuests === 0) {
+    return null;
   }
 
-  if (children > 0) {
-    parts.push(`${children} child${children === 1 ? "" : "ren"}`);
+  const breakdownSegments: string[] = [];
+  if (safeAdults > 0) {
+    breakdownSegments.push(`${safeAdults} adult${safeAdults === 1 ? "" : "s"}`);
+  }
+  if (safeChildren > 0) {
+    breakdownSegments.push(`${safeChildren} child${safeChildren === 1 ? "" : "ren"}`);
   }
 
-  if (parts.length === 0) return null;
+  const breakdown = breakdownSegments.length
+    ? ` (${breakdownSegments.join(", ")})`
+    : "";
 
-  return parts.join(", ");
+  return `${totalGuests} guest${totalGuests === 1 ? "" : "s"}${breakdown}`;
+}
+
+function accumulateGuestTotals(
+  totals: GuestTotals,
+  detail: ReservationDetail
+): GuestTotals {
+  return {
+    adults: totals.adults + detail.adultCount,
+    children: totals.children + detail.childCount,
+  };
 }
 
 function groupRoomsByType(
@@ -224,8 +244,12 @@ export function ReservationHoverCard({
         customerTitle: null,
         customerFirstName: guest?.firstName ?? null,
         customerLastName: guest?.lastName ?? null,
-        adults: reservation.numberOfGuests ?? null,
-        children: null,
+        adultCount: Number.isFinite(reservation.adultCount)
+          ? reservation.adultCount
+          : reservation.numberOfGuests ?? 0,
+        childCount: Number.isFinite(reservation.childCount)
+          ? reservation.childCount
+          : 0,
         roomNumber: room?.roomNumber,
         roomTypeName: roomType?.name,
       });
@@ -268,13 +292,13 @@ export function ReservationHoverCard({
     const groups = new Map<string, {
       bookingId: string;
       guestName: string;
-      guestsText?: string | null;
       bookingDate: Date;
       checkIn: Date;
       checkOut: Date;
       nights: number;
       rooms: Array<{ id: string; roomNumber?: string; roomTypeName?: string }>;
       statuses: Set<ReservationStatus>;
+      totals: GuestTotals;
     }>();
 
     displayedReservationDetails.forEach((detail) => {
@@ -289,7 +313,6 @@ export function ReservationHoverCard({
         groups.set(bookingId, {
           bookingId,
           guestName: formatCustomerName(detail),
-          guestsText: formatGuests(detail),
           bookingDate,
           checkIn,
           checkOut,
@@ -302,6 +325,10 @@ export function ReservationHoverCard({
             },
           ],
           statuses: new Set<ReservationStatus>([reservation.status]),
+          totals: {
+            adults: detail.adultCount,
+            children: detail.childCount,
+          },
         });
         return;
       }
@@ -315,6 +342,7 @@ export function ReservationHoverCard({
       existing.checkOut = checkOut > existing.checkOut ? checkOut : existing.checkOut;
       existing.nights = Math.max(existing.nights, nights);
       existing.statuses.add(reservation.status);
+      existing.totals = accumulateGuestTotals(existing.totals, detail);
     });
 
     return Array.from(groups.values()).map((group) => {
@@ -323,11 +351,15 @@ export function ReservationHoverCard({
         statusLabel === "Mixed"
           ? mixedStatusStyle
           : getStatusStyle(statusLabel as ReservationStatus);
+      const guestsText = formatGuestTotals(
+        group.totals.adults,
+        group.totals.children
+      );
 
       return {
         bookingId: group.bookingId,
         guestName: group.guestName,
-        guestsText: group.guestsText,
+        guestsText,
         bookingDate: group.bookingDate,
         checkIn: group.checkIn,
         checkOut: group.checkOut,
