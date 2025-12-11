@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import type { User, Role, Permission } from "@/data/types";
+import type { PermissionFeature } from "@/lib/permissions/map";
 import { useAuth } from "@/hooks/use-auth";
 
 interface AuthContextType {
@@ -11,6 +12,8 @@ interface AuthContextType {
   userRole: Role | null;
   isLoading: boolean;
   hasPermission: (permission: Permission) => boolean;
+  hasAnyPermission: (permissions: Iterable<Permission>) => boolean;
+  hasFeatureAccess: (feature: PermissionFeature, options?: { requireAll?: boolean }) => boolean;
 }
 
 export const AuthContext = React.createContext<AuthContextType | undefined>(undefined);

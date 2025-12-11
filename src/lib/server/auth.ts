@@ -1,6 +1,7 @@
 import type { Permission } from "@/data/types";
 import { createServerSupabaseClient } from "@/integrations/supabase/server";
 import { ADMIN_ROLES, ROLE_NAMES } from "@/constants/roles";
+import { getPermissionsForFeatures, type PermissionFeature } from "@/lib/permissions/map";
 
 export class HttpError extends Error {
   constructor(public status: number, message: string) {
@@ -21,12 +22,67 @@ export async function requirePermission(
   request: Request,
   requiredPermission: Permission
 ): Promise<AuthorizedProfile> {
-  const context = await resolveProfileContext(request);
+  return requirePermissions(request, requiredPermission);
+}
 
-  if (!hasPermission(context.roleName, context.permissions, requiredPermission)) {
+export async function requirePermissions(
+  request: Request,
+  ...requiredPermissions: Permission[]
+): Promise<AuthorizedProfile> {
+  if (requiredPermissions.length === 0) {
+    throw new Error("At least one permission must be provided");
+  }
+
+  const context = await resolveProfileContext(request);
+  const isAllowed = requiredPermissions.some((permission) =>
+    hasPermission(context.roleName, context.permissions, permission)
+  );
+
+  if (!isAllowed) {
     throw new HttpError(403, "Insufficient permissions");
   }
 
+  return {
+    userId: context.profileId,
+    roleName: context.roleName,
+    permissions: context.permissions,
+  };
+}
+
+export async function requireFeature(
+  request: Request,
+  feature: PermissionFeature | PermissionFeature[],
+  { requireAll = false }: { requireAll?: boolean } = {}
+): Promise<AuthorizedProfile> {
+  const featurePermissions = getPermissionsForFeatures(feature);
+  if (featurePermissions.length === 0) {
+    return requireProfile(request);
+  }
+
+  const context = await resolveProfileContext(request);
+  const allowed = requireAll
+    ? featurePermissions.every((permission) =>
+        hasPermission(context.roleName, context.permissions, permission)
+      )
+    : featurePermissions.some((permission) =>
+        hasPermission(context.roleName, context.permissions, permission)
+      );
+
+  if (!allowed) {
+    throw new HttpError(403, "Insufficient permissions");
+  }
+
+  return {
+    userId: context.profileId,
+    roleName: context.roleName,
+    permissions: context.permissions,
+  };
+}
+
+export async function requireProfile(
+  request: Request
+): Promise<AuthorizedProfile> {
+  const context = await resolveProfileContext(request);
   return {
     userId: context.profileId,
     roleName: context.roleName,
@@ -103,11 +159,13 @@ async function resolveProfileContext(request: Request): Promise<ProfileContext> 
 }
 
 function hasPermission(
-  roleName: string | null,
+  _roleName: string | null,
   permissions: Permission[],
   requiredPermission: Permission
 ): boolean {
-  if (!requiredPermission) return true;
-  if (roleName === "Hotel Owner") return true;
+  if (!requiredPermission) {
+    return true;
+  }
+
   return permissions.includes(requiredPermission);
 }

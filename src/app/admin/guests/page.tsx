@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { GuestFormDialog } from "./components/guest-form-dialog";
 import type { Guest } from "@/data/types";
 import { Button } from "@/components/ui/button";
+import { PermissionGate } from "@/components/admin/permission-gate";
 
 export default function GuestsPage() {
   const { guests } = useDataContext();
@@ -24,6 +25,7 @@ export default function GuestsPage() {
   };
 
   return (
+    <PermissionGate feature="guests">
     <div className="space-y-6">
       {isReservationFlow && (
         <Alert>
@@ -42,5 +44,6 @@ export default function GuestsPage() {
       )}
       <GuestsDataTable columns={columns} data={guests} />
     </div>
+    </PermissionGate>
   );
 }

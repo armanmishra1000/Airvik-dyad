@@ -20,6 +20,7 @@ import {
   MessageSquare,
   HeartHandshake,
   History,
+  Megaphone,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import * as React from "react";
@@ -40,39 +41,51 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import type { Permission } from "@/data/types";
+import { getPermissionsForFeature, type PermissionFeature } from "@/lib/permissions/map";
 
 type SidebarNavItem = {
   href: string;
   icon: LucideIcon;
   label: string;
-  requiredPermission: Permission;
-  subItems?: Array<{ label: string; href: string }>;
+  feature?: PermissionFeature;
+  permissions?: Permission[];
+  subItems?: Array<{ label: string; href: string; feature?: PermissionFeature; permissions?: Permission[] }>;
 };
 
 const navItems: SidebarNavItem[] = [
-  { href: "/admin", icon: Home, label: "Dashboard", requiredPermission: "read:reservation" },
-  { href: "/admin/reservations", icon: Calendar, label: "Reservations", requiredPermission: "read:reservation" },
-  { href: "/admin/calendar", icon: Calendar, label: "Calendar", requiredPermission: "read:reservation" },
-  { 
-    href: "/admin/posts", 
-    icon: FileText, 
-    label: "Posts", 
-    requiredPermission: "read:post",
+  { href: "/admin", icon: Home, label: "Dashboard", feature: "dashboard" },
+  { href: "/admin/reservations", icon: Calendar, label: "Reservations", feature: "reservations" },
+  { href: "/admin/calendar", icon: Calendar, label: "Calendar", feature: "calendar" },
+  {
+    href: "/admin/posts",
+    icon: FileText,
+    label: "Posts",
+    feature: "posts",
     subItems: [
-      { label: "All Posts", href: "/admin/posts" },
-      { label: "Add Post", href: "/admin/posts/create" },
-      { label: "Categories", href: "/admin/posts/categories" },
-    ]
+      { label: "All Posts", href: "/admin/posts", feature: "posts" },
+      { label: "Add Post", href: "/admin/posts/create", permissions: ["create:post"] },
+      { label: "Categories", href: "/admin/posts/categories", permissions: ["update:post"] },
+    ],
   },
-  { href: "/admin/housekeeping", icon: ClipboardList, label: "Housekeeping", requiredPermission: "read:room" },
-  { href: "/admin/guests", icon: Users, label: "Guests", requiredPermission: "read:guest" },
-  { href: "/admin/room-categories", icon: FolderOpen, label: "Room Categories", requiredPermission: "read:room_category" },
-  { href: "/admin/room-types", icon: Layers, label: "Room Types", requiredPermission: "read:room_type" },
-  { href: "/admin/rooms", icon: BedDouble, label: "Rooms", requiredPermission: "read:room" },
-  { href: "/admin/rates", icon: DollarSign, label: "Rate Plans", requiredPermission: "read:rate_plan" },
-  { href: "/admin/feedback", icon: MessageSquare, label: "Feedback", requiredPermission: "read:feedback" },
-  { href: "/admin/reports", icon: BarChart3, label: "Reports", requiredPermission: "read:report" },
-  { href: "/admin/donations", icon: HeartHandshake, label: "Donations", requiredPermission: "read:report" },
+  { href: "/admin/housekeeping", icon: ClipboardList, label: "Housekeeping", feature: "housekeeping" },
+  { href: "/admin/guests", icon: Users, label: "Guests", feature: "guests" },
+  { href: "/admin/room-categories", icon: FolderOpen, label: "Room Categories", feature: "roomCategories" },
+  { href: "/admin/room-types", icon: Layers, label: "Room Types", feature: "roomTypes" },
+  { href: "/admin/rooms", icon: BedDouble, label: "Rooms", feature: "rooms" },
+  { href: "/admin/rates", icon: DollarSign, label: "Rate Plans", feature: "ratePlans" },
+  {
+    href: "/admin/events",
+    icon: Megaphone,
+    label: "Events",
+    feature: "eventBanner",
+    subItems: [
+      { label: "All Events", href: "/admin/events", feature: "eventBanner" },
+      { label: "Add Event", href: "/admin/events/create", feature: "eventBanner" },
+    ],
+  },
+  { href: "/admin/feedback", icon: MessageSquare, label: "Feedback", feature: "feedback" },
+  { href: "/admin/reports", icon: BarChart3, label: "Reports", feature: "reports" },
+  { href: "/admin/donations", icon: HeartHandshake, label: "Donations", feature: "donations" },
 ] satisfies SidebarNavItem[];
 
 interface SidebarProps {
@@ -82,20 +95,22 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname() ?? "";
-  const { hasPermission, userRole } = useAuthContext();
+  const { hasPermission, hasAnyPermission } = useAuthContext();
   const { property } = useDataContext();
 
-  const baseNavItems = navItems.filter((item) => hasPermission(item.requiredPermission));
-  const canViewActivity = userRole?.name === "Hotel Owner" || userRole?.name === "Hotel Manager";
-  const activityNavItem: SidebarNavItem = {
-    href: "/admin/activity",
-    icon: History,
-    label: "Activity",
-    requiredPermission: "read:reservation",
+  const canAccessItem = (item: Pick<SidebarNavItem, "feature" | "permissions">): boolean => {
+    const featurePermissions = item.feature ? getPermissionsForFeature(item.feature) : [];
+    const required = [...featurePermissions, ...(item.permissions ?? [])];
+    if (required.length === 0) {
+      return true;
+    }
+    return hasAnyPermission(required);
   };
-  const accessibleNavItems: SidebarNavItem[] = canViewActivity
-    ? [...baseNavItems, activityNavItem]
-    : baseNavItems;
+
+  const accessibleNavItems = navItems.filter(canAccessItem);
+  if (canAccessItem({ feature: "activity" })) {
+    accessibleNavItems.push({ href: "/admin/activity", icon: History, label: "Activity", feature: "activity" });
+  }
 
   return (
     <aside className="hidden h-screen flex-col border-r border-border/50 bg-card/80 shadow-lg transition-colors duration-300 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:flex">
@@ -158,6 +173,10 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             }
 
             if (subItems) {
+              const visibleSubItems = subItems.filter((subItem) => canAccessItem(subItem));
+              if (visibleSubItems.length === 0) {
+                return null;
+              }
               return (
                 <Collapsible
                   key={href}
@@ -181,7 +200,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-border/50 pl-2">
-                      {subItems.map((sub) => (
+                      {visibleSubItems.map((sub) => (
                         <Link
                           key={sub.href}
                           href={sub.href}

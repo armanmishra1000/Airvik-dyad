@@ -43,6 +43,7 @@ import { useDataContext } from "@/context/data-context";
     CalendarSkeleton 
   } from "./components/dashboard-skeleton";
 import { getTodayRange } from "@/lib/date";
+import { PermissionGate } from "@/components/admin/permission-gate";
   
   export default function DashboardPage() {
     const { reservations, guests, dashboardLayout, updateDashboardLayout, rooms, isLoading } = useDataContext();
@@ -226,6 +227,7 @@ import { getTodayRange } from "@/lib/date";
     }
 
     return (
+      <PermissionGate feature="dashboard">
         <div className="space-y-6">
             <div className="flex justify-end">
                 <Button variant="outline" size="sm" className="focus-visible:ring-0" onClick={() => setIsEditing(!isEditing)}>
@@ -257,5 +259,6 @@ import { getTodayRange } from "@/lib/date";
                 </DragOverlay>
             </DndContext>
         </div>
+      </PermissionGate>
     );
   }

@@ -4,6 +4,7 @@ import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import type { User, Role, Permission } from "@/data/types";
+import { getPermissionsForFeature, type PermissionFeature } from "@/lib/permissions/map";
 
 type ProfileWithRole = {
   id: string;
@@ -73,9 +74,41 @@ export function useAuth() {
 
   const hasPermission = (permission: Permission): boolean => {
     if (!userRole) return false;
-    if (userRole.name === 'Hotel Owner') return true;
     return userRole.permissions?.includes(permission) || false;
   };
 
-  return { authUser, currentUser, userRole, isLoading, hasPermission };
+  const hasAnyPermission = (permissions: Iterable<Permission>): boolean => {
+    for (const permission of permissions) {
+      if (hasPermission(permission)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const hasFeatureAccess = (
+    feature: PermissionFeature,
+    { requireAll = false }: { requireAll?: boolean } = {}
+  ): boolean => {
+    const required = getPermissionsForFeature(feature);
+    if (required.length === 0) {
+      return true;
+    }
+
+    if (requireAll) {
+      return required.every((permission) => hasPermission(permission));
+    }
+
+    return hasAnyPermission(required);
+  };
+
+  return {
+    authUser,
+    currentUser,
+    userRole,
+    isLoading,
+    hasPermission,
+    hasAnyPermission,
+    hasFeatureAccess,
+  };
 }

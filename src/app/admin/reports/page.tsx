@@ -6,9 +6,11 @@ import {
 } from "@/components/ui/tabs";
 import { OccupancyReport } from "./components/occupancy-report";
 import { RevenueReport } from "./components/revenue-report";
+import { PermissionGate } from "@/components/admin/permission-gate";
 
 export default function ReportsPage() {
   return (
+    <PermissionGate feature="reports">
     <div className="space-y-6">
       <div className="space-y-2">
         <h2 className="font-serif text-3xl font-semibold tracking-tight">Reports</h2>
@@ -46,5 +48,6 @@ export default function ReportsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </PermissionGate>
   );
 }

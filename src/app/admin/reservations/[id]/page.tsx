@@ -14,6 +14,7 @@ import { ReservationActivityTimeline } from "./components/ReservationActivityTim
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PermissionGate } from "@/components/admin/permission-gate";
 import {
   isActiveReservationStatus,
   resolveAggregateStatus,
@@ -35,11 +36,22 @@ export default function ReservationDetailsPage() {
   );
 
   if (!reservationIdFromParams) {
-    return isLoading ? <ReservationDetailsSkeleton /> : notFound();
+    if (isLoading) {
+      return (
+        <PermissionGate feature="reservations">
+          <ReservationDetailsSkeleton />
+        </PermissionGate>
+      );
+    }
+    return notFound();
   }
 
   if (isLoading) {
-    return <ReservationDetailsSkeleton />;
+    return (
+      <PermissionGate feature="reservations">
+        <ReservationDetailsSkeleton />
+      </PermissionGate>
+    );
   }
 
   if (!reservation) {
@@ -170,28 +182,30 @@ export default function ReservationDetailsPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <ReservationHeader
-        reservation={reservationWithDetails}
-        bookingStatus={bookingAggregateStatus}
-      />
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-1 space-y-6">
-          <GuestDetailsCard guest={guest} />
-          <StayDetailsCard reservation={stayDetailsReservation} />
-          <LinkedReservationsCard
-            reservations={groupSummary.reservations}
-          />
-        </div>
-        <div className="lg:col-span-2 space-y-6">
-          <BillingCard
-            reservation={reservationWithDetails}
-            groupSummary={groupSummary}
-          />
-          <ReservationActivityTimeline reservationId={reservation.id} />
+    <PermissionGate feature="reservations">
+      <div className="space-y-6">
+        <ReservationHeader
+          reservation={reservationWithDetails}
+          bookingStatus={bookingAggregateStatus}
+        />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-1 space-y-6">
+            <GuestDetailsCard guest={guest} />
+            <StayDetailsCard reservation={stayDetailsReservation} />
+            <LinkedReservationsCard
+              reservations={groupSummary.reservations}
+            />
+          </div>
+          <div className="lg:col-span-2 space-y-6">
+            <BillingCard
+              reservation={reservationWithDetails}
+              groupSummary={groupSummary}
+            />
+            <ReservationActivityTimeline reservationId={reservation.id} />
+          </div>
         </div>
       </div>
-    </div>
+    </PermissionGate>
   );
 }
 

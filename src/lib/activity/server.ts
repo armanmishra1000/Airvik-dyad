@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "@/integrations/supabase/server";
+import { getServerSupabaseClient } from "@/lib/server/supabase";
 import type {
   AdminActivityLogInput,
   AdminActivityLogPayload,
@@ -8,7 +8,7 @@ import type { AuthorizedProfile } from "@/lib/server/auth";
 export async function logAdminActivityServer(
   payload: AdminActivityLogPayload
 ) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await getServerSupabaseClient();
   const { error } = await supabase.rpc("log_admin_activity_rpc", {
     p_actor_user_id: payload.actorUserId,
     p_section: payload.section,

@@ -427,6 +427,19 @@ export interface StickyNote {
   createdAt: string;
 }
 
+export interface EventBanner {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl: string;
+  isActive: boolean;
+  startsAt?: string;
+  endsAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
 // Blog
 export interface Category {
   id: string;
