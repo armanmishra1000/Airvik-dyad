@@ -1,25 +1,53 @@
 import type { NextConfig } from "next";
 
+type RemotePattern = NonNullable<NonNullable<NextConfig["images"]>["remotePatterns"]>[number];
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+let supabaseHostname: string | undefined;
+
+if (supabaseUrl) {
+  try {
+    supabaseHostname = new URL(supabaseUrl).hostname;
+  } catch {
+    supabaseHostname = undefined;
+  }
+}
+
+const legacySupabaseHostname = "fflsucsqhjjuozmfwpho.supabase.co";
+const supabasePathname = "/storage/v1/object/public/images/**";
+
+const buildSupabasePattern = (hostname: string): RemotePattern => ({
+  protocol: "https",
+  hostname,
+  port: "",
+  pathname: supabasePathname,
+});
+
+const imageRemotePatterns: RemotePattern[] = [];
+
+if (supabaseHostname) {
+  imageRemotePatterns.push(buildSupabasePattern(supabaseHostname));
+}
+
+if (!supabaseHostname || supabaseHostname !== legacySupabaseHostname) {
+  imageRemotePatterns.push(buildSupabasePattern(legacySupabaseHostname));
+}
+
+imageRemotePatterns.push({
+  protocol: "https",
+  hostname: "i.ytimg.com",
+  port: "",
+  pathname: "/vi/**",
+});
+
 const nextConfig: NextConfig = {
   eslint: {
     // Allow production builds to succeed even if lint errors are present.
     ignoreDuringBuilds: true,
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "fflsucsqhjjuozmfwpho.supabase.co",
-        port: "",
-        pathname: "/storage/v1/object/public/images/**",
-      },
-      {
-        protocol: "https",
-        hostname: "i.ytimg.com",
-        port: "",
-        pathname: "/vi/**",
-      },
-    ],
+    remotePatterns: imageRemotePatterns,
+    unoptimized: true,
   },
   webpack: (config) => {
     if (process.env.NODE_ENV === "development") {

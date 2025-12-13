@@ -228,13 +228,7 @@ import { PermissionGate } from "@/components/admin/permission-gate";
 
     return (
       <PermissionGate feature="dashboard">
-        <div className="space-y-6">
-            <div className="flex justify-end">
-                <Button variant="outline" size="sm" className="focus-visible:ring-0" onClick={() => setIsEditing(!isEditing)}>
-                    {isEditing ? <Check className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
-                    {isEditing ? "Save Layout" : "Edit Layout"}
-                </Button>
-            </div>
+        <div className="flex min-h-[60vh] flex-col gap-6">
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -258,6 +252,12 @@ import { PermissionGate } from "@/components/admin/permission-gate";
                     ) : null}
                 </DragOverlay>
             </DndContext>
+            <div className="flex justify-end pt-2">
+                <Button variant="outline" size="sm" className="focus-visible:ring-0" onClick={() => setIsEditing(!isEditing)}>
+                    {isEditing ? <Check className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
+                    {isEditing ? "Save Layout" : "Edit Layout"}
+                </Button>
+            </div>
         </div>
       </PermissionGate>
     );

@@ -438,24 +438,34 @@ const fromDbAdminActivityLog = (
 
 // --- File Upload Helper ---
 
-export const uploadFile = async (file: File) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `${fileName}`;
+type UploadResponse = {
+  url: string;
+};
 
-    const { error: uploadError } = await supabase.storage
-        .from('images')
-        .upload(filePath, file);
+export const uploadFile = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", file);
 
-    if (uploadError) {
-        throw uploadError;
-    }
+  const response = await fetch("/api/admin/uploads", {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+  });
 
-    const { data: { publicUrl } } = supabase.storage
-        .from('images')
-        .getPublicUrl(filePath);
+  let payload: UploadResponse & { error?: string } | undefined;
 
-    return publicUrl;
+  try {
+    payload = (await response.json()) as UploadResponse & { error?: string };
+  } catch {
+    // Ignore JSON parse errors; we'll throw below.
+  }
+
+  if (!response.ok || !payload) {
+    const message = payload?.error ?? "Upload failed";
+    throw new Error(message);
+  }
+
+  return payload.url;
 };
 
 
