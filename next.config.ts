@@ -47,6 +47,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: imageRemotePatterns,
+    unoptimized: true,
   },
   webpack: (config) => {
     if (process.env.NODE_ENV === "development") {
