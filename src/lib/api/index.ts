@@ -586,10 +586,69 @@ export const updateProperty = (id: string, updatedData: Partial<Property>) => su
 export const createProperty = (propertyData: Partial<Property>) => supabase.from('properties').insert([propertyData]).select().single();
 
 // Guests
+const GUEST_PAGE_SIZE = 1000;
+
 export const getGuests = async () => {
-    const { data, error, ...rest } = await supabase.from('guests').select('*');
-    if (error || !data) return { data, error, ...rest };
-    return { data: data.map(fromDbGuest), error, ...rest };
+    const aggregatedRows: DbGuest[] = [];
+    let fromIndex = 0;
+    let toIndex = GUEST_PAGE_SIZE - 1;
+    let status: number | undefined;
+    let statusText: string | undefined;
+
+    while (true) {
+        const {
+            data,
+            error,
+            status: pageStatus,
+            statusText: pageStatusText,
+        } = await supabase
+            .from('guests')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .range(fromIndex, toIndex);
+
+        if (typeof status === 'undefined') {
+            status = pageStatus;
+        }
+        if (typeof statusText === 'undefined') {
+            statusText = pageStatusText;
+        }
+
+        if (error) {
+            return {
+                data: null,
+                error,
+                status,
+                statusText,
+            };
+        }
+
+        const rows = (data ?? []) as DbGuest[];
+        aggregatedRows.push(...rows);
+
+        if (rows.length < GUEST_PAGE_SIZE) {
+            break;
+        }
+
+        fromIndex += GUEST_PAGE_SIZE;
+        toIndex += GUEST_PAGE_SIZE;
+    }
+
+    const dedupedGuests = Array.from(
+        aggregatedRows.reduce((map, guest) => {
+            if (!map.has(guest.id)) {
+                map.set(guest.id, guest);
+            }
+            return map;
+        }, new Map<string, DbGuest>()).values()
+    );
+
+    return {
+        data: dedupedGuests.map(fromDbGuest),
+        error: null,
+        status,
+        statusText,
+    };
 };
 export const getGuestById = async (id: string) => {
     const { data, error, ...rest } = await supabase.from('guests').select('*').eq('id', id).single();
