@@ -1,7 +1,8 @@
 "use client";
 
+import * as React from "react";
 import { format, parseISO } from "date-fns";
-import { BedDouble, CalendarDays, Moon, Users, CreditCard, Hash } from "lucide-react";
+import { BedDouble, CalendarDays, Moon, Users, CreditCard, Hash, Copy } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
 import { useDataContext } from "@/context/data-context";
 import { formatBookingCode } from "@/lib/reservations/formatting";
@@ -20,6 +22,24 @@ interface StayDetailsCardProps {
 
 export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
   const { ratePlans } = useDataContext();
+  const bookingCode = React.useMemo(
+    () => formatBookingCode(reservation.bookingId),
+    [reservation.bookingId]
+  );
+  const [copied, setCopied] = React.useState(false);
+  React.useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(bookingCode);
+      setCopied(true);
+    } catch (error) {
+      console.error("Failed to copy booking ID", error);
+    }
+  };
   const ratePlan = reservation.ratePlanId
     ? ratePlans.find((rp) => rp.id === reservation.ratePlanId)
     : null;
@@ -54,9 +74,26 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
             <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Booking ID
             </span>
-            <span className="font-semibold font-mono text-sm">
-              {formatBookingCode(reservation.bookingId)}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold font-mono text-sm">
+                {bookingCode}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                aria-label="Copy booking ID"
+                onClick={handleCopy}
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+              {copied && (
+                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  Copied
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <Separator />
