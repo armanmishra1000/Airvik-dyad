@@ -12,7 +12,8 @@ export type PermissionResource =
   | "setting"
   | "user"
   | "post"
-  | "feedback";
+  | "feedback"
+  | "review";
 export type Permission = `${PermissionAction}:${PermissionResource}`;
 
 export const allPermissions: readonly Permission[] = [
@@ -24,6 +25,7 @@ export const allPermissions: readonly Permission[] = [
   "create:rate_plan", "read:rate_plan", "update:rate_plan", "delete:rate_plan",
   "create:post", "read:post", "update:post", "delete:post",
   "create:feedback", "read:feedback", "update:feedback", "delete:feedback",
+  "create:review", "read:review", "update:review", "delete:review",
   "read:report",
   "update:setting",
   "create:user", "read:user", "update:user", "delete:user",
@@ -440,7 +442,7 @@ export interface EventBanner {
   updatedBy?: string;
 }
 
-export interface Testimonial {
+export interface Review {
   id: string;
   reviewerName: string;
   reviewerTitle?: string;

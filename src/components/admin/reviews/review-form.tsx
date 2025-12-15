@@ -7,8 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-import type { Testimonial } from "@/data/types";
-import { createTestimonial, updateTestimonial } from "@/lib/server/testimonials";
+import type { Review } from "@/data/types";
+import { createReview, updateReview } from "@/lib/server/reviews";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -35,11 +35,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface TestimonialFormProps {
-  initialData?: Testimonial | null;
+interface ReviewFormProps {
+  initialData?: Review | null;
 }
 
-export function TestimonialForm({ initialData }: TestimonialFormProps) {
+export function ReviewForm({ initialData }: ReviewFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -67,16 +67,16 @@ export function TestimonialForm({ initialData }: TestimonialFormProps) {
     startTransition(async () => {
       try {
         if (initialData?.id) {
-          await updateTestimonial(initialData.id, values);
-          toast.success("Testimonial updated");
+          await updateReview(initialData.id, values);
+          toast.success("Review updated");
         } else {
-          await createTestimonial(values);
-          toast.success("Testimonial created");
+          await createReview(values);
+          toast.success("Review created");
         }
-        router.push("/admin/testimonials");
+        router.push("/admin/reviews");
       } catch (error) {
         console.error(error);
-        toast.error("Unable to save testimonial");
+        toast.error("Unable to save review");
       }
     });
   };
@@ -84,7 +84,7 @@ export function TestimonialForm({ initialData }: TestimonialFormProps) {
   return (
     <Card className="max-w-3xl">
       <CardHeader>
-        <CardTitle>{initialData ? "Edit Testimonial" : "Add Testimonial"}</CardTitle>
+        <CardTitle>{initialData ? "Edit Review" : "Add Review"}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -170,7 +170,7 @@ export function TestimonialForm({ initialData }: TestimonialFormProps) {
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Saving..." : "Save"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => router.push("/admin/testimonials")} disabled={isPending}>
+              <Button type="button" variant="outline" onClick={() => router.push("/admin/reviews")} disabled={isPending}>
                 Cancel
               </Button>
             </div>

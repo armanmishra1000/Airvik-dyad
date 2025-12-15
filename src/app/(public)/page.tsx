@@ -7,7 +7,7 @@ import { FeatureCard } from "@/components/marketing/home/FeatureCard";
 import { WelcomeSection } from "@/components/marketing/home/WelcomeSection";
 import { VideoSection } from "@/components/marketing/home/VideoSection";
 import { RoomsShowcaseSection } from "@/components/marketing/home/RoomsShowcaseSection";
-import { TestimonialSection } from "@/components/marketing/home/TestimonialSection";
+import { ReviewSection } from "@/components/marketing/home/ReviewSection";
 import { GallerySection } from "@/components/marketing/home/GallerySection";
 import { SupportActionsSection, type SupportAction } from "@/components/marketing/home/SupportActionsSection";
 import { Marquee } from "@/components/marketing/layout/Marquee";
@@ -76,7 +76,7 @@ const supportActions: SupportAction[] = [
  *
  * Renders the hero banner with background image and animated title, a features grid
  * with staggered entrance animations, and the site sections: Welcome, Gallery,
- * Video, Stay, Testimonial, and Marquee.
+ * Video, Stay, Review, and Marquee.
  *
  * @returns The JSX element representing the complete home page.
  */
@@ -203,8 +203,8 @@ export default function HomePage() {
       <VideoSection />
       <RoomsShowcaseSection />
 
-      {/* Testimonial Section */}
-      <TestimonialSection />
+      {/* Review Section */}
+      <ReviewSection />
 
       {/* Support Actions Section */}
       <SupportActionsSection actions={supportActions} />

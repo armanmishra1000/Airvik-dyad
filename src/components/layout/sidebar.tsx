@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   Home,
@@ -15,15 +16,12 @@ import {
   Layers,
   FolderOpen,
   ChevronsLeft,
-  FileText,
   ChevronRight,
   MessageSquare,
   HeartHandshake,
   History,
   Megaphone,
-  Quote,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -59,32 +57,20 @@ const navItems: SidebarNavItem[] = [
   { href: "/admin/calendar", icon: Calendar, label: "Calendar", feature: "calendar" },
   {
     href: "/admin/posts",
-    icon: FileText,
-    label: "Posts",
-    feature: "posts",
+    icon: Megaphone,
+    label: "Engagement",
     subItems: [
-      { label: "All Posts", href: "/admin/posts", feature: "posts" },
-      { label: "Add Post", href: "/admin/posts/create", permissions: ["create:post"] },
-      { label: "Categories", href: "/admin/posts/categories", permissions: ["update:post"] },
+      { label: "Blog Posts", href: "/admin/posts", feature: "posts" },
+      { label: "Event Promotions", href: "/admin/events", feature: "eventBanner" },
+      { label: "Guest Reviews", href: "/admin/reviews", feature: "reviews" },
     ],
   },
   { href: "/admin/housekeeping", icon: ClipboardList, label: "Housekeeping", feature: "housekeeping" },
-  { href: "/admin/testimonials", icon: Quote, label: "Testimonials", feature: "testimonials" },
   { href: "/admin/guests", icon: Users, label: "Guests", feature: "guests" },
   { href: "/admin/room-categories", icon: FolderOpen, label: "Room Categories", feature: "roomCategories" },
   { href: "/admin/room-types", icon: Layers, label: "Room Types", feature: "roomTypes" },
   { href: "/admin/rooms", icon: BedDouble, label: "Rooms", feature: "rooms" },
   { href: "/admin/rates", icon: DollarSign, label: "Rate Plans", feature: "ratePlans" },
-  {
-    href: "/admin/events",
-    icon: Megaphone,
-    label: "Events",
-    feature: "eventBanner",
-    subItems: [
-      { label: "All Events", href: "/admin/events", feature: "eventBanner" },
-      { label: "Add Event", href: "/admin/events/create", feature: "eventBanner" },
-    ],
-  },
   { href: "/admin/feedback", icon: MessageSquare, label: "Feedback", feature: "feedback" },
   { href: "/admin/reports", icon: BarChart3, label: "Reports", feature: "reports" },
   { href: "/admin/donations", icon: HeartHandshake, label: "Donations", feature: "donations" },

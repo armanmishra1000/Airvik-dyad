@@ -12,7 +12,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 
-type CarouselTestimonial = {
+type CarouselReview = {
   quote: string;
   image: string;
   imageAlt: string;
@@ -20,7 +20,7 @@ type CarouselTestimonial = {
   reviewerTitle?: string;
 };
 
-type TestimonialsResponse = {
+type ReviewsResponse = {
   data?: Array<{
     reviewerName: string;
     reviewerTitle?: string;
@@ -29,7 +29,7 @@ type TestimonialsResponse = {
   }>;
 };
 
-const fallbackTestimonials: CarouselTestimonial[] = [
+const fallbackReviews: CarouselReview[] = [
   {
     quote:
       "Sahajanand Wellness provided me with an incredible space to reconnect with myself",
@@ -56,18 +56,18 @@ const fallbackTestimonials: CarouselTestimonial[] = [
   },
 ];
 
-const testimonialCardBackground = "rgba(255, 248, 243, 0.85)";
+const reviewCardBackground = "rgba(255, 248, 243, 0.85)";
 
 const renderQuote = (quote: string) => quote;
 
-export function TestimonialSection() {
+export function ReviewSection() {
   const plugin = React.useRef(
     Autoplay({ delay: 3500, stopOnInteraction: false })
   );
   const [api, setApi] = React.useState<CarouselApi | null>(null);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
-  const [testimonials, setTestimonials] = React.useState<CarouselTestimonial[]>(
-    fallbackTestimonials
+  const [reviews, setReviews] = React.useState<CarouselReview[]>(
+    fallbackReviews
   );
 
   React.useEffect(() => {
@@ -90,30 +90,30 @@ export function TestimonialSection() {
   React.useEffect(() => {
     let cancelled = false;
 
-    const loadTestimonials = async () => {
+    const loadReviews = async () => {
       try {
-        const response = await fetch("/api/testimonials", { cache: "no-store" });
+        const response = await fetch("/api/reviews", { cache: "no-store" });
         if (!response.ok) {
           return;
         }
-        const json: TestimonialsResponse = await response.json();
+        const json: ReviewsResponse = await response.json();
         if (!json?.data?.length || cancelled) {
           return;
         }
-        const mapped: CarouselTestimonial[] = json.data.map((testimonial) => ({
-          quote: testimonial.content,
-          image: testimonial.imageUrl,
-          imageAlt: testimonial.reviewerName,
-          reviewerName: testimonial.reviewerName,
-          reviewerTitle: testimonial.reviewerTitle,
+        const mapped: CarouselReview[] = json.data.map((review) => ({
+          quote: review.content,
+          image: review.imageUrl,
+          imageAlt: review.reviewerName,
+          reviewerName: review.reviewerName,
+          reviewerTitle: review.reviewerTitle,
         }));
-        setTestimonials(mapped);
+        setReviews(mapped);
       } catch (error) {
-        console.error("Failed to load testimonials", error);
+        console.error("Failed to load reviews", error);
       }
     };
 
-    void loadTestimonials();
+    void loadReviews();
     return () => {
       cancelled = true;
     };
@@ -155,7 +155,7 @@ export function TestimonialSection() {
             setApi={setApi}
           >
             <CarouselContent className="cursor-pointer select-none">
-              {testimonials.map((testimonial, index) => (
+              {reviews.map((review, index) => (
                 <CarouselItem
                   key={index}
                   className="basis-full sm:basis-1/2 lg:basis-1/3"
@@ -163,32 +163,32 @@ export function TestimonialSection() {
                   <div className="p-12 h-full">
                     <Card
                       className="relative h-full rounded-3xl border border-white/80"
-                      style={{ backgroundColor: testimonialCardBackground }}
+                      style={{ backgroundColor: reviewCardBackground }}
                     >
                       <CardContent className="relative flex h-full flex-col items-center gap-6 px-8 pt-20 pb-6 text-center sm:pt-24 md:pt-24 md:pb-8 lg:px-10 lg:pt-28 select-none">
                         <div className="flex items-center justify-center -mt-16">
                           <div className="absolute -top-12 sm:-top-10 lg:-top-16 left-1/2 -translate-x-1/2 flex h-24 w-24 lg:w-32 lg:h-32 items-center justify-center rounded-full border-4 border-white bg-white">
                             <Image
-                              src={testimonial.image}
-                              alt={testimonial.imageAlt}
+                              src={review.image}
+                              alt={review.imageAlt}
                               fill
                               className="object-cover rounded-full"
                             />
                           </div>
                         </div>
                         <p className="text-lg leading-relaxed text-muted-foreground">
-                          &ldquo;{renderQuote(testimonial.quote)}&rdquo;
+                          &ldquo;{renderQuote(review.quote)}&rdquo;
                         </p>
-                        {(testimonial.reviewerName || testimonial.reviewerTitle) && (
+                        {(review.reviewerName || review.reviewerTitle) && (
                           <div className="text-center">
-                            {testimonial.reviewerName && (
+                            {review.reviewerName && (
                               <p className="text-base font-semibold text-foreground">
-                                {testimonial.reviewerName}
+                                {review.reviewerName}
                               </p>
                             )}
-                            {testimonial.reviewerTitle && (
+                            {review.reviewerTitle && (
                               <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
-                                {testimonial.reviewerTitle}
+                                {review.reviewerTitle}
                               </p>
                             )}
                           </div>
@@ -201,7 +201,7 @@ export function TestimonialSection() {
             </CarouselContent>
           </Carousel>
           <div className="mt-6 flex justify-center gap-2 lg:hidden">
-            {testimonials.map((_, index) => (
+            {reviews.map((_, index) => (
               <button
                 type="button"
                 key={index}
@@ -211,7 +211,7 @@ export function TestimonialSection() {
                     : "bg-primary/30"
                 }`}
                 onClick={() => api?.scrollTo(index)}
-                aria-label={`Go to testimonial ${index + 1}`}
+                aria-label={`Go to review ${index + 1}`}
               />
             ))}
           </div>

@@ -6,9 +6,10 @@ import { Pencil, Trash } from "lucide-react";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
-import type { Testimonial } from "@/data/types";
-import { deleteTestimonial, toggleTestimonialPublish } from "@/lib/server/testimonials";
+import type { Review } from "@/data/types";
+import { deleteReview, toggleReviewPublish } from "@/lib/server/reviews";
 import { cn } from "@/lib/utils";
+import { useAuthContext } from "@/context/auth-context";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -20,37 +21,46 @@ import {
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 
-interface TestimonialsTableProps {
-  testimonials: Testimonial[];
+interface ReviewsTableProps {
+  reviews: Review[];
 }
 
-export function TestimonialsTable({ testimonials }: TestimonialsTableProps) {
+export function ReviewsTable({ reviews }: ReviewsTableProps) {
   const [isPending, startTransition] = useTransition();
+  const { hasPermission } = useAuthContext();
+  const canUpdate = hasPermission("update:review");
+  const canDelete = hasPermission("delete:review");
 
   const handleDelete = (id: string) => {
-    if (!confirm("Delete this testimonial? This action cannot be undone.")) {
+    if (!canDelete) {
+      return;
+    }
+    if (!confirm("Delete this review? This action cannot be undone.")) {
       return;
     }
 
     startTransition(async () => {
       try {
-        await deleteTestimonial(id);
-        toast.success("Testimonial deleted");
+        await deleteReview(id);
+        toast.success("Review deleted");
       } catch (error) {
         console.error(error);
-        toast.error("Failed to delete testimonial");
+        toast.error("Failed to delete review");
       }
     });
   };
 
   const handleToggle = (id: string, nextValue: boolean) => {
+    if (!canUpdate) {
+      return;
+    }
     startTransition(async () => {
       try {
-        await toggleTestimonialPublish(id, nextValue);
-        toast.success(nextValue ? "Testimonial published" : "Testimonial unpublished");
+        await toggleReviewPublish(id, nextValue);
+        toast.success(nextValue ? "Review published" : "Review unpublished");
       } catch (error) {
         console.error(error);
-        toast.error("Failed to update testimonial");
+        toast.error("Failed to update review");
       }
     });
   };
@@ -68,21 +78,21 @@ export function TestimonialsTable({ testimonials }: TestimonialsTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {testimonials.length === 0 ? (
+          {reviews.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="h-24 text-center">
-                No testimonials yet.
+                No reviews yet.
               </TableCell>
             </TableRow>
           ) : (
-            testimonials.map((testimonial) => (
-              <TableRow key={testimonial.id}>
+            reviews.map((review) => (
+              <TableRow key={review.id}>
                 <TableCell>
                   <div className="relative h-14 w-14 overflow-hidden rounded-full border bg-muted">
-                    {testimonial.imageUrl ? (
+                    {review.imageUrl ? (
                       <Image
-                        src={testimonial.imageUrl}
-                        alt={`${testimonial.reviewerName} avatar`}
+                        src={review.imageUrl}
+                        alt={`${review.reviewerName} avatar`}
                         fill
                         className="object-cover"
                       />
@@ -95,52 +105,59 @@ export function TestimonialsTable({ testimonials }: TestimonialsTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
-                    <span className="font-semibold">{testimonial.reviewerName}</span>
-                    {testimonial.reviewerTitle && (
-                      <span className="text-sm text-muted-foreground">{testimonial.reviewerTitle}</span>
+                    <span className="font-semibold">{review.reviewerName}</span>
+                    {review.reviewerTitle && (
+                      <span className="text-sm text-muted-foreground">{review.reviewerTitle}</span>
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
                   <p className="line-clamp-2 text-sm text-muted-foreground">
-                    {testimonial.content}
+                    {review.content}
                   </p>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Switch
-                      checked={testimonial.isPublished}
-                      onCheckedChange={(value) => handleToggle(testimonial.id, value)}
-                      disabled={isPending}
+                      checked={review.isPublished}
+                      onCheckedChange={(value) => handleToggle(review.id, value)}
+                      disabled={isPending || !canUpdate}
                     />
                     <span
                       className={cn(
                         "text-sm",
-                        testimonial.isPublished ? "text-primary font-medium" : "text-muted-foreground"
+                        review.isPublished ? "text-primary font-medium" : "text-muted-foreground"
                       )}
                     >
-                      {testimonial.isPublished ? "Visible" : "Hidden"}
+                      {review.isPublished ? "Visible" : "Hidden"}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="icon" asChild>
-                      <Link href={`/admin/testimonials/${testimonial.id}`}>
-                        <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Edit</span>
-                      </Link>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(testimonial.id)}
-                      disabled={isPending}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash className="h-4 w-4" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
+                    {canUpdate && (
+                      <Button variant="ghost" size="icon" asChild>
+                        <Link href={`/admin/reviews/${review.id}`}>
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
+                        </Link>
+                      </Button>
+                    )}
+                    {canDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(review.id)}
+                        disabled={isPending}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash className="h-4 w-4" />
+                        <span className="sr-only">Delete</span>
+                      </Button>
+                    )}
+                    {!canUpdate && !canDelete && (
+                      <span className="text-xs text-muted-foreground">No actions</span>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

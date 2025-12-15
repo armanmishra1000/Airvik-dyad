@@ -1,7 +1,7 @@
 import { z } from "zod";
-import type { Testimonial } from "@/data/types";
+import type { Review } from "@/data/types";
 
-export const testimonialRowSchema = z.object({
+export const reviewRowSchema = z.object({
   id: z.string().uuid(),
   reviewer_name: z.string(),
   reviewer_title: z.string().nullable(),
@@ -13,9 +13,9 @@ export const testimonialRowSchema = z.object({
   updated_at: z.string(),
 });
 
-export type TestimonialRow = z.infer<typeof testimonialRowSchema>;
+export type ReviewRow = z.infer<typeof reviewRowSchema>;
 
-export function mapTestimonialRow(row: TestimonialRow): Testimonial {
+export function mapReviewRow(row: ReviewRow): Review {
   return {
     id: row.id,
     reviewerName: row.reviewer_name,

@@ -54,6 +54,10 @@ const permissionGroups = (allPermissions as readonly Permission[]).reduce((acc, 
   return acc;
 }, {} as Record<PermissionResource, { action: string; permission: Permission }[]>);
 
+const resourceLabels: Partial<Record<PermissionResource, string>> = {
+  review: "Guest Reviews",
+};
+
 export function RoleFormDialog({
   role,
   children,
@@ -134,7 +138,9 @@ export function RoleFormDialog({
                         <div className="space-y-5 p-5">
                         {Object.entries(permissionGroups).map(([resource, actions]) => (
                             <div key={resource} className="space-y-3">
-                                <h4 className="font-serif text-sm font-semibold uppercase text-muted-foreground">{resource.replace("_", " ")}</h4>
+                                <h4 className="font-serif text-sm font-semibold uppercase text-muted-foreground">
+                                  {resourceLabels[resource as PermissionResource] ?? resource.replace("_", " ")}
+                                </h4>
                                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                 {actions.map(({ action, permission }) => (
                                     <FormField

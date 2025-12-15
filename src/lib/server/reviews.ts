@@ -4,11 +4,12 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import type { Testimonial } from "@/data/types";
-import { testimonialRowSchema, mapTestimonialRow } from "@/lib/testimonials";
+import type { Review } from "@/data/types";
+import { reviewRowSchema, mapReviewRow } from "@/lib/reviews";
 import { createServerSupabaseClient, createSessionClient } from "@/integrations/supabase/server";
+import { requirePagePermissions } from "@/lib/server/page-auth";
 
-const testimonialFormSchema = z.object({
+const reviewFormSchema = z.object({
   reviewerName: z.string().trim().min(1).max(150),
   reviewerTitle: z.string().trim().max(150).optional(),
   content: z.string().trim().min(1).max(2000),
@@ -16,18 +17,20 @@ const testimonialFormSchema = z.object({
   isPublished: z.boolean(),
 });
 
-const revalidateTestimonialsPaths = () => {
+const revalidateReviewPaths = () => {
+  revalidatePath("/admin/reviews");
   revalidatePath("/admin/testimonials");
   revalidatePath("/");
 };
 
-const mapRows = (rows: unknown[] | null): Testimonial[] =>
+const mapRows = (rows: unknown[] | null): Review[] =>
   (rows ?? [])
-    .map((row) => testimonialRowSchema.safeParse(row))
-    .filter((result): result is { success: true; data: z.infer<typeof testimonialRowSchema> } => result.success)
-    .map((result) => mapTestimonialRow(result.data));
+    .map((row) => reviewRowSchema.safeParse(row))
+    .filter((result): result is { success: true; data: z.infer<typeof reviewRowSchema> } => result.success)
+    .map((result) => mapReviewRow(result.data));
 
-export async function getAllTestimonials(): Promise<Testimonial[]> {
+export async function getAllReviews(): Promise<Review[]> {
+  await requirePagePermissions("read:review");
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("testimonials")
@@ -35,14 +38,15 @@ export async function getAllTestimonials(): Promise<Testimonial[]> {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching testimonials", error);
-    throw new Error("Failed to fetch testimonials");
+    console.error("Error fetching reviews", error);
+    throw new Error("Failed to fetch reviews");
   }
 
   return mapRows(data);
 }
 
-export async function getTestimonialById(id: string): Promise<Testimonial | null> {
+export async function getReviewById(id: string): Promise<Review | null> {
+  await requirePagePermissions("read:review");
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("testimonials")
@@ -51,19 +55,19 @@ export async function getTestimonialById(id: string): Promise<Testimonial | null
     .maybeSingle();
 
   if (error) {
-    console.error("Error fetching testimonial", error);
-    throw new Error("Failed to fetch testimonial");
+    console.error("Error fetching review", error);
+    throw new Error("Failed to fetch review");
   }
 
   if (!data) {
     return null;
   }
 
-  const parsed = testimonialRowSchema.parse(data);
-  return mapTestimonialRow(parsed);
+  const parsed = reviewRowSchema.parse(data);
+  return mapReviewRow(parsed);
 }
 
-export async function getPublishedTestimonials(limit = 10): Promise<Testimonial[]> {
+export async function getPublishedReviews(limit = 10): Promise<Review[]> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("testimonials")
@@ -73,18 +77,19 @@ export async function getPublishedTestimonials(limit = 10): Promise<Testimonial[
     .limit(limit);
 
   if (error) {
-    console.error("Error fetching published testimonials", error);
-    throw new Error("Failed to fetch testimonials");
+    console.error("Error fetching published reviews", error);
+    throw new Error("Failed to fetch reviews");
   }
 
   return mapRows(data);
 }
 
-type FormPayload = z.infer<typeof testimonialFormSchema>;
+type FormPayload = z.infer<typeof reviewFormSchema>;
 
-export async function createTestimonial(rawData: FormPayload): Promise<Testimonial> {
+export async function createReview(rawData: FormPayload): Promise<Review> {
+  await requirePagePermissions("create:review");
   const supabase = await createSessionClient();
-  const payload = testimonialFormSchema.parse(rawData);
+  const payload = reviewFormSchema.parse(rawData);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -109,13 +114,14 @@ export async function createTestimonial(rawData: FormPayload): Promise<Testimoni
     throw error;
   }
 
-  revalidateTestimonialsPaths();
-  return mapTestimonialRow(testimonialRowSchema.parse(data));
+  revalidateReviewPaths();
+  return mapReviewRow(reviewRowSchema.parse(data));
 }
 
-export async function updateTestimonial(id: string, rawData: FormPayload): Promise<void> {
+export async function updateReview(id: string, rawData: FormPayload): Promise<void> {
+  await requirePagePermissions("update:review");
   const supabase = await createSessionClient();
-  const payload = testimonialFormSchema.parse(rawData);
+  const payload = reviewFormSchema.parse(rawData);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -139,10 +145,11 @@ export async function updateTestimonial(id: string, rawData: FormPayload): Promi
     throw error;
   }
 
-  revalidateTestimonialsPaths();
+  revalidateReviewPaths();
 }
 
-export async function deleteTestimonial(id: string): Promise<void> {
+export async function deleteReview(id: string): Promise<void> {
+  await requirePagePermissions("delete:review");
   const supabase = await createSessionClient();
   const { error } = await supabase
     .from("testimonials")
@@ -153,10 +160,11 @@ export async function deleteTestimonial(id: string): Promise<void> {
     throw error;
   }
 
-  revalidateTestimonialsPaths();
+  revalidateReviewPaths();
 }
 
-export async function toggleTestimonialPublish(id: string, isPublished: boolean): Promise<void> {
+export async function toggleReviewPublish(id: string, isPublished: boolean): Promise<void> {
+  await requirePagePermissions("update:review");
   const supabase = await createSessionClient();
   const {
     data: { user },
@@ -175,5 +183,5 @@ export async function toggleTestimonialPublish(id: string, isPublished: boolean)
     throw error;
   }
 
-  revalidateTestimonialsPaths();
+  revalidateReviewPaths();
 }
