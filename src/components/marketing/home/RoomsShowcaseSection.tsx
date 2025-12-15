@@ -172,7 +172,7 @@ export function RoomsShowcaseSection() {
           </p>
         </div>
 
-        <div className="relative lg:hidden">
+        <div className="relative lg:hidden mt-12">
           <Carousel opts={{ align: "start", loop: true }} className="w-full">
             <CarouselContent className="-ml-4">
               {roomsToDisplay.map((room) => (
