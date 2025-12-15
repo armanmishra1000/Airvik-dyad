@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   Home,
@@ -15,14 +16,12 @@ import {
   Layers,
   FolderOpen,
   ChevronsLeft,
-  FileText,
   ChevronRight,
   MessageSquare,
   HeartHandshake,
   History,
   Megaphone,
 } from "lucide-react";
-import { usePathname } from "next/navigation";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -41,7 +40,19 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import type { Permission } from "@/data/types";
+import { ENGAGEMENT_SECTIONS } from "@/data/engagement-nav";
 import { getPermissionsForFeature, type PermissionFeature } from "@/lib/permissions/map";
+
+type SidebarChildItem = {
+  label: string;
+  href: string;
+  feature?: PermissionFeature;
+  permissions?: Permission[];
+};
+
+type SidebarSubItem = SidebarChildItem & {
+  children?: readonly SidebarChildItem[];
+};
 
 type SidebarNavItem = {
   href: string;
@@ -49,8 +60,29 @@ type SidebarNavItem = {
   label: string;
   feature?: PermissionFeature;
   permissions?: Permission[];
-  subItems?: Array<{ label: string; href: string; feature?: PermissionFeature; permissions?: Permission[] }>;
+  subItems?: SidebarSubItem[];
 };
+
+const engagementSubItems: SidebarSubItem[] = [
+  {
+    label: "Blog Posts",
+    href: "/admin/posts",
+    feature: "posts",
+    children: ENGAGEMENT_SECTIONS.posts.items,
+  },
+  {
+    label: "Event Promotions",
+    href: "/admin/events",
+    feature: "eventBanner",
+    children: ENGAGEMENT_SECTIONS.events.items,
+  },
+  {
+    label: "Guest Reviews",
+    href: "/admin/reviews",
+    feature: "reviews",
+    children: ENGAGEMENT_SECTIONS.reviews.items,
+  },
+];
 
 const navItems: SidebarNavItem[] = [
   { href: "/admin", icon: Home, label: "Dashboard", feature: "dashboard" },
@@ -58,14 +90,9 @@ const navItems: SidebarNavItem[] = [
   { href: "/admin/calendar", icon: Calendar, label: "Calendar", feature: "calendar" },
   {
     href: "/admin/posts",
-    icon: FileText,
-    label: "Posts",
-    feature: "posts",
-    subItems: [
-      { label: "All Posts", href: "/admin/posts", feature: "posts" },
-      { label: "Add Post", href: "/admin/posts/create", permissions: ["create:post"] },
-      { label: "Categories", href: "/admin/posts/categories", permissions: ["update:post"] },
-    ],
+    icon: Megaphone,
+    label: "Engagement",
+    subItems: engagementSubItems,
   },
   { href: "/admin/housekeeping", icon: ClipboardList, label: "Housekeeping", feature: "housekeeping" },
   { href: "/admin/guests", icon: Users, label: "Guests", feature: "guests" },
@@ -73,16 +100,6 @@ const navItems: SidebarNavItem[] = [
   { href: "/admin/room-types", icon: Layers, label: "Room Types", feature: "roomTypes" },
   { href: "/admin/rooms", icon: BedDouble, label: "Rooms", feature: "rooms" },
   { href: "/admin/rates", icon: DollarSign, label: "Rate Plans", feature: "ratePlans" },
-  {
-    href: "/admin/events",
-    icon: Megaphone,
-    label: "Events",
-    feature: "eventBanner",
-    subItems: [
-      { label: "All Events", href: "/admin/events", feature: "eventBanner" },
-      { label: "Add Event", href: "/admin/events/create", feature: "eventBanner" },
-    ],
-  },
   { href: "/admin/feedback", icon: MessageSquare, label: "Feedback", feature: "feedback" },
   { href: "/admin/reports", icon: BarChart3, label: "Reports", feature: "reports" },
   { href: "/admin/donations", icon: HeartHandshake, label: "Donations", feature: "donations" },
@@ -97,8 +114,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname() ?? "";
   const { hasPermission, hasAnyPermission } = useAuthContext();
   const { property } = useDataContext();
+  const [openDropdowns, setOpenDropdowns] = React.useState<Record<string, boolean>>({});
 
-  const canAccessItem = (item: Pick<SidebarNavItem, "feature" | "permissions">): boolean => {
+  const canAccessItem = (
+    item:
+      | Pick<SidebarNavItem, "feature" | "permissions">
+      | Pick<SidebarSubItem, "feature" | "permissions">
+      | Pick<SidebarChildItem, "feature" | "permissions">
+  ): boolean => {
     const featurePermissions = item.feature ? getPermissionsForFeature(item.feature) : [];
     const required = [...featurePermissions, ...(item.permissions ?? [])];
     if (required.length === 0) {
@@ -107,10 +130,48 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
     return hasAnyPermission(required);
   };
 
+  const isPathActive = (href: string): boolean => {
+    if (!href) return false;
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const isExactPathActive = (href: string): boolean => pathname === href;
+
+  const isSubItemActive = (subItem: SidebarSubItem): boolean => {
+    if (isPathActive(subItem.href)) {
+      return true;
+    }
+    if (subItem.children) {
+      return subItem.children.some((child) => isPathActive(child.href));
+    }
+    return false;
+  };
+
   const accessibleNavItems = navItems.filter(canAccessItem);
   if (canAccessItem({ feature: "activity" })) {
     accessibleNavItems.push({ href: "/admin/activity", icon: History, label: "Activity", feature: "activity" });
   }
+
+  React.useEffect(() => {
+    setOpenDropdowns((prev) => {
+      const next = { ...prev } as Record<string, boolean>;
+      navItems.forEach((item) => {
+        item.subItems?.forEach((sub) => {
+          if (sub.children && isSubItemActive(sub)) {
+            next[sub.href] = true;
+          }
+        });
+      });
+      return next;
+    });
+  }, [pathname]);
+
+  const toggleDropdown = (key: string) => {
+    setOpenDropdowns((prev) => ({
+      ...prev,
+      [key]: !(prev[key] ?? false),
+    }));
+  };
 
   return (
     <aside className="hidden h-screen flex-col border-r border-border/50 bg-card/80 shadow-lg transition-colors duration-300 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:flex">
@@ -145,7 +206,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
           {accessibleNavItems.map((item) => {
             const { href, icon: Icon, label, subItems } = item;
-            const isActive = pathname === href || (subItems && pathname.startsWith(href));
+            const isActive = isPathActive(href) || (subItems?.some((sub) => isSubItemActive(sub)) ?? false);
 
             if (isCollapsed) {
               return (
@@ -200,18 +261,65 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className="ml-4 mt-1 flex flex-col gap-1 border-l border-border/50 pl-2">
-                      {visibleSubItems.map((sub) => (
-                        <Link
-                          key={sub.href}
-                          href={sub.href}
-                          className={cn(
-                            "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
-                            pathname === sub.href && "bg-primary/10 text-primary"
-                          )}
-                        >
-                          {sub.label}
-                        </Link>
-                      ))}
+                      {visibleSubItems.map((sub) => {
+                        const hasChildren = Boolean(sub.children?.length);
+                        const childItems = hasChildren
+                          ? sub.children!.filter((child) => canAccessItem(child))
+                          : [];
+                        const isSubActive = isSubItemActive(sub);
+                        if (!hasChildren || childItems.length === 0) {
+                          return (
+                            <Link
+                              key={sub.href}
+                              href={sub.href}
+                              className={cn(
+                                "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
+                                isExactPathActive(sub.href) && "bg-primary/10 text-primary"
+                              )}
+                            >
+                              {sub.label}
+                            </Link>
+                          );
+                        }
+
+                        const isOpen = openDropdowns[sub.href] ?? isSubActive;
+                        return (
+                          <div key={sub.href} className="space-y-1">
+                            <button
+                              type="button"
+                              onClick={() => toggleDropdown(sub.href)}
+                              className={cn(
+                                "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
+                                isSubActive && "text-primary"
+                              )}
+                            >
+                              <span>{sub.label}</span>
+                              <ChevronRight
+                                className={cn(
+                                  "h-4 w-4 transition-transform",
+                                  isOpen && "rotate-90"
+                                )}
+                              />
+                            </button>
+                            {isOpen && (
+                              <div className="ml-3 flex flex-col gap-1 border-l border-dashed border-border/50 pl-3">
+                                {childItems.map((child) => (
+                                  <Link
+                                    key={child.href}
+                                    href={child.href}
+                                    className={cn(
+                                      "rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
+                                      isExactPathActive(child.href) && "bg-primary/10 text-primary"
+                                    )}
+                                  >
+                                    {child.label}
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
