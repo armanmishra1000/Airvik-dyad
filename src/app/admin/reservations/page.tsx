@@ -6,7 +6,7 @@ import { differenceInDays, parseISO } from "date-fns";
 import { columns, ReservationWithDetails } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { useDataContext } from "@/context/data-context";
-import type { FolioItem, ReservationStatus } from "@/data/types";
+import type { FolioItem, Guest, ReservationStatus } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
 import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
 import { PermissionGate } from "@/components/admin/permission-gate";
@@ -56,6 +56,7 @@ function getGroupDisplayAmount(
 export default function ReservationsPage() {
   const {
     reservations,
+    reservationsTotalCount,
     guests,
     updateReservationStatus,
     updateBookingReservationStatus,
@@ -63,17 +64,56 @@ export default function ReservationsPage() {
     property,
   } = useDataContext();
 
+  const formatFullName = React.useCallback(
+    (...parts: Array<string | null | undefined>) =>
+      parts
+        .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
+        .join(" ")
+        .trim(),
+    []
+  );
+
+  const guestMap = React.useMemo(() => {
+    return guests.reduce<Map<string, Guest>>((map, guest) => {
+      map.set(guest.id, guest);
+      return map;
+    }, new Map());
+  }, [guests]);
+
   const groupedReservations = React.useMemo(() => {
     const reservationsWithDetails = sortReservationsByBookingDate(reservations).map((res) => {
-      const guest = guests.find((g) => g.id === res.guestId);
       const room = rooms.find((r) => r.id === res.roomId);
       const nights = differenceInDays(
         parseISO(res.checkOutDate),
         parseISO(res.checkInDate)
       );
+      const resolvedGuestName = (() => {
+        const snapshot = res.guestSnapshot;
+        if (snapshot) {
+          const fullName = formatFullName(snapshot.firstName, snapshot.lastName);
+          if (fullName) {
+            return fullName;
+          }
+          if (snapshot.email) {
+            return snapshot.email;
+          }
+          if (snapshot.phone) {
+            return snapshot.phone;
+          }
+        }
+        const fallbackGuest = guestMap.get(res.guestId);
+        if (fallbackGuest) {
+          const fullName = formatFullName(
+            fallbackGuest.firstName,
+            fallbackGuest.lastName
+          );
+          return fullName || fallbackGuest.email || fallbackGuest.phone || "N/A";
+        }
+        return "N/A";
+      })();
       const detailedReservation: ReservationWithDetails = {
         ...res,
-        guestName: guest ? `${guest.firstName} ${guest.lastName}` : "N/A",
+        guestName: resolvedGuestName,
         roomNumber: room ? room.roomNumber : "N/A",
         nights,
         roomCount: 1,
@@ -141,7 +181,7 @@ export default function ReservationsPage() {
     }
 
     return tableData;
-  }, [reservations, guests, rooms, property]);
+  }, [reservations, guestMap, rooms, property, formatFullName]);
 
   const handleCancelReservation = async (bookingId: string) => {
     await updateBookingReservationStatus(bookingId, "Cancelled");
@@ -164,6 +204,7 @@ export default function ReservationsPage() {
         <DataTable
           columns={columns}
           data={groupedReservations}
+          totalCount={reservationsTotalCount}
           onCancelReservation={handleCancelReservation}
           onCheckInReservation={handleCheckInReservation}
           onCheckOutReservation={handleCheckOutReservation}

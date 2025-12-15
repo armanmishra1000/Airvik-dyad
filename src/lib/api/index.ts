@@ -106,6 +106,14 @@ type DbReservation = {
   external_source: string | null;
   external_id: string | null;
   external_metadata: Record<string, unknown> | null;
+  guest?: DbReservationGuest | null;
+};
+
+type DbReservationGuest = {
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone: string | null;
 };
 
 type ReservationUpdatePayload = Partial<
@@ -287,6 +295,30 @@ const formatTimestampForPostgres = (dateStr: string): string => {
   return date.toISOString(); // Full ISO 8601 with timezone
 };
 
+const normalizeBookingCodeInput = (bookingId?: string | null): string | null => {
+  if (typeof bookingId !== "string") {
+    return null;
+  }
+  const trimmed = bookingId.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const upper = trimmed.toUpperCase();
+  if (/^A[0-9]+$/.test(upper)) {
+    return upper;
+  }
+
+  const digitsOnly = upper.replace(/\D/g, "");
+  if (!digitsOnly) {
+    throw new Error(
+      `Invalid booking ID "${bookingId}". Provide a value like A6504 or include digits.`
+    );
+  }
+
+  return `A${digitsOnly}`;
+};
+
 // --- Data Transformation Helpers ---
 
 const fromDbGuest = (dbGuest: DbGuest): Guest => ({
@@ -365,6 +397,14 @@ const fromDbReservation = (dbReservation: DbReservation): Reservation => ({
   externalSource: dbReservation.external_source ?? undefined,
   externalId: dbReservation.external_id,
   externalMetadata: dbReservation.external_metadata ?? undefined,
+  guestSnapshot: dbReservation.guest
+    ? {
+        firstName: dbReservation.guest.first_name,
+        lastName: dbReservation.guest.last_name,
+        email: dbReservation.guest.email,
+        phone: dbReservation.guest.phone,
+      }
+    : undefined,
 });
 
 const toDbReservation = (
@@ -704,6 +744,56 @@ export const deleteGuest = (id: string) => supabase.from('guests').delete().eq('
 // Reservations
 const RESERVATION_PAGE_SIZE = 500;
 
+type ReservationPageParams = {
+  limit: number;
+  offset?: number;
+  includeCount?: boolean;
+};
+
+const normalizePageParams = ({
+  limit,
+  offset = 0,
+  includeCount = false,
+}: ReservationPageParams): Required<ReservationPageParams> => {
+  const safeLimit = Math.max(1, Math.min(limit, RESERVATION_PAGE_SIZE));
+  const safeOffset = Math.max(0, offset);
+  return { limit: safeLimit, offset: safeOffset, includeCount };
+};
+
+export const getReservationsPage = async (
+  params: ReservationPageParams
+) => {
+  const { limit, offset, includeCount } = normalizePageParams(params);
+  const toIndex = offset + limit - 1;
+  const reservationColumns =
+    '*, guest:guests(first_name,last_name,email,phone)';
+
+  const { data, error, status, statusText, count } = await supabase
+    .from('reservations')
+    .select(reservationColumns, includeCount ? { count: 'estimated' } : undefined)
+    .order('booking_date', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: false })
+    .range(offset, toIndex);
+
+  if (error || !data) {
+    return {
+      data: null,
+      error,
+      status,
+      statusText,
+      count: includeCount ? count ?? null : null,
+    } as const;
+  }
+
+  return {
+    data: (data as DbReservation[]).map(fromDbReservation),
+    error: null,
+    status,
+    statusText,
+    count: includeCount ? count ?? null : null,
+  } as const;
+};
+
 export const getReservations = async () => {
     const aggregatedRows: DbReservation[] = [];
     let fromIndex = 0;
@@ -761,8 +851,48 @@ export const getReservations = async () => {
     };
 };
 
+export const getReservationsTotalCount = async () => {
+  const { count, error, status, statusText } = await supabase
+    .from('reservations')
+    .select('id', { count: 'exact', head: true });
+
+  if (error) {
+    return { count: null, error, status, statusText } as const;
+  }
+
+  return { count: count ?? 0, error: null, status, statusText } as const;
+};
+
+export const getTotalBookingsCount = async () => {
+  const { data, error, status, statusText } = await supabase.rpc(
+    'get_total_bookings'
+  );
+
+  if (error) {
+    return { count: null, error, status, statusText } as const;
+  }
+
+  const numericCount =
+    typeof data === 'number'
+      ? data
+      : data === null || typeof data === 'undefined'
+      ? 0
+      : Number(data);
+
+  return {
+    count: Number.isFinite(numericCount) ? numericCount : 0,
+    error: null,
+    status,
+    statusText,
+  } as const;
+};
+
 export const getReservationById = async (id: string) => {
-    const { data, error, ...rest } = await supabase.from('reservations').select('*').eq('id', id).single();
+    const { data, error, ...rest } = await supabase
+      .from('reservations')
+      .select('*, guest:guests(first_name,last_name,email,phone)')
+      .eq('id', id)
+      .single();
     if (error || !data) return { data: null, error, ...rest };
     return { data: fromDbReservation(data), error, ...rest };
 };
@@ -785,9 +915,10 @@ export const createReservationsWithTotal = async (
   args.p_room_ids.forEach((id, idx) => validateUUID(id, `p_room_ids[${idx}]`));
 
   // Format dates and timestamps
+  const resolvedBookingId = normalizeBookingCodeInput(args.p_booking_id);
   const validatedArgs = {
     ...args,
-    p_booking_id: normalizeBookingCodeInput(args.p_booking_id),
+    p_booking_id: resolvedBookingId,
     p_check_in_date: formatDateForPostgres(args.p_check_in_date),
     p_check_out_date: formatDateForPostgres(args.p_check_out_date),
     p_booking_date: args.p_booking_date 

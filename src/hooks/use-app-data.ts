@@ -580,6 +580,7 @@ export function useAppData() {
   const [reservationsTotalCount, setReservationsTotalCount] = React.useState<number>(0);
   const [property, setProperty] = React.useState<Property>(defaultProperty);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
+  const [reservationsTotalCount, setReservationsTotalCount] = React.useState<number>(0);
   const [guests, setGuests] = React.useState<Guest[]>([]);
   const [rooms, setRooms] = React.useState<Room[]>([]);
   const [roomTypes, setRoomTypes] = React.useState<RoomType[]>([]);

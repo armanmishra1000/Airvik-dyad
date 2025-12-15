@@ -332,6 +332,13 @@ export interface DonationStats {
 
 export type ReservationSource = 'reception' | 'website' | 'vikbooking';
 
+export type ReservationGuestSnapshot = {
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
 export interface Reservation {
   id: string;
   bookingId: string; // Shared ID for multi-room bookings
@@ -355,6 +362,7 @@ export interface Reservation {
   externalSource?: string;
   externalId?: string | null;
   externalMetadata?: Record<string, unknown> | null;
+  guestSnapshot?: ReservationGuestSnapshot;
 }
 
 export interface ExternalRoomLink {

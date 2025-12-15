@@ -11,20 +11,28 @@ import { Button } from "@/components/ui/button"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
-  bookingCount: number
+  totalCount?: number
+  onRefresh?: () => void
+  isRefreshing?: boolean
+  isLoading?: boolean
 }
 
 export function DataTableToolbar<TData>({
   table,
-  bookingCount,
+  totalCount,
+  onRefresh,
+  isRefreshing,
+  isLoading,
 }: DataTableToolbarProps<TData>) {
   const searchValue = String(table.getState().globalFilter ?? "")
+  const fallbackCount = table.getCoreRowModel().rows.length
+  const badgeCount = typeof totalCount === "number" ? totalCount : fallbackCount
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
     table.setGlobalFilter(value)
     table.getColumn("guestName")?.setFilterValue(undefined)
-    table.getColumn("id")?.setFilterValue(undefined)
+    table.getColumn("bookingId")?.setFilterValue(undefined)
   }
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -46,8 +54,18 @@ export function DataTableToolbar<TData>({
       </div>
       <div className="flex items-center gap-3">
         <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-          {bookingCount} booking{bookingCount === 1 ? "" : "s"}
+          {badgeCount} booking{badgeCount === 1 ? "" : "s"}
         </span>
+        {onRefresh ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onRefresh}
+            disabled={Boolean(isLoading || isRefreshing)}
+          >
+            {isRefreshing ? "Refreshing…" : "Refresh"}
+          </Button>
+        ) : null}
         <DataTableViewOptions table={table} />
         <Button asChild>
           <Link href="/admin/reservations/new">Add Reservation</Link>

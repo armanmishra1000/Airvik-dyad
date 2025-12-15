@@ -135,6 +135,7 @@ interface DataContextType {
   isRefreshing: boolean;
   property: Property;
   reservations: Reservation[];
+  reservationsTotalCount: number;
   guests: Guest[];
   rooms: Room[];
   roomTypes: RoomType[];
