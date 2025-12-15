@@ -181,7 +181,7 @@ export function ReviewSection() {
                               />
                             </div>
                           </div>
-                          <p className="text-lg leading-relaxed text-muted-foreground">
+                          <p className="lg:text-lg text-base leading-relaxed text-muted-foreground mt-5">
                             &ldquo;{renderQuote(review.quote)}&rdquo;
                           </p>
                           {(review.reviewerName || review.reviewerTitle) && (
