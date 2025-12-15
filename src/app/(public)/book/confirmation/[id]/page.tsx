@@ -32,6 +32,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import { InlineAlert } from "@/components/public/inline-alert";
+import { formatBookingCode } from "@/lib/reservations/formatting";
 
 export default function BookingConfirmationPage() {
   const params = useParams<{ id: string }>();
@@ -297,6 +298,8 @@ export default function BookingConfirmationPage() {
     ? format(parseISO(reservation.bookingDate), "EEE, dd MMM yyyy · h:mm a")
     : null;
 
+  const formattedBookingCode = formatBookingCode(reservation.bookingId);
+
   const customerDetails = {
     fullName: displayGuestName,
     email: guest?.email ?? null,
@@ -331,7 +334,7 @@ export default function BookingConfirmationPage() {
               <div className="mx-auto mt-5 inline-flex items-center gap-3 rounded-full border border-border/60 bg-background/70 px-4 py-2 text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">Reservation ID</span>
                 <span className="font-mono text-xs text-muted-foreground">
-                  {reservation.id}
+                  {formattedBookingCode}
                 </span>
               </div>
               <div className="mx-auto mt-6 max-w-2xl">
@@ -413,13 +416,13 @@ export default function BookingConfirmationPage() {
                   <CardTitle className="text-foreground font-serif text-2xl">Your reservation</CardTitle>
                   <CardDescription className="flex flex-col gap-2 pt-1 text-sm text-muted-foreground">
                     <div className="flex flex-wrap items-center gap-2 text-foreground">
-                      <span>Reservation ID: {reservation.id}</span>
+                      <span>Reservation ID: {formattedBookingCode}</span>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
                         aria-label="Copy reservation ID"
-                        onClick={() => copyToClipboard(reservation.id, "Reservation ID")}
+                        onClick={() => copyToClipboard(formattedBookingCode, "Reservation ID")}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>

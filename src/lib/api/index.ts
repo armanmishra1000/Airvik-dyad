@@ -167,7 +167,7 @@ type DbBookingRestriction = {
 };
 
 type CreateReservationsArgs = {
-  p_booking_id: string;           // text - keep as string
+  p_booking_id?: string | null;   // optional - server will generate when omitted
   p_guest_id: string;             // uuid - validate UUID format
   p_room_ids: string[];           // uuid[] - validate UUID format
   p_rate_plan_id: string;         // uuid - validate UUID format
@@ -690,8 +690,56 @@ export const deleteGuest = (id: string) => supabase.from('guests').delete().eq('
 // Reservations
 const RESERVATION_PAGE_SIZE = 500;
 
+type ReservationPageParams = {
+  limit: number;
+  offset?: number;
+  includeCount?: boolean;
+};
+
+const normalizePageParams = ({
+  limit,
+  offset = 0,
+  includeCount = false,
+}: ReservationPageParams): Required<ReservationPageParams> => {
+  const safeLimit = Math.max(1, Math.min(limit, RESERVATION_PAGE_SIZE));
+  const safeOffset = Math.max(0, offset);
+  return { limit: safeLimit, offset: safeOffset, includeCount };
+};
+
+export const getReservationsPage = async (
+  params: ReservationPageParams
+) => {
+  const { limit, offset, includeCount } = normalizePageParams(params);
+  const toIndex = offset + limit - 1;
+
+  const { data, error, status, statusText, count } = await supabase
+    .from('reservations')
+    .select('*', includeCount ? { count: 'estimated' } : undefined)
+    .order('booking_date', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: false })
+    .range(offset, toIndex);
+
+  if (error || !data) {
+    return {
+      data: null,
+      error,
+      status,
+      statusText,
+      count: includeCount ? count ?? null : null,
+    } as const;
+  }
+
+  return {
+    data: (data as DbReservation[]).map(fromDbReservation),
+    error: null,
+    status,
+    statusText,
+    count: includeCount ? count ?? null : null,
+  } as const;
+};
+
 export const getReservations = async () => {
-    const aggregatedRows: DbReservation[] = [];
+    const aggregatedRows: Reservation[] = [];
     let fromIndex = 0;
     let toIndex = RESERVATION_PAGE_SIZE - 1;
     let status: number | undefined;
@@ -700,12 +748,11 @@ export const getReservations = async () => {
 
     while (true) {
         const includeCount = fromIndex === 0;
-        const { data, error, status: pageStatus, statusText: pageStatusText, count: pageCount } = await supabase
-            .from('reservations')
-            .select('*', includeCount ? { count: 'estimated' } : undefined)
-            .order('booking_date', { ascending: false, nullsFirst: false })
-            .order('id', { ascending: false })
-            .range(fromIndex, toIndex);
+        const { data, error, status: pageStatus, statusText: pageStatusText, count: pageCount } = await getReservationsPage({
+            limit: RESERVATION_PAGE_SIZE,
+            offset: fromIndex,
+            includeCount,
+        });
 
         if (typeof status === 'undefined') {
             status = pageStatus;
@@ -717,7 +764,7 @@ export const getReservations = async () => {
             count = typeof pageCount === 'number' ? pageCount : null;
         }
 
-        if (error) {
+        if (error || !data) {
             return {
                 data: null,
                 error,
@@ -727,10 +774,9 @@ export const getReservations = async () => {
             };
         }
 
-        const pageRows = (data ?? []) as DbReservation[];
-        aggregatedRows.push(...pageRows);
+        aggregatedRows.push(...data);
 
-        if (pageRows.length < RESERVATION_PAGE_SIZE) {
+        if (data.length < RESERVATION_PAGE_SIZE) {
             break;
         }
 
@@ -739,7 +785,7 @@ export const getReservations = async () => {
     }
 
     return {
-        data: aggregatedRows.map(fromDbReservation),
+        data: aggregatedRows,
         error: null,
         status,
         statusText,
@@ -773,6 +819,7 @@ export const createReservationsWithTotal = async (
   // Format dates and timestamps
   const validatedArgs = {
     ...args,
+    p_booking_id: args.p_booking_id ?? null,
     p_check_in_date: formatDateForPostgres(args.p_check_in_date),
     p_check_out_date: formatDateForPostgres(args.p_check_out_date),
     p_booking_date: args.p_booking_date 

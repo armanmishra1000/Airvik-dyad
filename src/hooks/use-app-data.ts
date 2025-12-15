@@ -361,6 +361,30 @@ type FolioItemRecord = {
 };
 type RoomTypeAmenityRecord = { room_type_id: string; amenity_id: string };
 
+const toFolioItem = (
+  record: FolioItemRecord,
+  fallbackTimestamp: string
+): FolioItem => ({
+  id: record.id,
+  description: record.description,
+  amount: record.amount,
+  timestamp: record.timestamp ?? fallbackTimestamp,
+  paymentMethod: record.payment_method ?? undefined,
+  externalSource: record.external_source ?? undefined,
+  externalReference: record.external_reference ?? undefined,
+  externalMetadata: record.external_metadata ?? undefined,
+});
+
+const groupFolioRecords = (records: FolioItemRecord[]) => {
+  const grouped = new Map<string, FolioItemRecord[]>();
+  records.forEach((record) => {
+    const current = grouped.get(record.reservation_id) ?? [];
+    current.push(record);
+    grouped.set(record.reservation_id, current);
+  });
+  return grouped;
+};
+
 type CreateReservationPayload = {
   guestId: string;
   roomIds: string[];
@@ -527,6 +551,9 @@ const defaultProperty: Property = {
   tax_percentage: 0,
 };
 
+const INITIAL_RESERVATION_PAGE_SIZE = 50;
+const RESERVATION_BACKFILL_PAGE_SIZE = 500;
+
 export function useAppData() {
   const { session } = useSessionContext();
   const { logActivity } = useActivityLogger();
@@ -542,7 +569,11 @@ export function useAppData() {
   const userId = session?.user?.id ?? null;
   const [isLoading, setIsLoading] = React.useState(true);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [isReservationsInitialLoading, setIsReservationsInitialLoading] = React.useState(true);
+  const [isReservationsBackfilling, setIsReservationsBackfilling] = React.useState(false);
   const hasHydratedRef = React.useRef(false);
+  const reservationsBackfillPromiseRef = React.useRef<Promise<void> | null>(null);
+  const folioRecordsByReservationRef = React.useRef<Map<string, FolioItemRecord[]>>(new Map());
   const [property, setProperty] = React.useState<Property>(defaultProperty);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
   const [guests, setGuests] = React.useState<Guest[]>([]);
@@ -557,6 +588,82 @@ export function useAppData() {
   const [housekeepingAssignments, setHousekeepingAssignments] = React.useState<HousekeepingAssignment[]>([]);
   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(['stats', 'tables', 'calendar', 'notes']);
 
+  const withFolioData = React.useCallback(
+    (reservationsList: Reservation[]): Reservation[] => {
+      if (!reservationsList.length) {
+        return reservationsList;
+      }
+
+      return reservationsList.map((reservation) => {
+        const records = folioRecordsByReservationRef.current.get(reservation.id) ?? [];
+        const folio = records.map((record) => toFolioItem(record, reservation.bookingDate));
+        return { ...reservation, folio };
+      });
+    },
+    []
+  );
+
+  const mergeReservationLists = React.useCallback(
+    (existing: Reservation[], incoming: Reservation[]): Reservation[] => {
+      if (!incoming.length) {
+        return existing;
+      }
+      const byId = new Map(existing.map((reservation) => [reservation.id, reservation]));
+      incoming.forEach((reservation) => {
+        byId.set(reservation.id, reservation);
+      });
+      return Array.from(byId.values());
+    },
+    []
+  );
+
+  const startReservationsBackfill = React.useCallback(
+    async (initialLoadedCount: number) => {
+      if (reservationsBackfillPromiseRef.current) {
+        return reservationsBackfillPromiseRef.current;
+      }
+
+      setIsReservationsBackfilling(true);
+
+      const promise = (async () => {
+        let offset = initialLoadedCount;
+        while (true) {
+          const { data, error } = await api.getReservationsPage({
+            limit: RESERVATION_BACKFILL_PAGE_SIZE,
+            offset,
+          });
+
+          if (error || !data?.length) {
+            break;
+          }
+
+          offset += data.length;
+          const reservationsWithFolios = withFolioData(data);
+          setReservations((previous) =>
+            sortReservationsByBookingDate(
+              mergeReservationLists(previous, reservationsWithFolios)
+            )
+          );
+
+          if (data.length < RESERVATION_BACKFILL_PAGE_SIZE) {
+            break;
+          }
+        }
+      })()
+        .catch((error) => {
+          console.error("Failed to backfill reservations:", error);
+        })
+        .finally(() => {
+          setIsReservationsBackfilling(false);
+          reservationsBackfillPromiseRef.current = null;
+        });
+
+      reservationsBackfillPromiseRef.current = promise;
+      return promise;
+    },
+    [mergeReservationLists, withFolioData]
+  );
+
   const fetchData = React.useCallback(async (options?: { keepExisting?: boolean }) => {
     const keepExisting = options?.keepExisting ?? false;
     const alreadyHydrated = hasHydratedRef.current;
@@ -564,18 +671,18 @@ export function useAppData() {
 
     if (shouldUseLoadingState) {
       setIsLoading(true);
+      setIsReservationsInitialLoading(true);
     } else {
       setIsRefreshing(true);
     }
 
     try {
       const [
-        propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
+        propertyRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
         rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes, housekeepingAssignmentsRes,
         roomTypeAmenitiesRes
       ] = await Promise.all([
         api.getProperty(),
-        api.getReservations(),
         userId ? api.getGuests() : Promise.resolve({ data: [] }),
         api.getRooms(),
         api.getRoomTypes(),
@@ -590,6 +697,16 @@ export function useAppData() {
         api.getRoomTypeAmenities()
       ]);
 
+
+      const reservationsPage = await api.getReservationsPage({
+        limit: INITIAL_RESERVATION_PAGE_SIZE,
+        offset: 0,
+        includeCount: true,
+      });
+
+      if (reservationsPage.error) {
+        throw reservationsPage.error;
+      }
       if (propertyRes.data) setProperty({ ...defaultProperty, ...propertyRes.data });
       setGuests(guestsRes.data || []);
       setRooms(roomsRes.data || []);
@@ -601,21 +718,19 @@ export function useAppData() {
       setHousekeepingAssignments(housekeepingAssignmentsRes.data || []);
 
       const folioItems = (folioItemsRes.data || []) as FolioItemRecord[];
-      const reservationsWithFolios: Reservation[] = (reservationsRes.data || []).map((res) => {
-        const folio = folioItems
-          .filter((item) => item.reservation_id === res.id)
-          .map((item) => {
-            const { reservation_id, payment_method, ...folioItem } = item;
-            void reservation_id;
-            return {
-              ...folioItem,
-              timestamp: item.timestamp ?? res.bookingDate,
-              paymentMethod: payment_method ?? undefined,
-            };
-          });
-        return { ...res, folio };
+      folioRecordsByReservationRef.current = groupFolioRecords(folioItems);
+
+      const initialReservations = withFolioData(reservationsPage.data ?? []);
+      setReservations((previous) => {
+        if (keepExisting && previous.length) {
+          const merged = mergeReservationLists(previous, initialReservations);
+          return sortReservationsByBookingDate(merged);
+        }
+        return sortReservationsByBookingDate(initialReservations);
       });
-      setReservations(sortReservationsByBookingDate(reservationsWithFolios));
+      setIsReservationsInitialLoading(false);
+
+      void startReservationsBackfill(initialReservations.length);
 
       const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
       const roomTypesData = (roomTypesRes.data || []).map(rt => {
@@ -638,8 +753,9 @@ export function useAppData() {
       } else {
         setIsRefreshing(false);
       }
+      setIsReservationsInitialLoading(false);
     }
-  }, [userId]);
+  }, [mergeReservationLists, startReservationsBackfill, userId, withFolioData]);
 
   React.useEffect(() => {
     fetchData();
@@ -723,7 +839,6 @@ export function useAppData() {
 
   const addReservation = async (payload: CreateReservationPayload) => {
     const { roomIds, roomOccupancies, ...reservationDetails } = payload;
-    const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     // Check if rate plan exists, but don't fail if it doesn't
     const ratePlan = reservationDetails.ratePlanId 
@@ -738,7 +853,6 @@ export function useAppData() {
     const taxRate = property?.tax_percentage ?? 0;
 
     const { data, error } = await api.createReservationsWithTotal({
-      p_booking_id: bookingId,
       p_guest_id: reservationDetails.guestId,
       p_room_ids: roomIds,
       p_rate_plan_id: reservationDetails.ratePlanId || "default-rate-plan",
@@ -778,6 +892,7 @@ export function useAppData() {
       sortReservationsByBookingDate([...prev, ...reservationsWithEmptyFolio])
     );
     const primaryReservation = reservationsWithEmptyFolio[0];
+    const assignedBookingId = primaryReservation?.bookingId ?? "";
     const guest = guests.find((g) => g.id === reservationDetails.guestId);
     const label = guest
       ? formatName(guest.firstName, guest.lastName) || guest.email
@@ -786,7 +901,7 @@ export function useAppData() {
       section: "reservations",
       entityType: "reservation",
       entityId: primaryReservation?.id ?? null,
-      entityLabel: bookingId,
+      entityLabel: assignedBookingId,
       action: "reservation_created",
       details: `Created reservation for ${label}`,
       metadata: {
@@ -1475,6 +1590,8 @@ export function useAppData() {
   return {
     isLoading,
     isRefreshing,
+    isReservationsInitialLoading,
+    isReservationsBackfilling,
     property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
     updateProperty, addGuest, deleteGuest, addReservation, addRoomsToBooking, refetchUsers, updateGuest, updateReservation, updateReservationStatus, updateBookingReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,

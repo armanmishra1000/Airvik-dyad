@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ReservationEditForm } from "@/app/admin/reservations/components/reservation-edit-form";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatBookingCode } from "@/lib/reservations/formatting";
 
 export default function ReservationEditPage() {
   const params = useParams<{ id: string }>();
@@ -83,7 +84,7 @@ export default function ReservationEditPage() {
           Editing reservation
         </p>
         <h1 className="text-2xl font-serif font-semibold">{guestName}</h1>
-        <p className="text-sm text-muted-foreground">Booking #{reservation.bookingId}</p>
+        <p className="text-sm text-muted-foreground">Booking {formatBookingCode(reservation.bookingId)}</p>
       </div>
       <ReservationEditForm
         reservation={reservationWithDetails}

@@ -31,12 +31,17 @@ import { DataTableToolbar } from "./data-table-toolbar"
 import { DataTablePagination } from "./data-table-pagination"
 import { CancelReservationDialog } from "./cancel-reservation-dialog"
 import type { ReservationWithDetails } from "./columns"
+import { formatBookingCode } from "@/lib/reservations/formatting"
 interface DataTableProps {
   columns: ColumnDef<ReservationWithDetails, unknown>[]
   data: ReservationWithDetails[]
   onCancelReservation: (bookingId: string) => Promise<void> | void
   onCheckInReservation: (reservationId: string) => void
   onCheckOutReservation: (reservationId: string) => void
+  onRefresh?: () => void
+  isLoading?: boolean
+  isRefreshing?: boolean
+  isBackgroundLoading?: boolean
 }
 
 export function DataTable({
@@ -45,6 +50,10 @@ export function DataTable({
   onCancelReservation,
   onCheckInReservation,
   onCheckOutReservation,
+  onRefresh,
+  isLoading,
+  isRefreshing,
+  isBackgroundLoading,
 }: DataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "bookingDate", desc: true },
@@ -60,8 +69,8 @@ export function DataTable({
     React.useState<ReservationWithDetails | null>(null)
 
   const handleOpenCancelDialog = (reservation: ReservationWithDetails) => {
-    setReservationToCancel(reservation);
-  };
+    setReservationToCancel(reservation)
+  }
 
   const handleConfirmCancellation = () => {
     if (!reservationToCancel) {
@@ -89,10 +98,13 @@ export function DataTable({
       const term = String(filterValue ?? "").trim().toLowerCase()
       if (!term) return true
 
-      const bookingIdRaw = String(row.original.bookingId ?? row.getValue("id") ?? "").toLowerCase()
-      const normalizedBookingId = bookingIdRaw
+      const bookingIdentifier = String(row.original.bookingId ?? row.getValue("id") ?? "")
+      const bookingIdRaw = bookingIdentifier.toLowerCase()
+      const normalizedBookingId = bookingIdentifier
         .replace(/^booking-/i, "")
         .replace(/^vik-/i, "")
+        .toLowerCase()
+      const formattedBookingId = formatBookingCode(bookingIdentifier).toLowerCase()
       const guestName = String(row.original.guestName ?? row.getValue("guestName") ?? "")
         .trim()
         .toLowerCase()
@@ -100,6 +112,7 @@ export function DataTable({
       const matchesCurrent =
         bookingIdRaw.includes(term) ||
         normalizedBookingId.includes(term) ||
+        formattedBookingId.includes(term) ||
         guestName.includes(term)
 
       if (matchesCurrent) return true
@@ -147,11 +160,17 @@ export function DataTable({
     }
   })
 
+  const hasRows = table.getRowModel().rows?.length > 0
+  const showLoadingState = Boolean(isLoading) && !hasRows
+
   return (
     <div className="space-y-6">
       <DataTableToolbar
         table={table}
         bookingCount={data.length}
+        onRefresh={onRefresh}
+        isRefreshing={Boolean(isRefreshing)}
+        isLoading={Boolean(isLoading)}
       />
       <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
         <Table>
@@ -174,16 +193,41 @@ export function DataTable({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            {showLoadingState ? (
+              <TableRow>
+                <TableCell colSpan={columns.length}>
+                  <div className="space-y-4 py-8">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <div
+                        key={String(index)}
+                        className="h-4 animate-pulse rounded-full bg-muted/60"
+                      />
+                    ))}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : hasRows ? (
+              <>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+                {isBackgroundLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="py-4 text-center text-sm text-muted-foreground"
+                    >
+                      Loading older reservations…
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))
+                  </TableRow>
+                ) : null}
+              </>
             ) : (
               <TableRow>
                 <TableCell

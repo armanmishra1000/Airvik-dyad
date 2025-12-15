@@ -61,6 +61,10 @@ export default function ReservationsPage() {
     updateBookingReservationStatus,
     rooms,
     property,
+    refreshReservations,
+    isRefreshing,
+    isReservationsInitialLoading,
+    isReservationsBackfilling,
   } = useDataContext();
 
   const groupedReservations = React.useMemo(() => {
@@ -167,6 +171,12 @@ export default function ReservationsPage() {
           onCancelReservation={handleCancelReservation}
           onCheckInReservation={handleCheckInReservation}
           onCheckOutReservation={handleCheckOutReservation}
+          onRefresh={() => {
+            void refreshReservations();
+          }}
+          isLoading={isReservationsInitialLoading || isRefreshing}
+          isRefreshing={isRefreshing}
+          isBackgroundLoading={isReservationsBackfilling}
         />
       </div>
     </PermissionGate>

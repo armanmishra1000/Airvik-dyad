@@ -12,6 +12,7 @@ import { useDataContext } from "@/context/data-context";
 import type { ImportJob, ImportJobEntryStatus, Room } from "@/data/types";
 import type { ImportIssue, SkipReportEntry } from "@/lib/importers/vikbooking/types";
 import { authorizedFetch } from "@/lib/auth/client-session";
+import { formatBookingCode } from "@/lib/reservations/formatting";
 
 type PreviewRow = Record<string, unknown>;
 
@@ -341,7 +342,7 @@ export function CsvImportPanel() {
                       return (
                         <tr key={rowNumber} className="border-t">
                           <td className="px-2 py-1">{rowNumber}</td>
-                          <td className="px-2 py-1">{String(row.bookingId ?? "")}</td>
+                          <td className="px-2 py-1">{formatBookingCode(String(row.bookingId ?? ""))}</td>
                           <td className="px-2 py-1">{String(row.roomLabel ?? "")}</td>
                           <td className="px-2 py-1">
                             {String((row.guest as Record<string, unknown> | undefined)?.firstName ?? "")}
@@ -492,7 +493,7 @@ export function CsvImportPanel() {
                   {skipReport.map((entry) => (
                     <tr key={entry.entryId} className="border-t">
                       <td className="px-2 py-1">{entry.rowNumber}</td>
-                      <td className="px-2 py-1">{entry.bookingId}</td>
+                      <td className="px-2 py-1">{formatBookingCode(entry.bookingId)}</td>
                       <td className="px-2 py-1">{entry.roomLabel ?? "—"}</td>
                       <td className="px-2 py-1">{entry.guestName ?? "—"}</td>
                     <td className="px-2 py-1">

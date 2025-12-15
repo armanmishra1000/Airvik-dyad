@@ -8,17 +8,25 @@ import { DataTableViewOptions } from "./data-table-view-options"
 import { DataTableFacetedFilter } from "./data-table-faceted-filter"
 import { statuses } from "./columns"
 import { Button } from "@/components/ui/button"
+import { Loader2, RefreshCw } from "lucide-react"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
   bookingCount: number
+  onRefresh?: () => void
+  isRefreshing?: boolean
+  isLoading?: boolean
 }
 
 export function DataTableToolbar<TData>({
   table,
   bookingCount,
+  onRefresh,
+  isRefreshing,
+  isLoading,
 }: DataTableToolbarProps<TData>) {
   const searchValue = String(table.getState().globalFilter ?? "")
+  const refreshDisabled = !onRefresh || Boolean(isLoading)
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
@@ -48,6 +56,21 @@ export function DataTableToolbar<TData>({
         <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
           {bookingCount} booking{bookingCount === 1 ? "" : "s"}
         </span>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onRefresh?.()}
+          disabled={refreshDisabled || Boolean(isRefreshing)}
+          className="gap-2"
+        >
+          {isRefreshing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          Refresh
+        </Button>
         <DataTableViewOptions table={table} />
         <Button asChild>
           <Link href="/admin/reservations/new">Add Reservation</Link>

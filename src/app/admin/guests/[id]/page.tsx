@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatBookingCode } from "@/lib/reservations/formatting";
 
 export default function GuestDetailsPage() {
   const params = useParams<{ id: string }>();
@@ -95,7 +96,7 @@ export default function GuestDetailsPage() {
               <TableBody>
                 {guestReservations.map(res => (
                   <TableRow key={res.id}>
-                    <TableCell className="font-mono text-xs">{res.bookingId}</TableCell>
+                    <TableCell className="font-mono text-xs">{formatBookingCode(res.bookingId)}</TableCell>
                     <TableCell>Room {res.roomNumber}</TableCell>
                     <TableCell>{res.status}</TableCell>
                   </TableRow>

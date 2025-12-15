@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tooltip"
 import type { FolioItem, ReservationSource, ReservationStatus } from "@/data/types"
 import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { formatBookingCode } from "@/lib/reservations/formatting";
 
 export type ReservationWithDetails = {
     id: string;
@@ -90,7 +91,7 @@ function ReservationActions({ reservation, table }: { reservation: ReservationWi
             View Details
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => navigator.clipboard.writeText(reservation.id)}
+          onClick={() => navigator.clipboard.writeText(formatBookingCode(reservation.bookingId))}
         >
           Copy booking ID
         </DropdownMenuItem>
@@ -170,11 +171,18 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
         const input = String(value ?? "").trim().toLowerCase();
         if (!input) return true;
         const rawValue = String(row.getValue(id) ?? "");
-        const normalized = rawValue
+        const bookingIdentifier = row.original.bookingId || row.original.id || rawValue;
+        const normalized = bookingIdentifier
           .replace(/^booking-/i, "")
           .replace(/^vik-/i, "")
           .toLowerCase();
-        return normalized.includes(input);
+        const formatted = formatBookingCode(bookingIdentifier).toLowerCase();
+        const rawLower = bookingIdentifier.toLowerCase();
+        return (
+          normalized.includes(input) ||
+          rawLower.includes(input) ||
+          formatted.includes(input)
+        );
     },
     cell: ({ row }) => {
         if (row.depth > 0) {
@@ -190,9 +198,11 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
             return <span className="font-mono text-xs">N/A</span>;
         }
 
+        const formattedCode = formatBookingCode(displayId);
+
         return (
             <Link href={`/admin/reservations/${linkId}`} className="font-mono text-xs text-primary hover:underline">
-                {displayId.substring(displayId.startsWith('booking-') ? 8 : 4)}
+                {formattedCode}
             </Link>
         )
     }

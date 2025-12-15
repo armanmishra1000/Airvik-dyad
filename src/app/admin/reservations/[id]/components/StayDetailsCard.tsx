@@ -1,7 +1,7 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
-import { BedDouble, CalendarDays, Moon, Users, CreditCard } from "lucide-react";
+import { BedDouble, CalendarDays, Moon, Users, CreditCard, Hash } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -12,6 +12,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
 import { useDataContext } from "@/context/data-context";
+import { formatBookingCode } from "@/lib/reservations/formatting";
 
 interface StayDetailsCardProps {
   reservation: ReservationWithDetails;
@@ -45,6 +46,12 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
           <span className="text-muted-foreground">&rarr;</span>
           <span className="font-semibold">
             {format(parseISO(reservation.checkOutDate), "MMM d, yyyy")}
+          </span>
+        </div>
+        <div className="flex items-center gap-3 text-base">
+          <Hash className="h-4 w-4 text-muted-foreground" />
+          <span className="font-semibold font-mono text-sm">
+            {formatBookingCode(reservation.bookingId)}
           </span>
         </div>
         <Separator />

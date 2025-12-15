@@ -14,6 +14,7 @@ import { useDataContext } from "@/context/data-context";
 import type { Reservation, ReservationStatus } from "@/data/types";
 import { cn } from "@/lib/utils";
 import { isActiveReservationStatus } from "@/lib/reservations/status";
+import { formatBookingCode } from "@/lib/reservations/formatting";
 
 const reservationStatusStyles: Record<
   ReservationStatus,
@@ -101,8 +102,9 @@ const BOOKING_ID_VISIBLE_LENGTH = 7 as const;
 
 function formatBookingId(id: string): string {
   if (!id) return "-";
-  if (id.length <= BOOKING_ID_VISIBLE_LENGTH) return id;
-  return id.slice(-BOOKING_ID_VISIBLE_LENGTH);
+  const formatted = formatBookingCode(id);
+  if (formatted.length <= BOOKING_ID_VISIBLE_LENGTH) return formatted;
+  return formatted.slice(-BOOKING_ID_VISIBLE_LENGTH);
 }
 
 function formatCustomerName(detail: ReservationDetail): string {
