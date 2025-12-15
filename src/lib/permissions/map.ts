@@ -18,6 +18,7 @@ export const FEATURE_PERMISSIONS = {
   feedback: ["read:feedback"],
   feedbackManage: ["update:feedback", "delete:feedback"],
   eventBanner: ["update:setting"],
+  testimonials: ["update:setting"],
   reports: ["read:report"],
   activity: ["read:report"],
   settings: ["update:setting"],

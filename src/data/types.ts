@@ -440,6 +440,18 @@ export interface EventBanner {
   updatedBy?: string;
 }
 
+export interface Testimonial {
+  id: string;
+  reviewerName: string;
+  reviewerTitle?: string;
+  content: string;
+  imageUrl: string;
+  isPublished: boolean;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
 // Blog
 export interface Category {
   id: string;

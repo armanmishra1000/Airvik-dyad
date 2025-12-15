@@ -12,7 +12,24 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 
-const testimonials = [
+type CarouselTestimonial = {
+  quote: string;
+  image: string;
+  imageAlt: string;
+  reviewerName?: string;
+  reviewerTitle?: string;
+};
+
+type TestimonialsResponse = {
+  data?: Array<{
+    reviewerName: string;
+    reviewerTitle?: string;
+    content: string;
+    imageUrl: string;
+  }>;
+};
+
+const fallbackTestimonials: CarouselTestimonial[] = [
   {
     quote:
       "Sahajanand Wellness provided me with an incredible space to reconnect with myself",
@@ -49,6 +66,9 @@ export function TestimonialSection() {
   );
   const [api, setApi] = React.useState<CarouselApi | null>(null);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
+  const [testimonials, setTestimonials] = React.useState<CarouselTestimonial[]>(
+    fallbackTestimonials
+  );
 
   React.useEffect(() => {
     if (!api) {
@@ -66,6 +86,38 @@ export function TestimonialSection() {
       api.off("select", onSelect);
     };
   }, [api]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const loadTestimonials = async () => {
+      try {
+        const response = await fetch("/api/testimonials", { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+        const json: TestimonialsResponse = await response.json();
+        if (!json?.data?.length || cancelled) {
+          return;
+        }
+        const mapped: CarouselTestimonial[] = json.data.map((testimonial) => ({
+          quote: testimonial.content,
+          image: testimonial.imageUrl,
+          imageAlt: testimonial.reviewerName,
+          reviewerName: testimonial.reviewerName,
+          reviewerTitle: testimonial.reviewerTitle,
+        }));
+        setTestimonials(mapped);
+      } catch (error) {
+        console.error("Failed to load testimonials", error);
+      }
+    };
+
+    void loadTestimonials();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <section className="bg-background py-10 sm:py-12">
@@ -113,7 +165,7 @@ export function TestimonialSection() {
                       className="relative h-full rounded-3xl border border-white/80"
                       style={{ backgroundColor: testimonialCardBackground }}
                     >
-                      <CardContent className="relative flex h-full flex-col items-center gap-8 px-8 pt-20 pb-6 text-center sm:pt-24 md:pt-24 md:pb-8 lg:px-10 lg:pt-28 select-none">
+                      <CardContent className="relative flex h-full flex-col items-center gap-6 px-8 pt-20 pb-6 text-center sm:pt-24 md:pt-24 md:pb-8 lg:px-10 lg:pt-28 select-none">
                         <div className="flex items-center justify-center -mt-16">
                           <div className="absolute -top-12 sm:-top-10 lg:-top-16 left-1/2 -translate-x-1/2 flex h-24 w-24 lg:w-32 lg:h-32 items-center justify-center rounded-full border-4 border-white bg-white">
                             <Image
@@ -127,10 +179,20 @@ export function TestimonialSection() {
                         <p className="text-lg leading-relaxed text-muted-foreground">
                           &ldquo;{renderQuote(testimonial.quote)}&rdquo;
                         </p>
-                        {/* <div className="mx-auto h-px w-16 bg-primary/30" /> */}
-                        {/* <p className="text-xs font-medium uppercase tracking-[0.4em] text-muted-foreground">
-                          {testimonial.author}
-                        </p> */}
+                        {(testimonial.reviewerName || testimonial.reviewerTitle) && (
+                          <div className="text-center">
+                            {testimonial.reviewerName && (
+                              <p className="text-base font-semibold text-foreground">
+                                {testimonial.reviewerName}
+                              </p>
+                            )}
+                            {testimonial.reviewerTitle && (
+                              <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+                                {testimonial.reviewerTitle}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </div>

@@ -21,6 +21,7 @@ import {
   HeartHandshake,
   History,
   Megaphone,
+  Quote,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import * as React from "react";
@@ -68,6 +69,7 @@ const navItems: SidebarNavItem[] = [
     ],
   },
   { href: "/admin/housekeeping", icon: ClipboardList, label: "Housekeeping", feature: "housekeeping" },
+  { href: "/admin/testimonials", icon: Quote, label: "Testimonials", feature: "testimonials" },
   { href: "/admin/guests", icon: Users, label: "Guests", feature: "guests" },
   { href: "/admin/room-categories", icon: FolderOpen, label: "Room Categories", feature: "roomCategories" },
   { href: "/admin/room-types", icon: Layers, label: "Room Types", feature: "roomTypes" },
