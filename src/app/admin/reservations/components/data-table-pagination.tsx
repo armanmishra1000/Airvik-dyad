@@ -19,17 +19,28 @@ import {
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>
+  totalCount?: number
 }
 
 export function DataTablePagination<TData>({
   table,
+  totalCount,
 }: DataTablePaginationProps<TData>) {
+  const filteredCount = table.getFilteredRowModel().rows.length
+  const isFiltered =
+    Boolean(table.getState().globalFilter) ||
+    (table.getState().columnFilters?.length ?? 0) > 0
+  const displayTotal = isFiltered
+    ? filteredCount
+    : typeof totalCount === "number"
+    ? totalCount
+    : filteredCount
+  const currentPageCount = table.getPaginationRowModel().rows.length
   return (
     <div className="flex flex-col gap-4 px-2 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-4">
       <div className="text-sm text-muted-foreground">
-        Showing {table.getPaginationRowModel().rows.length} of{" "}
-        {table.getFilteredRowModel().rows.length} booking
-        {table.getFilteredRowModel().rows.length === 1 ? "" : "s"}.
+        Showing {currentPageCount} of {displayTotal} booking
+        {displayTotal === 1 ? "" : "s"}.
       </div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
         <div className="flex items-center gap-2">

@@ -23,40 +23,22 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { FolioItem, ReservationSource, ReservationStatus } from "@/data/types"
+import type {
+  Reservation,
+  ReservationSource,
+  ReservationStatus,
+} from "@/data/types"
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import { formatBookingCode } from "@/lib/reservations/formatting";
 
-export type ReservationWithDetails = {
-    id: string;
-    guestId: string;
-    roomId: string;
-    ratePlanId: string | null;
-    checkInDate: string;
-    checkOutDate: string;
-    numberOfGuests: number;
-    status: ReservationStatus;
-    notes?: string | undefined;
-    folio: FolioItem[];
-    totalAmount: number;
-    displayAmount?: number;
-    guestName: string;
-    roomNumber: string;
-    bookingDate: string;
-    bookingId: string;
-    source: ReservationSource;
-    nights: number;
-    paymentMethod: string;
-    adultCount: number;
-    childCount: number;
-    roomCount?: number;
-    subRows?: ReservationWithDetails[];
-    taxEnabledSnapshot: boolean;
-    taxRateSnapshot: number;
-    externalSource?: string;
-    externalId?: string | null;
-    externalMetadata?: Record<string, unknown> | null;
-}
+export type ReservationWithDetails = Reservation & {
+  displayAmount?: number;
+  guestName: string;
+  roomNumber: string;
+  nights: number;
+  roomCount?: number;
+  subRows?: ReservationWithDetails[];
+};
 
 export const statuses = [
     { value: "Tentative", label: "Tentative", icon: HelpCircle },

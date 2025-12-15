@@ -5,6 +5,7 @@ import {
   ColumnDef,
   ColumnFiltersState,
   ExpandedState,
+  PaginationState,
   Row,
   SortingState,
   VisibilityState,
@@ -32,6 +33,7 @@ import { DataTablePagination } from "./data-table-pagination"
 import { CancelReservationDialog } from "./cancel-reservation-dialog"
 import type { ReservationWithDetails } from "./columns"
 import { formatBookingCode } from "@/lib/reservations/formatting"
+import { GeistSpinner } from "@/components/shared/vercel-spinner"
 interface DataTableProps {
   columns: ColumnDef<ReservationWithDetails, unknown>[]
   data: ReservationWithDetails[]
@@ -42,6 +44,7 @@ interface DataTableProps {
   isLoading?: boolean
   isRefreshing?: boolean
   isBackgroundLoading?: boolean
+  totalCount?: number
 }
 
 export function DataTable({
@@ -54,6 +57,7 @@ export function DataTable({
   isLoading,
   isRefreshing,
   isBackgroundLoading,
+  totalCount,
 }: DataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "bookingDate", desc: true },
@@ -65,6 +69,10 @@ export function DataTable({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [expanded, setExpanded] = React.useState<ExpandedState>({})
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  })
   const [reservationToCancel, setReservationToCancel] =
     React.useState<ReservationWithDetails | null>(null)
 
@@ -133,6 +141,7 @@ export function DataTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setPagination,
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
@@ -144,12 +153,16 @@ export function DataTable({
     getExpandedRowModel: getExpandedRowModel(),
     globalFilterFn: reservationGlobalFilter,
     onGlobalFilterChange: setGlobalFilter,
+    autoResetAll: false,
+    autoResetPageIndex: false,
+    autoResetExpanded: false,
     state: {
       sorting,
       columnFilters,
       globalFilter,
       columnVisibility,
       expanded,
+      pagination,
     },
     meta: {
         checkInReservation: (res: ReservationWithDetails) =>
@@ -167,7 +180,7 @@ export function DataTable({
     <div className="space-y-6">
       <DataTableToolbar
         table={table}
-        bookingCount={data.length}
+        totalCount={totalCount}
         onRefresh={onRefresh}
         isRefreshing={Boolean(isRefreshing)}
         isLoading={Boolean(isLoading)}
@@ -196,13 +209,9 @@ export function DataTable({
             {showLoadingState ? (
               <TableRow>
                 <TableCell colSpan={columns.length}>
-                  <div className="space-y-4 py-8">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <div
-                        key={String(index)}
-                        className="h-4 animate-pulse rounded-full bg-muted/60"
-                      />
-                    ))}
+                  <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+                    <GeistSpinner size={36} label="Loading reservations" />
+                    <p className="text-sm">Loading reservations…</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -241,7 +250,7 @@ export function DataTable({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      <DataTablePagination table={table} totalCount={totalCount} />
       <CancelReservationDialog
         isOpen={!!reservationToCancel}
         onOpenChange={(isOpen) => !isOpen && setReservationToCancel(null)}

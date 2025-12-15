@@ -137,6 +137,7 @@ interface DataContextType {
   isReservationsBackfilling: boolean;
   property: Property;
   reservations: Reservation[];
+  reservationsTotalCount: number;
   guests: Guest[];
   rooms: Room[];
   roomTypes: RoomType[];

@@ -576,6 +576,7 @@ export function useAppData() {
   const folioRecordsByReservationRef = React.useRef<Map<string, FolioItemRecord[]>>(new Map());
   const [property, setProperty] = React.useState<Property>(defaultProperty);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
+  const [reservationsTotalCount, setReservationsTotalCount] = React.useState<number>(0);
   const [guests, setGuests] = React.useState<Guest[]>([]);
   const [rooms, setRooms] = React.useState<Room[]>([]);
   const [roomTypes, setRoomTypes] = React.useState<RoomType[]>([]);
@@ -697,15 +698,20 @@ export function useAppData() {
         api.getRoomTypeAmenities()
       ]);
 
-
-      const reservationsPage = await api.getReservationsPage({
-        limit: INITIAL_RESERVATION_PAGE_SIZE,
-        offset: 0,
-        includeCount: true,
-      });
+      const [reservationsPage, totalBookingsResult] = await Promise.all([
+        api.getReservationsPage({
+          limit: INITIAL_RESERVATION_PAGE_SIZE,
+          offset: 0,
+          includeCount: true,
+        }),
+        api.getTotalBookingsCount(),
+      ]);
 
       if (reservationsPage.error) {
         throw reservationsPage.error;
+      }
+      if (totalBookingsResult.error) {
+        console.error("Failed to fetch total bookings count:", totalBookingsResult.error);
       }
       if (propertyRes.data) setProperty({ ...defaultProperty, ...propertyRes.data });
       setGuests(guestsRes.data || []);
@@ -728,6 +734,14 @@ export function useAppData() {
         }
         return sortReservationsByBookingDate(initialReservations);
       });
+      const fallbackBookingCount = new Set(
+        initialReservations.map((reservation) => reservation.bookingId)
+      ).size;
+      const resolvedBookingCount =
+        typeof totalBookingsResult.count === "number"
+          ? totalBookingsResult.count
+          : fallbackBookingCount;
+      setReservationsTotalCount(resolvedBookingCount);
       setIsReservationsInitialLoading(false);
 
       void startReservationsBackfill(initialReservations.length);
@@ -1592,7 +1606,7 @@ export function useAppData() {
     isRefreshing,
     isReservationsInitialLoading,
     isReservationsBackfilling,
-    property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
+    property, reservations, reservationsTotalCount, guests, rooms, roomTypes, roomCategories, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
     updateProperty, addGuest, deleteGuest, addReservation, addRoomsToBooking, refetchUsers, updateGuest, updateReservation, updateReservationStatus, updateBookingReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
     deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
