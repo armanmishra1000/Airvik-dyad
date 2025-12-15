@@ -50,9 +50,14 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
         </div>
         <div className="flex items-center gap-3 text-base">
           <Hash className="h-4 w-4 text-muted-foreground" />
-          <span className="font-semibold font-mono text-sm">
-            {formatBookingCode(reservation.bookingId)}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Booking ID
+            </span>
+            <span className="font-semibold font-mono text-sm">
+              {formatBookingCode(reservation.bookingId)}
+            </span>
+          </div>
         </div>
         <Separator />
         <div className="grid gap-4 sm:grid-cols-2">

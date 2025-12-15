@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 
 import type { AdminActivityLog } from "@/data/types";
+import { formatBookingCode } from "@/lib/reservations/formatting";
 
 const fallbackCurrencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -59,6 +60,8 @@ const describeChangedFields = (fields: string[] | undefined) => {
   return remainingCount > 0 ? `${base}, +${remainingCount} more` : base;
 };
 
+const BOOKING_LABEL_PATTERN = /^(?:A?\d+|booking-|vik-)/i;
+
 const humanize = (value: string | null | undefined) => {
   if (!value) return "";
   return value
@@ -103,14 +106,30 @@ export const formatActivityActor = (log: AdminActivityLog) => {
   return `${actorName} • ${actorRole}`;
 };
 
+const shouldFormatBookingReference = (value: string | null | undefined) => {
+  if (!value) {
+    return false;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return false;
+  }
+  return BOOKING_LABEL_PATTERN.test(trimmed);
+};
+
 export const formatActivityResource = (log: AdminActivityLog) => {
-  return (
+  const rawValue =
     log.entityLabel?.trim() ||
     log.entityId?.trim() ||
     humanize(log.entityType) ||
     humanize(log.section) ||
-    "—"
-  );
+    "—";
+
+  if (shouldFormatBookingReference(rawValue)) {
+    return formatBookingCode(rawValue);
+  }
+
+  return rawValue;
 };
 
 export const formatActivitySummary = (log: AdminActivityLog) => {

@@ -326,6 +326,7 @@ import * as api from "@/lib/api";
 import { extractChangedFields } from "@/lib/activity/change-detector";
 import { revalidateReservationsCache } from "@/lib/reservations/cache-client";
 import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
+import { formatBookingCode } from "@/lib/reservations/formatting";
 import {
   buildRoomOccupancyAssignments,
   type RoomOccupancyAssignment,
@@ -970,7 +971,7 @@ export function useAppData() {
       entityId: reservationId,
       entityLabel: data.bookingId,
       action: "reservation_updated",
-      details: `Updated reservation ${data.bookingId}`,
+      details: `Updated reservation ${formatBookingCode(data.bookingId)}`,
       metadata: changedFields.length ? { changedFields } : undefined,
     });
   };
@@ -1042,7 +1043,7 @@ export function useAppData() {
       entityId: bookingId,
       entityLabel: bookingId,
       action: "reservation_status_updated",
-      details: `Changed booking ${bookingId} status to ${status} for ${data.length} rooms`,
+      details: `Changed booking ${formatBookingCode(bookingId)} status to ${status} for ${data.length} rooms`,
       metadata: { status, bookingId, affectedReservations: data.length },
     });
   };
