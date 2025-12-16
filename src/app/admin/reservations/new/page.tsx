@@ -30,7 +30,11 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
+import {
+  calculateMultipleRoomPricing,
+  resolveRoomNightlyRate,
+  type RoomPricingOverrides,
+} from "@/lib/pricing-calculator";
 import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import { buildRoomOccupancyAssignments } from "@/lib/reservations/guest-allocation";
@@ -55,6 +59,11 @@ const dateRangeSchema = z.object({
   path: ["to"],
 });
 
+const customRateRecordSchema = z
+  .record(z.string(), z.coerce.number().min(1, "Custom price must be positive."))
+  .default({})
+  .transform((value) => value ?? {});
+
 const reservationFormSchema = z.object({
   guestId: z.string({ required_error: "Please select a guest." }),
   dateRange: dateRangeSchema,
@@ -65,9 +74,12 @@ const reservationFormSchema = z.object({
   roomTypeId: z.string().optional(),
   roomIds: z.array(z.string()).min(1, "Select at least one room."),
   notes: z.string().max(500).optional(),
+  customRates: customRateRecordSchema,
 });
 
-type ReservationFormValues = z.infer<typeof reservationFormSchema>;
+type ReservationFormValues = z.input<typeof reservationFormSchema>;
+
+type CustomRateFieldErrors = Partial<Record<string, { message?: string }>>;
 
 export default function CreateReservationPage() {
   const {
@@ -98,6 +110,7 @@ export default function CreateReservationPage() {
       roomTypeId: undefined,
       roomIds: [],
       notes: "",
+      customRates: {},
     },
   });
 
@@ -111,6 +124,8 @@ export default function CreateReservationPage() {
   const selectedRoomTypeId = form.watch("roomTypeId") || "";
   const watchedRoomIds = form.watch("roomIds");
   const selectedRoomIds = React.useMemo(() => watchedRoomIds ?? [], [watchedRoomIds]);
+  const customRates = form.watch("customRates");
+  const customRatesValue = React.useMemo(() => customRates ?? {}, [customRates]);
   const adultsInput = form.watch("adults");
   const childrenInput = form.watch("children");
   const adults = Number(adultsInput ?? 0) || 0;
@@ -214,6 +229,32 @@ export default function CreateReservationPage() {
       .filter((type): type is RoomType => Boolean(type));
   }, [roomMap, roomTypeMap, selectedRoomIds]);
 
+  const uniqueSelectedRoomTypes = React.useMemo(() => {
+    const entries = new Map<string, RoomType>();
+    selectedRoomIds.forEach((roomId) => {
+      const room = roomMap.get(roomId);
+      if (!room) return;
+      const roomType = roomTypeMap.get(room.roomTypeId);
+      if (!roomType) return;
+      entries.set(roomType.id, roomType);
+    });
+    return Array.from(entries.values());
+  }, [roomMap, roomTypeMap, selectedRoomIds]);
+
+  React.useEffect(() => {
+    const allowedIds = new Set(uniqueSelectedRoomTypes.map((type) => type.id));
+    const currentRates = form.getValues("customRates") ?? {};
+    const nextEntries = Object.entries(currentRates).filter(
+      ([roomTypeId, value]) => allowedIds.has(roomTypeId) && typeof value === "number" && value > 0
+    );
+    if (nextEntries.length !== Object.keys(currentRates).length) {
+      form.setValue("customRates", Object.fromEntries(nextEntries), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [form, uniqueSelectedRoomTypes]);
+
   const selectedRoomsCapacity = React.useMemo(() => {
     if (!selectedRoomIds.length) return 0;
     return selectedRoomIds.reduce((sum, roomId) => sum + getRoomCapacity(roomId), 0);
@@ -229,6 +270,13 @@ export default function CreateReservationPage() {
     };
   }, [property?.tax_enabled, property?.tax_percentage]);
 
+  const nightlyOverrides = React.useMemo<RoomPricingOverrides | undefined>(() => {
+    const entries = Object.entries(customRatesValue).filter(([, value]) =>
+      typeof value === "number" && value > 0
+    );
+    return entries.length ? Object.fromEntries(entries) : undefined;
+  }, [customRatesValue]);
+
   const pricing = React.useMemo(() => {
     if (!selectedRoomTypes.length || nights <= 0) return null;
     return calculateMultipleRoomPricing({
@@ -236,10 +284,70 @@ export default function CreateReservationPage() {
       ratePlan: defaultRatePlan,
       nights: nights || 1,
       taxConfig,
+      nightlyOverrides,
     });
-  }, [selectedRoomTypes, defaultRatePlan, nights, taxConfig]);
+  }, [selectedRoomTypes, defaultRatePlan, nights, taxConfig, nightlyOverrides]);
 
   const formatCurrency = useCurrencyFormatter({ maximumFractionDigits: 0 });
+  const customRateErrors = form.formState.errors.customRates as CustomRateFieldErrors | undefined;
+
+  const handleCustomRateInput = React.useCallback(
+    (roomTypeId: string, rawValue: string) => {
+      if (!rawValue.trim()) {
+        if (roomTypeId in customRatesValue) {
+          const nextRates = { ...customRatesValue };
+          delete nextRates[roomTypeId];
+          form.setValue("customRates", nextRates, { shouldDirty: true, shouldValidate: true });
+        }
+        return;
+      }
+      const numericValue = Number(rawValue);
+      if (Number.isNaN(numericValue)) {
+        return;
+      }
+      form.setValue(
+        "customRates",
+        {
+          ...customRatesValue,
+          [roomTypeId]: numericValue,
+        },
+        { shouldDirty: true, shouldValidate: true }
+      );
+    },
+    [customRatesValue, form]
+  );
+
+  const handleResetCustomRate = React.useCallback(
+    (roomTypeId: string) => {
+      if (!(roomTypeId in customRatesValue)) {
+        return;
+      }
+      const nextRates = { ...customRatesValue };
+      delete nextRates[roomTypeId];
+      form.setValue("customRates", nextRates, { shouldDirty: true, shouldValidate: true });
+    },
+    [customRatesValue, form]
+  );
+
+  const buildCustomRoomTotals = React.useCallback(
+    (roomIdsList: string[], stayNights: number): Array<number | null> => {
+      if (!stayNights || stayNights <= 0) {
+        return roomIdsList.map(() => null);
+      }
+      return roomIdsList.map((roomId) => {
+        const room = roomMap.get(roomId);
+        if (!room) return null;
+        const roomType = roomTypeMap.get(room.roomTypeId);
+        if (!roomType) return null;
+        const override = customRatesValue[roomType.id];
+        if (typeof override !== "number" || override <= 0) {
+          return null;
+        }
+        return override * stayNights;
+      });
+    },
+    [customRatesValue, roomMap, roomTypeMap]
+  );
 
   const onSubmit = async (values: ReservationFormValues) => {
     if (!defaultRatePlan) {
@@ -261,6 +369,15 @@ export default function CreateReservationPage() {
         values.children
       );
 
+      const stayNights = Math.max(
+        differenceInDays(values.dateRange.to, values.dateRange.from),
+        1
+      );
+      const customTotals = buildCustomRoomTotals(values.roomIds, stayNights);
+      const hasCustomTotals = customTotals.some(
+        (total) => typeof total === "number" && total > 0
+      );
+
       const result = await addReservation({
         guestId: values.guestId,
         roomIds: values.roomIds,
@@ -276,6 +393,7 @@ export default function CreateReservationPage() {
         source: "reception",
         paymentMethod: values.paymentMethod,
         roomOccupancies,
+        customRoomTotals: hasCustomTotals ? customTotals : undefined,
       });
 
       if (!result.length) {
@@ -520,6 +638,74 @@ export default function CreateReservationPage() {
                     </p>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Custom Prices (optional)</CardTitle>
+                <CardDescription>Override nightly rates for selected room types.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {uniqueSelectedRoomTypes.length ? (
+                  uniqueSelectedRoomTypes.map((roomType) => {
+                    const overrideValue = customRatesValue[roomType.id];
+                    const hasOverride = typeof overrideValue === "number" && overrideValue > 0;
+                    const defaultNightlyRate = resolveRoomNightlyRate({
+                      roomType,
+                      ratePlan: defaultRatePlan,
+                    });
+                    const errorMessage = customRateErrors?.[roomType.id]?.message;
+                    return (
+                      <div
+                        key={roomType.id}
+                        className="space-y-2 rounded-xl border border-border/50 p-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{roomType.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Default {formatCurrency(defaultNightlyRate)} / night
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              min={1}
+                              className="w-28"
+                              value={typeof overrideValue === "number" ? overrideValue : ""}
+                              onChange={(event) =>
+                                handleCustomRateInput(roomType.id, event.target.value)
+                              }
+                              placeholder={formatCurrency(defaultNightlyRate)}
+                            />
+                            {hasOverride && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleResetCustomRate(roomType.id)}
+                              >
+                                Reset
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        {errorMessage && (
+                          <p className="text-xs text-destructive">{errorMessage}</p>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
+                    Select rooms to override their nightly rates.
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Changes apply only to this booking and update the summary immediately.
+                </p>
               </CardContent>
             </Card>
 

@@ -382,6 +382,7 @@ type CreateReservationPayload = {
   bookingDate: string;
   source: Reservation["source"];
   paymentMethod: Reservation["paymentMethod"];
+  customRoomTotals?: Array<number | null>;
 };
 
 type AddRoomsToBookingPayload = {
@@ -402,9 +403,20 @@ type AddRoomsToBookingPayload = {
   paymentMethod: Reservation["paymentMethod"];
   taxEnabledSnapshot: boolean;
   taxRateSnapshot: number;
+  customRoomTotals?: Array<number | null>;
 };
 
 type UserProfileUpdate = Partial<Pick<User, "name" | "roleId">>;
+
+function generateBookingId() {
+  const timestampSegment = Date.now().toString(36);
+  const randomSegment = Math.random().toString(36).slice(2, 10);
+  const slug = `${timestampSegment}${randomSegment}`
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 18);
+  const safeSlug = slug || timestampSegment;
+  return `booking-${safeSlug}`;
+}
 
 const normalizeRoomOccupancies = (
   roomIds: string[],
@@ -722,8 +734,8 @@ export function useAppData() {
   };
 
   const addReservation = async (payload: CreateReservationPayload) => {
-    const { roomIds, roomOccupancies, ...reservationDetails } = payload;
-    const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const { roomIds, roomOccupancies, customRoomTotals, ...reservationDetails } = payload;
+    const bookingId = generateBookingId();
 
     // Check if rate plan exists, but don't fail if it doesn't
     const ratePlan = reservationDetails.ratePlanId 
@@ -754,6 +766,7 @@ export function useAppData() {
       p_child_count: reservationDetails.childCount,
       p_tax_enabled_snapshot: taxEnabled,
       p_tax_rate_snapshot: taxEnabled ? taxRate : 0,
+      p_custom_totals: customRoomTotals ?? null,
     });
 
     if (error) throw error;
@@ -822,6 +835,7 @@ export function useAppData() {
       p_child_count: payload.childCount,
       p_tax_enabled_snapshot: payload.taxEnabledSnapshot,
       p_tax_rate_snapshot: payload.taxRateSnapshot,
+      p_custom_totals: payload.customRoomTotals ?? null,
     });
 
     if (error) throw error;
