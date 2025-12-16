@@ -23,39 +23,22 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { FolioItem, ReservationSource, ReservationStatus } from "@/data/types"
+import type {
+  Reservation,
+  ReservationSource,
+  ReservationStatus,
+} from "@/data/types"
 import { useCurrencyFormatter } from "@/hooks/use-currency";
+import { formatBookingCode } from "@/lib/reservations/formatting";
 
-export type ReservationWithDetails = {
-    id: string;
-    guestId: string;
-    roomId: string;
-    ratePlanId: string | null;
-    checkInDate: string;
-    checkOutDate: string;
-    numberOfGuests: number;
-    status: ReservationStatus;
-    notes?: string | undefined;
-    folio: FolioItem[];
-    totalAmount: number;
-    displayAmount?: number;
-    guestName: string;
-    roomNumber: string;
-    bookingDate: string;
-    bookingId: string;
-    source: ReservationSource;
-    nights: number;
-    paymentMethod: string;
-    adultCount: number;
-    childCount: number;
-    roomCount?: number;
-    subRows?: ReservationWithDetails[];
-    taxEnabledSnapshot: boolean;
-    taxRateSnapshot: number;
-    externalSource?: string;
-    externalId?: string | null;
-    externalMetadata?: Record<string, unknown> | null;
-}
+export type ReservationWithDetails = Reservation & {
+  displayAmount?: number;
+  guestName: string;
+  roomNumber: string;
+  nights: number;
+  roomCount?: number;
+  subRows?: ReservationWithDetails[];
+};
 
 export const statuses = [
     { value: "Tentative", label: "Tentative", icon: HelpCircle },
@@ -90,7 +73,7 @@ function ReservationActions({ reservation, table }: { reservation: ReservationWi
             View Details
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => navigator.clipboard.writeText(reservation.id)}
+          onClick={() => navigator.clipboard.writeText(formatBookingCode(reservation.bookingId))}
         >
           Copy booking ID
         </DropdownMenuItem>
@@ -164,7 +147,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     },
   },
   {
-    accessorKey: "id",
+    accessorKey: "bookingId",
     header: "Booking ID",
     filterFn: (row, id, value) => {
         const input = String(value ?? "").trim().toLowerCase();
@@ -174,7 +157,8 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
           .replace(/^booking-/i, "")
           .replace(/^vik-/i, "")
           .toLowerCase();
-        return normalized.includes(input);
+        const formatted = formatBookingCode(rawValue).toLowerCase();
+        return normalized.includes(input) || formatted.includes(input);
     },
     cell: ({ row }) => {
         if (row.depth > 0) {
@@ -183,7 +167,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
         const reservation = row.original;
         const isGroup = !!reservation.subRows;
         
-        const displayId = isGroup ? reservation.id : reservation.bookingId;
+        const displayId = reservation.bookingId;
         const linkId = isGroup ? reservation.subRows![0].id : reservation.id;
 
         if (!displayId) {
@@ -192,7 +176,7 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
 
         return (
             <Link href={`/admin/reservations/${linkId}`} className="font-mono text-xs text-primary hover:underline">
-                {displayId.substring(displayId.startsWith('booking-') ? 8 : 4)}
+                {formatBookingCode(displayId)}
             </Link>
         )
     }

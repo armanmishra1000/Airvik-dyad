@@ -7,28 +7,34 @@ import { randomUUID } from "crypto";
 const bucketName = "images";
 const maxFileSizeBytes = 5 * 1024 * 1024; // 5MB default limit
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl) {
-  throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL environment variable.");
-}
-
-if (!serviceRoleKey) {
-  throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable.");
-}
-
 type ServiceClient = SupabaseClient;
 
 let cachedClient: ServiceClient | null = null;
 let hasEnsuredBucket = false;
+
+function getServiceSupabaseConfig(): { url: string; serviceRoleKey: string } {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL environment variable.");
+  }
+
+  if (!serviceRoleKey) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable.");
+  }
+
+  return { url, serviceRoleKey };
+}
 
 function getServiceSupabaseClient(): ServiceClient {
   if (cachedClient) {
     return cachedClient;
   }
 
-  cachedClient = createClient(supabaseUrl as string, serviceRoleKey as string, {
+  const config = getServiceSupabaseConfig();
+
+  cachedClient = createClient(config.url, config.serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
