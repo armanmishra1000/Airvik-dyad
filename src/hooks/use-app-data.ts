@@ -324,6 +324,8 @@ import { useSessionContext } from "@/context/session-context";
 import { useActivityLogger } from "@/hooks/use-activity-logger";
 import * as api from "@/lib/api";
 import { extractChangedFields } from "@/lib/activity/change-detector";
+import { authorizedFetch } from "@/lib/auth/client-session";
+import { revalidateReservationsCache } from "@/lib/reservations/cache-client";
 import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
 import {
   buildRoomOccupancyAssignments,
@@ -348,17 +350,6 @@ import type {
   AdminActivityLogInput,
 } from "@/data/types";
 
-type FolioItemRecord = {
-  reservation_id: string;
-  id: string;
-  description: string;
-  amount: number;
-  timestamp: string | null;
-  payment_method?: string | null;
-  external_source?: string | null;
-  external_reference?: string | null;
-  external_metadata?: Record<string, unknown> | null;
-};
 type RoomTypeAmenityRecord = { room_type_id: string; amenity_id: string };
 
 type CreateReservationPayload = {
@@ -527,6 +518,45 @@ const defaultProperty: Property = {
   tax_percentage: 0,
 };
 
+const INITIAL_RESERVATION_PAGE_SIZE = 50;
+const RESERVATION_BACKFILL_PAGE_SIZE = 500;
+
+type ReservationsApiPayload = {
+  data: Reservation[];
+  nextOffset: number | null;
+  count?: number | null;
+};
+
+type FetchReservationsArgs = {
+  limit: number;
+  offset: number;
+  includeCount?: boolean;
+};
+
+const fetchReservationsFromApi = async (
+  params: FetchReservationsArgs
+): Promise<ReservationsApiPayload> => {
+  const query = new URLSearchParams();
+  query.set("limit", String(params.limit));
+  query.set("offset", String(params.offset));
+  if (params.includeCount) {
+    query.set("includeCount", "1");
+  }
+
+  const response = await authorizedFetch(
+    `/api/admin/reservations?${query.toString()}`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Failed to load reservations");
+  }
+
+  return (await response.json()) as ReservationsApiPayload;
+};
 export function useAppData() {
   const { session } = useSessionContext();
   const { logActivity } = useActivityLogger();
@@ -543,6 +573,11 @@ export function useAppData() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const hasHydratedRef = React.useRef(false);
+
+  const [isReservationsInitialLoading, setIsReservationsInitialLoading] = React.useState(true);
+  const [isReservationsBackfilling, setIsReservationsBackfilling] = React.useState(false);
+  const reservationsBackfillPromiseRef = React.useRef<Promise<void> | null>(null);
+  const [reservationsTotalCount, setReservationsTotalCount] = React.useState<number>(0);
   const [property, setProperty] = React.useState<Property>(defaultProperty);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
   const [guests, setGuests] = React.useState<Guest[]>([]);
@@ -557,6 +592,66 @@ export function useAppData() {
   const [housekeepingAssignments, setHousekeepingAssignments] = React.useState<HousekeepingAssignment[]>([]);
   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(['stats', 'tables', 'calendar', 'notes']);
 
+  const mergeReservationLists = React.useCallback(
+    (existing: Reservation[], incoming: Reservation[]): Reservation[] => {
+      if (!incoming.length) {
+        return existing;
+      }
+      const byId = new Map(existing.map((reservation) => [reservation.id, reservation]));
+      incoming.forEach((reservation) => {
+        byId.set(reservation.id, reservation);
+      });
+      return Array.from(byId.values());
+    },
+    []
+  );
+
+  const startReservationsBackfill = React.useCallback(
+    async (initialLoadedCount: number) => {
+      if (reservationsBackfillPromiseRef.current) {
+        return reservationsBackfillPromiseRef.current;
+      }
+
+      setIsReservationsBackfilling(true);
+
+      const promise = (async () => {
+        let offset = initialLoadedCount;
+        while (true) {
+          try {
+            const { data } = await fetchReservationsFromApi({
+              limit: RESERVATION_BACKFILL_PAGE_SIZE,
+              offset,
+            });
+
+            if (!data.length) {
+              break;
+            }
+
+            offset += data.length;
+            setReservations((previous) =>
+              sortReservationsByBookingDate(
+                mergeReservationLists(previous, data)
+              )
+            );
+
+            if (data.length < RESERVATION_BACKFILL_PAGE_SIZE) {
+              break;
+            }
+          } catch (error) {
+            console.error("Failed to backfill reservations:", error);
+            break;
+          }
+        }
+      })().finally(() => {
+        setIsReservationsBackfilling(false);
+        reservationsBackfillPromiseRef.current = null;
+      });
+
+      reservationsBackfillPromiseRef.current = promise;
+      return promise;
+    },
+    [mergeReservationLists]
+  );
   const fetchData = React.useCallback(async (options?: { keepExisting?: boolean }) => {
     const keepExisting = options?.keepExisting ?? false;
     const alreadyHydrated = hasHydratedRef.current;
@@ -564,18 +659,18 @@ export function useAppData() {
 
     if (shouldUseLoadingState) {
       setIsLoading(true);
+      setIsReservationsInitialLoading(true);
     } else {
       setIsRefreshing(true);
     }
 
     try {
       const [
-        propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
-        rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes, housekeepingAssignmentsRes,
+        propertyRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
+        rolesRes, amenitiesRes, stickyNotesRes, usersFuncRes, housekeepingAssignmentsRes,
         roomTypeAmenitiesRes
       ] = await Promise.all([
         api.getProperty(),
-        api.getReservations(),
         userId ? api.getGuests() : Promise.resolve({ data: [] }),
         api.getRooms(),
         api.getRoomTypes(),
@@ -584,12 +679,16 @@ export function useAppData() {
         userId ? api.getRoles() : Promise.resolve({ data: [] }),
         api.getAmenities(),
         userId ? api.getStickyNotes(userId) : Promise.resolve({ data: [] }),
-        api.getFolioItems(),
         userId ? api.getUsers() : Promise.resolve({ data: [] }),
         userId ? api.getHousekeepingAssignments() : Promise.resolve({ data: [] }),
         api.getRoomTypeAmenities()
       ]);
 
+      const reservationsResponse = await fetchReservationsFromApi({
+        limit: INITIAL_RESERVATION_PAGE_SIZE,
+        offset: 0,
+        includeCount: true,
+      });
       if (propertyRes.data) setProperty({ ...defaultProperty, ...propertyRes.data });
       setGuests(guestsRes.data || []);
       setRooms(roomsRes.data || []);
@@ -600,22 +699,25 @@ export function useAppData() {
       setUsers(usersFuncRes.data || []);
       setHousekeepingAssignments(housekeepingAssignmentsRes.data || []);
 
-      const folioItems = (folioItemsRes.data || []) as FolioItemRecord[];
-      const reservationsWithFolios: Reservation[] = (reservationsRes.data || []).map((res) => {
-        const folio = folioItems
-          .filter((item) => item.reservation_id === res.id)
-          .map((item) => {
-            const { reservation_id, payment_method, ...folioItem } = item;
-            void reservation_id;
-            return {
-              ...folioItem,
-              timestamp: item.timestamp ?? res.bookingDate,
-              paymentMethod: payment_method ?? undefined,
-            };
-          });
-        return { ...res, folio };
+      const initialReservations = reservationsResponse.data ?? [];
+      setReservations((previous) => {
+        if (keepExisting && previous.length) {
+          const merged = mergeReservationLists(previous, initialReservations);
+          return sortReservationsByBookingDate(merged);
+        }
+        return sortReservationsByBookingDate(initialReservations);
       });
-      setReservations(sortReservationsByBookingDate(reservationsWithFolios));
+      const fallbackBookingCount = new Set(
+        initialReservations.map((reservation) => reservation.bookingId)
+      ).size;
+      const resolvedBookingCount =
+        typeof reservationsResponse.count === "number"
+          ? reservationsResponse.count
+          : fallbackBookingCount;
+      setReservationsTotalCount(resolvedBookingCount);
+      setIsReservationsInitialLoading(false);
+
+      void startReservationsBackfill(initialReservations.length);
 
       const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
       const roomTypesData = (roomTypesRes.data || []).map(rt => {
@@ -638,14 +740,19 @@ export function useAppData() {
       } else {
         setIsRefreshing(false);
       }
+      setIsReservationsInitialLoading(false);
     }
-  }, [userId]);
+  }, [mergeReservationLists, startReservationsBackfill, userId]);
 
   React.useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const refreshReservations = React.useCallback(() => fetchData({ keepExisting: true }), [fetchData]);
+
+  const triggerReservationsCacheRevalidation = React.useCallback(() => {
+    void revalidateReservationsCache();
+  }, []);
 
   const updateProperty = async (updatedData: Partial<Omit<Property, "id">>) => {
     const changedFields = extractChangedFields(property, updatedData);
@@ -723,7 +830,6 @@ export function useAppData() {
 
   const addReservation = async (payload: CreateReservationPayload) => {
     const { roomIds, roomOccupancies, ...reservationDetails } = payload;
-    const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     // Check if rate plan exists, but don't fail if it doesn't
     const ratePlan = reservationDetails.ratePlanId 
@@ -738,7 +844,7 @@ export function useAppData() {
     const taxRate = property?.tax_percentage ?? 0;
 
     const { data, error } = await api.createReservationsWithTotal({
-      p_booking_id: bookingId,
+      p_booking_id: null,
       p_guest_id: reservationDetails.guestId,
       p_room_ids: roomIds,
       p_rate_plan_id: reservationDetails.ratePlanId || "default-rate-plan",
@@ -777,7 +883,9 @@ export function useAppData() {
     setReservations((prev) =>
       sortReservationsByBookingDate([...prev, ...reservationsWithEmptyFolio])
     );
+    triggerReservationsCacheRevalidation();
     const primaryReservation = reservationsWithEmptyFolio[0];
+    const assignedBookingId = primaryReservation?.bookingId ?? null;
     const guest = guests.find((g) => g.id === reservationDetails.guestId);
     const label = guest
       ? formatName(guest.firstName, guest.lastName) || guest.email
@@ -786,7 +894,7 @@ export function useAppData() {
       section: "reservations",
       entityType: "reservation",
       entityId: primaryReservation?.id ?? null,
-      entityLabel: bookingId,
+      entityLabel: assignedBookingId,
       action: "reservation_created",
       details: `Created reservation for ${label}`,
       metadata: {
@@ -846,6 +954,7 @@ export function useAppData() {
     setReservations((prev) =>
       sortReservationsByBookingDate([...(prev ?? []), ...createdReservations])
     );
+    triggerReservationsCacheRevalidation();
 
     return createdReservations;
   };
@@ -855,6 +964,7 @@ export function useAppData() {
     const { data, error } = await api.updateReservation(reservationId, updatedData);
     if (error) throw error;
     setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, ...data } : r));
+    triggerReservationsCacheRevalidation();
     const changedFields = extractChangedFields(previousReservation, updatedData);
     recordActivity({
       section: "reservations",
@@ -871,6 +981,7 @@ export function useAppData() {
     const { error } = await api.updateReservationStatus(reservationId, status);
     if (error) throw error;
     setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, status } : r));
+    triggerReservationsCacheRevalidation();
     recordActivity({
       section: "reservations",
       entityType: "reservation",
@@ -909,6 +1020,7 @@ export function useAppData() {
         };
       })
     );
+    triggerReservationsCacheRevalidation();
 
     data.forEach((updatedReservation) => {
       recordActivity({
@@ -956,7 +1068,16 @@ export function useAppData() {
       }
       throw new Error("Failed to add folio item");
     }
-    const inserted = data as FolioItemRecord;
+    const inserted = data as {
+      id: string;
+      description: string;
+      amount: number;
+      timestamp: string | null;
+      payment_method: string | null;
+      external_source: string | null;
+      external_reference: string | null;
+      external_metadata: Record<string, unknown> | null;
+    };
     const folioItem: FolioItem = {
       id: inserted.id,
       description: inserted.description,
@@ -974,6 +1095,7 @@ export function useAppData() {
           : r
       )
     );
+    triggerReservationsCacheRevalidation();
     recordActivity({
       section: "reservations",
       entityType: "reservation",
@@ -1475,6 +1597,9 @@ export function useAppData() {
   return {
     isLoading,
     isRefreshing,
+    isReservationsInitialLoading,
+    isReservationsBackfilling,
+    reservationsTotalCount,
     property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
     updateProperty, addGuest, deleteGuest, addReservation, addRoomsToBooking, refetchUsers, updateGuest, updateReservation, updateReservationStatus, updateBookingReservationStatus,
     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,

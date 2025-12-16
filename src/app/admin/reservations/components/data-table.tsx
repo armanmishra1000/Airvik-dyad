@@ -5,6 +5,7 @@ import {
   ColumnDef,
   ColumnFiltersState,
   ExpandedState,
+  PaginationState,
   Row,
   SortingState,
   VisibilityState,
@@ -31,12 +32,18 @@ import { DataTableToolbar } from "./data-table-toolbar"
 import { DataTablePagination } from "./data-table-pagination"
 import { CancelReservationDialog } from "./cancel-reservation-dialog"
 import type { ReservationWithDetails } from "./columns"
+import { GeistSpinner } from "@/components/shared/vercel-spinner"
 interface DataTableProps {
   columns: ColumnDef<ReservationWithDetails, unknown>[]
   data: ReservationWithDetails[]
   onCancelReservation: (bookingId: string) => Promise<void> | void
   onCheckInReservation: (reservationId: string) => void
   onCheckOutReservation: (reservationId: string) => void
+  onRefresh?: () => void
+  isLoading?: boolean
+  isRefreshing?: boolean
+  isBackgroundLoading?: boolean
+  totalCount?: number
 }
 
 export function DataTable({
@@ -45,6 +52,11 @@ export function DataTable({
   onCancelReservation,
   onCheckInReservation,
   onCheckOutReservation,
+  onRefresh,
+  isLoading,
+  isRefreshing,
+  isBackgroundLoading,
+  totalCount,
 }: DataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "bookingDate", desc: true },
@@ -56,6 +68,10 @@ export function DataTable({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [expanded, setExpanded] = React.useState<ExpandedState>({})
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  })
   const [reservationToCancel, setReservationToCancel] =
     React.useState<ReservationWithDetails | null>(null)
 
@@ -89,7 +105,9 @@ export function DataTable({
       const term = String(filterValue ?? "").trim().toLowerCase()
       if (!term) return true
 
-      const bookingIdRaw = String(row.original.bookingId ?? row.getValue("id") ?? "").toLowerCase()
+      const bookingIdRaw = String(
+        row.original.bookingId ?? row.getValue("bookingId") ?? ""
+      ).toLowerCase()
       const normalizedBookingId = bookingIdRaw
         .replace(/^booking-/i, "")
         .replace(/^vik-/i, "")
@@ -120,6 +138,7 @@ export function DataTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: setPagination,
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
@@ -131,12 +150,16 @@ export function DataTable({
     getExpandedRowModel: getExpandedRowModel(),
     globalFilterFn: reservationGlobalFilter,
     onGlobalFilterChange: setGlobalFilter,
+    autoResetAll: false,
+    autoResetPageIndex: false,
+    autoResetExpanded: false,
     state: {
       sorting,
       columnFilters,
       globalFilter,
       columnVisibility,
       expanded,
+      pagination,
     },
     meta: {
         checkInReservation: (res: ReservationWithDetails) =>
@@ -147,11 +170,17 @@ export function DataTable({
     }
   })
 
+  const hasRows = table.getRowModel().rows.length > 0
+  const showLoadingState = Boolean(isLoading) && !hasRows
+
   return (
     <div className="space-y-6">
       <DataTableToolbar
         table={table}
-        bookingCount={data.length}
+        totalCount={totalCount}
+        onRefresh={onRefresh}
+        isRefreshing={Boolean(isRefreshing)}
+        isLoading={Boolean(isLoading)}
       />
       <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
         <Table>
@@ -174,16 +203,37 @@ export function DataTable({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            {showLoadingState ? (
+              <TableRow>
+                <TableCell colSpan={columns.length}>
+                  <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+                    <GeistSpinner size={36} label="Loading reservations" />
+                    <p className="text-sm">Loading reservations…</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : hasRows ? (
+              <>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+                {isBackgroundLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="py-4 text-center text-sm text-muted-foreground"
+                    >
+                      Loading older reservations…
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))
+                  </TableRow>
+                ) : null}
+              </>
             ) : (
               <TableRow>
                 <TableCell
@@ -197,7 +247,7 @@ export function DataTable({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      <DataTablePagination table={table} totalCount={totalCount} />
       <CancelReservationDialog
         isOpen={!!reservationToCancel}
         onOpenChange={(isOpen) => !isOpen && setReservationToCancel(null)}

@@ -254,13 +254,17 @@ export async function getDonationByOrderId(orderId: string): Promise<Donation | 
 }
 
 export async function getDonationStats(): Promise<DonationStats> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase.from("donation_stats").select("*").maybeSingle();
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase.from("donation_stats").select("*").maybeSingle();
 
-  if (error) {
-    console.warn("Unable to read donation stats, returning defaults", error.message);
+    if (error) {
+      console.warn("Unable to read donation stats, returning defaults", error.message);
+      return fromDbStats(null);
+    }
+
+    return fromDbStats(data as DbDonationStats | null);
+  } catch {
     return fromDbStats(null);
   }
-
-  return fromDbStats(data as DbDonationStats | null);
 }

@@ -46,54 +46,62 @@ export async function getEventById(id: string): Promise<EventBanner | null> {
 }
 
 export async function getHomepageBanner(): Promise<EventBanner | null> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("event_banners")
-    .select("*")
-    .eq("is_active", true)
-    // Extra safety: active within dates (handled by RLS usually, but explicit check good)
-    .or(`starts_at.is.null,starts_at.lte.${new Date().toISOString()}`)
-    .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`)
-    .limit(1)
-    .maybeSingle();
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from("event_banners")
+      .select("*")
+      .eq("is_active", true)
+      // Extra safety: active within dates (handled by RLS usually, but explicit check good)
+      .or(`starts_at.is.null,starts_at.lte.${new Date().toISOString()}`)
+      .or(`ends_at.is.null,ends_at.gte.${new Date().toISOString()}`)
+      .limit(1)
+      .maybeSingle();
 
-  if (error) {
-    console.error("Error fetching homepage banner:", error);
+    if (error) {
+      console.error("Error fetching homepage banner:", error);
+      return null;
+    }
+
+    if (!data) return null;
+
+    const parsed = eventBannerRowSchema.safeParse(data);
+    if (!parsed.success) return null;
+    return mapEventBannerRow(parsed.data);
+  } catch {
     return null;
   }
-
-  if (!data) return null;
-
-  const parsed = eventBannerRowSchema.safeParse(data);
-  if (!parsed.success) return null;
-  return mapEventBannerRow(parsed.data);
 }
 
 export async function getUpcomingEvents(): Promise<EventBanner[]> {
-  const supabase = createServerSupabaseClient();
-  const now = new Date().toISOString();
-  
-  const { data, error } = await supabase
-    .from("event_banners")
-    .select("*")
-    .gt("starts_at", now)
-    .eq("is_active", false) // Assuming upcoming aren't the ACTIVE banner? Or maybe they can be?
-    // Requirement: "Upcoming events list... visible separately"
-    // Usually upcoming events are distinct from the currently running active banner.
-    // I will fetch ALL future events regardless of active flag, 
-    // but maybe exclude the one that is currently the main banner if needed.
-    // For now, simple date filter.
-    .order("starts_at", { ascending: true });
+  try {
+    const supabase = createServerSupabaseClient();
+    const now = new Date().toISOString();
+    
+    const { data, error } = await supabase
+      .from("event_banners")
+      .select("*")
+      .gt("starts_at", now)
+      .eq("is_active", false) // Assuming upcoming aren't the ACTIVE banner? Or maybe they can be?
+      // Requirement: "Upcoming events list... visible separately"
+      // Usually upcoming events are distinct from the currently running active banner.
+      // I will fetch ALL future events regardless of active flag,
+      // but maybe exclude the one that is currently the main banner if needed.
+      // For now, simple date filter.
+      .order("starts_at", { ascending: true });
 
-  if (error) {
-    console.error("Error fetching upcoming events:", error);
+    if (error) {
+      console.error("Error fetching upcoming events:", error);
+      return [];
+    }
+
+    return data
+      .map((row) => eventBannerRowSchema.safeParse(row))
+      .filter((result) => result.success)
+      .map((result) => mapEventBannerRow(result.data));
+  } catch {
     return [];
   }
-
-  return data
-    .map((row) => eventBannerRowSchema.safeParse(row))
-    .filter((result) => result.success)
-    .map((result) => mapEventBannerRow(result.data));
 }
 
 // --- Actions ---
