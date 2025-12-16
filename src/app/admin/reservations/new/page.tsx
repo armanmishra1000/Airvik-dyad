@@ -42,11 +42,11 @@ import { PermissionGate } from "@/components/admin/permission-gate";
 
 const paymentMethodOptions = [
   "Not specified",
-  "Not relevant",
-  "Pay with UPI",
-  "Card on file",
+  "Bank/IMPS",
   "Cash",
-  "Transfer",
+  "UPI",
+  "Bhagat Ji",
+  "Anurag Ji",
 ] as const satisfies ReservationPaymentMethod[];
 
 const creatableStatuses = ["Confirmed", "Tentative", "Standby"] as const satisfies ReservationStatus[];

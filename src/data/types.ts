@@ -204,11 +204,11 @@ export type ReservationStatus =
 
 export type ReservationPaymentMethod =
   | "Not specified"
-  | "Not relevant"
-  | "Pay with UPI"
-  | "Card on file"
+  | "Bank/IMPS"
   | "Cash"
-  | "Transfer";
+  | "UPI"
+  | "Bhagat Ji"
+  | "Anurag Ji";
 
 export interface FolioItem {
   id: string;
