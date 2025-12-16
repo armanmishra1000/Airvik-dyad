@@ -79,6 +79,19 @@ export function Footer() {
               A registered religious trust in Uttarakhand, dedicated to
               religious, educational, and health-related activities.
             </p>
+            <div className="flex items-center space-x-2 mt-6">
+              {socialLinks.map((link, index) => (
+                <a
+                  key={index}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary bg-card lg:size-10 size-8 rounded-full flex items-center flex-shrink-0 justify-center transition-colors focus-visible:outline-none"
+                >
+                  <link.icon className="lg:size-5 size-4" />
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* Column 2: Contact Details */}
@@ -173,34 +186,22 @@ export function Footer() {
         <div className="border-t border-border/50 pb-5"></div>
 
         {/* Second Row */}
-        <div className="flex flex-col sm:flex-row items-center justify-between">
+        <div className="flex items-center justify-center">
           <Link
             href="https://apexture.in/"
-            className="text-muted-foreground mb-4 sm:mb-0"
+            className="text-muted-foreground mb-4 sm:mb-0 sm:text-lg text-base"
           >
-            Made with{" "}
-            <img
-              draggable="false"
-              role="img"
-              className="size-5 inline-block align-middle mx-0.5"
-              alt="❤️"
-              src="https://s.w.org/images/core/emoji/17.0.2/svg/2764.svg"
-            ></img>
-            ️ by Apexture Pvt. Ltd.
+            Manage {" "}
+            <Image
+              className="size-5 inline-block align-middle mx-1"
+              alt="logo"
+              src="apexture-icon.svg"
+              width={40}
+              height={40}
+              quality={100}
+            ></Image>
+            ️ By Apexture Pvt. Ltd.
           </Link>
-          <div className="flex items-center space-x-3">
-            {socialLinks.map((link, index) => (
-              <a
-                key={index}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary bg-card lg:size-10 size-8 rounded-full flex items-center justify-center transition-colors focus-visible:outline-none"
-              >
-                <link.icon className="lg:size-5 size-4" />
-              </a>
-            ))}
-          </div>
         </div>
       </div>
     </footer>
