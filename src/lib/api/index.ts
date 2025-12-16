@@ -295,30 +295,6 @@ const formatTimestampForPostgres = (dateStr: string): string => {
   return date.toISOString(); // Full ISO 8601 with timezone
 };
 
-const normalizeBookingCodeInput = (bookingId?: string | null): string | null => {
-  if (typeof bookingId !== "string") {
-    return null;
-  }
-  const trimmed = bookingId.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const upper = trimmed.toUpperCase();
-  if (/^A[0-9]+$/.test(upper)) {
-    return upper;
-  }
-
-  const digitsOnly = upper.replace(/\D/g, "");
-  if (!digitsOnly) {
-    throw new Error(
-      `Invalid booking ID "${bookingId}". Provide a value like A6504 or include digits.`
-    );
-  }
-
-  return `A${digitsOnly}`;
-};
-
 // --- Data Transformation Helpers ---
 
 const fromDbGuest = (dbGuest: DbGuest): Guest => ({

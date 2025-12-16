@@ -55,6 +55,10 @@ function getGroupDisplayAmount(
 
 export default function ReservationsPage() {
   const {
+    isRefreshing,
+    isReservationsInitialLoading,
+    isReservationsBackfilling,
+    refreshReservations,
     reservations,
     reservationsTotalCount,
     guests,
@@ -205,6 +209,10 @@ export default function ReservationsPage() {
           columns={columns}
           data={groupedReservations}
           totalCount={reservationsTotalCount}
+          isLoading={isReservationsInitialLoading}
+          isRefreshing={isRefreshing}
+          isBackgroundLoading={isReservationsBackfilling}
+          onRefresh={refreshReservations}
           onCancelReservation={handleCancelReservation}
           onCheckInReservation={handleCheckInReservation}
           onCheckOutReservation={handleCheckOutReservation}

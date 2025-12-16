@@ -1,6 +1,8 @@
+import { authorizedFetch } from "@/lib/auth/client-session";
+
 export async function revalidateReservationsCache(): Promise<boolean> {
   try {
-    const response = await fetch("/api/admin/reservations/revalidate", {
+    const response = await authorizedFetch("/api/admin/reservations/revalidate", {
       method: "POST",
       cache: "no-store",
     });

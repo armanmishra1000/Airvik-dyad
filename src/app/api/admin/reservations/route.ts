@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { HttpError, requireFeature } from "@/lib/server/auth";
+
 import {
   clampReservationPageParams,
   getCachedReservationsCount,
@@ -9,7 +11,7 @@ import {
 type ReservationsApiResponse = {
   data: Awaited<ReturnType<typeof getCachedReservationsPage>>["data"];
   nextOffset: number | null;
-  count?: number;
+  count?: number | null;
 };
 
 const parseBoolean = (value: string | null): boolean => {
@@ -18,6 +20,15 @@ const parseBoolean = (value: string | null): boolean => {
 };
 
 export async function GET(request: NextRequest) {
+  try {
+    await requireFeature(request, "reservations");
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return NextResponse.json({ message: error.message }, { status: error.status });
+    }
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   const url = new URL(request.url);
   const limitParam = url.searchParams.get("limit");
   const offsetParam = url.searchParams.get("offset");
@@ -37,7 +48,7 @@ export async function GET(request: NextRequest) {
     const normalized = clampReservationPageParams({ limit, offset });
     const page = await getCachedReservationsPage(normalized);
 
-    let count: number | undefined;
+    let count: number | null | undefined;
     if (includeCount) {
       count = await getCachedReservationsCount();
     }

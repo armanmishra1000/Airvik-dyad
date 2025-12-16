@@ -133,6 +133,8 @@ type AddRoomsToBookingPayload = {
 interface DataContextType {
   isLoading: boolean;
   isRefreshing: boolean;
+  isReservationsInitialLoading: boolean;
+  isReservationsBackfilling: boolean;
   property: Property;
   reservations: Reservation[];
   reservationsTotalCount: number;

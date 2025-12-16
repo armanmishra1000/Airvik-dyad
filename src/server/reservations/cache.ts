@@ -171,7 +171,8 @@ const reservationsCountCache = unstable_cache(
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase.rpc("get_total_bookings");
     if (error) {
-      throw new Error(error.message);
+      console.error("Failed to fetch total bookings count:", error);
+      return null;
     }
     const numericCount =
       typeof data === "number"
@@ -188,6 +189,7 @@ const reservationsCountCache = unstable_cache(
   }
 );
 
-export const getCachedReservationsCount = () => reservationsCountCache();
+export const getCachedReservationsCount = (): Promise<number | null> =>
+  reservationsCountCache();
 
 export const clampReservationPageParams = normalizePageParams;
