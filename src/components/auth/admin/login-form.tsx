@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -83,7 +84,7 @@ export function AdminLoginForm() {
   }
 
   return (
-    <div className="relative min-h-screen w-full grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,560px)] overflow-hidden">
+    <div className="relative min-h-screen w-full flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] gap-8 lg:gap-0 overflow-hidden">
       {/* Decorative background */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-gradient-to-br from-orange-400/30 to-rose-400/30 blur-3xl" />
@@ -91,30 +92,50 @@ export function AdminLoginForm() {
       </div>
 
       {/* Brand / Visual side */}
-      <div className="relative hidden md:flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 dark:from-amber-950/20 dark:via-orange-950/10 dark:to-rose-950/10 p-10">
-        <div className="relative z-10 max-w-lg mx-auto text-left">
-          <span className="inline-flex items-center rounded-full bg-white/70 dark:bg-white/10 px-3 py-1 text-xs ring-1 ring-black/5 dark:ring-white/10 mb-5">Admin</span>
-          <h2 className="text-4xl md:text-5xl font-serif font-semibold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-rose-600">
-            Streamlined hotel management
+      <section className="relative flex w-full items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 dark:from-amber-950/20 dark:via-orange-950/10 dark:to-rose-950/10 px-6 py-10 sm:px-10 lg:px-12">
+        <div className="relative z-10 mx-auto w-full max-w-2xl text-left">
+          <div className="mb-6 inline-flex items-center justify-center rounded-full bg-white/80 px-4 py-2 shadow-sm ring-1 ring-black/5 dark:bg-white/10 dark:ring-white/10">
+            <Image src="/apexture-logo.svg" alt="Apexture logo" width={120} height={32} className="h-8 w-auto md:h-10" />
+          </div>
+          <h2 className="text-4xl font-serif font-semibold leading-tight text-orange-900 sm:text-5xl dark:text-white">
+            Hotel Management System
           </h2>
-          <p className="mt-4 text-sm text-muted-foreground max-w-md">
-            Sign in to manage reservations, housekeeping, rates, reports and more.
+          <p className="mt-4 max-w-2xl text-base text-neutral-700 sm:text-lg dark:text-neutral-200">
+            Securely orchestrate reservations, rates, and on-site teams from one console built for fast-moving hospitality leaders.
           </p>
-          <ul className="mt-6 space-y-3 text-sm">
-            <li className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-orange-600" /> Role-based access</li>
-            <li className="flex items-center gap-2"><CalendarCheck className="h-4 w-4 text-orange-600" /> Smart scheduling</li>
-            <li className="flex items-center gap-2"><LineChart className="h-4 w-4 text-orange-600" /> Insights & reporting</li>
+          <ul className="mt-6 space-y-4 text-sm sm:text-base text-neutral-800 dark:text-neutral-100">
+            <li className="flex items-start gap-3">
+              <ShieldCheck className="mt-0.5 h-5 w-5 text-orange-600" />
+              <div>
+                <p className="font-medium">Granular staff roles</p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-300">Approve only the actions each desk or department needs.</p>
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <CalendarCheck className="mt-0.5 h-5 w-5 text-orange-600" />
+              <div>
+                <p className="font-medium">Live stay grid</p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-300">Automate scheduling, room turns, and housekeeping handoffs.</p>
+              </div>
+            </li>
+            <li className="flex items-start gap-3">
+              <LineChart className="mt-0.5 h-5 w-5 text-orange-600" />
+              <div>
+                <p className="font-medium">Revenue-grade analytics</p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-300">Track pacing, ADR, and channel mix in real time.</p>
+              </div>
+            </li>
           </ul>
         </div>
         <div className="pointer-events-none absolute inset-0 opacity-[0.05] bg-[radial-gradient(circle_at_20%_20%,#000_2px,transparent_2px)] bg-[length:20px_20px]" />
-      </div>
+      </section>
 
       {/* Form side */}
-      <div className="flex items-center justify-center p-6 sm:p-10 md:pr-12">
-        <Card className="w-full max-w-lg rounded-2xl shadow-2xl backdrop-blur-md bg-white/80 dark:bg-neutral-900/60 ring-1 ring-black/5 dark:ring-white/10">
+      <div className="flex w-full items-center justify-center px-6 pb-12 sm:px-10 lg:px-12 lg:pb-0">
+        <Card className="w-full max-w-lg rounded-2xl bg-white/85 shadow-2xl backdrop-blur-md ring-1 ring-black/5 dark:bg-neutral-900/60 dark:ring-white/10">
           <CardHeader className="text-left pb-2">
             <CardTitle className="text-3xl font-serif">Admin Sign in</CardTitle>
-            <CardDescription>Access the hotel operations dashboard.</CardDescription>
+            <CardDescription>Sign in with your Apexture credentials to open the control room.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             <Form {...form}>
