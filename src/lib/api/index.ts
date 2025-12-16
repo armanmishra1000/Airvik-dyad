@@ -167,7 +167,7 @@ type DbBookingRestriction = {
 };
 
 type CreateReservationsArgs = {
-  p_booking_id: string;           // text - keep as string
+  p_booking_id?: string | null;   // optional - allow DB to generate when null/omitted
   p_guest_id: string;             // uuid - validate UUID format
   p_room_ids: string[];           // uuid[] - validate UUID format
   p_rate_plan_id: string;         // uuid - validate UUID format
@@ -244,6 +244,20 @@ type AdminActivityLogFilters = {
   to?: string;
   limit?: number;
   page?: number;
+};
+
+
+const normalizeBookingCodeInput = (bookingId?: string | null): string | null => {
+  if (typeof bookingId !== "string") {
+    return null;
+  }
+  const trimmed = bookingId.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const upper = trimmed.toUpperCase();
+  return /^A[0-9]+$/.test(upper) ? upper : null;
 };
 
 
@@ -773,6 +787,7 @@ export const createReservationsWithTotal = async (
   // Format dates and timestamps
   const validatedArgs = {
     ...args,
+    p_booking_id: normalizeBookingCodeInput(args.p_booking_id),
     p_check_in_date: formatDateForPostgres(args.p_check_in_date),
     p_check_out_date: formatDateForPostgres(args.p_check_out_date),
     p_booking_date: args.p_booking_date 

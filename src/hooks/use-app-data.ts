@@ -723,7 +723,6 @@ export function useAppData() {
 
   const addReservation = async (payload: CreateReservationPayload) => {
     const { roomIds, roomOccupancies, ...reservationDetails } = payload;
-    const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     // Check if rate plan exists, but don't fail if it doesn't
     const ratePlan = reservationDetails.ratePlanId 
@@ -738,7 +737,7 @@ export function useAppData() {
     const taxRate = property?.tax_percentage ?? 0;
 
     const { data, error } = await api.createReservationsWithTotal({
-      p_booking_id: bookingId,
+      p_booking_id: null,
       p_guest_id: reservationDetails.guestId,
       p_room_ids: roomIds,
       p_rate_plan_id: reservationDetails.ratePlanId || "default-rate-plan",
@@ -778,6 +777,7 @@ export function useAppData() {
       sortReservationsByBookingDate([...prev, ...reservationsWithEmptyFolio])
     );
     const primaryReservation = reservationsWithEmptyFolio[0];
+    const assignedBookingId = primaryReservation?.bookingId ?? null;
     const guest = guests.find((g) => g.id === reservationDetails.guestId);
     const label = guest
       ? formatName(guest.firstName, guest.lastName) || guest.email
@@ -786,7 +786,7 @@ export function useAppData() {
       section: "reservations",
       entityType: "reservation",
       entityId: primaryReservation?.id ?? null,
-      entityLabel: bookingId,
+      entityLabel: assignedBookingId,
       action: "reservation_created",
       details: `Created reservation for ${label}`,
       metadata: {

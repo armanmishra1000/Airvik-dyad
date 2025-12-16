@@ -2,28 +2,31 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieMethodsServer } from "@supabase/ssr";
 // import type { Database } from "@/lib/types/supabase";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
 type SetAllCookies = NonNullable<CookieMethodsServer["setAll"]>;
 
-if (!supabaseUrl) {
-  throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set");
-}
+function getProxySupabaseConfig(): { url: string; anonKey: string } {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseAnonKey) {
-  throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not set");
-}
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not set");
+  }
 
-const resolvedSupabaseUrl = supabaseUrl as string;
-const resolvedSupabaseAnonKey = supabaseAnonKey as string;
+  if (!anonKey) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_ANON_KEY is not set");
+  }
+
+  return { url, anonKey };
+}
 
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let supabaseResponse: NextResponse = NextResponse.next({ request });
 
+  const { url, anonKey } = getProxySupabaseConfig();
+
   const supabase = await createServerClient(
-    resolvedSupabaseUrl,
-    resolvedSupabaseAnonKey,
+    url,
+    anonKey,
     {
     cookies: {
       getAll() {
