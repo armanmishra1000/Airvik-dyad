@@ -1,5 +1,7 @@
 import type { RoomType, RatePlan } from "@/data/types";
 
+export type RoomPricingOverrides = Record<string, number>;
+
 export interface PricingCalculation {
   nightlyRate: number;
   totalCost: number;
@@ -28,6 +30,30 @@ function resolveTaxSummary(totalCost: number, taxConfig?: TaxConfig) {
   };
 }
 
+export function resolveRoomNightlyRate({
+  roomType,
+  ratePlan,
+  nightlyRateOverride,
+}: {
+  roomType?: RoomType | null;
+  ratePlan?: RatePlan | null;
+  nightlyRateOverride?: number;
+}): number {
+  if (typeof nightlyRateOverride === "number" && nightlyRateOverride > 0) {
+    return nightlyRateOverride;
+  }
+
+  if (roomType?.price && roomType.price > 0) {
+    return roomType.price;
+  }
+
+  if (ratePlan?.price && ratePlan.price > 0) {
+    return ratePlan.price;
+  }
+
+  return 3000;
+}
+
 /**
  * Calculate pricing for a room booking with consistent logic
  * Priority order: room type price -> rate plan price -> default fallback (3000)
@@ -38,21 +64,20 @@ export function calculateRoomPricing({
   nights,
   rooms = 1,
   taxConfig,
+  nightlyRateOverride,
 }: {
   roomType?: RoomType | null;
   ratePlan?: RatePlan | null;
   nights: number;
   rooms?: number;
   taxConfig?: TaxConfig;
+  nightlyRateOverride?: number;
 }): PricingCalculation {
   // Determine the nightly rate with consistent priority
   // Priority 1: Use room type price (matches single room page display)
   // Priority 2: Use rate plan price
   // Priority 3: Default fallback
-  const nightlyRate = 
-    (roomType?.price && roomType.price > 0) ? roomType.price :
-    (ratePlan?.price && ratePlan.price > 0) ? ratePlan.price :
-    3000;
+  const nightlyRate = resolveRoomNightlyRate({ roomType, ratePlan, nightlyRateOverride });
 
   const totalCost = nightlyRate * nights * rooms;
   const { taxesAndFees, taxesApplied, taxRatePercent } = resolveTaxSummary(totalCost, taxConfig);
@@ -76,11 +101,13 @@ export function calculateMultipleRoomPricing({
   ratePlan,
   nights,
   taxConfig,
+  nightlyOverrides,
 }: {
   roomTypes: RoomType[];
   ratePlan?: RatePlan | null;
   nights: number;
   taxConfig?: TaxConfig;
+  nightlyOverrides?: RoomPricingOverrides;
 }): PricingCalculation {
   const rooms = roomTypes.length;
   if (rooms === 0) {
@@ -95,6 +122,7 @@ export function calculateMultipleRoomPricing({
       nights,
       rooms: 1,
       taxConfig: undefined,
+      nightlyRateOverride: nightlyOverrides?.[roomType.id],
     });
     return sum + roomPricing.totalCost;
   }, 0);

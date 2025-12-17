@@ -107,7 +107,11 @@ type AddReservationPayload = Omit<
   | "totalAmount"
   | "taxEnabledSnapshot"
   | "taxRateSnapshot"
-> & { roomIds: string[]; roomOccupancies?: RoomOccupancyAssignment[] };
+> & {
+  roomIds: string[];
+  roomOccupancies?: RoomOccupancyAssignment[];
+  customRoomTotals?: Array<number | null>;
+};
 
 type AddRoomsToBookingPayload = {
   bookingId: string;
@@ -127,6 +131,7 @@ type AddRoomsToBookingPayload = {
   taxEnabledSnapshot: boolean;
   taxRateSnapshot: number;
   roomOccupancies?: RoomOccupancyAssignment[];
+  customRoomTotals?: Array<number | null>;
 };
 
 // This mirrors the original AppContextType for component compatibility

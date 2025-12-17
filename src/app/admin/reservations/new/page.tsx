@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import type { DateRange } from "react-day-picker";
+import { Check, ChevronsUpDown } from "lucide-react";
 
 import { useDataContext } from "@/context/data-context";
 import type { ReservationPaymentMethod, ReservationStatus, RoomType } from "@/data/types";
@@ -29,8 +30,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { calculateMultipleRoomPricing } from "@/lib/pricing-calculator";
+import {
+  calculateMultipleRoomPricing,
+  resolveRoomNightlyRate,
+  type RoomPricingOverrides,
+} from "@/lib/pricing-calculator";
 import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import { buildRoomOccupancyAssignments } from "@/lib/reservations/guest-allocation";
@@ -38,11 +52,11 @@ import { PermissionGate } from "@/components/admin/permission-gate";
 
 const paymentMethodOptions = [
   "Not specified",
-  "Not relevant",
-  "Pay with UPI",
-  "Card on file",
+  "Bank/IMPS",
   "Cash",
-  "Transfer",
+  "UPI",
+  "Bhagat Ji",
+  "Anurag Ji",
 ] as const satisfies ReservationPaymentMethod[];
 
 const creatableStatuses = ["Confirmed", "Tentative", "Standby"] as const satisfies ReservationStatus[];
@@ -55,6 +69,11 @@ const dateRangeSchema = z.object({
   path: ["to"],
 });
 
+const customRateRecordSchema = z
+  .record(z.string(), z.coerce.number().min(1, "Custom price must be positive."))
+  .default({})
+  .transform((value) => value ?? {});
+
 const reservationFormSchema = z.object({
   guestId: z.string({ required_error: "Please select a guest." }),
   dateRange: dateRangeSchema,
@@ -65,9 +84,12 @@ const reservationFormSchema = z.object({
   roomTypeId: z.string().optional(),
   roomIds: z.array(z.string()).min(1, "Select at least one room."),
   notes: z.string().max(500).optional(),
+  customRates: customRateRecordSchema,
 });
 
-type ReservationFormValues = z.infer<typeof reservationFormSchema>;
+type ReservationFormValues = z.input<typeof reservationFormSchema>;
+
+type CustomRateFieldErrors = Partial<Record<string, { message?: string }>>;
 
 export default function CreateReservationPage() {
   const {
@@ -98,6 +120,7 @@ export default function CreateReservationPage() {
       roomTypeId: undefined,
       roomIds: [],
       notes: "",
+      customRates: {},
     },
   });
 
@@ -111,6 +134,8 @@ export default function CreateReservationPage() {
   const selectedRoomTypeId = form.watch("roomTypeId") || "";
   const watchedRoomIds = form.watch("roomIds");
   const selectedRoomIds = React.useMemo(() => watchedRoomIds ?? [], [watchedRoomIds]);
+  const customRates = form.watch("customRates");
+  const customRatesValue = React.useMemo(() => customRates ?? {}, [customRates]);
   const adultsInput = form.watch("adults");
   const childrenInput = form.watch("children");
   const adults = Number(adultsInput ?? 0) || 0;
@@ -202,6 +227,30 @@ export default function CreateReservationPage() {
 
   const selectedGuestId = form.watch("guestId");
   const selectedGuest = guests.find((guest) => guest.id === selectedGuestId);
+  const [guestPopoverOpen, setGuestPopoverOpen] = React.useState(false);
+
+  const formatGuestName = React.useCallback((guest: { firstName?: string | null; lastName?: string | null }) => {
+    const parts = [guest.firstName, guest.lastName]
+      .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+      .map((value) => value.trim());
+    return parts.join(" ");
+  }, []);
+
+  const selectedGuestLabel = React.useMemo(() => {
+    if (!selectedGuest) return "";
+    return formatGuestName(selectedGuest);
+  }, [formatGuestName, selectedGuest]);
+
+  const buildGuestKeywords = React.useCallback(
+    (guest: { firstName?: string | null; lastName?: string | null; email?: string | null; phone?: string | null }) => {
+      const fullName = formatGuestName(guest);
+      const values = [fullName, guest.email, guest.phone];
+      return values
+        .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+        .map((value) => value.trim());
+    },
+    [formatGuestName]
+  );
   const defaultRatePlan = ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
 
   const selectedRoomTypes = React.useMemo(() => {
@@ -213,6 +262,32 @@ export default function CreateReservationPage() {
       })
       .filter((type): type is RoomType => Boolean(type));
   }, [roomMap, roomTypeMap, selectedRoomIds]);
+
+  const uniqueSelectedRoomTypes = React.useMemo(() => {
+    const entries = new Map<string, RoomType>();
+    selectedRoomIds.forEach((roomId) => {
+      const room = roomMap.get(roomId);
+      if (!room) return;
+      const roomType = roomTypeMap.get(room.roomTypeId);
+      if (!roomType) return;
+      entries.set(roomType.id, roomType);
+    });
+    return Array.from(entries.values());
+  }, [roomMap, roomTypeMap, selectedRoomIds]);
+
+  React.useEffect(() => {
+    const allowedIds = new Set(uniqueSelectedRoomTypes.map((type) => type.id));
+    const currentRates = form.getValues("customRates") ?? {};
+    const nextEntries = Object.entries(currentRates).filter(
+      ([roomTypeId, value]) => allowedIds.has(roomTypeId) && typeof value === "number" && value > 0
+    );
+    if (nextEntries.length !== Object.keys(currentRates).length) {
+      form.setValue("customRates", Object.fromEntries(nextEntries), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [form, uniqueSelectedRoomTypes]);
 
   const selectedRoomsCapacity = React.useMemo(() => {
     if (!selectedRoomIds.length) return 0;
@@ -229,6 +304,13 @@ export default function CreateReservationPage() {
     };
   }, [property?.tax_enabled, property?.tax_percentage]);
 
+  const nightlyOverrides = React.useMemo<RoomPricingOverrides | undefined>(() => {
+    const entries = Object.entries(customRatesValue).filter(([, value]) =>
+      typeof value === "number" && value > 0
+    );
+    return entries.length ? Object.fromEntries(entries) : undefined;
+  }, [customRatesValue]);
+
   const pricing = React.useMemo(() => {
     if (!selectedRoomTypes.length || nights <= 0) return null;
     return calculateMultipleRoomPricing({
@@ -236,10 +318,70 @@ export default function CreateReservationPage() {
       ratePlan: defaultRatePlan,
       nights: nights || 1,
       taxConfig,
+      nightlyOverrides,
     });
-  }, [selectedRoomTypes, defaultRatePlan, nights, taxConfig]);
+  }, [selectedRoomTypes, defaultRatePlan, nights, taxConfig, nightlyOverrides]);
 
   const formatCurrency = useCurrencyFormatter({ maximumFractionDigits: 0 });
+  const customRateErrors = form.formState.errors.customRates as CustomRateFieldErrors | undefined;
+
+  const handleCustomRateInput = React.useCallback(
+    (roomTypeId: string, rawValue: string) => {
+      if (!rawValue.trim()) {
+        if (roomTypeId in customRatesValue) {
+          const nextRates = { ...customRatesValue };
+          delete nextRates[roomTypeId];
+          form.setValue("customRates", nextRates, { shouldDirty: true, shouldValidate: true });
+        }
+        return;
+      }
+      const numericValue = Number(rawValue);
+      if (Number.isNaN(numericValue)) {
+        return;
+      }
+      form.setValue(
+        "customRates",
+        {
+          ...customRatesValue,
+          [roomTypeId]: numericValue,
+        },
+        { shouldDirty: true, shouldValidate: true }
+      );
+    },
+    [customRatesValue, form]
+  );
+
+  const handleResetCustomRate = React.useCallback(
+    (roomTypeId: string) => {
+      if (!(roomTypeId in customRatesValue)) {
+        return;
+      }
+      const nextRates = { ...customRatesValue };
+      delete nextRates[roomTypeId];
+      form.setValue("customRates", nextRates, { shouldDirty: true, shouldValidate: true });
+    },
+    [customRatesValue, form]
+  );
+
+  const buildCustomRoomTotals = React.useCallback(
+    (roomIdsList: string[], stayNights: number): Array<number | null> => {
+      if (!stayNights || stayNights <= 0) {
+        return roomIdsList.map(() => null);
+      }
+      return roomIdsList.map((roomId) => {
+        const room = roomMap.get(roomId);
+        if (!room) return null;
+        const roomType = roomTypeMap.get(room.roomTypeId);
+        if (!roomType) return null;
+        const override = customRatesValue[roomType.id];
+        if (typeof override !== "number" || override <= 0) {
+          return null;
+        }
+        return override * stayNights;
+      });
+    },
+    [customRatesValue, roomMap, roomTypeMap]
+  );
 
   const onSubmit = async (values: ReservationFormValues) => {
     if (!defaultRatePlan) {
@@ -261,6 +403,15 @@ export default function CreateReservationPage() {
         values.children
       );
 
+      const stayNights = Math.max(
+        differenceInDays(values.dateRange.to, values.dateRange.from),
+        1
+      );
+      const customTotals = buildCustomRoomTotals(values.roomIds, stayNights);
+      const hasCustomTotals = customTotals.some(
+        (total) => typeof total === "number" && total > 0
+      );
+
       const result = await addReservation({
         guestId: values.guestId,
         roomIds: values.roomIds,
@@ -276,6 +427,7 @@ export default function CreateReservationPage() {
         source: "reception",
         paymentMethod: values.paymentMethod,
         roomOccupancies,
+        customRoomTotals: hasCustomTotals ? customTotals : undefined,
       });
 
       if (!result.length) {
@@ -327,32 +479,77 @@ export default function CreateReservationPage() {
                   <CardDescription>Select an existing guest or add a new one.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <FormField
                       control={form.control}
                       name="guestId"
                       render={({ field }) => (
                         <FormItem className="flex-1">
                           <FormLabel>Guest</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <FormControl>
-                              <SelectTrigger className="h-12 rounded-xl">
-                                <SelectValue placeholder="Select guest" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {guests.map((guest) => (
-                                <SelectItem key={guest.id} value={guest.id}>
-                                  {guest.firstName} {guest.lastName}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Popover open={guestPopoverOpen} onOpenChange={setGuestPopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={guestPopoverOpen}
+                                  className={cn(
+                                    "h-12 w-full justify-between rounded-xl border border-border/50 bg-card/80 px-4 font-medium",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {selectedGuestLabel ? selectedGuestLabel : "Select guest"}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              align="start"
+                              className="w-[var(--radix-popover-trigger-width)] rounded-2xl border border-border/50 bg-card/95 p-0 shadow-lg backdrop-blur"
+                            >
+                              <Command>
+                                <CommandInput placeholder="Search guest..." />
+                                <CommandList>
+                                  <CommandEmpty>No guest found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {guests.map((guest) => {
+                                      const guestLabel = formatGuestName(guest);
+                                      const isSelected = guest.id === field.value;
+                                      return (
+                                        <CommandItem
+                                          key={guest.id}
+                                          value={guest.id}
+                                          keywords={buildGuestKeywords(guest)}
+                                          className="text-foreground data-[selected=true]:text-primary"
+                                          onSelect={() => {
+                                            form.setValue("guestId", guest.id, { shouldValidate: true });
+                                            setGuestPopoverOpen(false);
+                                          }}
+                                        >
+                                          <span
+                                            className={cn(
+                                              "mr-2 flex h-5 w-5 items-center justify-center rounded-md border border-border/60",
+                                              isSelected
+                                                ? "border-primary bg-primary text-primary-foreground"
+                                                : "opacity-60 [&_svg]:invisible"
+                                            )}
+                                          >
+                                            <Check className="h-3.5 w-3.5" />
+                                          </span>
+                                          {guestLabel || "Unnamed guest"}
+                                        </CommandItem>
+                                      );
+                                    })}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" className="h-12 shrink-0" asChild>
                       <Link href={guestCreationUrl}>
                         Add New Guest
                       </Link>
@@ -520,6 +717,74 @@ export default function CreateReservationPage() {
                     </p>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Custom Prices (optional)</CardTitle>
+                <CardDescription>Override nightly rates for selected room types.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {uniqueSelectedRoomTypes.length ? (
+                  uniqueSelectedRoomTypes.map((roomType) => {
+                    const overrideValue = customRatesValue[roomType.id];
+                    const hasOverride = typeof overrideValue === "number" && overrideValue > 0;
+                    const defaultNightlyRate = resolveRoomNightlyRate({
+                      roomType,
+                      ratePlan: defaultRatePlan,
+                    });
+                    const errorMessage = customRateErrors?.[roomType.id]?.message;
+                    return (
+                      <div
+                        key={roomType.id}
+                        className="space-y-2 rounded-xl border border-border/50 p-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{roomType.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Default {formatCurrency(defaultNightlyRate)} / night
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              min={1}
+                              className="w-28"
+                              value={typeof overrideValue === "number" ? overrideValue : ""}
+                              onChange={(event) =>
+                                handleCustomRateInput(roomType.id, event.target.value)
+                              }
+                              placeholder={formatCurrency(defaultNightlyRate)}
+                            />
+                            {hasOverride && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleResetCustomRate(roomType.id)}
+                              >
+                                Reset
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        {errorMessage && (
+                          <p className="text-xs text-destructive">{errorMessage}</p>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
+                    Select rooms to override their nightly rates.
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Changes apply only to this booking and update the summary immediately.
+                </p>
               </CardContent>
             </Card>
 

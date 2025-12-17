@@ -458,7 +458,7 @@ function BookingReviewContent() {
         notes: additionalRequest || undefined,
         bookingDate: new Date().toISOString(),
         source: "website",
-        paymentMethod: "Pay with UPI",
+        paymentMethod: "UPI",
         roomOccupancies: occupancySlices,
       });
 

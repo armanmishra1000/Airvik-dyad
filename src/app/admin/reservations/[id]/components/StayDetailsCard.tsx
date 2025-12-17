@@ -1,7 +1,15 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
-import { BedDouble, CalendarDays, Moon, Users, CreditCard } from "lucide-react";
+import {
+  BedDouble,
+  CalendarDays,
+  Moon,
+  Users,
+  CreditCard,
+  Hash,
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -9,9 +17,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
 import { useDataContext } from "@/context/data-context";
+import {
+  DEFAULT_BOOKING_ID_FALLBACK,
+  formatBookingCode,
+} from "@/lib/reservations/formatting";
 
 interface StayDetailsCardProps {
   reservation: ReservationWithDetails;
@@ -27,6 +40,21 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
     : reservation.externalSource === "vikbooking"
     ? "Imported from VikBooking"
     : "Not assigned";
+
+  const bookingIdLabel = formatBookingCode(reservation.bookingId);
+  const canCopyBookingId = bookingIdLabel !== DEFAULT_BOOKING_ID_FALLBACK;
+  const handleCopyBookingId = async (): Promise<void> => {
+    if (!canCopyBookingId) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(bookingIdLabel);
+      toast.success("Booking ID copied.");
+    } catch {
+      toast.error("Failed to copy Booking ID.");
+    }
+  };
 
   return (
     <Card>
@@ -66,6 +94,25 @@ export function StayDetailsCard({ reservation }: StayDetailsCardProps) {
           <div className="flex items-center gap-3">
             <CreditCard className="h-4 w-4 text-muted-foreground" />
             <span>{reservation.paymentMethod || "Payment on file"}</span>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 sm:col-span-2">
+            <div className="flex items-center gap-3">
+              <Hash className="h-4 w-4 text-muted-foreground" />
+              <span>
+                Booking ID: <span className="font-mono text-xs">{bookingIdLabel}</span>
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => {
+                void handleCopyBookingId();
+              }}
+              disabled={!canCopyBookingId}
+            >
+              Copy
+            </Button>
           </div>
         </div>
         {reservation.notes?.trim() && (

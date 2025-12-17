@@ -37,10 +37,10 @@ const INTERNAL_FOLIO_SOURCE = "internal" as const;
 
 type DbGuest = {
   id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone: string | null;
 };
 
 type DbCategoryUpdatePayload = Partial<
@@ -191,6 +191,7 @@ type CreateReservationsArgs = {
   p_child_count?: number | null;
   p_tax_enabled_snapshot?: boolean | null;
   p_tax_rate_snapshot?: number | null;
+  p_custom_totals?: Array<number | null> | null;
 };
 
 type RoomTypeAmenityRow = {
@@ -299,10 +300,10 @@ const formatTimestampForPostgres = (dateStr: string): string => {
 
 const fromDbGuest = (dbGuest: DbGuest): Guest => ({
   id: dbGuest.id,
-  firstName: dbGuest.first_name,
-  lastName: dbGuest.last_name,
-  email: dbGuest.email,
-  phone: dbGuest.phone,
+  firstName: dbGuest.first_name ?? "",
+  lastName: dbGuest.last_name ?? "",
+  email: dbGuest.email ?? "",
+  phone: dbGuest.phone ?? "",
 });
 
 const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>): GuestUpdatePayload => {
@@ -890,6 +891,21 @@ export const createReservationsWithTotal = async (
   validateUUID(args.p_rate_plan_id, 'p_rate_plan_id');
   args.p_room_ids.forEach((id, idx) => validateUUID(id, `p_room_ids[${idx}]`));
 
+  if (args.p_custom_totals) {
+    const totalsLength = args.p_custom_totals.length;
+    if (totalsLength !== args.p_room_ids.length) {
+      throw new Error('p_custom_totals length must match p_room_ids length');
+    }
+    args.p_custom_totals.forEach((value, idx) => {
+      if (value === null || typeof value === 'undefined') {
+        return;
+      }
+      if (Number.isNaN(value) || !Number.isFinite(value) || value <= 0) {
+        throw new Error(`Invalid custom total at index ${idx}: ${value}`);
+      }
+    });
+  }
+
   // Format dates and timestamps
   const resolvedBookingId = normalizeBookingCodeInput(args.p_booking_id);
   const validatedArgs = {
@@ -906,6 +922,7 @@ export const createReservationsWithTotal = async (
     p_child_count: args.p_child_count ?? 0,
     p_tax_enabled_snapshot: args.p_tax_enabled_snapshot ?? false,
     p_tax_rate_snapshot: args.p_tax_rate_snapshot ?? 0,
+    p_custom_totals: args.p_custom_totals ?? null,
   };
 
   const { data, error } = await supabase.rpc('create_reservations_with_total', validatedArgs);
