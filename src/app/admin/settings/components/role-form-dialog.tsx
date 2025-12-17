@@ -87,6 +87,7 @@ export function RoleFormDialog({
     const roleData = {
         name: values.name,
         permissions: values.permissions as Permission[],
+        hierarchyLevel: role?.hierarchyLevel ?? 0,
     }
     if (isEditing && role) {
       updateRole(role.id, roleData);

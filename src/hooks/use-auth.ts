@@ -14,6 +14,15 @@ type ProfileWithRole = {
 };
 import { getUserProfile } from "@/lib/api";
 
+const mapRole = (role: Role | null): Role | null => {
+  if (!role) return null;
+  const raw = role as Role & { hierarchy_level?: number };
+  return {
+    ...role,
+    hierarchyLevel: typeof raw.hierarchyLevel === "number" ? raw.hierarchyLevel : raw.hierarchy_level ?? 0,
+  };
+};
+
 export function useAuth() {
   const [authUser, setAuthUser] = React.useState<AuthUser | null>(null);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
@@ -36,7 +45,7 @@ export function useAuth() {
         email: user.email ?? "",
         roleId: typedProfile.role_id,
       });
-      setUserRole(typedProfile.roles);
+      setUserRole(mapRole(typedProfile.roles));
     } catch (error) {
       console.error("Failed to fetch user profile, signing out.", error);
       await supabase.auth.signOut();

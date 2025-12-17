@@ -191,16 +191,15 @@ export function Footer() {
             href="https://apexture.in/"
             className="text-muted-foreground mb-4 sm:mb-0 sm:text-lg text-base"
           >
-            Manage {" "}
+            Managed by{" "}
             <Image
-              className="size-5 inline-block align-middle mx-1"
+              className="inline-block align-middle mx-1"
               alt="logo"
-              src="apexture-icon.svg"
-              width={40}
+              src="apexture-logo.svg"
+              width={120}
               height={40}
               quality={100}
             ></Image>
-            ️ By Apexture Pvt. Ltd.
           </Link>
         </div>
       </div>

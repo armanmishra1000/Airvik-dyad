@@ -41,6 +41,7 @@ export const buildRole = (overrides: Partial<Role> = {}): Role => {
     permissions:
       overrides.permissions ??
       allPermissions.slice(0, Math.max(1, (roleSequence % allPermissions.length) || 3)),
+    hierarchyLevel: overrides.hierarchyLevel ?? roleSequence,
   };
 
   roleSequence += 1;

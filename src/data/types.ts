@@ -37,6 +37,7 @@ export interface Role {
   id: string;
   name: string;
   permissions: Permission[];
+  hierarchyLevel: number;
 }
 
 export interface User {

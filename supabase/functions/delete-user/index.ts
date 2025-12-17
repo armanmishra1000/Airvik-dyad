@@ -65,6 +65,18 @@ serve(async (req) => {
       });
     }
 
+    const { data: canManageUser, error: manageError } = await supabaseClient.rpc('user_can_manage_user', {
+      actor_user_id: user.id,
+      target_user_id: userIdToDelete,
+    });
+
+    if (manageError || !canManageUser) {
+      return new Response(JSON.stringify({ error: "User not authorized to delete this user." }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 403,
+      });
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''

@@ -26,6 +26,7 @@ import { UserFormDialog } from "./user-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
 import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
+import { filterManageableRoles } from "@/lib/roles"
 import type { User } from "@/data/types"
 
 export function UsersDataTable<TData extends User, TValue>({
@@ -37,8 +38,13 @@ export function UsersDataTable<TData extends User, TValue>({
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
-  const { deleteUser } = useDataContext()
-  const { hasPermission } = useAuthContext()
+  const { deleteUser, roles } = useDataContext()
+  const { hasPermission, userRole } = useAuthContext()
+
+  const hasCreatableRoles = React.useMemo(
+    () => filterManageableRoles(userRole ?? null, roles).length > 0,
+    [roles, userRole]
+  )
 
   const handleDeleteConfirm = async () => {
     if (itemToDelete) {
@@ -75,7 +81,7 @@ export function UsersDataTable<TData extends User, TValue>({
     <>
       <div className="space-y-6">
         <div className="flex items-center justify-end gap-3">
-          {hasPermission("create:user") && (
+          {hasPermission("create:user") && hasCreatableRoles && (
             <UserFormDialog>
               <Button>Add User</Button>
             </UserFormDialog>
