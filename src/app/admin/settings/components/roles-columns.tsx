@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { Role } from "@/data/types"
 import { RoleFormDialog } from "./role-form-dialog"
+import { canManageRole } from "@/lib/roles"
+import type { RolesTableMeta } from "./roles-data-table"
 
 export const columns: ColumnDef<Role>[] = [
   {
@@ -31,6 +33,10 @@ export const columns: ColumnDef<Role>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const role = row.original
+      const meta = table.options.meta as RolesTableMeta | undefined
+      const actorRole = meta?.actorRole ?? null
+      const allowManageRoles = meta?.allowManageRoles ?? false
+      const canManage = allowManageRoles && canManageRole(actorRole, role)
  
       return (
         <DropdownMenu>
@@ -42,14 +48,28 @@ export const columns: ColumnDef<Role>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <RoleFormDialog role={role}>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                    Edit
-                </DropdownMenuItem>
+            <RoleFormDialog role={role} actorRole={actorRole} allowManageRoles={allowManageRoles}>
+              <DropdownMenuItem
+                disabled={!canManage}
+                onSelect={(e) => {
+                  if (!canManage) {
+                    e.preventDefault()
+                  }
+                }}
+              >
+                Edit
+              </DropdownMenuItem>
             </RoleFormDialog>
             <DropdownMenuItem 
                 className="text-destructive"
-                onSelect={() => table.options.meta?.openDeleteDialog?.(role)}
+                disabled={!canManage}
+                onSelect={(e) => {
+                  if (!canManage) {
+                    e.preventDefault()
+                    return
+                  }
+                  meta?.openDeleteDialog?.(role)
+                }}
             >
                 Delete
             </DropdownMenuItem>
