@@ -1054,21 +1054,79 @@ export function ReservationEditForm({
                 />
               </section>
 
-              {/* <section className="rounded-2xl border border-border/60 p-4">
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes</FormLabel>
-                      <FormControl>
-                        <Textarea rows={4} placeholder="Optional notes for the front desk" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                            <section className="space-y-4 rounded-2xl border border-border/60 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Custom prices</p>
+                    <h3 className="text-base font-semibold">Override nightly rates</h3>
+                  </div>
+                  {uniqueSelectedRoomTypes.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {uniqueSelectedRoomTypes.length} room type{uniqueSelectedRoomTypes.length === 1 ? "" : "s"}
+                    </p>
                   )}
-                />
-              </section> */}
+                </div>
+                
+                {uniqueSelectedRoomTypes.length ? (
+                  uniqueSelectedRoomTypes.map((roomType) => {
+                    const overrideValue = customRatesValue[roomType.id];
+                    const hasOverride = typeof overrideValue === "number" && overrideValue > 0;
+                    const defaultNightlyRate = resolveRoomNightlyRate({
+                      roomType,
+                      ratePlan,
+                    });
+                    const errorMessage = customRateErrors?.[roomType.id]?.message;
+                    return (
+                      <div
+                        key={roomType.id}
+                        className="space-y-2 rounded-xl border border-border/50 p-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="font-medium">{roomType.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Default {formatCurrency(defaultNightlyRate)} / night
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              inputMode="decimal"
+                              min={1}
+                              className="w-28"
+                              value={typeof overrideValue === "number" ? overrideValue : ""}
+                              onChange={(event) =>
+                                handleCustomRateInput(roomType.id, event.target.value)
+                              }
+                              placeholder={formatCurrency(defaultNightlyRate)}
+                            />
+                            {hasOverride && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleResetCustomRate(roomType.id)}
+                              >
+                                Reset
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        {errorMessage && (
+                          <p className="text-xs text-destructive">{errorMessage}</p>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
+                    Select rooms to unlock per-booking price overrides.
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Adjusted prices apply only to this booking and reflect everywhere once saved.
+                </p>
+              </section>
             </div>
 
             <div className="flex w-full flex-col gap-6 lg:w-2/5 lg:min-w-0">
@@ -1233,79 +1291,6 @@ export function ReservationEditForm({
                     </p>
                   )}
                 </div>
-              </section>
-
-              <section className="space-y-4 rounded-2xl border border-border/60 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Custom prices</p>
-                    <h3 className="text-base font-semibold">Override nightly rates</h3>
-                  </div>
-                  {uniqueSelectedRoomTypes.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {uniqueSelectedRoomTypes.length} room type{uniqueSelectedRoomTypes.length === 1 ? "" : "s"}
-                    </p>
-                  )}
-                </div>
-                {uniqueSelectedRoomTypes.length ? (
-                  uniqueSelectedRoomTypes.map((roomType) => {
-                    const overrideValue = customRatesValue[roomType.id];
-                    const hasOverride = typeof overrideValue === "number" && overrideValue > 0;
-                    const defaultNightlyRate = resolveRoomNightlyRate({
-                      roomType,
-                      ratePlan,
-                    });
-                    const errorMessage = customRateErrors?.[roomType.id]?.message;
-                    return (
-                      <div
-                        key={roomType.id}
-                        className="space-y-2 rounded-xl border border-border/50 p-3"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <p className="font-medium">{roomType.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Default {formatCurrency(defaultNightlyRate)} / night
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              inputMode="decimal"
-                              min={1}
-                              className="w-28"
-                              value={typeof overrideValue === "number" ? overrideValue : ""}
-                              onChange={(event) =>
-                                handleCustomRateInput(roomType.id, event.target.value)
-                              }
-                              placeholder={formatCurrency(defaultNightlyRate)}
-                            />
-                            {hasOverride && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleResetCustomRate(roomType.id)}
-                              >
-                                Reset
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        {errorMessage && (
-                          <p className="text-xs text-destructive">{errorMessage}</p>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
-                    Select rooms to unlock per-booking price overrides.
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Adjusted prices apply only to this booking and reflect everywhere once saved.
-                </p>
               </section>
 
               <section className="rounded-2xl border border-border/60 p-4">
