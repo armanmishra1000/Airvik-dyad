@@ -350,6 +350,13 @@ import type {
   AdminActivityLogInput,
 } from "@/data/types";
 
+const mapDbRole = (role: Role & { hierarchy_level?: number }): Role => ({
+  id: role.id,
+  name: role.name,
+  permissions: role.permissions ?? [],
+  hierarchyLevel: typeof role.hierarchyLevel === "number" ? role.hierarchyLevel : role.hierarchy_level ?? 0,
+});
+
 type RoomTypeAmenityRecord = { room_type_id: string; amenity_id: string };
 
 type CreateReservationPayload = {
@@ -686,6 +693,40 @@ export function useAppData() {
         api.getRoomTypeAmenities()
       ]);
 
+      const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
+      const roomTypesData = (roomTypesRes.data || []).map(rt => {
+        const amenitiesForRoomType = roomTypeAmenities
+          .filter(rta => rta.room_type_id === rt.id)
+          .map(rta => rta.amenity_id);
+        return api.fromDbRoomType({ ...rt, amenities: amenitiesForRoomType });
+      });
+
+      if (!userId) {
+        if (propertyRes.data) setProperty({ ...defaultProperty, ...propertyRes.data });
+        setGuests([]);
+        setRooms(roomsRes.data || []);
+        setRatePlans(ratePlansRes.data || []);
+        setRoles([]);
+        setAmenities(amenitiesRes.data || []);
+        setStickyNotes([]);
+        setUsers([]);
+        setHousekeepingAssignments([]);
+        setReservations([]);
+        setReservationsTotalCount(0);
+        setIsReservationsInitialLoading(false);
+        setRoomTypes(roomTypesData);
+        setRoomCategories(roomCategoriesRes.data || []);
+        if (!alreadyHydrated) {
+          hasHydratedRef.current = true;
+        }
+        if (shouldUseLoadingState) {
+          setIsLoading(false);
+        } else {
+          setIsRefreshing(false);
+        }
+        return;
+      }
+
       const reservationsResponse = await fetchReservationsFromApi({
         limit: INITIAL_RESERVATION_PAGE_SIZE,
         offset: 0,
@@ -695,7 +736,7 @@ export function useAppData() {
       setGuests(guestsRes.data || []);
       setRooms(roomsRes.data || []);
       setRatePlans(ratePlansRes.data || []);
-      setRoles(rolesRes.data || []);
+      setRoles((rolesRes.data || []).map(mapDbRole));
       setAmenities(amenitiesRes.data || []);
       setStickyNotes(stickyNotesRes.data || []);
       setUsers(usersFuncRes.data || []);
@@ -721,13 +762,6 @@ export function useAppData() {
 
       void startReservationsBackfill(initialReservations.length);
 
-      const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
-      const roomTypesData = (roomTypesRes.data || []).map(rt => {
-        const amenitiesForRoomType = roomTypeAmenities
-          .filter(rta => rta.room_type_id === rt.id)
-          .map(rta => rta.amenity_id);
-        return api.fromDbRoomType({ ...rt, amenities: amenitiesForRoomType });
-      });
       setRoomTypes(roomTypesData);
       setRoomCategories(roomCategoriesRes.data || []);
 
@@ -1347,15 +1381,16 @@ export function useAppData() {
   const addRole = async (roleData: Omit<Role, "id">) => {
     const { data, error } = await api.addRole(roleData);
     if (error) throw error;
-    setRoles(prev => [...prev, data]);
+    const mappedRole = mapDbRole(data as Role & { hierarchy_level?: number });
+    setRoles(prev => [...prev, mappedRole]);
     recordActivity({
       section: "roles",
       entityType: "role",
-      entityId: data.id,
-      entityLabel: data.name,
+      entityId: mappedRole.id,
+      entityLabel: mappedRole.name,
       action: "role_created",
-      details: `Created role ${data.name}`,
-      metadata: { permissions: data.permissions },
+      details: `Created role ${mappedRole.name}`,
+      metadata: { permissions: mappedRole.permissions, hierarchyLevel: mappedRole.hierarchyLevel },
     });
   };
 
@@ -1363,15 +1398,16 @@ export function useAppData() {
     const previousRole = roles.find((role) => role.id === roleId);
     const { data, error } = await api.updateRole(roleId, updatedData);
     if (error) throw error;
-    setRoles(prev => prev.map(r => r.id === roleId ? data : r));
+    const mappedRole = mapDbRole(data as Role & { hierarchy_level?: number });
+    setRoles(prev => prev.map(r => r.id === roleId ? mappedRole : r));
     const changedFields = extractChangedFields(previousRole, updatedData);
     recordActivity({
       section: "roles",
       entityType: "role",
       entityId: roleId,
-      entityLabel: data.name,
+      entityLabel: mappedRole.name,
       action: "role_updated",
-      details: `Updated role ${data.name}`,
+      details: `Updated role ${mappedRole.name}`,
       metadata: changedFields.length ? { changedFields } : undefined,
     });
   };

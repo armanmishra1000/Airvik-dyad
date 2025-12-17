@@ -26,6 +26,15 @@ import { RoleFormDialog } from "./role-form-dialog"
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog"
 import { useDataContext } from "@/context/data-context"
 import type { Role } from "@/data/types"
+import { useAuth } from "@/hooks/use-auth"
+import { canManageRole } from "@/lib/roles"
+
+export type RolesTableMeta = {
+  openDeleteDialog: (item: Role) => void;
+  actorRole: Role | null;
+  allowManageRoles: boolean;
+  canManageRole: (role: Role | null | undefined) => boolean;
+};
 
 export function RolesDataTable<TData extends Role, TValue>({
   columns,
@@ -37,9 +46,18 @@ export function RolesDataTable<TData extends Role, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
   const { deleteRole } = useDataContext()
+  const { userRole, hasPermission } = useAuth()
+
+  const allowManageRoles = hasPermission("update:setting")
+  const canManage = React.useCallback((role: Role | null | undefined) => canManageRole(userRole, role ?? null), [userRole])
 
   const handleDeleteConfirm = async () => {
     if (itemToDelete) {
+      if (!allowManageRoles || !canManage(itemToDelete)) {
+        toast.error("You can only manage lower-level roles.")
+        setItemToDelete(null)
+        return
+      }
       const success = await deleteRole(itemToDelete.id);
       if (success) {
         toast.success(`Role "${itemToDelete.name}" has been deleted.`);
@@ -62,20 +80,27 @@ export function RolesDataTable<TData extends Role, TValue>({
     state: {
       sorting,
     },
-    meta: {
+      meta: {
       openDeleteDialog: (item: TData) => {
         setItemToDelete(item)
       },
-    },
+        actorRole: userRole,
+        allowManageRoles,
+        canManageRole: canManage,
+      } as unknown as RolesTableMeta,
   })
+
+  const canCreate = allowManageRoles && !!userRole
 
   return (
     <>
       <div className="space-y-6">
         <div className="flex items-center justify-end gap-3">
-          <RoleFormDialog>
-            <Button>Add Role</Button>
-          </RoleFormDialog>
+          {canCreate ? (
+            <RoleFormDialog actorRole={userRole} allowManageRoles={allowManageRoles}>
+              <Button>Add Role</Button>
+            </RoleFormDialog>
+          ) : null}
         </div>
         <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
           <Table>
