@@ -37,10 +37,10 @@ const INTERNAL_FOLIO_SOURCE = "internal" as const;
 
 type DbGuest = {
   id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  phone: string | null;
 };
 
 type DbCategoryUpdatePayload = Partial<
@@ -300,10 +300,10 @@ const formatTimestampForPostgres = (dateStr: string): string => {
 
 const fromDbGuest = (dbGuest: DbGuest): Guest => ({
   id: dbGuest.id,
-  firstName: dbGuest.first_name,
-  lastName: dbGuest.last_name,
-  email: dbGuest.email,
-  phone: dbGuest.phone,
+  firstName: dbGuest.first_name ?? "",
+  lastName: dbGuest.last_name ?? "",
+  email: dbGuest.email ?? "",
+  phone: dbGuest.phone ?? "",
 });
 
 const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>): GuestUpdatePayload => {

@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import type { DateRange } from "react-day-picker";
+import { Check, ChevronsUpDown } from "lucide-react";
 
 import { useDataContext } from "@/context/data-context";
 import type { ReservationPaymentMethod, ReservationStatus, RoomType } from "@/data/types";
@@ -29,6 +30,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import {
   calculateMultipleRoomPricing,
@@ -217,6 +227,30 @@ export default function CreateReservationPage() {
 
   const selectedGuestId = form.watch("guestId");
   const selectedGuest = guests.find((guest) => guest.id === selectedGuestId);
+  const [guestPopoverOpen, setGuestPopoverOpen] = React.useState(false);
+
+  const formatGuestName = React.useCallback((guest: { firstName?: string | null; lastName?: string | null }) => {
+    const parts = [guest.firstName, guest.lastName]
+      .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+      .map((value) => value.trim());
+    return parts.join(" ");
+  }, []);
+
+  const selectedGuestLabel = React.useMemo(() => {
+    if (!selectedGuest) return "";
+    return formatGuestName(selectedGuest);
+  }, [formatGuestName, selectedGuest]);
+
+  const buildGuestKeywords = React.useCallback(
+    (guest: { firstName?: string | null; lastName?: string | null; email?: string | null; phone?: string | null }) => {
+      const fullName = formatGuestName(guest);
+      const values = [fullName, guest.email, guest.phone];
+      return values
+        .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+        .map((value) => value.trim());
+    },
+    [formatGuestName]
+  );
   const defaultRatePlan = ratePlans.find((rp) => rp.name === "Standard Rate") || ratePlans[0];
 
   const selectedRoomTypes = React.useMemo(() => {
@@ -445,32 +479,77 @@ export default function CreateReservationPage() {
                   <CardDescription>Select an existing guest or add a new one.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                     <FormField
                       control={form.control}
                       name="guestId"
                       render={({ field }) => (
                         <FormItem className="flex-1">
                           <FormLabel>Guest</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <FormControl>
-                              <SelectTrigger className="h-12 rounded-xl">
-                                <SelectValue placeholder="Select guest" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {guests.map((guest) => (
-                                <SelectItem key={guest.id} value={guest.id}>
-                                  {guest.firstName} {guest.lastName}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Popover open={guestPopoverOpen} onOpenChange={setGuestPopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={guestPopoverOpen}
+                                  className={cn(
+                                    "h-12 w-full justify-between rounded-xl border border-border/50 bg-card/80 px-4 font-medium",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {selectedGuestLabel ? selectedGuestLabel : "Select guest"}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              align="start"
+                              className="w-[var(--radix-popover-trigger-width)] rounded-2xl border border-border/50 bg-card/95 p-0 shadow-lg backdrop-blur"
+                            >
+                              <Command>
+                                <CommandInput placeholder="Search guest..." />
+                                <CommandList>
+                                  <CommandEmpty>No guest found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {guests.map((guest) => {
+                                      const guestLabel = formatGuestName(guest);
+                                      const isSelected = guest.id === field.value;
+                                      return (
+                                        <CommandItem
+                                          key={guest.id}
+                                          value={guest.id}
+                                          keywords={buildGuestKeywords(guest)}
+                                          className="text-foreground data-[selected=true]:text-primary"
+                                          onSelect={() => {
+                                            form.setValue("guestId", guest.id, { shouldValidate: true });
+                                            setGuestPopoverOpen(false);
+                                          }}
+                                        >
+                                          <span
+                                            className={cn(
+                                              "mr-2 flex h-5 w-5 items-center justify-center rounded-md border border-border/60",
+                                              isSelected
+                                                ? "border-primary bg-primary text-primary-foreground"
+                                                : "opacity-60 [&_svg]:invisible"
+                                            )}
+                                          >
+                                            <Check className="h-3.5 w-3.5" />
+                                          </span>
+                                          {guestLabel || "Unnamed guest"}
+                                        </CommandItem>
+                                      );
+                                    })}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button variant="outline" asChild>
+                    <Button variant="outline" className="h-12 shrink-0" asChild>
                       <Link href={guestCreationUrl}>
                         Add New Guest
                       </Link>
