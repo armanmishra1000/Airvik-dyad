@@ -693,6 +693,40 @@ export function useAppData() {
         api.getRoomTypeAmenities()
       ]);
 
+      const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
+      const roomTypesData = (roomTypesRes.data || []).map(rt => {
+        const amenitiesForRoomType = roomTypeAmenities
+          .filter(rta => rta.room_type_id === rt.id)
+          .map(rta => rta.amenity_id);
+        return api.fromDbRoomType({ ...rt, amenities: amenitiesForRoomType });
+      });
+
+      if (!userId) {
+        if (propertyRes.data) setProperty({ ...defaultProperty, ...propertyRes.data });
+        setGuests([]);
+        setRooms(roomsRes.data || []);
+        setRatePlans(ratePlansRes.data || []);
+        setRoles([]);
+        setAmenities(amenitiesRes.data || []);
+        setStickyNotes([]);
+        setUsers([]);
+        setHousekeepingAssignments([]);
+        setReservations([]);
+        setReservationsTotalCount(0);
+        setIsReservationsInitialLoading(false);
+        setRoomTypes(roomTypesData);
+        setRoomCategories(roomCategoriesRes.data || []);
+        if (!alreadyHydrated) {
+          hasHydratedRef.current = true;
+        }
+        if (shouldUseLoadingState) {
+          setIsLoading(false);
+        } else {
+          setIsRefreshing(false);
+        }
+        return;
+      }
+
       const reservationsResponse = await fetchReservationsFromApi({
         limit: INITIAL_RESERVATION_PAGE_SIZE,
         offset: 0,
@@ -728,13 +762,6 @@ export function useAppData() {
 
       void startReservationsBackfill(initialReservations.length);
 
-      const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
-      const roomTypesData = (roomTypesRes.data || []).map(rt => {
-        const amenitiesForRoomType = roomTypeAmenities
-          .filter(rta => rta.room_type_id === rt.id)
-          .map(rta => rta.amenity_id);
-        return api.fromDbRoomType({ ...rt, amenities: amenitiesForRoomType });
-      });
       setRoomTypes(roomTypesData);
       setRoomCategories(roomCategoriesRes.data || []);
 
