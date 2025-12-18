@@ -41,6 +41,10 @@ type DbGuest = {
   last_name: string | null;
   email: string | null;
   phone: string | null;
+  address: string | null;
+  pincode: string | null;
+  city: string | null;
+  country: string | null;
 };
 
 type DbCategoryUpdatePayload = Partial<
@@ -48,14 +52,18 @@ type DbCategoryUpdatePayload = Partial<
 >;
 
 type GuestUpdatePayload = Partial<
-  Pick<DbGuest, "first_name" | "last_name" | "email" | "phone">
+  Pick<DbGuest, "first_name" | "last_name" | "email" | "phone" | "address" | "pincode" | "city" | "country">
 >;
 
 type GetOrCreateGuestArgs = {
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
   phone: string;
+  address?: string;
+  pincode?: string;
+  city?: string;
+  country?: string;
 };
 
 type DbRoom = {
@@ -318,14 +326,46 @@ const fromDbGuest = (dbGuest: DbGuest): Guest => ({
   lastName: dbGuest.last_name ?? "",
   email: dbGuest.email ?? "",
   phone: dbGuest.phone ?? "",
+  address: dbGuest.address ?? "",
+  pincode: dbGuest.pincode ?? "",
+  city: dbGuest.city ?? "",
+  country: dbGuest.country ?? "",
 });
 
 const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>): GuestUpdatePayload => {
+  const normalizeNullableText = (value: string): string | null => {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  };
+
   const dbData: GuestUpdatePayload = {};
-  if (appGuest.firstName) dbData.first_name = appGuest.firstName;
-  if (appGuest.lastName) dbData.last_name = appGuest.lastName;
-  if (appGuest.email) dbData.email = appGuest.email;
-  if (appGuest.phone) dbData.phone = appGuest.phone;
+
+  if (typeof appGuest.firstName === "string" && appGuest.firstName.trim().length > 0) {
+    dbData.first_name = appGuest.firstName.trim();
+  }
+  if (typeof appGuest.lastName === "string" && appGuest.lastName.trim().length > 0) {
+    dbData.last_name = appGuest.lastName.trim();
+  }
+
+  if (typeof appGuest.email === "string") {
+    dbData.email = normalizeNullableText(appGuest.email);
+  }
+  if (typeof appGuest.phone === "string") {
+    dbData.phone = normalizeNullableText(appGuest.phone);
+  }
+  if (typeof appGuest.address === "string") {
+    dbData.address = normalizeNullableText(appGuest.address);
+  }
+  if (typeof appGuest.pincode === "string") {
+    dbData.pincode = normalizeNullableText(appGuest.pincode);
+  }
+  if (typeof appGuest.city === "string") {
+    dbData.city = normalizeNullableText(appGuest.city);
+  }
+  if (typeof appGuest.country === "string") {
+    dbData.country = normalizeNullableText(appGuest.country);
+  }
+
   return dbData;
 };
 
@@ -703,11 +743,15 @@ export const getGuestById = async (id: string) => {
 export const getOrCreateGuestByEmail = async (
   args: GetOrCreateGuestArgs
 ): Promise<{ data: Guest | null; error: PostgrestError | null }> => {
-  const { data, error } = await supabase.rpc('get_or_create_guest', {
+  const { data, error } = await supabase.rpc('get_or_create_booking_guest', {
     p_first_name: args.firstName,
     p_last_name: args.lastName,
-    p_email: args.email,
+    p_email: args.email ?? "",
     p_phone: args.phone,
+    p_address: args.address,
+    p_pincode: args.pincode,
+    p_city: args.city,
+    p_country: args.country,
   });
 
   if (error) {

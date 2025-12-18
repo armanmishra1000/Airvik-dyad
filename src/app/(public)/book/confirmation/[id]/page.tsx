@@ -5,6 +5,8 @@ import { useParams, notFound } from "next/navigation";
 import { format, parseISO, differenceInDays } from "date-fns";
 import {
   CheckCircle2,
+  Globe,
+  Hash,
   MapPin,
   Phone,
   Mail,
@@ -40,22 +42,30 @@ export default function BookingConfirmationPage() {
     const value = params.id;
     return Array.isArray(value) ? value[0] ?? "" : value ?? "";
   }, [params]);
-  const { property, reservations, guests, rooms, roomTypes, ratePlans } = useDataContext();
+  const { property, reservations, guests, rooms, roomTypes, ratePlans } =
+    useDataContext();
   const formatCurrency = useCurrencyFormatter();
-  const [reservationData, setReservationData] = React.useState<Reservation | null>(null);
+  const [reservationData, setReservationData] =
+    React.useState<Reservation | null>(null);
   const [guestData, setGuestData] = React.useState<Guest | null>(null);
   const [isLoadingReservation, setIsLoadingReservation] = React.useState(false);
   const [isLoadingGuest, setIsLoadingGuest] = React.useState(false);
   const [hasAttemptedFetch, setHasAttemptedFetch] = React.useState(false);
 
-  const reservation = reservationData || reservations.find((r) => r.id === reservationIdFromParams);
-  const guestFromContext = reservation ? guests.find((g) => g.id === reservation.guestId) : undefined;
+  const reservation =
+    reservationData ||
+    reservations.find((r) => r.id === reservationIdFromParams);
+  const guestFromContext = reservation
+    ? guests.find((g) => g.id === reservation.guestId)
+    : undefined;
   const guest = guestData || guestFromContext;
-  
+
   // Derive all reservations that belong to the same booking
   const bookingReservations = React.useMemo(() => {
     if (!reservation) return [] as Reservation[];
-    const grouped = reservations.filter((r) => r.bookingId === reservation.bookingId);
+    const grouped = reservations.filter(
+      (r) => r.bookingId === reservation.bookingId
+    );
     if (grouped.length > 0) {
       return grouped;
     }
@@ -189,12 +199,15 @@ export default function BookingConfirmationPage() {
       0
     );
     const enabledRates = bookingReservations
-      .map((resItem) => (resItem.taxEnabledSnapshot ? resItem.taxRateSnapshot ?? 0 : 0))
+      .map((resItem) =>
+        resItem.taxEnabledSnapshot ? resItem.taxRateSnapshot ?? 0 : 0
+      )
       .filter((rate) => rate > 0);
     const uniqueRates = new Set(enabledRates.map((rate) => rate.toFixed(4)));
-    const taxRatePercent = uniqueRates.size === 1 && enabledRates.length > 0
-      ? enabledRates[0] * 100
-      : null;
+    const taxRatePercent =
+      uniqueRates.size === 1 && enabledRates.length > 0
+        ? enabledRates[0] * 100
+        : null;
 
     return {
       baseTotal,
@@ -211,14 +224,19 @@ export default function BookingConfirmationPage() {
     }
     return bookingTotals.taxRatePercent.toLocaleString("en-IN", {
       maximumFractionDigits: 2,
-      minimumFractionDigits:
-        bookingTotals.taxRatePercent % 1 === 0 ? 0 : 2,
+      minimumFractionDigits: bookingTotals.taxRatePercent % 1 === 0 ? 0 : 2,
     });
   }, [bookingTotals.taxRatePercent]);
 
   // Fetch reservation directly if not in context
   React.useEffect(() => {
-    if (reservationIdFromParams && !reservation && !reservationData && !isLoadingReservation && !hasAttemptedFetch) {
+    if (
+      reservationIdFromParams &&
+      !reservation &&
+      !reservationData &&
+      !isLoadingReservation &&
+      !hasAttemptedFetch
+    ) {
       setIsLoadingReservation(true);
       setHasAttemptedFetch(true);
       getReservationById(reservationIdFromParams)
@@ -234,8 +252,14 @@ export default function BookingConfirmationPage() {
           setIsLoadingReservation(false);
         });
     }
-  }, [reservationIdFromParams, reservation, reservationData, isLoadingReservation, hasAttemptedFetch]);
-  
+  }, [
+    reservationIdFromParams,
+    reservation,
+    reservationData,
+    isLoadingReservation,
+    hasAttemptedFetch,
+  ]);
+
   // Always refresh guest data to reflect the latest contact information from Supabase
   React.useEffect(() => {
     const guestId = reservation?.guestId;
@@ -274,7 +298,9 @@ export default function BookingConfirmationPage() {
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading your reservation...</p>
+          <p className="mt-4 text-muted-foreground">
+            Loading your reservation...
+          </p>
         </div>
       </div>
     );
@@ -301,6 +327,10 @@ export default function BookingConfirmationPage() {
     fullName: displayGuestName,
     email: guest?.email ?? null,
     phone: guest?.phone ?? null,
+    address: guest?.address ?? null,
+    pincode: guest?.pincode ?? null,
+    city: guest?.city ?? null,
+    country: guest?.country ?? null,
     bookingTimestamp: formattedBookingDateTime,
   };
 
@@ -326,10 +356,13 @@ export default function BookingConfirmationPage() {
                 Your stay is ready at {property.name}
               </h1>
               <p className="mt-3 text-lg text-muted-foreground">
-                Thanks, {customerDetails.fullName}. We&apos;ve secured your rooms and our team is preparing to welcome you.
+                Thanks, {customerDetails.fullName}. We&apos;ve secured your
+                rooms and our team is preparing to welcome you.
               </p>
               <div className="mx-auto mt-5 inline-flex items-center gap-3 rounded-full border border-border/60 bg-background/70 px-4 py-2 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Reservation ID</span>
+                <span className="font-medium text-foreground">
+                  Reservation ID
+                </span>
                 <span className="font-mono text-xs text-muted-foreground">
                   {reservation.id}
                 </span>
@@ -338,7 +371,8 @@ export default function BookingConfirmationPage() {
                 <InlineAlert
                   variant="info"
                   title="Payment confirmation call"
-                  description="Within a short time, our reception team will call you and confirm the payment." />
+                  description="Within a short time, our reception team will call you and confirm the payment."
+                />
               </div>
             </div>
           </div>
@@ -348,9 +382,12 @@ export default function BookingConfirmationPage() {
             <div className="space-y-6">
               <Card className="rounded-2xl border-border/60 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="font-serif text-2xl">Guest details</CardTitle>
+                  <CardTitle className="font-serif text-2xl">
+                    Guest details
+                  </CardTitle>
                   <CardDescription>
-                    We&apos;ll reach you on these contacts if we need anything before arrival.
+                    We&apos;ll reach you on these contacts if we need anything
+                    before arrival.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -359,8 +396,12 @@ export default function BookingConfirmationPage() {
                       <User className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Guest name</p>
-                      <p className="text-base font-medium text-foreground">{customerDetails.fullName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Guest name
+                      </p>
+                      <p className="text-base font-medium text-foreground">
+                        {customerDetails.fullName}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -379,7 +420,12 @@ export default function BookingConfirmationPage() {
                         size="icon"
                         className="mt-2 h-7 w-7"
                         aria-label="Copy email address"
-                        onClick={() => copyToClipboard(customerDetails.email ?? "", "Email address")}
+                        onClick={() =>
+                          copyToClipboard(
+                            customerDetails.email ?? "",
+                            "Email address"
+                          )
+                        }
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -390,8 +436,56 @@ export default function BookingConfirmationPage() {
                       <Phone className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Mobile number</p>
-                      <p className="text-base font-medium text-foreground">{customerDetails.phone ?? "Not provided"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Mobile number
+                      </p>
+                      <p className="text-base font-medium text-foreground">
+                        {customerDetails.phone ?? "Not provided"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground">
+                      <MapPin className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Address</p>
+                      <p className="text-base font-medium text-foreground break-words">
+                        {customerDetails.address ?? "Not provided"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground">
+                      <Globe className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Country</p>
+                      <p className="text-base font-medium text-foreground">
+                        {customerDetails.country ?? "Not provided"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground">
+                      <MapPin className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">City</p>
+                      <p className="text-base font-medium text-foreground">
+                        {customerDetails.city ?? "Not provided"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground">
+                      <Hash className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Pincode</p>
+                      <p className="text-base font-medium text-foreground">
+                        {customerDetails.pincode ?? "Not provided"}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -410,7 +504,9 @@ export default function BookingConfirmationPage() {
 
               <Card className="rounded-2xl border-border/60 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-foreground font-serif text-2xl">Your reservation</CardTitle>
+                  <CardTitle className="text-foreground font-serif text-2xl">
+                    Your reservation
+                  </CardTitle>
                   <CardDescription className="flex flex-col gap-2 pt-1 text-sm text-muted-foreground">
                     <div className="flex flex-wrap items-center gap-2 text-foreground">
                       <span>Reservation ID: {reservation.id}</span>
@@ -419,12 +515,17 @@ export default function BookingConfirmationPage() {
                         size="icon"
                         className="h-7 w-7"
                         aria-label="Copy reservation ID"
-                        onClick={() => copyToClipboard(reservation.id, "Reservation ID")}
+                        onClick={() =>
+                          copyToClipboard(reservation.id, "Reservation ID")
+                        }
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
                     </div>
-                    <span>Everything about your rooms, dates, and price in one glance.</span>
+                    <span>
+                      Everything about your rooms, dates, and price in one
+                      glance.
+                    </span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -458,7 +559,9 @@ export default function BookingConfirmationPage() {
                                   x{item.quantity} room
                                   {item.quantity === 1 ? "" : "s"}
                                   {capacityPerRoom
-                                    ? ` · up to ${capacityPerRoom} guest${capacityPerRoom === 1 ? "" : "s"} per room`
+                                    ? ` · up to ${capacityPerRoom} guest${
+                                        capacityPerRoom === 1 ? "" : "s"
+                                      } per room`
                                     : ""}
                                 </p>
                               </div>
@@ -475,16 +578,19 @@ export default function BookingConfirmationPage() {
                         · {guestBreakdown.total} guest
                         {guestBreakdown.total === 1 ? "" : "s"}
                         {guestBreakdown.total > 0 && (
-                          <> ({guestBreakdown.adults} adult
-                          {guestBreakdown.adults === 1 ? "" : "s"}
-                          {guestBreakdown.children > 0 && (
-                            <>
-                              {", "}
-                              {guestBreakdown.children} child
-                              {guestBreakdown.children === 1 ? "" : "ren"}
-                            </>
-                          )}
-                          )</>
+                          <>
+                            {" "}
+                            ({guestBreakdown.adults} adult
+                            {guestBreakdown.adults === 1 ? "" : "s"}
+                            {guestBreakdown.children > 0 && (
+                              <>
+                                {", "}
+                                {guestBreakdown.children} child
+                                {guestBreakdown.children === 1 ? "" : "ren"}
+                              </>
+                            )}
+                            )
+                          </>
                         )}
                       </span>
                       <span>
@@ -539,7 +645,8 @@ export default function BookingConfirmationPage() {
                         >
                           <span>
                             {item.name} · x{item.quantity} room
-                            {item.quantity === 1 ? "" : "s"} · {item.nights} night
+                            {item.quantity === 1 ? "" : "s"} · {item.nights}{" "}
+                            night
                             {item.nights === 1 ? "" : "s"}
                           </span>
                           <span className="font-medium">
@@ -552,7 +659,9 @@ export default function BookingConfirmationPage() {
 
                       <div className="flex justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">
-                          {bookingTotals.taxesApplied ? "Total (before tax)" : "Subtotal"}
+                          {bookingTotals.taxesApplied
+                            ? "Total (before tax)"
+                            : "Subtotal"}
                         </span>
                         <span className="font-semibold">
                           {formatCurrency(Math.round(bookingTotals.baseTotal))}
@@ -562,10 +671,14 @@ export default function BookingConfirmationPage() {
                         <div className="flex justify-between text-xs sm:text-sm">
                           <span className="text-muted-foreground">
                             Taxes &amp; fees
-                            {formattedTaxRate && <span> ({formattedTaxRate}%)</span>}
+                            {formattedTaxRate && (
+                              <span> ({formattedTaxRate}%)</span>
+                            )}
                           </span>
                           <span className="font-semibold">
-                            {formatCurrency(Math.round(bookingTotals.taxesTotal))}
+                            {formatCurrency(
+                              Math.round(bookingTotals.taxesTotal)
+                            )}
                           </span>
                         </div>
                       )}
@@ -574,7 +687,9 @@ export default function BookingConfirmationPage() {
 
                       <div className="flex justify-between text-sm font-semibold">
                         <span>Total</span>
-                        <span>{formatCurrency(Math.round(bookingTotals.grandTotal))}</span>
+                        <span>
+                          {formatCurrency(Math.round(bookingTotals.grandTotal))}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -586,11 +701,17 @@ export default function BookingConfirmationPage() {
             <div>
               <Card className="flex h-full flex-col rounded-2xl border-border/60 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-foreground font-serif text-2xl">Hotel information</CardTitle>
-                  <CardDescription>Everything you need to reach us with ease.</CardDescription>
+                  <CardTitle className="text-foreground font-serif text-2xl">
+                    Hotel information
+                  </CardTitle>
+                  <CardDescription>
+                    Everything you need to reach us with ease.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                  <p className="text-base font-semibold text-foreground">SAHAJANAND WELLNESS</p>
+                  <p className="text-base font-semibold text-foreground">
+                    SAHAJANAND WELLNESS
+                  </p>
                   <div className="flex items-start gap-3 text-muted-foreground">
                     <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />
                     <span>
@@ -600,7 +721,10 @@ export default function BookingConfirmationPage() {
                   </div>
                   <div className="flex items-center gap-3 text-muted-foreground">
                     <Phone className="h-4 w-4" />
-                    <a href={`tel:${property.phone}`} className="font-medium text-foreground hover:underline">
+                    <a
+                      href={`tel:${property.phone}`}
+                      className="font-medium text-foreground hover:underline"
+                    >
                       {property.phone}
                     </a>
                   </div>
@@ -619,52 +743,69 @@ export default function BookingConfirmationPage() {
                 </CardContent>
                 <Separator className="my-4" />
                 <CardHeader className="pt-0">
-                  <CardTitle className="text-foreground font-serif text-2xl">What&apos;s next?</CardTitle>
-                  <CardDescription>Simple steps before you arrive.</CardDescription>
+                  <CardTitle className="text-foreground font-serif text-2xl">
+                    What&apos;s next?
+                  </CardTitle>
+                  <CardDescription>
+                    Simple steps before you arrive.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <ol className="space-y-4 text-sm">
                     <li className="flex gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <div className="flex h-10 w-10 items-center flex-shrink-0 justify-center rounded-full bg-primary/10 text-primary">
                         <Phone className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">Reception call for payment</p>
+                        <p className="font-medium text-foreground">
+                          Reception call for payment
+                        </p>
                         <p className="text-muted-foreground">
-                          Our reception team will call shortly to complete your UPI transaction and answer any final questions.
+                          Our reception team will call shortly to complete your
+                          UPI transaction and answer any final questions.
                         </p>
                       </div>
                     </li>
                     <li className="flex gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <div className="flex h-10 w-10 items-center flex-shrink-0 justify-center rounded-full bg-primary/10 text-primary">
                         <Mail className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">Check your inbox</p>
+                        <p className="font-medium text-foreground">
+                          Check your inbox
+                        </p>
                         <p className="text-muted-foreground">
-                          We sent your confirmation to {customerDetails.email ?? "your email"}. Save it for quick reference at check-in.
+                          We sent your confirmation to{" "}
+                          {customerDetails.email ?? "your email"}. Save it for
+                          quick reference at check-in.
                         </p>
                       </div>
                     </li>
                     <li className="flex gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <div className="flex h-10 w-10 items-center flex-shrink-0 justify-center rounded-full bg-primary/10 text-primary">
                         <CalendarDays className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">Plan your arrival</p>
+                        <p className="font-medium text-foreground">
+                          Plan your arrival
+                        </p>
                         <p className="text-muted-foreground">
-                          Check-in starts at 12:00 PM; consider your travel time so we can welcome you without delay.
+                          Check-in starts at 12:00 PM; consider your travel time
+                          so we can welcome you without delay.
                         </p>
                       </div>
                     </li>
                     <li className="flex gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <div className="flex h-10 w-10 items-center flex-shrink-0 justify-center rounded-full bg-primary/10 text-primary">
                         <MapPin className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">Need directions?</p>
+                        <p className="font-medium text-foreground">
+                          Need directions?
+                        </p>
                         <p className="text-muted-foreground">
-                          Use the map above or tap our phone number if you need live guidance from the property.
+                          Use the map above or tap our phone number if you need
+                          live guidance from the property.
                         </p>
                       </div>
                     </li>

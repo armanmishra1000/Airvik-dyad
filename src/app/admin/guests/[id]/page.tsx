@@ -65,11 +65,27 @@ export default function GuestDetailsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground">Email</p>
-              <p>{guest.email}</p>
+              <p>{guest.email || "Not provided"}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Phone</p>
-              <p>{guest.phone}</p>
+              <p>{guest.phone || "Not provided"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Country</p>
+              <p>{guest.country || "Not provided"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">City</p>
+              <p>{guest.city || "Not provided"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Pincode</p>
+              <p>{guest.pincode || "Not provided"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Address</p>
+              <p>{guest.address || "Not provided"}</p>
             </div>
           </div>
         </CardContent>

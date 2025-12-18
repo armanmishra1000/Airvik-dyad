@@ -34,10 +34,12 @@ export const columns: ColumnDef<Guest>[] = [
   {
     accessorKey: "email",
     header: "Email",
+    cell: ({ row }) => row.original.email || "—",
   },
   {
     accessorKey: "phone",
     header: "Phone",
+    cell: ({ row }) => row.original.phone || "—",
   },
   {
     id: "actions",
