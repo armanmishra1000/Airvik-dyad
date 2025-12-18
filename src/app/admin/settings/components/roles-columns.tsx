@@ -52,8 +52,9 @@ export const columns: ColumnDef<Role>[] = [
               <DropdownMenuItem
                 disabled={!canManage}
                 onSelect={(e) => {
+                  e.preventDefault()
                   if (!canManage) {
-                    e.preventDefault()
+                    return
                   }
                 }}
               >
