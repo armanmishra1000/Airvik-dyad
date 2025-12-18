@@ -29,7 +29,19 @@ export function useAuth() {
   const [userRole, setUserRole] = React.useState<Role | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  const lastLoadedUserIdRef = React.useRef<string | null>(null);
+  const fetchInFlightUserIdRef = React.useRef<string | null>(null);
+
   const fetchUserProfile = React.useCallback(async (user: AuthUser) => {
+    if (lastLoadedUserIdRef.current === user.id) {
+      return;
+    }
+
+    if (fetchInFlightUserIdRef.current === user.id) {
+      return;
+    }
+
+    fetchInFlightUserIdRef.current = user.id;
     setIsLoading(true);
     try {
       const { data: profile, error } = await getUserProfile(user.id);
@@ -46,15 +58,22 @@ export function useAuth() {
         roleId: typedProfile.role_id,
       });
       setUserRole(mapRole(typedProfile.roles));
+
+      lastLoadedUserIdRef.current = user.id;
     } catch (error) {
       console.error("Failed to fetch user profile, signing out.", error);
       await supabase.auth.signOut();
     } finally {
+      if (fetchInFlightUserIdRef.current === user.id) {
+        fetchInFlightUserIdRef.current = null;
+      }
       setIsLoading(false);
     }
   }, []);
 
   const clearAuthData = () => {
+    lastLoadedUserIdRef.current = null;
+    fetchInFlightUserIdRef.current = null;
     setAuthUser(null);
     setCurrentUser(null);
     setUserRole(null);
