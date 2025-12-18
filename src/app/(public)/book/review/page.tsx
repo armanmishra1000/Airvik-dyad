@@ -883,7 +883,17 @@ function BookingReviewContent() {
                           <FormItem>
                             <FormLabel>Pincode</FormLabel>
                             <FormControl>
-                              <Input placeholder="000000" {...field} />
+                              <Input
+                                placeholder="000000"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                maxLength={6}
+                                {...field}
+                                onChange={(event) => {
+                                  const digitsOnly = event.target.value.replace(/\D/g, "");
+                                  field.onChange(digitsOnly.slice(0, 6));
+                                }}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -967,6 +977,13 @@ function BookingReviewContent() {
                                   type="tel"
                                   placeholder="Your phone number"
                                   {...field}
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  maxLength={10}
+                                  onChange={(event) => {
+                                    const digitsOnly = event.target.value.replace(/\D/g, "");
+                                    field.onChange(digitsOnly.slice(0, 10));
+                                  }}
                                 />
                               </FormControl>
                             </div>

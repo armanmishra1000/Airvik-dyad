@@ -43,10 +43,10 @@ const guestSchema = z.object({
   lastName: z.string().min(1, "Last name is required."),
   email: optionalEmailSchema,
   phone: z.string().min(1, "Phone number is required."),
-  address: z.string().trim(),
-  pincode: z.string().trim(),
-  city: z.string().trim(),
-  country: z.string().trim(),
+  address: z.string().trim().min(1, "Address is required."),
+  pincode: z.string().trim().min(1, "Pincode is required."),
+  city: z.string().trim().min(1, "City is required."),
+  country: z.string().trim().min(1, "Country is required."),
 });
 
 interface GuestFormDialogProps {
@@ -219,7 +219,18 @@ export function GuestFormDialog({
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input placeholder="555-1234" {...field} />
+                    <Input
+                      placeholder="555-1234"
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={10}
+                      {...field}
+                      onChange={(event) => {
+                        const digitsOnly = event.target.value.replace(/\D/g, "");
+                        field.onChange(digitsOnly.slice(0, 10));
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -248,7 +259,17 @@ export function GuestFormDialog({
                   <FormItem>
                     <FormLabel>Pincode</FormLabel>
                     <FormControl>
-                      <Input placeholder="000000" {...field} />
+                      <Input
+                        placeholder="000000"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={6}
+                        {...field}
+                        onChange={(event) => {
+                          const digitsOnly = event.target.value.replace(/\D/g, "");
+                          field.onChange(digitsOnly.slice(0, 6));
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
