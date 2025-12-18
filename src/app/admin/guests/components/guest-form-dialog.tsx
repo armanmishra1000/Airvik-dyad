@@ -28,11 +28,25 @@ import { Input } from "@/components/ui/input";
 import type { Guest } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
 
+const optionalEmailSchema = z
+  .string()
+  .transform((value) => value.trim())
+  .pipe(
+    z.union([
+      z.literal(""),
+      z.string().email("Please enter a valid email address."),
+    ])
+  );
+
 const guestSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().min(1, "Last name is required."),
-  email: z.string().email("Please enter a valid email address."),
+  email: optionalEmailSchema,
   phone: z.string().min(1, "Phone number is required."),
+  address: z.string().trim(),
+  pincode: z.string().trim(),
+  city: z.string().trim(),
+  country: z.string().trim(),
 });
 
 interface GuestFormDialogProps {
@@ -65,6 +79,10 @@ export function GuestFormDialog({
       lastName: guest?.lastName || "",
       email: guest?.email || "",
       phone: guest?.phone || "",
+      address: guest?.address || "",
+      pincode: guest?.pincode || "",
+      city: guest?.city || "",
+      country: guest?.country || "",
     },
   });
 
@@ -77,10 +95,23 @@ export function GuestFormDialog({
           lastName: values.lastName,
           email: values.email,
           phone: values.phone,
+          address: values.address,
+          pincode: values.pincode,
+          city: values.city,
+          country: values.country,
         });
       } else {
         const created = await addGuest(values);
-        form.reset({ firstName: "", lastName: "", email: "", phone: "" });
+        form.reset({
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          address: "",
+          pincode: "",
+          city: "",
+          country: "",
+        });
         onGuestCreated?.(created);
       }
 
@@ -103,9 +134,22 @@ export function GuestFormDialog({
         lastName: guest.lastName || "",
         email: guest.email || "",
         phone: guest.phone || "",
+        address: guest.address || "",
+        pincode: guest.pincode || "",
+        city: guest.city || "",
+        country: guest.country || "",
       });
     } else {
-      form.reset({ firstName: "", lastName: "", email: "", phone: "" });
+      form.reset({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        address: "",
+        pincode: "",
+        city: "",
+        country: "",
+      });
     }
   }, [guest, open, form]);
 
@@ -156,9 +200,13 @@ export function GuestFormDialog({
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Email (optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="john.doe@example.com" {...field} type="email" />
+                    <Input
+                      placeholder="john.doe@example.com"
+                      {...field}
+                      type="email"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -172,6 +220,63 @@ export function GuestFormDialog({
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
                     <Input placeholder="555-1234" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Street, area" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="pincode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pincode</FormLabel>
+                    <FormControl>
+                      <Input placeholder="000000" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input placeholder="City" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="country"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Country" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

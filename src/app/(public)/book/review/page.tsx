@@ -45,10 +45,23 @@ import {
 } from "@/components/ui/select";
 import type { RoomType } from "@/data/types";
 
+const optionalEmailSchema = z
+  .string()
+  .transform((value) => value.trim())
+  .pipe(
+    z.union([
+      z.literal(""),
+      z.string().email("Please enter a valid email."),
+    ])
+  );
+
 const paymentSchema = z.object({
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().min(1, "Last name is required."),
-  email: z.string().email("Please enter a valid email."),
+  email: optionalEmailSchema,
+  address: z.string().trim().min(1,"Address is required."),
+  pincode: z.string().trim().min(1,"Pincode is required."),
+  city: z.string().trim().min(1,"City is required."),
   country: z.string({ required_error: "Country is required." }),
   phoneCountryCode: z.string(),
   phone: z.string().min(10, "Phone number must be at least 10 digits."),
@@ -180,6 +193,9 @@ function BookingReviewContent() {
       firstName: "",
       lastName: "",
       email: "",
+      address: "",
+      pincode: "",
+      city: "",
       country: "India",
       phoneCountryCode: "+91",
       phone: "",
@@ -428,6 +444,10 @@ function BookingReviewContent() {
         lastName: values.lastName,
         email: values.email,
         phone: normalizedPhone.length > 0 ? normalizedPhone : values.phone,
+        address: values.address,
+        pincode: values.pincode,
+        city: values.city,
+        country: values.country,
       });
 
       if (guestError || !guest) {
@@ -508,7 +528,7 @@ function BookingReviewContent() {
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row gap-6 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row gap-6 max-w-7xl mx-auto sm:mt-10 mt-5">
         {/* Booking Summary - Sidebar */}
         <div className="space-y-6 md:w-2/5 w-full">
           <Card>
@@ -790,7 +810,7 @@ function BookingReviewContent() {
         <div className="md:w-3/5 w-full">
           <Card>
             <CardHeader>
-              <CardTitle>Guest & Payment Information</CardTitle>
+              <CardTitle className="text-lg">Guest & Payment Information</CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -799,7 +819,6 @@ function BookingReviewContent() {
                   className="space-y-6"
                 >
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Guest Details</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -833,7 +852,7 @@ function BookingReviewContent() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Email (optional)</FormLabel>
                           <FormControl>
                             <Input type="email" {...field} />
                           </FormControl>
@@ -841,6 +860,49 @@ function BookingReviewContent() {
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Street, area" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid sm:grid-cols-2 grid-cols-1 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="pincode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Pincode</FormLabel>
+                            <FormControl>
+                              <Input placeholder="000000" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input placeholder="City" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
                     <div className="grid sm:grid-cols-2 grid-cols-1 gap-4">
                       <FormField

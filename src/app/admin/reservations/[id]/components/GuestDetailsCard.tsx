@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Mail, Phone, User } from "lucide-react";
+import { Globe, Hash, Mail, MapPin, Phone, User } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -46,11 +46,27 @@ export function GuestDetailsCard({ guest }: GuestDetailsCardProps) {
         </div>
         <div className="flex items-center gap-3">
           <Mail className="h-4 w-4 text-muted-foreground" />
-          <span>{guest.email}</span>
+          <span>{guest.email || "Not provided"}</span>
         </div>
         <div className="flex items-center gap-3">
           <Phone className="h-4 w-4 text-muted-foreground" />
           <span>{guest.phone || "Not provided"}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Globe className="h-4 w-4 text-muted-foreground" />
+          <span>{guest.country || "Not provided"}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <span>{guest.city || "Not provided"}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Hash className="h-4 w-4 text-muted-foreground" />
+          <span>{guest.pincode || "Not provided"}</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
+          <span className="leading-relaxed">{guest.address || "Not provided"}</span>
         </div>
       </CardContent>
       <CardFooter className="border-t border-border/40 px-6 py-4">
