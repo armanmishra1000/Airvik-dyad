@@ -35,6 +35,7 @@ function AdminLayoutInner({
     }
     const roleName = userRole?.name;
     const allowed =
+      roleName === "Administration" ||
       roleName === "Hotel Owner" ||
       roleName === "Hotel Manager" ||
       roleName === "Receptionist" ||
@@ -46,6 +47,7 @@ function AdminLayoutInner({
 
   const roleName = userRole?.name;
   const allowed =
+    roleName === "Administration" ||
     roleName === "Hotel Owner" ||
     roleName === "Hotel Manager" ||
     roleName === "Receptionist" ||

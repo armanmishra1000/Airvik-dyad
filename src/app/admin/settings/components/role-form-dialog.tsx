@@ -34,6 +34,8 @@ import {
   type PermissionResource,
 } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
+import { canManageRole } from "@/lib/roles";
+import { useAuth } from "@/hooks/use-auth";
 
 const roleSchema = z.object({
   name: z.string().min(1, "Role name is required."),
@@ -43,6 +45,8 @@ const roleSchema = z.object({
 interface RoleFormDialogProps {
   role?: Role;
   children: React.ReactNode;
+  actorRole?: Role | null;
+  allowManageRoles?: boolean;
 }
 
 const permissionGroups = (allPermissions as readonly Permission[]).reduce((acc, permission) => {
@@ -61,9 +65,13 @@ const resourceLabels: Partial<Record<PermissionResource, string>> = {
 export function RoleFormDialog({
   role,
   children,
+  actorRole: actorRoleProp,
+  allowManageRoles = true,
 }: RoleFormDialogProps) {
   const [open, setOpen] = React.useState(false);
   const { addRole, updateRole } = useDataContext();
+  const { userRole } = useAuth();
+  const actorRole = actorRoleProp ?? userRole;
   const isEditing = !!role;
 
   const form = useForm<z.infer<typeof roleSchema>>({
@@ -84,10 +92,29 @@ export function RoleFormDialog({
   }, [open, role, form]);
 
   function onSubmit(values: z.infer<typeof roleSchema>) {
+    if (!allowManageRoles || !actorRole) {
+      toast.error("You don't have permission to manage roles.");
+      return;
+    }
+
     const roleData = {
         name: values.name,
         permissions: values.permissions as Permission[],
+        hierarchyLevel: role?.hierarchyLevel ?? 0,
     }
+
+    const targetRole: Role = role ?? {
+      id: "new-role",
+      name: roleData.name,
+      permissions: roleData.permissions,
+      hierarchyLevel: roleData.hierarchyLevel,
+    };
+
+    if (!canManageRole(actorRole, targetRole)) {
+      toast.error("You can only manage roles below your level.");
+      return;
+    }
+
     if (isEditing && role) {
       updateRole(role.id, roleData);
     } else {

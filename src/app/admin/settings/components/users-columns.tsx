@@ -15,6 +15,7 @@ import type { User } from "@/data/types"
 import { useDataContext } from "@/context/data-context"
 import { useAuthContext } from "@/context/auth-context"
 import { UserFormDialog } from "./user-form-dialog"
+import { canManageRole, findRoleById } from "@/lib/roles"
 
 function UserRoleCell({ roleId }: { roleId: string }) {
   const { roles } = useDataContext()
@@ -30,7 +31,10 @@ function UserActionsCell({
   user: User
   onDelete?: (user: User) => void
 }) {
-  const { hasPermission } = useAuthContext()
+  const { hasPermission, userRole } = useAuthContext()
+  const { roles } = useDataContext()
+  const targetRole = findRoleById(roles, user.roleId)
+  const canManage = canManageRole(userRole, targetRole)
 
   return (
     <DropdownMenu>
@@ -42,14 +46,14 @@ function UserActionsCell({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        {hasPermission("update:user") && (
+        {hasPermission("update:user") && canManage && (
           <UserFormDialog user={user}>
             <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
               Edit
             </DropdownMenuItem>
           </UserFormDialog>
         )}
-        {hasPermission("delete:user") && (
+        {hasPermission("delete:user") && canManage && (
           <DropdownMenuItem
             className="text-destructive"
             onSelect={() => onDelete?.(user)}

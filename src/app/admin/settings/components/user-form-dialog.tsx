@@ -35,6 +35,8 @@ import { Input } from "@/components/ui/input";
 import type { User } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthContext } from "@/context/auth-context";
+import { canManageRole, filterManageableRoles, findRoleById } from "@/lib/roles";
 
 const userSchema = z.object({
   name: z.string().min(1, "Name is required."),
@@ -61,7 +63,13 @@ export function UserFormDialog({
   const [open, setOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { roles, updateUser, refetchUsers } = useDataContext();
+  const { userRole } = useAuthContext();
   const isEditing = !!user;
+
+  const manageableRoles = React.useMemo(
+    () => filterManageableRoles(userRole ?? null, roles),
+    [roles, userRole]
+  );
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(isEditing ? editUserSchema : userSchema),
@@ -76,18 +84,24 @@ export function UserFormDialog({
   async function onSubmit(values: UserFormValues) {
     setIsSubmitting(true);
     try {
+      const selectedRole = findRoleById(roles, values.roleId);
+      if (!canManageRole(userRole ?? null, selectedRole ?? null)) {
+        toast.error("You are not allowed to assign this role.");
+        return;
+      }
+
       if (isEditing && user) {
         updateUser(user.id, { name: values.name, roleId: values.roleId });
         toast.success("User updated successfully!");
         await refetchUsers();
         setOpen(false);
       } else {
-        const selectedRole = roles.find(r => r.id === values.roleId);
         const { error } = await supabase.functions.invoke("create-user", {
           body: {
             email: values.email,
             password: values.password,
             name: values.name,
+            roleId: values.roleId,
             role_name: selectedRole?.name,
           },
         });
@@ -173,6 +187,7 @@ export function UserFormDialog({
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
+                    disabled={manageableRoles.length === 0}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -180,13 +195,16 @@ export function UserFormDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {roles.map((role) => (
+                      {manageableRoles.map((role) => (
                         <SelectItem key={role.id} value={role.id}>
                           {role.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {manageableRoles.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No roles available to assign.</p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

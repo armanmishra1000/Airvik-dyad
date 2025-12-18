@@ -235,6 +235,20 @@ type UpdateUserProfilePayload = Partial<{
   roleId: string;
 }>;
 
+const toDbRolePayload = (roleData: Partial<Role>): Record<string, unknown> => {
+  const payload: Record<string, unknown> = {};
+  if (typeof roleData.name !== "undefined") {
+    payload.name = roleData.name;
+  }
+  if (typeof roleData.permissions !== "undefined") {
+    payload.permissions = roleData.permissions;
+  }
+  if (typeof (roleData as Partial<Role>).hierarchyLevel !== "undefined") {
+    payload.hierarchy_level = (roleData as Partial<Role>).hierarchyLevel;
+  }
+  return payload;
+};
+
 type DbAdminActivityLog = {
   id: string;
   actor_user_id: string | null;
@@ -1143,8 +1157,8 @@ export const deleteRatePlan = (id: string) => supabase.from('rate_plans').delete
 
 // Roles
 export const getRoles = () => supabase.from('roles').select('*');
-export const addRole = (roleData: Omit<Role, "id">) => supabase.from('roles').insert([roleData]).select().single();
-export const updateRole = (id: string, updatedData: Partial<Role>) => supabase.from('roles').update(updatedData).eq('id', id).select().single();
+export const addRole = (roleData: Omit<Role, "id">) => supabase.from('roles').insert([toDbRolePayload(roleData)]).select().single();
+export const updateRole = (id: string, updatedData: Partial<Role>) => supabase.from('roles').update(toDbRolePayload(updatedData)).eq('id', id).select().single();
 export const deleteRole = (id: string) => supabase.from('roles').delete().eq('id', id);
 
 // Users & Profiles

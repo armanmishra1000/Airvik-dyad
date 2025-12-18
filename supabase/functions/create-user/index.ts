@@ -69,17 +69,77 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { email, password, name, role_name } = await req.json();
+    const { email, password, name, roleId, role_name } = await req.json();
+
+    if (!email || !password || !name) {
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
+
+    // Resolve target role
+    let targetRoleId: string | null = roleId ?? null;
+
+    if (!targetRoleId && role_name) {
+      const { data: roleLookup, error: roleLookupError } = await supabase
+        .from('roles')
+        .select('id')
+        .eq('name', role_name)
+        .maybeSingle();
+
+      if (roleLookupError) {
+        throw roleLookupError;
+      }
+
+      targetRoleId = roleLookup?.id ?? null;
+    }
+
+    if (!targetRoleId) {
+      return new Response(JSON.stringify({ error: 'Invalid or missing role' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      });
+    }
+
+    // Hierarchy check
+    const { data: canManage, error: manageError } = await supabase.rpc(
+      'user_can_manage_role',
+      {
+        actor_user_id: user.id,
+        target_role_id: targetRoleId,
+      }
+    );
+
+    if (manageError || !canManage) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 403,
+      });
+    }
 
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Auto-confirm users since they are created by an admin
-      user_metadata: { name, role_name },
+      email_confirm: true,
+      user_metadata: { name },
     });
 
     if (error) {
       throw error;
+    }
+
+    const newUserId = data.user?.id;
+
+    if (newUserId) {
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .update({ name, role_id: targetRoleId })
+        .eq('id', newUserId);
+
+      if (profileError) {
+        throw profileError;
+      }
     }
 
     return new Response(JSON.stringify({ user: data.user }), {
