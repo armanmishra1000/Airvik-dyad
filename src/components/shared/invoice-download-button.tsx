@@ -46,7 +46,7 @@ export function InvoiceDownloadButton({
             // Dynamic import to ensure client-side only loading
             const { generateInvoice } = await import("@/lib/invoice/generate-invoice");
 
-            generateInvoice({
+            await generateInvoice({
                 reservations,
                 guest,
                 property,
