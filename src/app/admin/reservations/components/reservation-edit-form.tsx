@@ -148,6 +148,13 @@ export function ReservationEditForm({
 
   const guest = React.useMemo(() => guests.find((g) => g.id === reservation.guestId), [guests, reservation.guestId]);
 
+  // Helper function to validate UUID format
+  const isValidUUID = (uuid: string | undefined): uuid is string => {
+    if (!uuid) return false;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
+
   const groupReservations = React.useMemo(
     () => reservations.filter((entry) => entry.bookingId === reservation.bookingId),
     [reservations, reservation.bookingId]
@@ -393,12 +400,24 @@ export function ReservationEditForm({
     return entries.sort((a, b) => order[a.kind] - order[b.kind]);
   }, [activeGroupReservations, roomMap, roomTypeMap, selectedRoomIds]);
 
+  const getDefaultRatePlan = React.useMemo(() => {
+    // Look for "Standard Rate" first, then fall back to first available rate plan
+    return ratePlans.find((plan) => plan.name === "Standard Rate") || ratePlans[0];
+  }, [ratePlans]);
+
   const ratePlan = React.useMemo(() => {
     if (!ratePlans.length) {
       return undefined;
     }
-    return ratePlans.find((plan) => plan.id === reservation.ratePlanId);
-  }, [ratePlans, reservation.ratePlanId]);
+
+    // If reservation has a rate plan, use it
+    if (reservation.ratePlanId) {
+      return ratePlans.find((plan) => plan.id === reservation.ratePlanId);
+    }
+
+    // For imported reservations without rate plan, use default
+    return getDefaultRatePlan;
+  }, [ratePlans, reservation.ratePlanId, getDefaultRatePlan]);
   const ratePlanUnavailable = !ratePlan;
 
   const selectedRoomsCapacity = React.useMemo(
@@ -619,8 +638,11 @@ export function ReservationEditForm({
       form.setError("dateRange", { message: "Select stay dates" });
       return;
     }
-    if (!ratePlan) {
-      toast.error("Assign a rate plan before saving changes.");
+
+    // Ensure we have a rate plan - assign default if this is an imported reservation
+    const effectiveRatePlan = ratePlan || getDefaultRatePlan;
+    if (!effectiveRatePlan) {
+      toast.error("No rate plans available. Please create a rate plan first.");
       return;
     }
 
@@ -628,10 +650,20 @@ export function ReservationEditForm({
     form.setValue("roomIds", uniqueRoomIds, { shouldValidate: true });
 
     const totalGuestsSelected = adultCount + childCount;
+    // Debug logging - remove in production
+    console.log('reservation.ratePlanId:', reservation.ratePlanId);
+    console.log('effectiveRatePlan:', effectiveRatePlan);
+    console.log('effectiveRatePlan.id:', effectiveRatePlan?.id);
+    console.log('isValidUUID(effectiveRatePlan.id):', isValidUUID(effectiveRatePlan?.id));
+
     const baseReservationPayload = {
       checkInDate: formatISO(dateRange.from, { representation: "date" }),
       checkOutDate: formatISO(dateRange.to, { representation: "date" }),
       notes: notes?.trim() || undefined,
+      // Only include rate plan ID if it's a valid UUID
+      ...(reservation.ratePlanId === null && isValidUUID(effectiveRatePlan?.id) && {
+        ratePlanId: effectiveRatePlan.id
+      }),
     };
     const roomOccupancies = buildRoomOccupancyAssignments(
       uniqueRoomIds,
@@ -1130,6 +1162,12 @@ export function ReservationEditForm({
             </div>
 
             <div className="flex w-full flex-col gap-6 lg:w-2/5 lg:min-w-0">
+              {!reservation.ratePlanId && ratePlan && (
+                <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                  <p className="font-medium">Legacy Reservation</p>
+                  <p>This reservation was imported without a rate plan. &ldquo;{ratePlan.name}&rdquo; has been automatically assigned for editing purposes.</p>
+                </section>
+              )}
               {ratePlanUnavailable && (
                 <section className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
                   No rate plan is available for this booking. Configure a rate plan to enable pricing and room assignment changes.
