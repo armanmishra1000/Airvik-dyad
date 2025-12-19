@@ -11,6 +11,7 @@ import { useDataContext } from "@/context/data-context";
 import type { ReservationWithDetails } from "@/app/admin/reservations/components/columns";
 import type { ReservationStatus } from "@/data/types";
 import { CancelReservationDialog } from "@/app/admin/reservations/components/cancel-reservation-dialog";
+import { InvoiceDownloadButton } from "@/components/shared/invoice-download-button";
 import * as React from "react";
 
 interface ReservationHeaderProps {
@@ -19,10 +20,20 @@ interface ReservationHeaderProps {
 }
 
 export function ReservationHeader({ reservation, bookingStatus }: ReservationHeaderProps) {
-  const { updateReservationStatus, updateBookingReservationStatus } = useDataContext();
+  const { updateReservationStatus, updateBookingReservationStatus, guests, rooms, roomTypes, property, reservations } = useDataContext();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
   const searchParams = useSearchParams();
   const isNewlyCreated = searchParams?.get("createdBooking") === "1";
+
+  // Get all reservations for this booking
+  const bookingReservations = React.useMemo(() => {
+    return reservations.filter((r) => r.bookingId === reservation.bookingId);
+  }, [reservations, reservation.bookingId]);
+
+  // Get guest for this reservation
+  const guest = React.useMemo(() => {
+    return guests.find((g) => g.id === reservation.guestId);
+  }, [guests, reservation.guestId]);
 
   const handleStatusUpdate = async (
     status: "Checked-in" | "Checked-out" | "Cancelled"
@@ -88,6 +99,15 @@ export function ReservationHeader({ reservation, bookingStatus }: ReservationHea
               </>
             )}
           </Button>
+          <InvoiceDownloadButton
+            reservations={bookingReservations}
+            guest={guest}
+            property={property}
+            rooms={rooms}
+            roomTypes={roomTypes}
+            variant="outline"
+            size="sm"
+          />
           <Button
             variant="outline"
             size="sm"
