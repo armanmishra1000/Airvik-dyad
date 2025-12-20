@@ -463,7 +463,16 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
 
   const totalGuests = reservations.reduce((sum, r) => sum + (r.numberOfGuests || 0), 0);
   const totalAdults = reservations.reduce((sum, r) => sum + (r.adultCount || 0), 0);
-  drawResRow("Guests:", `${totalGuests} (${totalAdults} adult${totalAdults === 1 ? "" : "s"})`);
+  const totalChildren = reservations.reduce((sum, r) => sum + (r.childCount || 0), 0);
+  const guestDetails: string[] = [];
+  if (totalAdults > 0) {
+    guestDetails.push(`${totalAdults} adult${totalAdults === 1 ? "" : "s"}`);
+  }
+  if (totalChildren > 0) {
+    guestDetails.push(`${totalChildren} ${totalChildren === 1 ? "child" : "children"}`);
+  }
+  const guestDetailText = guestDetails.length ? ` (${guestDetails.join(", ")})` : "";
+  drawResRow("Guests:", `${totalGuests}${guestDetailText}`);
 
   yPos += cardHeight + 15;
 
