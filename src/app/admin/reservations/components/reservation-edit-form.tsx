@@ -144,6 +144,7 @@ export function ReservationEditForm({
     property,
     validateBookingRequest,
     refreshReservations,
+    activeBookingReservations,
   } = useDataContext();
 
   const guest = React.useMemo(() => guests.find((g) => g.id === reservation.guestId), [guests, reservation.guestId]);
@@ -156,8 +157,9 @@ export function ReservationEditForm({
   };
 
   const groupReservations = React.useMemo(
-    () => reservations.filter((entry) => entry.bookingId === reservation.bookingId),
-    [reservations, reservation.bookingId]
+    () => (activeBookingReservations.length > 0 ? activeBookingReservations : reservations)
+      .filter((entry) => entry.bookingId === reservation.bookingId),
+    [reservations, activeBookingReservations, reservation.bookingId]
   );
 
   const activeGroupReservations = React.useMemo(
