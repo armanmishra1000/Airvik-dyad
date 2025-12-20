@@ -64,6 +64,10 @@ export interface Property {
   defaultUnitsView: UnitsViewMode;
   tax_enabled: boolean;
   tax_percentage: number;
+  trust_registration_no?: string;
+  trust_date?: string;
+  pan_no?: string;
+  certificate_no?: string;
 }
 
 export type UnitsViewMode = 'remaining' | 'booked';

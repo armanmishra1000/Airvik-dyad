@@ -65,6 +65,10 @@ const propertySchema = z.object({
     .number({ invalid_type_error: "Enter a valid percentage" })
     .min(0, "Tax percentage cannot be negative")
     .max(100, "Tax percentage cannot exceed 100"),
+  trust_registration_no: z.string().optional(),
+  trust_date: z.string().optional(),
+  pan_no: z.string().optional(),
+  certificate_no: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.tax_enabled && data.tax_percentage <= 0) {
     ctx.addIssue({
@@ -93,6 +97,10 @@ export function PropertySettingsForm() {
       currency: property.currency || "INR",
       tax_enabled: property.tax_enabled ?? false,
       tax_percentage: (property.tax_percentage ?? 0) * 100,
+      trust_registration_no: property.trust_registration_no || "",
+      trust_date: property.trust_date || "",
+      pan_no: property.pan_no || "",
+      certificate_no: property.certificate_no || "",
     },
   });
 
@@ -111,6 +119,10 @@ export function PropertySettingsForm() {
       currency: property.currency || "INR",
       tax_enabled: property.tax_enabled ?? false,
       tax_percentage: (property.tax_percentage ?? 0) * 100,
+      trust_registration_no: property.trust_registration_no || "",
+      trust_date: property.trust_date || "",
+      pan_no: property.pan_no || "",
+      certificate_no: property.certificate_no || "",
     });
   }, [property, form]);
 
@@ -124,6 +136,10 @@ export function PropertySettingsForm() {
       photos: values.photos ? values.photos.split(",").map(p => p.trim()).filter(Boolean) : [],
       google_maps_url: values.google_maps_url?.trim() || undefined,
       tax_percentage: normalizedTaxPercentage,
+      trust_registration_no: values.trust_registration_no || undefined,
+      trust_date: values.trust_date || undefined,
+      pan_no: values.pan_no || undefined,
+      certificate_no: values.certificate_no || undefined,
     };
     updateProperty(updatedData);
     toast.success("Property details updated successfully!");
@@ -238,6 +254,70 @@ export function PropertySettingsForm() {
                 )}
               />
             </div>
+
+            <div className="border rounded-lg p-4 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold">Trust &amp; Legal Details</h3>
+                <p className="text-sm text-muted-foreground">
+                  Manage legal registration details for donation receipts.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField<PropertyFormValues, "trust_registration_no">
+                  control={form.control}
+                  name="trust_registration_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Trust Registration No.</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Registration number" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField<PropertyFormValues, "trust_date">
+                  control={form.control}
+                  name="trust_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Dtd.</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Date" />
+                      </FormControl>
+                      <FormDescription>Date of registration/trust deed</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField<PropertyFormValues, "pan_no">
+                  control={form.control}
+                  name="pan_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>PAN No.</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Permanent Account Number" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField<PropertyFormValues, "certificate_no">
+                  control={form.control}
+                  name="certificate_no"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Certificate No.</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="80G Certificate Number" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
             <FormField<PropertyFormValues, "google_maps_url">
               control={form.control}
               name="google_maps_url"
@@ -336,6 +416,9 @@ export function PropertySettingsForm() {
                 />
               </div>
             </div>
+
+
+
             <Button type="submit">Save Changes</Button>
           </form>
         </Form>

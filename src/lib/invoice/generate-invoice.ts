@@ -325,7 +325,7 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
 
-  doc.text(`Invoice No:`, pageWidth - margin - 35, yPos + 22, { align: "right" });
+  doc.text(`Receipt No:`, pageWidth - margin - 35, yPos + 22, { align: "right" });
   doc.setTextColor(COLORS.TEXT_DARK); // Black
   doc.setFont("helvetica", "bold");
   doc.text(invoiceNumber, pageWidth - margin, yPos + 22, { align: "right" });
@@ -363,9 +363,29 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   }
   if (property.email) {
     doc.text(`Email: ${property.email}`, margin, currentDetailY);
+    currentDetailY += 4;
   }
 
-  yPos = 100; // Fixed start for cards
+  // --- Trust / NGO Details ---
+  currentDetailY += 2; // small gap
+  if (property.trust_registration_no) {
+    doc.text(`Trust Reg. No: ${property.trust_registration_no}`, margin, currentDetailY);
+    currentDetailY += 4;
+  }
+  if (property.trust_date) {
+    doc.text(`Dtd.: ${property.trust_date}`, margin, currentDetailY);
+    currentDetailY += 4;
+  }
+  if (property.pan_no) {
+    doc.text(`PAN No: ${property.pan_no}`, margin, currentDetailY);
+    currentDetailY += 4;
+  }
+  if (property.certificate_no) {
+    doc.text(`Certificate No: ${property.certificate_no}`, margin, currentDetailY);
+    currentDetailY += 4;
+  }
+
+  yPos = currentDetailY + 10; // Ensure dynamic spacing based on content height
 
   // ========== CARDS: BILL TO & RESERVATION ==========
   const cardGap = 10;
@@ -474,15 +494,15 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   const guestDetailText = guestDetails.length ? ` (${guestDetails.join(", ")})` : "";
   drawResRow("Guests:", `${totalGuests}${guestDetailText}`);
 
-  yPos += cardHeight + 15;
+  yPos += cardHeight + 5; // Reduced gap between cards and table (was +15)
 
   // ========== TABLE ==========
-  const tableHead = [["Description", "Qty", "Nights", "Rate/Night", "Amount"]];
+  // Columns: Description, Nights, Amount
+  // Removed: Qty, Rate/Night
+  const tableHead = [["Description", "Nights", "Amount"]];
   const tableBody = roomChargeSummaries.map((summary) => [
     summary.roomTypeName,
-    summary.quantity.toString(),
     summary.nights.toString(),
-    formatCurrency(summary.ratePerNight / summary.quantity),
     formatCurrency(summary.totalAmount),
   ]);
 
@@ -504,10 +524,8 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
     },
     columnStyles: {
       0: { cellWidth: "auto", halign: "left" },
-      1: { cellWidth: 20, halign: "center" },
-      2: { cellWidth: 20, halign: "center" },
-      3: { cellWidth: 35, halign: "right" },
-      4: { cellWidth: 35, halign: "right" },
+      1: { cellWidth: 30, halign: "center" },
+      2: { cellWidth: 40, halign: "right" },
     },
     styles: {
       cellPadding: 4,
@@ -520,7 +538,7 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
     margin: { left: margin, right: margin },
   });
 
-  yPos = doc.lastAutoTable.finalY + 10;
+  yPos = doc.lastAutoTable.finalY + 15; // Increased gap after table as per request
 
   // ========== TOTALS ==========
   const totalsWidth = 80;
@@ -548,7 +566,8 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
     yPos += rowHeight;
   };
 
-  drawTotalRow("Subtotal", formatCurrency(subtotal));
+  // Subtotal removed as per request
+  // drawTotalRow("Subtotal", formatCurrency(subtotal));
 
   if (taxAmount > 0) {
     const taxLabel = taxRate
@@ -572,22 +591,7 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   doc.setTextColor(COLORS.TEXT_LIGHT);
   doc.text("We look forward to welcoming you.", pageWidth / 2, footerTextY + 5, { align: "center" });
 
-  // Managed By + Logo
-  const managedY = footerTextY + 15;
-  doc.setFontSize(7);
-  doc.setTextColor(150, 150, 150); // Light grey
-  doc.text("MANAGED BY", pageWidth / 2, managedY, { align: "center" });
-
-  if (apextureLogoResult) {
-    const { width, height } = calculateDimensions(
-      apextureLogoResult.width,
-      apextureLogoResult.height,
-      LOGO_CONFIG.COMPANY_LOGO.height,
-      LOGO_CONFIG.COMPANY_LOGO.width
-    );
-    // Center the logo below "MANAGED BY"
-    doc.addImage(apextureLogoResult.base64, "PNG", (pageWidth - width) / 2, managedY + 2, width, height);
-  }
+  // Managed By + Logo REMOVED as per request
 
   // Save PDF
   const fileName = `Invoice-${invoiceNumber}.pdf`;
