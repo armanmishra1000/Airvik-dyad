@@ -565,402 +565,402 @@ export default function CreateReservationPage() {
                 </CardContent>
               </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Stay Details</CardTitle>
-                <CardDescription>Choose dates, guests, and room type filters.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="dateRange"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Check-in / Check-out</FormLabel>
-                      <FormControl>
-                        <ReservationDateRangePicker value={field.value} onChange={field.onChange} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid gap-4 md:grid-cols-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Stay Details</CardTitle>
+                  <CardDescription>Choose dates, guests, and room type filters.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
                   <FormField
                     control={form.control}
-                    name="adults"
+                    name="dateRange"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Adults</FormLabel>
+                        <FormLabel>Check-in / Check-out</FormLabel>
                         <FormControl>
-                          <Input type="number" min={1} {...field} />
+                          <ReservationDateRangePicker value={field.value} onChange={field.onChange} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="children"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Children</FormLabel>
-                        <FormControl>
-                          <Input type="number" min={0} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="roomTypeId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Room Type Filter</FormLabel>
-                        <Select
-                          value={field.value ?? "__all"}
-                          onValueChange={(val) => field.onChange(val === "__all" ? undefined : val)}
-                        >
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <FormField
+                      control={form.control}
+                      name="adults"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Adults</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="All room types" />
-                            </SelectTrigger>
+                            <Input type="number" min={1} {...field} />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="__all">All room types</SelectItem>
-                            {roomTypes.map((type) => (
-                              <SelectItem key={type.id} value={type.id}>
-                                {type.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="children"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Children</FormLabel>
+                          <FormControl>
+                            <Input type="number" min={0} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="roomTypeId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Room Type Filter</FormLabel>
+                          <Select
+                            value={field.value ?? "__all"}
+                            onValueChange={(val) => field.onChange(val === "__all" ? undefined : val)}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="All room types" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="__all">All room types</SelectItem>
+                              {roomTypes.map((type) => (
+                                <SelectItem key={type.id} value={type.id}>
+                                  {type.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Available Rooms</CardTitle>
-                <CardDescription>Select one or more rooms for this booking.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-72 overflow-y-auto pr-1">
-                  <div className="space-y-3">
-                    {watchedDateRange?.from && watchedDateRange?.to ? (
-                      filteredAvailableRooms.length ? (
-                        filteredAvailableRooms.map((room) => {
-                          const roomType = roomTypes.find((rt) => rt.id === room.roomTypeId);
-                          const isSelected = selectedRoomIds.includes(room.id);
-                          return (
-                        <div
-                          key={room.id}
-                          className={cn(
-                            "flex items-center gap-4 rounded-2xl border px-4 py-3",
-                            isSelected ? "border-primary/60 bg-primary/5" : "border-border/40 bg-card"
-                          )}
-                        >
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => handleRoomToggle(room.id)}
-                            id={`room-${room.id}`}
-                          />
-                          <label htmlFor={`room-${room.id}`} className="flex flex-1 flex-col text-sm font-medium">
-                            <span className="flex items-center gap-2">
-                              Room {room.roomNumber}
-                              <Badge
-                                variant="outline"
-                                className="rounded-full border-border/50 bg-background/50 px-2 py-0 text-[10px] font-semibold"
+              <Card>
+                <CardHeader>
+                  <CardTitle>Available Rooms</CardTitle>
+                  <CardDescription>Select one or more rooms for this booking.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="max-h-72 overflow-y-auto pr-1">
+                    <div className="space-y-3">
+                      {watchedDateRange?.from && watchedDateRange?.to ? (
+                        filteredAvailableRooms.length ? (
+                          filteredAvailableRooms.map((room) => {
+                            const roomType = roomTypes.find((rt) => rt.id === room.roomTypeId);
+                            const isSelected = selectedRoomIds.includes(room.id);
+                            return (
+                              <div
+                                key={room.id}
+                                className={cn(
+                                  "flex items-center gap-4 rounded-2xl border px-4 py-3",
+                                  isSelected ? "border-primary/60 bg-primary/5" : "border-border/40 bg-card"
+                                )}
                               >
-                                {ROOM_STATUS_LABELS[room.status]}
-                              </Badge>
-                            </span>
-                            <span className="text-xs text-muted-foreground">{roomType?.name}</span>
-                          </label>
-                        </div>
-                          );
-                        })
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={() => handleRoomToggle(room.id)}
+                                  id={`room-${room.id}`}
+                                />
+                                <label htmlFor={`room-${room.id}`} className="flex flex-1 flex-col text-sm font-medium">
+                                  <span className="flex items-center gap-2">
+                                    Room {room.roomNumber}
+                                    <Badge
+                                      variant="outline"
+                                      className="rounded-full border-border/50 bg-background/50 px-2 py-0 text-[10px] font-semibold"
+                                    >
+                                      {ROOM_STATUS_LABELS[room.status]}
+                                    </Badge>
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">{roomType?.name}</span>
+                                </label>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="rounded-xl border border-dashed border-border/60 bg-muted/10 p-8 text-center text-sm text-muted-foreground">
+                            No rooms match the selected dates or filters.
+                          </div>
+                        )
                       ) : (
                         <div className="rounded-xl border border-dashed border-border/60 bg-muted/10 p-8 text-center text-sm text-muted-foreground">
-                          No rooms match the selected dates or filters.
+                          Select dates to load available rooms.
                         </div>
-                      )
-                    ) : (
-                      <div className="rounded-xl border border-dashed border-border/60 bg-muted/10 p-8 text-center text-sm text-muted-foreground">
-                        Select dates to load available rooms.
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-                {form.formState.errors.roomIds && (
-                  <p className="mt-2 text-sm text-destructive">
-                    {form.formState.errors.roomIds.message}
-                  </p>
-                )}
-                <div className="mt-4 rounded-2xl border border-border/60 bg-muted/10 p-4 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Capacity Selected</span>
-                    <span className="font-medium">
-                      {selectedRoomIds.length ? `${selectedRoomsCapacity} guests` : "0"}
-                    </span>
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Guest count: {totalGuests} ({adults} adults / {children} children)
-                  </div>
-                  {!hasCapacityForGuests && selectedRoomIds.length > 0 && (
-                    <p className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                      Add more rooms or adjust guests. Need capacity for {totalGuests} but currently have {selectedRoomsCapacity}.
+                  {form.formState.errors.roomIds && (
+                    <p className="mt-2 text-sm text-destructive">
+                      {form.formState.errors.roomIds.message}
                     </p>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Custom Prices (optional)</CardTitle>
-                <CardDescription>Override nightly rates for selected room types.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {uniqueSelectedRoomTypes.length ? (
-                  uniqueSelectedRoomTypes.map((roomType) => {
-                    const overrideValue = customRatesValue[roomType.id];
-                    const hasOverride = typeof overrideValue === "number" && overrideValue > 0;
-                    const defaultNightlyRate = resolveRoomNightlyRate({
-                      roomType,
-                      ratePlan: defaultRatePlan,
-                    });
-                    const errorMessage = customRateErrors?.[roomType.id]?.message;
-                    return (
-                      <div
-                        key={roomType.id}
-                        className="space-y-2 rounded-xl border border-border/50 p-3"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <p className="font-medium">{roomType.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Default {formatCurrency(defaultNightlyRate)} / night
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              inputMode="decimal"
-                              min={1}
-                              className="w-28"
-                              value={typeof overrideValue === "number" ? overrideValue : ""}
-                              onChange={(event) =>
-                                handleCustomRateInput(roomType.id, event.target.value)
-                              }
-                              placeholder={formatCurrency(defaultNightlyRate)}
-                            />
-                            {hasOverride && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleResetCustomRate(roomType.id)}
-                              >
-                                Reset
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        {errorMessage && (
-                          <p className="text-xs text-destructive">{errorMessage}</p>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
-                    Select rooms to override their nightly rates.
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Changes apply only to this booking and update the summary immediately.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Details</CardTitle>
-                <CardDescription>Status, payment method, and notes.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Booking Status</FormLabel>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {creatableStatuses.map((status) => (
-                              <SelectItem key={status} value={status}>
-                                {status}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="paymentMethod"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Method</FormLabel>
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {paymentMethodOptions.map((method) => (
-                              <SelectItem key={method} value={method}>
-                                {method}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes</FormLabel>
-                      <FormControl>
-                        <Textarea rows={4} placeholder="Optional notes for the front desk" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Summary</CardTitle>
-                <CardDescription>Review before saving.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Guests</span>
-                    <span className="font-medium">{adults + children} ({adults} Adults / {children} Children)</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Nights</span>
-                    <span className="font-medium">{nights || "-"}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Rooms Selected</span>
-                    <span className="font-medium">{selectedRoomIds.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Capacity</span>
-                    <span className={cn("font-medium", hasCapacityForGuests ? "text-foreground" : "text-destructive")}>{selectedRoomsCapacity} / {totalGuests}</span>
-                  </div>
-                </div>
-                <Separator />
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-semibold">{pricing ? formatCurrency(pricing.totalCost) : "-"}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Taxes & Fees</span>
-                    <span className="font-semibold">
-                      {pricing
-                        ? `${taxConfig.enabled && pricing.taxRatePercent ? `${pricing.taxRatePercent.toFixed(pricing.taxRatePercent % 1 === 0 ? 0 : 2)}% · ` : ""}${formatCurrency(pricing.taxesAndFees)}`
-                        : "-"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-base">
-                    <span className="font-medium">Grand Total</span>
-                    <span className="font-semibold">{pricing ? formatCurrency(pricing.grandTotal) : "-"}</span>
-                  </div>
-                </div>
-                {!taxConfig.enabled && (
-                  <p className="text-xs text-muted-foreground">
-                    Taxes &amp; Fees are turned off in Property Settings.
-                  </p>
-                )}
-                <Separator />
-                <div className="space-y-2">
-                  <div className="text-xs uppercase tracking-wide text-muted-foreground">Selected Rooms</div>
-                  {selectedRoomIds.length ? (
-                    <div className="flex flex-wrap gap-2">
-                      {selectedRoomIds.map((roomId) => {
-                        const room = rooms.find((r) => r.id === roomId);
-                        return (
-                          <Badge key={roomId} variant="secondary" className="rounded-full px-3 py-1">
-                            Room {room?.roomNumber}
-                          </Badge>
-                        );
-                      })}
+                  <div className="mt-4 rounded-2xl border border-border/60 bg-muted/10 p-4 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Capacity Selected</span>
+                      <span className="font-medium">
+                        {selectedRoomIds.length ? `${selectedRoomsCapacity} guests` : "0"}
+                      </span>
                     </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">No rooms selected yet.</p>
-                  )}
-                </div>
-                <Button type="submit" className="w-full mt-4" disabled={form.formState.isSubmitting || !hasCapacityForGuests}>
-                  {form.formState.isSubmitting ? "Saving..." : !hasCapacityForGuests ? "Add more capacity" : "Save Reservation"}
-                </Button>
-              </CardContent>
-            </Card>
+                    <div className="mt-2 text-xs text-muted-foreground">
+                      Guest count: {totalGuests} ({adults} adults / {children} children)
+                    </div>
+                    {!hasCapacityForGuests && selectedRoomIds.length > 0 && (
+                      <p className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                        Add more rooms or adjust guests. Need capacity for {totalGuests} but currently have {selectedRoomsCapacity}.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Website Rates</CardTitle>
-                <CardDescription>Reference pricing from the public site.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {roomTypes.map((roomType) => (
-                  <div key={roomType.id} className="rounded-xl border border-border/40 p-3">
-                    <div className="flex items-center justify-between text-sm font-medium">
-                      <span>{roomType.name}</span>
-                      <span className="text-primary">
-                        {roomType.price
-                          ? `${formatCurrency(roomType.price)} / night`
+              <Card>
+                <CardHeader>
+                  <CardTitle>Custom Prices (optional)</CardTitle>
+                  <CardDescription>Override nightly rates for selected room types.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {uniqueSelectedRoomTypes.length ? (
+                    uniqueSelectedRoomTypes.map((roomType) => {
+                      const overrideValue = customRatesValue[roomType.id];
+                      const hasOverride = typeof overrideValue === "number" && overrideValue > 0;
+                      const defaultNightlyRate = resolveRoomNightlyRate({
+                        roomType,
+                        ratePlan: defaultRatePlan,
+                      });
+                      const errorMessage = customRateErrors?.[roomType.id]?.message;
+                      return (
+                        <div
+                          key={roomType.id}
+                          className="space-y-2 rounded-xl border border-border/50 p-3"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <p className="font-medium">{roomType.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Default {formatCurrency(defaultNightlyRate)} / night
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                inputMode="decimal"
+                                min={1}
+                                className="w-28"
+                                value={typeof overrideValue === "number" ? overrideValue : ""}
+                                onChange={(event) =>
+                                  handleCustomRateInput(roomType.id, event.target.value)
+                                }
+                                placeholder={formatCurrency(defaultNightlyRate)}
+                              />
+                              {hasOverride && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleResetCustomRate(roomType.id)}
+                                >
+                                  Reset
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          {errorMessage && (
+                            <p className="text-xs text-destructive">{errorMessage}</p>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
+                      Select rooms to override their nightly rates.
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Changes apply only to this booking and update the summary immediately.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Additional Details</CardTitle>
+                  <CardDescription>Status, payment method, and notes.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Booking Status</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {creatableStatuses.map((status) => (
+                                <SelectItem key={status} value={status}>
+                                  {status}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="paymentMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Method</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {paymentMethodOptions.map((method) => (
+                                <SelectItem key={method} value={method}>
+                                  {method}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes</FormLabel>
+                        <FormControl>
+                          <Textarea rows={4} placeholder="Optional notes for the front desk" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Summary</CardTitle>
+                  <CardDescription>Review before saving.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Guests</span>
+                      <span className="font-medium">{adults + children} ({adults} Adults / {children} Children)</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Nights</span>
+                      <span className="font-medium">{nights || "-"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Rooms Selected</span>
+                      <span className="font-medium">{selectedRoomIds.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Capacity</span>
+                      <span className={cn("font-medium", hasCapacityForGuests ? "text-foreground" : "text-destructive")}>{selectedRoomsCapacity} / {totalGuests}</span>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="font-semibold">{pricing ? formatCurrency(pricing.totalCost) : "-"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Taxes & Fees</span>
+                      <span className="font-semibold">
+                        {pricing
+                          ? `${taxConfig.enabled && pricing.taxRatePercent ? `${pricing.taxRatePercent.toFixed(pricing.taxRatePercent % 1 === 0 ? 0 : 2)}% · ` : ""}${formatCurrency(pricing.taxesAndFees)}`
                           : "-"}
                       </span>
                     </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      Up to {roomType.maxOccupancy} guests · {roomType.bedTypes.join(", ")}
+                    <div className="flex items-center justify-between text-base">
+                      <span className="font-medium">Grand Total</span>
+                      <span className="font-semibold">{pricing ? formatCurrency(pricing.grandTotal) : "-"}</span>
                     </div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        </form>
-      </Form>
-    </div>
+                  {!taxConfig.enabled && (
+                    <p className="text-xs text-muted-foreground">
+                      Taxes &amp; Fees are turned off in Property Settings.
+                    </p>
+                  )}
+                  <Separator />
+                  <div className="space-y-2">
+                    <div className="text-xs uppercase tracking-wide text-muted-foreground">Selected Rooms</div>
+                    {selectedRoomIds.length ? (
+                      <div className="flex flex-wrap gap-2">
+                        {selectedRoomIds.map((roomId) => {
+                          const room = rooms.find((r) => r.id === roomId);
+                          return (
+                            <Badge key={roomId} variant="secondary" className="rounded-full px-3 py-1">
+                              Room {room?.roomNumber}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No rooms selected yet.</p>
+                    )}
+                  </div>
+                  <Button type="submit" className="w-full mt-4" disabled={form.formState.isSubmitting || !hasCapacityForGuests}>
+                    {form.formState.isSubmitting ? "Saving..." : !hasCapacityForGuests ? "Add more capacity" : "Save Reservation & Generate Invoice"}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Website Rates</CardTitle>
+                  <CardDescription>Reference pricing from the public site.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {roomTypes.map((roomType) => (
+                    <div key={roomType.id} className="rounded-xl border border-border/40 p-3">
+                      <div className="flex items-center justify-between text-sm font-medium">
+                        <span>{roomType.name}</span>
+                        <span className="text-primary">
+                          {roomType.price
+                            ? `${formatCurrency(roomType.price)} / night`
+                            : "-"}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Up to {roomType.maxOccupancy} guests · {roomType.bedTypes.join(", ")}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </form>
+        </Form>
+      </div>
     </PermissionGate>
   );
 }

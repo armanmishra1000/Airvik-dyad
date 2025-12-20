@@ -62,3 +62,10 @@ TAB_SWITCHING_RELOAD_FIX.md
 CHANGES_LOG.md
 simple-booking-search-enhancement-plan.md
 
+
+supabase-dev-clone-guide.md
+supabase-dev-clone-plain.md
+supabase-edge-functions-fix.md
+
+# Claude Code configuration
+.claude/

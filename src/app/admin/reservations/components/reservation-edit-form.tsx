@@ -890,463 +890,465 @@ export function ReservationEditForm({
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-col gap-6 lg:flex-row lg:items-start"
         >
-            <div className="flex w-full flex-col gap-6 lg:w-3/5 lg:min-w-0">
-              <section className="rounded-2xl border border-border/60 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Guest</p>
-                    <p className="text-base font-medium">
-                      {guest ? `${guest.firstName} ${guest.lastName}` : reservation.guestName}
-                    </p>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    <p>{guest?.email}</p>
-                    <p>{guest?.phone || "No phone"}</p>
-                  </div>
-                </div>
-              </section>
-
-              <section className="space-y-5 rounded-2xl border border-border/60 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Stay details</p>
-                    <h3 className="text-base font-semibold">
-                      {watchedDateRange?.from && watchedDateRange?.to
-                        ? `${format(watchedDateRange.from, "MMM d, yyyy")} → ${format(
-                            watchedDateRange.to,
-                            "MMM d, yyyy"
-                          )}`
-                        : "Select dates"}
-                    </h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {nights > 0 ? `${nights} night${nights === 1 ? "" : "s"}` : "-"}
+          <div className="flex w-full flex-col gap-6 lg:w-3/5 lg:min-w-0">
+            <section className="rounded-2xl border border-border/60 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Guest</p>
+                  <p className="text-base font-medium">
+                    {guest ? `${guest.firstName} ${guest.lastName}` : reservation.guestName}
                   </p>
                 </div>
+                <div className="text-sm text-muted-foreground">
+                  <p>{guest?.email}</p>
+                  <p>{guest?.phone || "No phone"}</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-5 rounded-2xl border border-border/60 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Stay details</p>
+                  <h3 className="text-base font-semibold">
+                    {watchedDateRange?.from && watchedDateRange?.to
+                      ? `${format(watchedDateRange.from, "MMM d, yyyy")} → ${format(
+                        watchedDateRange.to,
+                        "MMM d, yyyy"
+                      )}`
+                      : "Select dates"}
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {nights > 0 ? `${nights} night${nights === 1 ? "" : "s"}` : "-"}
+                </p>
+              </div>
+              <FormField
+                control={form.control}
+                name="dateRange"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <ReservationDateRangePicker
+                        value={field.value as DateRange | undefined}
+                        onChange={field.onChange}
+                        allowPastDates
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid gap-4 md:grid-cols-3">
                 <FormField
                   control={form.control}
-                  name="dateRange"
+                  name="adults"
                   render={({ field }) => (
                     <FormItem>
+                      <FormLabel>Adults</FormLabel>
                       <FormControl>
-                        <ReservationDateRangePicker
-                          value={field.value as DateRange | undefined}
-                          onChange={field.onChange}
-                          allowPastDates
-                        />
+                        <Input type="number" min={0} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <div className="grid gap-4 md:grid-cols-3">
-                  <FormField
-                    control={form.control}
-                    name="adults"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Adults</FormLabel>
-                        <FormControl>
-                          <Input type="number" min={0} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="children"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Children</FormLabel>
-                        <FormControl>
-                          <Input type="number" min={0} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="roomTypeId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Room Type Filter</FormLabel>
-                        <Select
-                          value={field.value ?? "__all"}
-                          onValueChange={(value) => field.onChange(value === "__all" ? undefined : value)}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="All room types" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="__all">All room types</SelectItem>
-                            {roomTypes.map((type) => (
-                              <SelectItem key={type.id} value={type.id}>
-                                {type.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="rounded-xl border border-dashed border-border/50 p-3 text-sm text-muted-foreground">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="font-medium text-foreground">
-                      {totalGuests} guest{totalGuests === 1 ? "" : "s"}
-                    </span>
-                    <span className="text-muted-foreground">
-                      Capacity after changes: {selectedRoomsCapacity || "-"} / {totalGuests || "-"}
-                    </span>
-                    {!hasCapacity && totalGuests > 0 && (
-                      <span className="text-destructive">Add more rooms or reduce guests.</span>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              <section className="space-y-5 rounded-2xl border border-border/60 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Available rooms</p>
-                    <h3 className="text-base font-semibold">Select rooms for this stay</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedRoomIds.length > 0
-                      ? `${selectedRoomIds.length} selected`
-                      : `${pendingRoomEntries.length} pending`}
-                  </p>
-                </div>
                 <FormField
                   control={form.control}
-                  name="roomIds"
-                  render={() => (
+                  name="children"
+                  render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Select available rooms</FormLabel>
-                      {ratePlanUnavailable && (
-                        <p className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                          Assign a rate plan to enable room selection.
-                        </p>
-                      )}
-                      <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
-                        {watchedDateRange?.from && watchedDateRange?.to ? (
-                          filteredAvailableRooms.length ? (
-                            filteredAvailableRooms.map((room) => {
-                              const roomType = roomTypeMap.get(room.roomTypeId);
-                              const statusLabel = ROOM_STATUS_LABELS[room.status] ?? room.status;
-                              const isSelected = selectedRoomIds.includes(room.id);
-                              return (
-                                <label
-                                  key={room.id}
-                                  className={cn(
-                                    "flex items-start gap-4 rounded-2xl border px-4 py-3",
-                                    isSelected ? "border-primary bg-primary/5" : "border-border/50",
-                                    ratePlanUnavailable ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-                                  )}
-                                >
-                                  <Checkbox
-                                    checked={isSelected}
-                                    disabled={ratePlanUnavailable}
-                                    onCheckedChange={() => handleRoomToggle(room.id)}
-                                  />
-                                  <div className="flex flex-1 flex-col">
-                                    <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                                      <span>Room {room.roomNumber}</span>
-                                      <Badge variant="outline" className="rounded-full text-xs">
-                                        {statusLabel}
-                                      </Badge>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                      {roomType?.name}
-                                      {roomType?.maxOccupancy ? ` · ${roomType.maxOccupancy} guests` : ""}
-                                    </p>
-                                  </div>
-                                </label>
-                              );
-                            })
-                          ) : (
-                            <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
-                              No rooms match the selected dates or filters.
-                            </p>
-                          )
-                        ) : (
-                          <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
-                            Select dates to see available rooms.
-                          </p>
-                        )}
-                      </div>
+                      <FormLabel>Children</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={0} {...field} />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </section>
-
-                            <section className="space-y-4 rounded-2xl border border-border/60 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Custom prices</p>
-                    <h3 className="text-base font-semibold">Override nightly rates</h3>
-                  </div>
-                  {uniqueSelectedRoomTypes.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {uniqueSelectedRoomTypes.length} room type{uniqueSelectedRoomTypes.length === 1 ? "" : "s"}
-                    </p>
+                <FormField
+                  control={form.control}
+                  name="roomTypeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Room Type Filter</FormLabel>
+                      <Select
+                        value={field.value ?? "__all"}
+                        onValueChange={(value) => field.onChange(value === "__all" ? undefined : value)}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="All room types" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="__all">All room types</SelectItem>
+                          {roomTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="rounded-xl border border-dashed border-border/50 p-3 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="font-medium text-foreground">
+                    {totalGuests} guest{totalGuests === 1 ? "" : "s"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    Capacity after changes: {selectedRoomsCapacity || "-"} / {totalGuests || "-"}
+                  </span>
+                  {!hasCapacity && totalGuests > 0 && (
+                    <span className="text-destructive">Add more rooms or reduce guests.</span>
                   )}
                 </div>
-                
-                {uniqueSelectedRoomTypes.length ? (
-                  uniqueSelectedRoomTypes.map((roomType) => {
-                    const overrideValue = customRatesValue[roomType.id];
-                    const hasOverride = typeof overrideValue === "number" && overrideValue > 0;
-                    const defaultNightlyRate = resolveRoomNightlyRate({
-                      roomType,
-                      ratePlan,
-                    });
-                    const errorMessage = customRateErrors?.[roomType.id]?.message;
+              </div>
+            </section>
+
+            <section className="space-y-5 rounded-2xl border border-border/60 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Available rooms</p>
+                  <h3 className="text-base font-semibold">Select rooms for this stay</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {selectedRoomIds.length > 0
+                    ? `${selectedRoomIds.length} selected`
+                    : `${pendingRoomEntries.length} pending`}
+                </p>
+              </div>
+              <FormField
+                control={form.control}
+                name="roomIds"
+                render={() => (
+                  <FormItem>
+                    <FormLabel>Select available rooms</FormLabel>
+                    {ratePlanUnavailable && (
+                      <p className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                        Assign a rate plan to enable room selection.
+                      </p>
+                    )}
+                    <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                      {watchedDateRange?.from && watchedDateRange?.to ? (
+                        filteredAvailableRooms.length ? (
+                          filteredAvailableRooms.map((room) => {
+                            const roomType = roomTypeMap.get(room.roomTypeId);
+                            const statusLabel = ROOM_STATUS_LABELS[room.status] ?? room.status;
+                            const isSelected = selectedRoomIds.includes(room.id);
+                            return (
+                              <label
+                                key={room.id}
+                                className={cn(
+                                  "flex items-start gap-4 rounded-2xl border px-4 py-3",
+                                  isSelected ? "border-primary bg-primary/5" : "border-border/50",
+                                  ratePlanUnavailable ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+                                )}
+                              >
+                                <Checkbox
+                                  checked={isSelected}
+                                  disabled={ratePlanUnavailable}
+                                  onCheckedChange={() => handleRoomToggle(room.id)}
+                                />
+                                <div className="flex flex-1 flex-col">
+                                  <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                                    <span>Room {room.roomNumber}</span>
+                                    <Badge variant="outline" className="rounded-full text-xs">
+                                      {statusLabel}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    {roomType?.name}
+                                    {roomType?.maxOccupancy ? ` · ${roomType.maxOccupancy} guests` : ""}
+                                  </p>
+                                </div>
+                              </label>
+                            );
+                          })
+                        ) : (
+                          <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
+                            No rooms match the selected dates or filters.
+                          </p>
+                        )
+                      ) : (
+                        <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
+                          Select dates to see available rooms.
+                        </p>
+                      )}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </section>
+
+            <section className="space-y-4 rounded-2xl border border-border/60 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Custom prices</p>
+                  <h3 className="text-base font-semibold">Override nightly rates</h3>
+                </div>
+                {uniqueSelectedRoomTypes.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {uniqueSelectedRoomTypes.length} room type{uniqueSelectedRoomTypes.length === 1 ? "" : "s"}
+                  </p>
+                )}
+              </div>
+
+              {uniqueSelectedRoomTypes.length ? (
+                uniqueSelectedRoomTypes.map((roomType) => {
+                  const overrideValue = customRatesValue[roomType.id];
+                  const hasOverride = typeof overrideValue === "number" && overrideValue > 0;
+                  const defaultNightlyRate = resolveRoomNightlyRate({
+                    roomType,
+                    ratePlan,
+                  });
+                  const errorMessage = customRateErrors?.[roomType.id]?.message;
+                  return (
+                    <div
+                      key={roomType.id}
+                      className="space-y-2 rounded-xl border border-border/50 p-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="font-medium">{roomType.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Default {formatCurrency(defaultNightlyRate)} / night
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            inputMode="decimal"
+                            min={1}
+                            className="w-28"
+                            value={typeof overrideValue === "number" ? overrideValue : ""}
+                            onChange={(event) =>
+                              handleCustomRateInput(roomType.id, event.target.value)
+                            }
+                            placeholder={formatCurrency(defaultNightlyRate)}
+                          />
+                          {hasOverride && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleResetCustomRate(roomType.id)}
+                            >
+                              Reset
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      {errorMessage && (
+                        <p className="text-xs text-destructive">{errorMessage}</p>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
+                  Select rooms to unlock per-booking price overrides.
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Adjusted prices apply only to this booking and reflect everywhere once saved.
+              </p>
+            </section>
+          </div>
+
+        <div className="flex w-full flex-col gap-6 lg:w-2/5 lg:min-w-0">
+          {!reservation.ratePlanId && ratePlan && (
+            <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+              <p className="font-medium">Legacy Reservation</p>
+              <p>
+                This reservation was imported without a rate plan. &ldquo;{ratePlan.name}&rdquo; has been automatically assigned for
+                editing purposes.
+              </p>
+            </section>
+          )}
+          {ratePlanUnavailable && (
+              <section className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+                No rate plan is available for this booking. Configure a rate plan to enable pricing and room assignment changes.
+              </section>
+            )}
+            <section className="space-y-4 rounded-2xl border border-border/60 p-4 text-sm">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Summary</p>
+                <h3 className="text-base font-semibold">Review before saving</h3>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Guests</span>
+                  <span className="font-medium">
+                    {totalGuests} ({adults} Adults / {childGuests} Children)
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Nights</span>
+                  <span className="font-medium">{nights || "-"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Rooms Selected</span>
+                  <span className="font-medium">{selectedRoomIds.length}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Rate Plan</span>
+                  <span className={cn("font-medium", ratePlan ? "text-foreground" : "text-destructive")}>
+                    {ratePlan?.name ?? "Unavailable"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Capacity</span>
+                  <span className={cn("font-medium", hasCapacity ? "text-foreground" : "text-destructive")}>
+                    {selectedRoomsCapacity} / {totalGuests}
+                  </span>
+                </div>
+              </div>
+              <Separator />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-semibold">{pricing ? formatCurrency(pricing.totalCost) : "-"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Taxes & Fees</span>
+                  <span className="font-semibold">
+                    {pricing
+                      ? `${pricing.taxRatePercent
+                        ? `${pricing.taxRatePercent.toFixed(
+                          pricing.taxRatePercent % 1 === 0 ? 0 : 2
+                        )}% · `
+                        : ""
+                      }${formatCurrency(pricing.taxesAndFees)}`
+                      : "-"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-base">
+                  <span className="font-medium">Grand Total</span>
+                  <span className="font-semibold">{pricing ? formatCurrency(pricing.grandTotal) : "-"}</span>
+                </div>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Selected Rooms</p>
+                {selectedRoomIds.length ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {selectedRoomIds.map((roomId) => {
+                      const room = roomMap.get(roomId);
+                      return (
+                        <Badge key={roomId} variant="secondary" className="rounded-full px-3 py-1">
+                          Room {room?.roomNumber ?? "-"}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No rooms selected.</p>
+                )}
+              </div>
+            </section>
+
+            <div className="rounded-2xl border border-border/60 p-4">
+              <div className="flex flex-col gap-3">
+                <Button type="button" variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={!canSubmit || form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? "Saving..." : "Save Changes & Update Invoice"}
+                </Button>
+              </div>
+            </div>
+
+            <section className="space-y-4 rounded-2xl border border-border/60 p-4 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Booked rooms</p>
+                  <h3 className="text-base font-semibold">
+                    {pendingRoomEntries.length} room{pendingRoomEntries.length === 1 ? "" : "s"}
+                  </h3>
+                </div>
+              </div>
+              <div className="space-y-2 rounded-xl border border-border/40 p-3">
+                {pendingRoomEntries.length ? (
+                  pendingRoomEntries.map((entry) => {
+                    const isPrimary = entry.reservation?.id === reservation.id;
+                    const dateLine = entry.reservation
+                      ? `${format(parseISO(entry.reservation.checkInDate), "MMM d")} → ${format(
+                        parseISO(entry.reservation.checkOutDate),
+                        "MMM d"
+                      )}`
+                      : "Will be added after saving";
+                    const actionLabel =
+                      entry.kind === "kept"
+                        ? "Kept"
+                        : entry.kind === "new"
+                          ? "Will add"
+                          : "Will remove";
+                    const actionVariant = entry.kind === "removed" ? "outline" : entry.kind === "new" ? "default" : "secondary";
                     return (
                       <div
-                        key={roomType.id}
-                        className="space-y-2 rounded-xl border border-border/50 p-3"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div>
-                            <p className="font-medium">{roomType.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Default {formatCurrency(defaultNightlyRate)} / night
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              inputMode="decimal"
-                              min={1}
-                              className="w-28"
-                              value={typeof overrideValue === "number" ? overrideValue : ""}
-                              onChange={(event) =>
-                                handleCustomRateInput(roomType.id, event.target.value)
-                              }
-                              placeholder={formatCurrency(defaultNightlyRate)}
-                            />
-                            {hasOverride && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleResetCustomRate(roomType.id)}
-                              >
-                                Reset
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        {errorMessage && (
-                          <p className="text-xs text-destructive">{errorMessage}</p>
+                        key={entry.key}
+                        className={cn(
+                          "flex items-center justify-between rounded-xl border px-3 py-2",
+                          entry.kind === "new"
+                            ? "border-primary/50 bg-primary/5"
+                            : entry.kind === "removed"
+                              ? "border-border/40 bg-muted/10"
+                              : isPrimary
+                                ? "border-primary/50 bg-primary/5"
+                                : "border-border/50"
                         )}
+                      >
+                        <div>
+                          <p className="font-medium">{entry.roomLabel}</p>
+                          <p className="text-xs text-muted-foreground">{dateLine}</p>
+                          {entry.roomTypeLabel && (
+                            <p className="text-xs text-muted-foreground">
+                              {entry.roomTypeLabel}
+                              {entry.occupancyLabel ? ` · ${entry.occupancyLabel}` : ""}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-1 text-xs font-semibold">
+                          <Badge variant={actionVariant}>{actionLabel}</Badge>
+                          {entry.reservation && (
+                            <Badge variant="outline" className="capitalize">
+                              {entry.reservation.status}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     );
                   })
                 ) : (
-                  <p className="rounded-xl border border-dashed border-border/60 p-4 text-center text-sm text-muted-foreground">
-                    Select rooms to unlock per-booking price overrides.
+                  <p className="rounded-xl border border-dashed border-border/60 p-3 text-center text-xs text-muted-foreground">
+                    Select at least one room to preview assignments.
                   </p>
                 )}
-                <p className="text-xs text-muted-foreground">
-                  Adjusted prices apply only to this booking and reflect everywhere once saved.
-                </p>
-              </section>
-            </div>
-
-            <div className="flex w-full flex-col gap-6 lg:w-2/5 lg:min-w-0">
-              {!reservation.ratePlanId && ratePlan && (
-                <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-                  <p className="font-medium">Legacy Reservation</p>
-                  <p>This reservation was imported without a rate plan. &ldquo;{ratePlan.name}&rdquo; has been automatically assigned for editing purposes.</p>
-                </section>
-              )}
-              {ratePlanUnavailable && (
-                <section className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-                  No rate plan is available for this booking. Configure a rate plan to enable pricing and room assignment changes.
-                </section>
-              )}
-              <section className="space-y-4 rounded-2xl border border-border/60 p-4 text-sm">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Summary</p>
-                  <h3 className="text-base font-semibold">Review before saving</h3>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Guests</span>
-                    <span className="font-medium">
-                      {totalGuests} ({adults} Adults / {childGuests} Children)
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Nights</span>
-                    <span className="font-medium">{nights || "-"}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Rooms Selected</span>
-                    <span className="font-medium">{selectedRoomIds.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Rate Plan</span>
-                    <span className={cn("font-medium", ratePlan ? "text-foreground" : "text-destructive")}>
-                      {ratePlan?.name ?? "Unavailable"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Capacity</span>
-                    <span className={cn("font-medium", hasCapacity ? "text-foreground" : "text-destructive")}>
-                      {selectedRoomsCapacity} / {totalGuests}
-                    </span>
-                  </div>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-semibold">{pricing ? formatCurrency(pricing.totalCost) : "-"}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Taxes & Fees</span>
-                    <span className="font-semibold">
-                      {pricing
-                        ? `${
-                            pricing.taxRatePercent
-                              ? `${pricing.taxRatePercent.toFixed(
-                                  pricing.taxRatePercent % 1 === 0 ? 0 : 2
-                                )}% · `
-                              : ""
-                          }${formatCurrency(pricing.taxesAndFees)}`
-                        : "-"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-base">
-                    <span className="font-medium">Grand Total</span>
-                    <span className="font-semibold">{pricing ? formatCurrency(pricing.grandTotal) : "-"}</span>
-                  </div>
-                </div>
-                <Separator />
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Selected Rooms</p>
-                  {selectedRoomIds.length ? (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {selectedRoomIds.map((roomId) => {
-                        const room = roomMap.get(roomId);
-                        return (
-                          <Badge key={roomId} variant="secondary" className="rounded-full px-3 py-1">
-                            Room {room?.roomNumber ?? "-"}
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">No rooms selected.</p>
-                  )}
-                </div>
-              </section>
-
-              <div className="rounded-2xl border border-border/60 p-4">
-                <div className="flex flex-col gap-3">
-                  <Button type="button" variant="outline" onClick={handleCancel}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={!canSubmit || form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Saving..." : "Save changes"}
-                  </Button>
-                </div>
               </div>
+            </section>
 
-              <section className="space-y-4 rounded-2xl border border-border/60 p-4 text-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Booked rooms</p>
-                    <h3 className="text-base font-semibold">
-                      {pendingRoomEntries.length} room{pendingRoomEntries.length === 1 ? "" : "s"}
-                    </h3>
-                  </div>
-                </div>
-                <div className="space-y-2 rounded-xl border border-border/40 p-3">
-                  {pendingRoomEntries.length ? (
-                    pendingRoomEntries.map((entry) => {
-                      const isPrimary = entry.reservation?.id === reservation.id;
-                      const dateLine = entry.reservation
-                        ? `${format(parseISO(entry.reservation.checkInDate), "MMM d")} → ${format(
-                            parseISO(entry.reservation.checkOutDate),
-                            "MMM d"
-                          )}`
-                        : "Will be added after saving";
-                      const actionLabel =
-                        entry.kind === "kept"
-                          ? "Kept"
-                          : entry.kind === "new"
-                          ? "Will add"
-                          : "Will remove";
-                      const actionVariant = entry.kind === "removed" ? "outline" : entry.kind === "new" ? "default" : "secondary";
-                      return (
-                        <div
-                          key={entry.key}
-                          className={cn(
-                            "flex items-center justify-between rounded-xl border px-3 py-2",
-                            entry.kind === "new"
-                              ? "border-primary/50 bg-primary/5"
-                              : entry.kind === "removed"
-                              ? "border-border/40 bg-muted/10"
-                              : isPrimary
-                              ? "border-primary/50 bg-primary/5"
-                              : "border-border/50"
-                          )}
-                        >
-                          <div>
-                            <p className="font-medium">{entry.roomLabel}</p>
-                            <p className="text-xs text-muted-foreground">{dateLine}</p>
-                            {entry.roomTypeLabel && (
-                              <p className="text-xs text-muted-foreground">
-                                {entry.roomTypeLabel}
-                                {entry.occupancyLabel ? ` · ${entry.occupancyLabel}` : ""}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex flex-col items-end gap-1 text-xs font-semibold">
-                            <Badge variant={actionVariant}>{actionLabel}</Badge>
-                            {entry.reservation && (
-                              <Badge variant="outline" className="capitalize">
-                                {entry.reservation.status}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="rounded-xl border border-dashed border-border/60 p-3 text-center text-xs text-muted-foreground">
-                      Select at least one room to preview assignments.
-                    </p>
-                  )}
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-border/60 p-4">
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes</FormLabel>
-                      <FormControl>
-                        <Textarea rows={4} placeholder="Optional notes for the front desk" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </section>
-            </div>
+            <section className="rounded-2xl border border-border/60 p-4">
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Textarea rows={4} placeholder="Optional notes for the front desk" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </section>
+          </div>
         </form>
       </Form>
     </div>

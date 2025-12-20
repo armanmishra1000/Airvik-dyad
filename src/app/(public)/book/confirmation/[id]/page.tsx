@@ -34,6 +34,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
 import { InlineAlert } from "@/components/public/inline-alert";
+import { InvoiceDownloadButton } from "@/components/shared/invoice-download-button";
 
 export default function BookingConfirmationPage() {
   const params = useParams<{ id: string }>();
@@ -153,9 +154,9 @@ export default function BookingConfirmationPage() {
   // Calculate nights based on the reservation dates
   const nights = reservation
     ? differenceInDays(
-        parseISO(reservation.checkOutDate),
-        parseISO(reservation.checkInDate)
-      )
+      parseISO(reservation.checkOutDate),
+      parseISO(reservation.checkInDate)
+    )
     : 0;
 
   // Determine the rate plan used for this booking
@@ -559,9 +560,8 @@ export default function BookingConfirmationPage() {
                                   x{item.quantity} room
                                   {item.quantity === 1 ? "" : "s"}
                                   {capacityPerRoom
-                                    ? ` · up to ${capacityPerRoom} guest${
-                                        capacityPerRoom === 1 ? "" : "s"
-                                      } per room`
+                                    ? ` · up to ${capacityPerRoom} guest${capacityPerRoom === 1 ? "" : "s"
+                                    } per room`
                                     : ""}
                                 </p>
                               </div>
@@ -814,8 +814,18 @@ export default function BookingConfirmationPage() {
               </Card>
             </div>
           </div>
-          <div className="text-center mt-10">
-            <Button asChild size="lg" className="h-12 px-10 rounded-lg">
+          <div className="text-center mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <InvoiceDownloadButton
+              reservations={bookingReservations}
+              guest={guest}
+              property={property}
+              rooms={rooms}
+              roomTypes={roomTypes}
+              variant="outline"
+              size="lg"
+              className="h-12 px-10 rounded-lg w-full sm:w-auto"
+            />
+            <Button asChild size="lg" className="h-12 px-10 rounded-lg w-full sm:w-auto">
               <Link href="/">Back to Home</Link>
             </Button>
           </div>
