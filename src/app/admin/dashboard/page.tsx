@@ -46,7 +46,7 @@ import { getTodayRange } from "@/lib/date";
 import { PermissionGate } from "@/components/admin/permission-gate";
   
   export default function DashboardPage() {
-    const { reservations, guests, dashboardLayout, updateDashboardLayout, rooms, isLoading } = useDataContext();
+    const { todayReservations, guests, dashboardLayout, updateDashboardLayout, rooms, isLoading } = useDataContext();
     const [isEditing, setIsEditing] = React.useState(false);
     const [activeId, setActiveId] = React.useState<string | null>(null);
     const todayRange = React.useMemo(() => getTodayRange(), []);
@@ -74,7 +74,7 @@ import { PermissionGate } from "@/components/admin/permission-gate";
       const arrivals: Array<{ row: DashboardTableRow; sort: number }> = [];
       const departures: Array<{ row: DashboardTableRow; sort: number }> = [];
 
-      reservations.forEach((reservation) => {
+      todayReservations.forEach((reservation) => {
         if (CANCELLED_STATUSES.has(reservation.status)) {
           return;
         }
@@ -133,7 +133,7 @@ import { PermissionGate } from "@/components/admin/permission-gate";
         departuresRows: departures.sort(sortByDate).map((item) => item.row),
         roomsForSaleCount: roomsAvailableForSale.length,
       };
-    }, [guests, reservations, rooms, todayRange]);
+    }, [guests, todayReservations, rooms, todayRange]);
 
     const todayArrivalsCount = arrivalsRows.length;
     const todayDeparturesCount = departuresRows.length;

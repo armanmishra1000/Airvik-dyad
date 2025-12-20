@@ -1,17 +1,16 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { differenceInDays, parseISO } from "date-fns";
 import { columns, ReservationWithDetails } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { useDataContext } from "@/context/data-context";
-import type { FolioItem, Guest, ReservationStatus } from "@/data/types";
+import { BookingSummary } from "@/server/reservations/cache";
+import type { FolioItem, ReservationStatus } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
-import { sortReservationsByBookingDate } from "@/lib/reservations/sort";
 import { PermissionGate } from "@/components/admin/permission-gate";
-import { isActiveReservationStatus, resolveAggregateStatus } from "@/lib/reservations/status";
-import { isReservationRemovedDuringEdit } from "@/lib/reservations/filters";
 
 function sumAdditionalCharges(folioItems: FolioItem[] = []) {
   return folioItems
@@ -42,150 +41,104 @@ function getReservationDisplayAmount(
   return reservation.totalAmount + taxes + additionalCharges;
 }
 
-function getGroupDisplayAmount(
-  group: ReservationWithDetails[],
-  combinedFolio: FolioItem[],
-  property: { tax_enabled?: boolean | null; tax_percentage?: number | null }
-) {
-  const roomTotal = group.reduce((sum, r) => sum + r.totalAmount, 0);
-  const taxesTotal = group.reduce((sum, r) => sum + calculateReservationTaxAmount(r, property), 0);
-  const additionalCharges = sumAdditionalCharges(combinedFolio);
-  return roomTotal + taxesTotal + additionalCharges;
-}
-
 export default function ReservationsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const {
     isRefreshing,
     isReservationsInitialLoading,
-    isReservationsBackfilling,
     refreshReservations,
+    loadReservationsPage,
     reservations,
     reservationsTotalCount,
-    guests,
     updateReservationStatus,
     updateBookingReservationStatus,
-    rooms,
     property,
   } = useDataContext();
 
-  const formatFullName = React.useCallback(
-    (...parts: Array<string | null | undefined>) =>
-      parts
-        .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
-        .join(" ")
-        .trim(),
-    []
+  const pageIndex = Number(searchParams?.get("page") ?? "0");
+  const pageSize = Number(searchParams?.get("limit") ?? "10");
+  const searchQuery = searchParams?.get("q") ?? "";
+
+  const updateQueryParams = React.useCallback(
+    (params: Record<string, string | number | null>) => {
+      const current = new URLSearchParams(Array.from(searchParams?.entries() ?? []));
+
+      Object.entries(params).forEach(([key, value]) => {
+        if (value === null || value === "" || value === 0 && key === "page") {
+          current.delete(key);
+        } else {
+          current.set(key, String(value));
+        }
+      });
+
+      const search = current.toString();
+      const query = search ? `?${search}` : "";
+
+      router.push(`${pathname}${query}`);
+    },
+    [searchParams, router, pathname]
   );
 
-  const guestMap = React.useMemo(() => {
-    return guests.reduce<Map<string, Guest>>((map, guest) => {
-      map.set(guest.id, guest);
-      return map;
-    }, new Map());
-  }, [guests]);
+  React.useEffect(() => {
+    loadReservationsPage({
+      limit: pageSize,
+      offset: pageIndex * pageSize,
+      query: searchQuery,
+    });
+  }, [loadReservationsPage, pageIndex, pageSize, searchQuery]);
+
+  const handlePageChange = (index: number) => {
+    updateQueryParams({ page: index });
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    updateQueryParams({ limit: size, page: 0 });
+  };
+
+  const handleSearch = (query: string) => {
+    updateQueryParams({ q: query, page: 0 });
+  };
 
   const groupedReservations = React.useMemo(() => {
-    const reservationsWithDetails = sortReservationsByBookingDate(reservations).map((res) => {
-      const room = rooms.find((r) => r.id === res.roomId);
-      const nights = differenceInDays(
-        parseISO(res.checkOutDate),
-        parseISO(res.checkInDate)
-      );
-      const resolvedGuestName = (() => {
-        const snapshot = res.guestSnapshot;
-        if (snapshot) {
-          const fullName = formatFullName(snapshot.firstName, snapshot.lastName);
-          if (fullName) {
-            return fullName;
-          }
-          if (snapshot.email) {
-            return snapshot.email;
-          }
-          if (snapshot.phone) {
-            return snapshot.phone;
-          }
+    return (reservations as unknown as BookingSummary[]).map((booking) => {
+      const detailedBooking: ReservationWithDetails = { ...booking } as unknown as ReservationWithDetails;
+      
+      // Calculate nights for each row
+      const calculateNights = (res: { checkInDate: string; checkOutDate: string }) => 
+        differenceInDays(parseISO(res.checkOutDate), parseISO(res.checkInDate));
+
+      detailedBooking.nights = calculateNights(detailedBooking);
+      
+      if (booking.subRows) {
+        detailedBooking.subRows = booking.subRows.map((sub) => {
+          const subWithDetails = { ...sub } as unknown as ReservationWithDetails;
+          subWithDetails.nights = calculateNights(sub);
+          subWithDetails.displayAmount = isRevenueReservation(sub.status)
+            ? getReservationDisplayAmount(subWithDetails, property)
+            : 0;
+          return subWithDetails;
+        });
+
+        // Top level amount is the sum of subRows if it's a multi-room booking
+        if (detailedBooking.subRows.length > 1) {
+          detailedBooking.displayAmount = detailedBooking.subRows.reduce((sum, sub) => sum + (sub.displayAmount || 0), 0);
+        } else {
+          detailedBooking.displayAmount = isRevenueReservation(detailedBooking.status)
+            ? getReservationDisplayAmount(detailedBooking, property)
+            : 0;
         }
-        const fallbackGuest = guestMap.get(res.guestId);
-        if (fallbackGuest) {
-          const fullName = formatFullName(
-            fallbackGuest.firstName,
-            fallbackGuest.lastName
-          );
-          return fullName || fallbackGuest.email || fallbackGuest.phone || "N/A";
-        }
-        return "N/A";
-      })();
-      const detailedReservation: ReservationWithDetails = {
-        ...res,
-        guestName: resolvedGuestName,
-        roomNumber: room ? room.roomNumber : "N/A",
-        nights,
-        roomCount: 1,
-        displayAmount: 0,
-      };
-
-      const baseDisplayAmount = getReservationDisplayAmount(detailedReservation, property);
-      detailedReservation.displayAmount = isRevenueReservation(detailedReservation.status)
-        ? baseDisplayAmount
-        : 0;
-      return detailedReservation;
-    });
-
-    const bookingGroups = new Map<string, typeof reservationsWithDetails>();
-    reservationsWithDetails.forEach((res) => {
-      if (!bookingGroups.has(res.bookingId)) {
-        bookingGroups.set(res.bookingId, []);
-      }
-      bookingGroups.get(res.bookingId)!.push(res);
-    });
-
-    const tableData: ReservationWithDetails[] = [];
-    for (const group of bookingGroups.values()) {
-      if (group.length > 1) {
-        const retainedEntries = group.filter(
-          (entry) => !isReservationRemovedDuringEdit(entry)
-        );
-        const normalizedGroup = retainedEntries.length > 0 ? retainedEntries : group;
-        const activeEntries = normalizedGroup.filter((entry) => isActiveReservationStatus(entry.status));
-        const displayEntries = activeEntries.length ? activeEntries : normalizedGroup;
-        const revenueEntries = displayEntries.filter((entry) => isRevenueReservation(entry.status));
-        const roomTotal = revenueEntries.reduce((sum, r) => sum + r.totalAmount, 0);
-        const combinedFolio = revenueEntries.flatMap((entry) => entry.folio ?? []);
-        const displayAmount = revenueEntries.length
-          ? getGroupDisplayAmount(revenueEntries, combinedFolio, property)
-          : 0;
-        const totalGuests = displayEntries.reduce((sum, entry) => sum + (entry.numberOfGuests ?? 0), 0);
-        const totalAdults = displayEntries.reduce((sum, entry) => sum + (entry.adultCount ?? 0), 0);
-        const totalChildren = displayEntries.reduce((sum, entry) => sum + (entry.childCount ?? 0), 0);
-        const roomNumbers = displayEntries.map((r) => r.roomNumber).filter(Boolean);
-        const aggregateStatus = resolveAggregateStatus(displayEntries.map((entry) => entry.status));
-        const primaryReservation = displayEntries[0] ?? group[0];
-        const parentRow: ReservationWithDetails = {
-          ...primaryReservation,
-          id: primaryReservation.bookingId,
-          status: aggregateStatus,
-          roomNumber:
-            roomNumbers.length === 0
-              ? "N/A"
-              : roomNumbers.length === 1
-              ? roomNumbers[0]
-              : roomNumbers.join(", "),
-          roomCount: displayEntries.length,
-          totalAmount: roomTotal,
-          displayAmount,
-          numberOfGuests: totalGuests,
-          adultCount: totalAdults,
-          childCount: totalChildren,
-          subRows: displayEntries.map((entry) => ({ ...entry, roomCount: 1 })),
-        };
-        tableData.push(parentRow);
       } else {
-        tableData.push(group[0]);
+        detailedBooking.displayAmount = isRevenueReservation(detailedBooking.status)
+          ? getReservationDisplayAmount(detailedBooking, property)
+          : 0;
       }
-    }
 
-    return tableData;
-  }, [reservations, guestMap, rooms, property, formatFullName]);
+      return detailedBooking;
+    });
+  }, [reservations, property]);
 
   const handleCancelReservation = async (bookingId: string) => {
     await updateBookingReservationStatus(bookingId, "Cancelled");
@@ -211,11 +164,17 @@ export default function ReservationsPage() {
           totalCount={reservationsTotalCount}
           isLoading={isReservationsInitialLoading}
           isRefreshing={isRefreshing}
-          isBackgroundLoading={isReservationsBackfilling}
           onRefresh={refreshReservations}
           onCancelReservation={handleCancelReservation}
           onCheckInReservation={handleCheckInReservation}
           onCheckOutReservation={handleCheckOutReservation}
+          pagination={{
+            pageIndex,
+            pageSize,
+            onPageChange: handlePageChange,
+            onPageSizeChange: handlePageSizeChange,
+          }}
+          onSearch={handleSearch}
         />
       </div>
     </PermissionGate>

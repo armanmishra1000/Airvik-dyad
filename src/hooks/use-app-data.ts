@@ -1,322 +1,3 @@
-// "use client";
-
-// import * as React from "react";
-// import { useAuthContext } from "@/context/auth-context";
-// import * as api from "@/lib/api";
-// import type {
-//   Reservation, Guest, ReservationStatus, FolioItem, HousekeepingAssignment, Room, RoomType,
-//   RatePlan, Property, User, Role, Amenity, StickyNote, DashboardComponentId
-// } from "@/data/types";
-// import { formatISO, differenceInDays } from "date-fns";
-
-// const defaultProperty: Property = {
-//   id: "default-property-id",
-//   name: "Airvik",
-//   address: "123 Main Street, Anytown, USA",
-//   phone: "555-123-4567",
-//   email: "contact@airvik.com",
-//   logo_url: "/logo-placeholder.svg",
-//   photos: [],
-//   google_maps_url: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.617023443543!2d-73.98784668459395!3d40.74844097932803!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1620312953789!5m2!1sen!2sus",
-//   timezone: "America/New_York",
-//   currency: "USD",
-// };
-
-// export function useAppData() {
-//   const { authUser } = useAuthContext();
-//   const [property, setProperty] = React.useState<Property>(defaultProperty);
-//   const [reservations, setReservations] = React.useState<Reservation[]>([]);
-//   const [guests, setGuests] = React.useState<Guest[]>([]);
-//   const [rooms, setRooms] = React.useState<Room[]>([]);
-//   const [roomTypes, setRoomTypes] = React.useState<RoomType[]>([]);
-//   const [ratePlans, setRatePlans] = React.useState<RatePlan[]>([]);
-//   const [users, setUsers] = React.useState<User[]>([]);
-//   const [roles, setRoles] = React.useState<Role[]>([]);
-//   const [amenities, setAmenities] = React.useState<Amenity[]>([]);
-//   const [stickyNotes, setStickyNotes] = React.useState<StickyNote[]>([]);
-//   const [housekeepingAssignments, setHousekeepingAssignments] = React.useState<HousekeepingAssignment[]>([]);
-//   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(['stats', 'tables', 'calendar', 'notes']);
-
-//   const fetchData = React.useCallback(async () => {
-//     if (!authUser) return;
-//     try {
-//       const [
-//         propertyRes, reservationsRes, guestsRes, roomsRes, roomTypesRes, ratePlansRes,
-//         rolesRes, amenitiesRes, stickyNotesRes, folioItemsRes, usersFuncRes, housekeepingAssignmentsRes,
-//         roomTypeAmenitiesRes
-//       ] = await Promise.all([
-//         api.getProperty(), api.getReservations(), api.getGuests(), api.getRooms(),
-//         api.getRoomTypes(), api.getRatePlans(), api.getRoles(), api.getAmenities(),
-//         api.getStickyNotes(authUser.id), api.getFolioItems(), api.getUsers(), api.getHousekeepingAssignments(),
-//         api.getRoomTypeAmenities()
-//       ]);
-
-//       if (propertyRes.data) setProperty(propertyRes.data);
-//       setGuests(guestsRes.data || []);
-//       setRooms(roomsRes.data || []);
-//       setRatePlans(ratePlansRes.data || []);
-//       setRoles(rolesRes.data || []);
-//       setAmenities(amenitiesRes.data || []);
-//       setStickyNotes(stickyNotesRes.data || []);
-//       setUsers(usersFuncRes.data || []);
-//       setHousekeepingAssignments(housekeepingAssignmentsRes.data || []);
-
-//       const reservationsWithFolios = (reservationsRes.data || []).map(res => ({
-//         ...res,
-//         folio: (folioItemsRes.data || []).filter(item => item.reservation_id === res.id)
-//       }));
-//       setReservations(reservationsWithFolios as any);
-
-//       const roomTypesData = (roomTypesRes.data || []).map(rt => {
-//         const amenitiesForRoomType = (roomTypeAmenitiesRes.data || [])
-//           .filter(rta => rta.room_type_id === rt.id)
-//           .map(rta => rta.amenity_id);
-//         return api.fromDbRoomType({ ...rt, amenities: amenitiesForRoomType });
-//       });
-//       setRoomTypes(roomTypesData);
-
-//     } catch (error) {
-//       console.error("Failed to load app data:", error);
-//     }
-//   }, [authUser]);
-
-//   React.useEffect(() => {
-//     fetchData();
-//   }, [fetchData]);
-
-//   const updateProperty = async (updatedData: Partial<Omit<Property, "id">>) => {
-//     const { data, error } = property.id === "default-property-id"
-//       ? await api.createProperty(updatedData)
-//       : await api.updateProperty(property.id, updatedData);
-//     if (error) throw error;
-//     setProperty(data);
-//   };
-
-//   const addGuest = async (guestData: Omit<Guest, "id">) => {
-//     const { data, error } = await api.addGuest(guestData);
-//     if (error) throw error;
-//     setGuests(prev => [...prev, data]);
-//     return data;
-//   };
-
-//   const updateGuest = async (guestId: string, updatedData: Partial<Omit<Guest, "id">>) => {
-//     const { data, error } = await api.updateGuest(guestId, updatedData);
-//     if (error) throw error;
-//     setGuests(prev => prev.map(g => g.id === guestId ? data : g));
-//   };
-
-//   const deleteGuest = async (guestId: string) => {
-//     const { error } = await api.deleteGuest(guestId);
-//     if (error) { console.error(error); return false; }
-//     setGuests(prev => prev.filter(g => g.id !== guestId));
-//     return true;
-//   };
-
-//   const addReservation = async (payload: any) => {
-//     const { roomIds, ...rest } = payload;
-//     const bookingId = `booking-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-
-//     const ratePlan = ratePlans.find(rp => rp.id === rest.ratePlanId);
-//     if (!ratePlan) {
-//       throw new Error("Rate plan not found for reservation.");
-//     }
-//     const nights = differenceInDays(new Date(rest.checkOutDate), new Date(rest.checkInDate));
-//     const totalAmount = nights * ratePlan.price;
-
-//     const newReservationsData = roomIds.map((roomId: string) => ({
-//       booking_id: bookingId,
-//       guest_id: rest.guestId,
-//       room_id: roomId,
-//       rate_plan_id: rest.ratePlanId,
-//       check_in_date: rest.checkInDate,
-//       check_out_date: rest.checkOutDate,
-//       number_of_guests: rest.numberOfGuests,
-//       status: rest.status,
-//       notes: rest.notes,
-//       total_amount: totalAmount,
-//       booking_date: rest.bookingDate,
-//       source: rest.source,
-//     }));
-
-//     const { data, error } = await api.addReservation(newReservationsData);
-//     if (error) throw error;
-
-//     const reservationsWithEmptyFolio = data.map(r => ({ ...r, folio: [] }));
-//     setReservations(prev => [...prev, ...reservationsWithEmptyFolio]);
-//     return reservationsWithEmptyFolio;
-//   };
-
-//   const updateReservation = async (reservationId: string, updatedData: Partial<Omit<Reservation, "id">>) => {
-//     const { data, error } = await api.updateReservation(reservationId, updatedData);
-//     if (error) throw error;
-//     setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, ...data } : r));
-//   };
-
-//   const updateReservationStatus = async (reservationId: string, status: ReservationStatus) => {
-//     const { error } = await api.updateReservationStatus(reservationId, status);
-//     if (error) throw error;
-//     setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, status } : r));
-//   };
-
-//   const addFolioItem = async (reservationId: string, item: Omit<FolioItem, "id" | "timestamp">) => {
-//     const { data, error } = await api.addFolioItem({ ...item, reservation_id: reservationId });
-//     if (error) throw error;
-//     setReservations(prev => prev.map(r => r.id === reservationId ? { ...r, folio: [...r.folio, data], totalAmount: r.totalAmount + data.amount } : r));
-//   };
-
-//   const addRoomType = async (roomTypeData: Omit<RoomType, "id">) => {
-//     const { data, error } = await api.upsertRoomType(roomTypeData);
-//     if (error) throw error;
-//     const newRoomType = api.fromDbRoomType(data);
-//     setRoomTypes(prev => [...prev, newRoomType]);
-//   };
-
-//   const updateRoomType = async (roomTypeId: string, updatedData: Partial<Omit<RoomType, "id">>) => {
-//     const { data, error } = await api.upsertRoomType({ ...updatedData, id: roomTypeId });
-//     if (error) throw error;
-//     const updatedRoomType = api.fromDbRoomType(data);
-//     setRoomTypes(prev => prev.map(rt => rt.id === roomTypeId ? updatedRoomType : rt));
-//   };
-
-//   const addRoom = async (roomData: Omit<Room, "id">) => {
-//     const { data: newRoom, error } = await api.addRoom(roomData);
-//     if (error) throw error;
-//     setRooms(prev => [...prev, newRoom]);
-//   };
-
-//   const updateRoom = async (roomId: string, updatedData: Partial<Omit<Room, "id">>) => {
-//     const { data: updatedRoom, error } = await api.updateRoom(roomId, updatedData);
-//     if (error) throw error;
-//     setRooms(prev => prev.map(r => r.id === roomId ? updatedRoom : r));
-//   };
-
-//   const deleteRoom = async (roomId: string) => {
-//     const { error } = await api.deleteRoom(roomId);
-//     if (error) { console.error(error); return false; }
-//     setRooms(prev => prev.filter(r => r.id !== roomId));
-//     return true;
-//   };
-
-//   const deleteRoomType = async (roomTypeId: string) => {
-//     const { error } = await api.deleteRoomType(roomTypeId);
-//     if (error) { console.error(error); return false; }
-//     setRoomTypes(prev => prev.filter(rt => rt.id !== roomTypeId));
-//     return true;
-//   };
-
-//   const addRatePlan = async (ratePlanData: Omit<RatePlan, "id">) => {
-//     const { data, error } = await api.addRatePlan(ratePlanData);
-//     if (error) throw error;
-//     setRatePlans(prev => [...prev, data]);
-//   };
-
-//   const updateRatePlan = async (ratePlanId: string, updatedData: Partial<Omit<RatePlan, "id">>) => {
-//     const { data, error } = await api.updateRatePlan(ratePlanId, updatedData);
-//     if (error) throw error;
-//     setRatePlans(prev => prev.map(rp => rp.id === ratePlanId ? data : rp));
-//   };
-
-//   const deleteRatePlan = async (ratePlanId: string) => {
-//     const { error } = await api.deleteRatePlan(ratePlanId);
-//     if (error) { console.error(error); return false; }
-//     setRatePlans(prev => prev.filter(rp => rp.id !== ratePlanId));
-//     return true;
-//   };
-
-//   const addRole = async (roleData: Omit<Role, "id">) => {
-//     const { data, error } = await api.addRole(roleData);
-//     if (error) throw error;
-//     setRoles(prev => [...prev, data]);
-//   };
-
-//   const updateRole = async (roleId: string, updatedData: Partial<Omit<Role, "id">>) => {
-//     const { data, error } = await api.updateRole(roleId, updatedData);
-//     if (error) throw error;
-//     setRoles(prev => prev.map(r => r.id === roleId ? data : r));
-//   };
-
-//   const deleteRole = async (roleId: string) => {
-//     const { error } = await api.deleteRole(roleId);
-//     if (error) { console.error(error); return false; }
-//     setRoles(prev => prev.filter(r => r.id !== roleId));
-//     return true;
-//   };
-
-//   const updateUser = async (userId: string, updatedData: Partial<Omit<User, "id">>) => {
-//     const { data, error } = await api.updateUserProfile(userId, updatedData as any);
-//     if (error) throw error;
-//     setUsers(prev => prev.map(u => u.id === userId ? { ...u, name: data.name, roleId: data.role_id } : u));
-//   };
-
-//   const deleteUser = async (userId: string) => {
-//     if (authUser?.id === userId) return false;
-//     const { error } = await api.deleteAuthUser(userId);
-//     if (error) { console.error(error); return false; }
-//     setUsers(prev => prev.filter(u => u.id !== userId));
-//     return true;
-//   };
-
-//   const refetchUsers = React.useCallback(async () => {
-//     const { data, error } = await api.getUsers();
-//     if (error) console.error("Error refetching users:", error);
-//     else setUsers(data || []);
-//   }, []);
-
-//   const addAmenity = async (amenityData: Omit<Amenity, "id">) => {
-//     const { data, error } = await api.addAmenity(amenityData);
-//     if (error) throw error;
-//     setAmenities(prev => [...prev, data]);
-//   };
-
-//   const updateAmenity = async (amenityId: string, updatedData: Partial<Omit<Amenity, "id">>) => {
-//     const { data, error } = await api.updateAmenity(amenityId, updatedData);
-//     if (error) throw error;
-//     setAmenities(prev => prev.map(a => a.id === amenityId ? data : a));
-//   };
-
-//   const deleteAmenity = async (amenityId: string) => {
-//     const { error } = await api.deleteAmenity(amenityId);
-//     if (error) { console.error(error); return false; }
-//     setAmenities(prev => prev.filter(a => a.id !== amenityId));
-//     return true;
-//   };
-
-//   const addStickyNote = async (noteData: Omit<StickyNote, "id" | "createdAt">) => {
-//     const { data, error } = await api.addStickyNote({ ...noteData, user_id: authUser!.id });
-//     if (error) throw error;
-//     setStickyNotes(prev => [...prev, data]);
-//   };
-
-//   const updateStickyNote = async (noteId: string, updatedData: Partial<Omit<StickyNote, "id" | "createdAt">>) => {
-//     const { data, error } = await api.updateStickyNote(noteId, updatedData);
-//     if (error) throw error;
-//     setStickyNotes(prev => prev.map(n => n.id === noteId ? data : n));
-//   };
-
-//   const deleteStickyNote = async (noteId: string) => {
-//     const { error } = await api.deleteStickyNote(noteId);
-//     if (error) throw error;
-//     setStickyNotes(prev => prev.filter(n => n.id !== noteId));
-//   };
-
-//   const assignHousekeeper = async (assignment: { roomId: string; userId: string; }) => {
-//     // This would involve an upsert operation in a real scenario
-//     console.log("Assigning housekeeper:", assignment);
-//   };
-
-//   const updateAssignmentStatus = async (roomId: string, status: "Pending" | "Completed") => {
-//     console.log("Updating assignment status:", roomId, status);
-//   };
-
-//   return {
-//     property, reservations, guests, rooms, roomTypes, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
-//     updateProperty, addGuest, deleteGuest, addReservation, refetchUsers, updateGuest, updateReservation, updateReservationStatus,
-//     addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
-//     deleteRoomType, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
-//     addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout: setDashboardLayout,
-//   };
-// }
-
 "use client";
 
 import * as React from "react";
@@ -527,9 +208,6 @@ const defaultProperty: Property = {
   tax_percentage: 0,
 };
 
-const INITIAL_RESERVATION_PAGE_SIZE = 50;
-const RESERVATION_BACKFILL_PAGE_SIZE = 500;
-
 type ReservationsApiPayload = {
   data: Reservation[];
   nextOffset: number | null;
@@ -539,6 +217,7 @@ type ReservationsApiPayload = {
 type FetchReservationsArgs = {
   limit: number;
   offset: number;
+  query?: string;
   includeCount?: boolean;
 };
 
@@ -548,6 +227,9 @@ const fetchReservationsFromApi = async (
   const query = new URLSearchParams();
   query.set("limit", String(params.limit));
   query.set("offset", String(params.offset));
+  if (params.query) {
+    query.set("query", params.query);
+  }
   if (params.includeCount) {
     query.set("includeCount", "1");
   }
@@ -566,8 +248,9 @@ const fetchReservationsFromApi = async (
 
   return (await response.json()) as ReservationsApiPayload;
 };
+
 export function useAppData() {
-  const { session } = useSessionContext();
+  const { session, isLoading: isSessionLoading } = useSessionContext();
   const { logActivity } = useActivityLogger();
   const recordActivity = React.useCallback(
     (entry: AdminActivityLogInput) => logActivity(entry),
@@ -584,11 +267,13 @@ export function useAppData() {
   const hasHydratedRef = React.useRef(false);
 
   const [isReservationsInitialLoading, setIsReservationsInitialLoading] = React.useState(true);
-  const [isReservationsBackfilling, setIsReservationsBackfilling] = React.useState(false);
-  const reservationsBackfillPromiseRef = React.useRef<Promise<void> | null>(null);
+  const [isBookingLookupLoading, setIsBookingLookupLoading] = React.useState(false);
+  const [lookupStatus, setLookupStatus] = React.useState<Record<string, 'pending' | 'success' | 'error'>>({});
+  const [activeBookingReservations, setActiveBookingReservations] = React.useState<Reservation[]>([]);
   const [reservationsTotalCount, setReservationsTotalCount] = React.useState<number>(0);
   const [property, setProperty] = React.useState<Property>(defaultProperty);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
+  const [todayReservations, setTodayReservations] = React.useState<Reservation[]>([]);
   const [guests, setGuests] = React.useState<Guest[]>([]);
   const [rooms, setRooms] = React.useState<Room[]>([]);
   const [roomTypes, setRoomTypes] = React.useState<RoomType[]>([]);
@@ -601,67 +286,97 @@ export function useAppData() {
   const [housekeepingAssignments, setHousekeepingAssignments] = React.useState<HousekeepingAssignment[]>([]);
   const [dashboardLayout, setDashboardLayout] = React.useState<DashboardComponentId[]>(['stats', 'tables', 'calendar', 'notes']);
 
-  const mergeReservationLists = React.useCallback(
-    (existing: Reservation[], incoming: Reservation[]): Reservation[] => {
-      if (!incoming.length) {
-        return existing;
+  const loadBookingDetails = React.useCallback(
+    async (id: string) => {
+      if (isSessionLoading || !userId) {
+        console.log(`[Lookup] Postponing lookup for ${id}: session loading or no user`);
+        return;
       }
-      const byId = new Map(existing.map((reservation) => [reservation.id, reservation]));
-      incoming.forEach((reservation) => {
-        byId.set(reservation.id, reservation);
-      });
-      return Array.from(byId.values());
+
+      console.log(`[Lookup] Starting lookup for ID: ${id}`);
+      setIsBookingLookupLoading(true);
+      setLookupStatus(prev => ({ ...prev, [id]: 'pending' }));
+      
+      try {
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        let targetBookingId = "";
+
+        if (isUUID) {
+          console.log(`[Lookup] Fetching by UUID: ${id}`);
+          const { data: res } = await api.getReservationById(id);
+          if (res) {
+            targetBookingId = res.bookingId;
+            console.log(`[Lookup] Found bookingId: ${targetBookingId} for UUID: ${id}`);
+            // Fetch guest if not in current state
+            if (res.guestId) {
+              const { data: guestData } = await api.getGuestById(res.guestId);
+              if (guestData) {
+                setGuests(prev => {
+                  if (prev.some(g => g.id === guestData.id)) return prev;
+                  return [...prev, guestData];
+                });
+              }
+            }
+          } else {
+            console.warn(`[Lookup] No reservation found for UUID: ${id}`);
+          }
+        } else {
+          console.log(`[Lookup] Assuming ID is booking code: ${id}`);
+          targetBookingId = id;
+        }
+
+        if (targetBookingId) {
+          console.log(`[Lookup] Fetching siblings for bookingId: ${targetBookingId}`);
+          const { data: siblings } = await api.getReservationsByBookingId(targetBookingId);
+          if (siblings && siblings.length > 0) {
+            console.log(`[Lookup] Successfully found ${siblings.length} records for ${targetBookingId}`);
+            setActiveBookingReservations(siblings);
+            setLookupStatus(prev => ({ ...prev, [id]: 'success' }));
+          } else {
+            console.warn(`[Lookup] No records found for bookingId: ${targetBookingId}`);
+            setLookupStatus(prev => ({ ...prev, [id]: 'error' }));
+          }
+        } else {
+          console.warn(`[Lookup] Could not resolve targetBookingId for ${id}`);
+          setLookupStatus(prev => ({ ...prev, [id]: 'error' }));
+        }
+      } catch (error) {
+        console.error(`[Lookup] Error during lookup for ${id}:`, error);
+        setLookupStatus(prev => ({ ...prev, [id]: 'error' }));
+      } finally {
+        setIsBookingLookupLoading(false);
+      }
+    },
+    [userId, isSessionLoading]
+  );
+
+  const loadReservationsPage = React.useCallback(
+    async (params: { limit: number; offset: number; query?: string }) => {
+      setIsReservationsInitialLoading(true);
+      try {
+        const response = await fetchReservationsFromApi({
+          limit: params.limit,
+          offset: params.offset,
+          query: params.query,
+          includeCount: true,
+        });
+        setReservations(sortReservationsByBookingDate(response.data || []));
+        setReservationsTotalCount(response.count ?? 0);
+      } catch (error) {
+        console.error("Failed to load reservations page:", error);
+      } finally {
+        setIsReservationsInitialLoading(false);
+      }
     },
     []
   );
 
-  const startReservationsBackfill = React.useCallback(
-    async (initialLoadedCount: number) => {
-      if (reservationsBackfillPromiseRef.current) {
-        return reservationsBackfillPromiseRef.current;
-      }
-
-      setIsReservationsBackfilling(true);
-
-      const promise = (async () => {
-        let offset = initialLoadedCount;
-        while (true) {
-          try {
-            const { data } = await fetchReservationsFromApi({
-              limit: RESERVATION_BACKFILL_PAGE_SIZE,
-              offset,
-            });
-
-            if (!data.length) {
-              break;
-            }
-
-            offset += data.length;
-            setReservations((previous) =>
-              sortReservationsByBookingDate(
-                mergeReservationLists(previous, data)
-              )
-            );
-
-            if (data.length < RESERVATION_BACKFILL_PAGE_SIZE) {
-              break;
-            }
-          } catch (error) {
-            console.error("Failed to backfill reservations:", error);
-            break;
-          }
-        }
-      })().finally(() => {
-        setIsReservationsBackfilling(false);
-        reservationsBackfillPromiseRef.current = null;
-      });
-
-      reservationsBackfillPromiseRef.current = promise;
-      return promise;
-    },
-    [mergeReservationLists]
-  );
   const fetchData = React.useCallback(async (options?: { keepExisting?: boolean }) => {
+    if (isSessionLoading) {
+      console.log("[AppData] Postponing fetchData: session still loading");
+      return;
+    }
+
     const keepExisting = options?.keepExisting ?? false;
     const alreadyHydrated = hasHydratedRef.current;
     const shouldUseLoadingState = !alreadyHydrated || !keepExisting;
@@ -674,6 +389,7 @@ export function useAppData() {
     }
 
     try {
+      console.log(`[AppData] Fetching global data (userId: ${userId})`);
       const [
         propertyRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
         rolesRes, amenitiesRes, stickyNotesRes, usersFuncRes, housekeepingAssignmentsRes,
@@ -702,6 +418,7 @@ export function useAppData() {
       });
 
       if (!userId) {
+        console.log("[AppData] No user session found, clearing state");
         if (propertyRes.data) setProperty({ ...defaultProperty, ...propertyRes.data });
         setGuests([]);
         setRooms(roomsRes.data || []);
@@ -712,6 +429,7 @@ export function useAppData() {
         setUsers([]);
         setHousekeepingAssignments([]);
         setReservations([]);
+        setTodayReservations([]);
         setReservationsTotalCount(0);
         setIsReservationsInitialLoading(false);
         setRoomTypes(roomTypesData);
@@ -727,8 +445,10 @@ export function useAppData() {
         return;
       }
 
+      console.log("[AppData] Loading dashboard reservations");
+      // Fetch only "today's" reservations for dashboard overview
       const reservationsResponse = await fetchReservationsFromApi({
-        limit: INITIAL_RESERVATION_PAGE_SIZE,
+        limit: 1000, // Reasonable limit for today's data
         offset: 0,
         includeCount: true,
       });
@@ -743,24 +463,12 @@ export function useAppData() {
       setHousekeepingAssignments(housekeepingAssignmentsRes.data || []);
 
       const initialReservations = reservationsResponse.data ?? [];
-      setReservations((previous) => {
-        if (keepExisting && previous.length) {
-          const merged = mergeReservationLists(previous, initialReservations);
-          return sortReservationsByBookingDate(merged);
-        }
-        return sortReservationsByBookingDate(initialReservations);
-      });
-      const fallbackBookingCount = new Set(
-        initialReservations.map((reservation) => reservation.bookingId)
-      ).size;
-      const resolvedBookingCount =
-        typeof reservationsResponse.count === "number"
-          ? reservationsResponse.count
-          : fallbackBookingCount;
-      setReservationsTotalCount(resolvedBookingCount);
+      setTodayReservations(sortReservationsByBookingDate(initialReservations));
+      
+      // We don't set the main 'reservations' state here anymore as it's managed per-page
+      // But we set the total count
+      setReservationsTotalCount(reservationsResponse.count ?? 0);
       setIsReservationsInitialLoading(false);
-
-      void startReservationsBackfill(initialReservations.length);
 
       setRoomTypes(roomTypesData);
       setRoomCategories(roomCategoriesRes.data || []);
@@ -768,8 +476,9 @@ export function useAppData() {
       if (!alreadyHydrated) {
         hasHydratedRef.current = true;
       }
+      console.log("[AppData] Global data fetch complete");
     } catch (error) {
-      console.error("Failed to load app data:", error);
+      console.error("[AppData] Failed to load app data:", error);
     } finally {
       if (shouldUseLoadingState) {
         setIsLoading(false);
@@ -778,7 +487,7 @@ export function useAppData() {
       }
       setIsReservationsInitialLoading(false);
     }
-  }, [mergeReservationLists, startReservationsBackfill, userId]);
+  }, [userId, isSessionLoading]);
 
   React.useEffect(() => {
     fetchData();
@@ -1638,15 +1347,66 @@ export function useAppData() {
     isLoading,
     isRefreshing,
     isReservationsInitialLoading,
-    isReservationsBackfilling,
+    isBookingLookupLoading,
+    isSessionLoading,
+    lookupStatus,
+    activeBookingReservations,
     reservationsTotalCount,
-    property, reservations, guests, rooms, roomTypes, roomCategories, ratePlans, users, roles, amenities, stickyNotes, dashboardLayout, housekeepingAssignments,
-    updateProperty, addGuest, deleteGuest, addReservation, addRoomsToBooking, refetchUsers, updateGuest, updateReservation, updateReservationStatus, updateBookingReservationStatus,
-    addFolioItem, assignHousekeeper, updateAssignmentStatus, addRoom, updateRoom, deleteRoom, addRoomType, updateRoomType,
-    deleteRoomType, addRoomCategory, updateRoomCategory, deleteRoomCategory, addRatePlan, updateRatePlan, deleteRatePlan, addRole, updateRole, deleteRole, updateUser, deleteUser,
-    addAmenity, updateAmenity, deleteAmenity, addStickyNote, updateStickyNote, deleteStickyNote, updateDashboardLayout: updateDashboardLayoutState,
+    property,
+    reservations,
+    todayReservations,
+    guests,
+    rooms,
+    roomTypes,
+    roomCategories,
+    ratePlans,
+    users,
+    roles,
+    amenities,
+    stickyNotes,
+    dashboardLayout,
+    housekeepingAssignments,
+    updateProperty,
+    addGuest,
+    deleteGuest,
+    addReservation,
+    addRoomsToBooking,
+    refetchUsers,
+    updateGuest,
+    updateReservation,
+    updateReservationStatus,
+    updateBookingReservationStatus,
+    addFolioItem,
+    assignHousekeeper,
+    updateAssignmentStatus,
+    addRoom,
+    updateRoom,
+    deleteRoom,
+    addRoomType,
+    updateRoomType,
+    deleteRoomType,
+    addRoomCategory,
+    updateRoomCategory,
+    deleteRoomCategory,
+    addRatePlan,
+    updateRatePlan,
+    deleteRatePlan,
+    addRole,
+    updateRole,
+    deleteRole,
+    updateUser,
+    deleteUser,
+    addAmenity,
+    updateAmenity,
+    deleteAmenity,
+    addStickyNote,
+    updateStickyNote,
+    deleteStickyNote,
+    updateDashboardLayout: updateDashboardLayoutState,
     validateBookingRequest,
     refreshReservations,
+    loadReservationsPage,
+    loadBookingDetails,
     logActivity: recordActivity,
   };
 }

@@ -23,20 +23,51 @@ import { isReservationRemovedDuringEdit } from "@/lib/reservations/filters";
 
 export default function ReservationDetailsPage() {
   const params = useParams<{ id: string }>();
-  const { reservations, guests, rooms, property, isLoading } = useDataContext();
+  const { 
+    reservations, 
+    guests, 
+    rooms, 
+    property, 
+    isLoading, 
+    loadBookingDetails,
+    isReservationsInitialLoading,
+    isBookingLookupLoading,
+    isSessionLoading,
+    lookupStatus,
+    activeBookingReservations: isolatedBookingReservations
+  } = useDataContext();
+
   const reservationIdFromParams = React.useMemo(() => {
     const rawId = params?.id;
     if (!rawId) return "";
     return Array.isArray(rawId) ? rawId[0] ?? "" : rawId;
   }, [params]);
 
-  const reservation = React.useMemo(
-    () => reservations.find((r) => r.id === reservationIdFromParams),
-    [reservations, reservationIdFromParams]
-  );
+  React.useEffect(() => {
+    if (reservationIdFromParams) {
+      console.log(`[Page] Effect triggered for ID: ${reservationIdFromParams}`);
+      loadBookingDetails(reservationIdFromParams);
+    }
+  }, [reservationIdFromParams, loadBookingDetails]);
+
+  const reservation = React.useMemo(() => {
+    const found = isolatedBookingReservations.find((r) => r.id === reservationIdFromParams) || 
+                  reservations.find((r) => r.id === reservationIdFromParams);
+    console.log(`[Page] Finding reservation for ${reservationIdFromParams}: ${found ? 'Found' : 'Not Found'}`);
+    return found;
+  }, [reservations, isolatedBookingReservations, reservationIdFromParams]);
+
+  const isActuallyLoading = 
+    isLoading || 
+    isSessionLoading || 
+    isReservationsInitialLoading || 
+    isBookingLookupLoading ||
+    (reservationIdFromParams && (!lookupStatus[reservationIdFromParams] || lookupStatus[reservationIdFromParams] === 'pending'));
+
+  console.log(`[Page] Render state: id=${reservationIdFromParams}, loading=${isActuallyLoading}, res=${!!reservation}, status=${reservationIdFromParams ? lookupStatus[reservationIdFromParams] : 'none'}`);
 
   if (!reservationIdFromParams) {
-    if (isLoading) {
+    if (isActuallyLoading) {
       return (
         <PermissionGate feature="reservations">
           <ReservationDetailsSkeleton />
@@ -46,7 +77,7 @@ export default function ReservationDetailsPage() {
     return notFound();
   }
 
-  if (isLoading) {
+  if (isActuallyLoading && !reservation) {
     return (
       <PermissionGate feature="reservations">
         <ReservationDetailsSkeleton />
@@ -54,32 +85,40 @@ export default function ReservationDetailsPage() {
     );
   }
 
-  if (!reservation) {
+  if (!reservation && !isActuallyLoading && lookupStatus[reservationIdFromParams] === 'error') {
+    console.warn(`[Page] Decided to show 404 for ${reservationIdFromParams}`);
     return notFound();
+  }
+
+  // Ensure TypeScript knows reservation is defined
+  if (!reservation) {
+    return (
+      <PermissionGate feature="reservations">
+        <ReservationDetailsSkeleton />
+      </PermissionGate>
+    );
   }
 
   const guest = guests.find((g) => g.id === reservation.guestId);
 
-  const bookingReservationsWithDetails: ReservationWithDetails[] = reservation
-    ? reservations
-        .filter((entry) => entry.bookingId === reservation.bookingId)
-        .map((entry) => {
-          const entryGuest = guests.find((g) => g.id === entry.guestId);
-          const entryRoomNumber =
-            rooms.find((room) => room.id === entry.roomId)?.roomNumber || "N/A";
-          return {
-            ...entry,
-            guestName: entryGuest
-              ? `${entryGuest.firstName} ${entryGuest.lastName}`
-              : "N/A",
-            roomNumber: entryRoomNumber,
-            nights: differenceInDays(
-              parseISO(entry.checkOutDate),
-              parseISO(entry.checkInDate)
-            ),
-          } as ReservationWithDetails;
-        })
-    : [];
+  const bookingReservationsWithDetails: ReservationWithDetails[] = (isolatedBookingReservations.length > 0 ? isolatedBookingReservations : reservations)
+    .filter((entry) => entry.bookingId === reservation.bookingId)
+    .map((entry) => {
+      const entryGuest = guests.find((g) => g.id === entry.guestId);
+      const entryRoomNumber =
+        rooms.find((room) => room.id === entry.roomId)?.roomNumber || "N/A";
+      return {
+        ...entry,
+        guestName: entryGuest
+          ? `${entryGuest.firstName} ${entryGuest.lastName}`
+          : "N/A",
+        roomNumber: entryRoomNumber,
+        nights: differenceInDays(
+          parseISO(entry.checkOutDate),
+          parseISO(entry.checkInDate)
+        ),
+      } as ReservationWithDetails;
+    });
 
   const fallbackReservationDetails: ReservationWithDetails = {
     ...reservation,

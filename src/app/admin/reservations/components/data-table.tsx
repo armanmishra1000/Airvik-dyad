@@ -9,6 +9,7 @@ import {
   Row,
   SortingState,
   VisibilityState,
+  Updater,
   flexRender,
   getCoreRowModel,
   getExpandedRowModel,
@@ -44,6 +45,13 @@ interface DataTableProps {
   isRefreshing?: boolean
   isBackgroundLoading?: boolean
   totalCount?: number
+  pagination?: {
+    pageIndex: number;
+    pageSize: number;
+    onPageChange: (index: number) => void;
+    onPageSizeChange: (size: number) => void;
+  };
+  onSearch?: (query: string) => void;
 }
 
 export function DataTable({
@@ -57,6 +65,8 @@ export function DataTable({
   isRefreshing,
   isBackgroundLoading,
   totalCount,
+  pagination,
+  onSearch,
 }: DataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "bookingDate", desc: true },
@@ -68,10 +78,39 @@ export function DataTable({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({})
   const [expanded, setExpanded] = React.useState<ExpandedState>({})
-  const [pagination, setPagination] = React.useState<PaginationState>({
+  const [localPagination, setLocalPagination] = React.useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   })
+
+  // Sync internal state if pagination is controlled
+  React.useEffect(() => {
+    if (pagination) {
+      setLocalPagination({
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+      });
+    }
+  }, [pagination]);
+
+  const handlePaginationChange = (updater: Updater<PaginationState>) => {
+    const nextPagination = typeof updater === "function" ? updater(localPagination) : updater;
+    setLocalPagination(nextPagination);
+    if (pagination) {
+      if (nextPagination.pageIndex !== localPagination.pageIndex) {
+        pagination.onPageChange(nextPagination.pageIndex);
+      }
+      if (nextPagination.pageSize !== localPagination.pageSize) {
+        pagination.onPageSizeChange(nextPagination.pageSize);
+      }
+    }
+  };
+
+  const handleGlobalFilterChange = (value: string) => {
+    setGlobalFilter(value);
+    onSearch?.(value);
+  };
+
   const [reservationToCancel, setReservationToCancel] =
     React.useState<ReservationWithDetails | null>(null)
 
@@ -138,7 +177,7 @@ export function DataTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onPaginationChange: setPagination,
+    onPaginationChange: handlePaginationChange,
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
@@ -149,7 +188,10 @@ export function DataTable({
     onExpandedChange: setExpanded,
     getExpandedRowModel: getExpandedRowModel(),
     globalFilterFn: reservationGlobalFilter,
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: handleGlobalFilterChange,
+    manualPagination: true,
+    manualFiltering: true,
+    pageCount: totalCount ? Math.ceil(totalCount / localPagination.pageSize) : 0,
     autoResetAll: false,
     autoResetPageIndex: false,
     autoResetExpanded: false,
@@ -159,7 +201,7 @@ export function DataTable({
       globalFilter,
       columnVisibility,
       expanded,
-      pagination,
+      pagination: localPagination,
     },
     meta: {
         checkInReservation: (res: ReservationWithDetails) =>

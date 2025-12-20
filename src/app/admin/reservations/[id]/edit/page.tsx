@@ -16,26 +16,64 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function ReservationEditPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { reservations, guests, rooms, isLoading } = useDataContext();
+  const { 
+    reservations, 
+    guests, 
+    rooms, 
+    isLoading, 
+    loadBookingDetails,
+    isReservationsInitialLoading,
+    isBookingLookupLoading,
+    isSessionLoading,
+    lookupStatus,
+    activeBookingReservations
+  } = useDataContext();
 
   const raw = params?.id;
   const reservationId = raw ? (Array.isArray(raw) ? raw[0] ?? "" : raw) : "";
 
-  const reservation = React.useMemo(
-    () => reservations.find((entry) => entry.id === reservationId),
-    [reservations, reservationId]
-  );
+  React.useEffect(() => {
+    if (reservationId) {
+      console.log(`[EditPage] Effect triggered for ID: ${reservationId}`);
+      loadBookingDetails(reservationId);
+    }
+  }, [reservationId, loadBookingDetails]);
+
+  const reservation = React.useMemo(() => {
+    const found = activeBookingReservations.find((entry) => entry.id === reservationId) || 
+                  reservations.find((entry) => entry.id === reservationId);
+    console.log(`[EditPage] Finding reservation for ${reservationId}: ${found ? 'Found' : 'Not Found'}`);
+    return found;
+  }, [reservations, activeBookingReservations, reservationId]);
+
+  const isActuallyLoading = 
+    isLoading || 
+    isSessionLoading || 
+    isReservationsInitialLoading || 
+    isBookingLookupLoading ||
+    (reservationId && (!lookupStatus[reservationId] || lookupStatus[reservationId] === 'pending'));
+
+  console.log(`[EditPage] Render state: id=${reservationId}, loading=${isActuallyLoading}, res=${!!reservation}, status=${reservationId ? lookupStatus[reservationId] : 'none'}`);
 
   if (!reservationId) {
-    return isLoading ? <ReservationEditSkeleton /> : notFound();
+    if (isActuallyLoading) {
+      return <ReservationEditSkeleton />;
+    }
+    return notFound();
   }
 
-  if (isLoading) {
+  if (isActuallyLoading && !reservation) {
     return <ReservationEditSkeleton />;
   }
 
-  if (!reservation) {
+  if (!reservation && !isActuallyLoading && lookupStatus[reservationId] === 'error') {
+    console.warn(`[EditPage] Decided to show 404 for ${reservationId}`);
     return notFound();
+  }
+
+  // Ensure TypeScript knows reservation is defined
+  if (!reservation) {
+    return <ReservationEditSkeleton />;
   }
 
   const guest = guests.find((g) => g.id === reservation.guestId);

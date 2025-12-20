@@ -139,9 +139,13 @@ interface DataContextType {
   isLoading: boolean;
   isRefreshing: boolean;
   isReservationsInitialLoading: boolean;
-  isReservationsBackfilling: boolean;
+  isBookingLookupLoading: boolean;
+  isSessionLoading: boolean;
+  lookupStatus: Record<string, 'pending' | 'success' | 'error'>;
   property: Property;
   reservations: Reservation[];
+  todayReservations: Reservation[];
+  activeBookingReservations: Reservation[];
   reservationsTotalCount: number;
   guests: Guest[];
   rooms: Room[];
@@ -236,6 +240,12 @@ interface DataContextType {
     bookingId?: string
   ) => Promise<BookingValidationResult>;
   refreshReservations: () => Promise<void>;
+  loadReservationsPage: (params: {
+    limit: number;
+    offset: number;
+    query?: string;
+  }) => Promise<void>;
+  loadBookingDetails: (id: string) => Promise<void>;
   logActivity: (entry: AdminActivityLogInput) => Promise<void>;
 }
 
