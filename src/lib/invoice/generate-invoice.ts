@@ -125,17 +125,22 @@ function calculateRoomChargeSummaries(
     const roomType = roomTypeMap.get(room.roomTypeId);
     if (!roomType) continue;
 
-    const nights = differenceInDays(
-      parseISO(reservation.checkOutDate),
-      parseISO(reservation.checkInDate)
+    const nights = Math.max(
+      differenceInDays(
+        parseISO(reservation.checkOutDate),
+        parseISO(reservation.checkInDate)
+      ),
+      1
     );
 
     const existing = summaryByRoomType.get(roomType.id);
     if (existing) {
       existing.quantity += 1;
       existing.totalAmount += reservation.totalAmount;
+      // We keep the highest night count or average? Usually nights should be same for a booking
+      existing.nights = Math.max(existing.nights, nights);
     } else {
-      const ratePerNight = nights > 0 ? reservation.totalAmount / nights : reservation.totalAmount;
+      const ratePerNight = reservation.totalAmount / nights;
 
       summaryByRoomType.set(roomType.id, {
         roomTypeName: roomType.name,
@@ -148,6 +153,20 @@ function calculateRoomChargeSummaries(
   }
 
   return Array.from(summaryByRoomType.values());
+}
+
+/**
+ * Extract additional charges from folio
+ */
+function calculateAdditionalCharges(reservations: Reservation[]): { description: string; amount: number }[] {
+  return reservations.flatMap((r) =>
+    (r.folio || [])
+      .filter((item) => item.amount > 0)
+      .map((item) => ({
+        description: item.description,
+        amount: item.amount,
+      }))
+  );
 }
 
 /**
@@ -277,9 +296,14 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   const bookingDate = primaryReservation.bookingDate;
 
   const roomChargeSummaries = calculateRoomChargeSummaries(reservations, rooms, roomTypes);
-  const subtotal = reservations.reduce((sum, r) => sum + r.totalAmount, 0);
+  const additionalCharges = calculateAdditionalCharges(reservations);
+
+  const roomSubtotal = reservations.reduce((sum, r) => sum + r.totalAmount, 0);
+  const additionalChargesSubtotal = additionalCharges.reduce((sum, c) => sum + c.amount, 0);
+
   const { taxAmount, taxRate } = calculateTaxTotals(reservations);
-  const grandTotal = subtotal + taxAmount;
+  const grandTotal = roomSubtotal + additionalChargesSubtotal + taxAmount;
+
   const nights = differenceInDays(parseISO(checkOutDate), parseISO(checkInDate));
   const invoiceNumber = generateInvoiceNumber(bookingId, bookingDate);
   const invoiceDate = format(new Date(), "dd MMM yyyy");
@@ -500,11 +524,14 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   // Columns: Description, Nights, Amount
   // Removed: Qty, Rate/Night
   const tableHead = [["Description", "Nights", "Amount"]];
-  const tableBody = roomChargeSummaries.map((summary) => [
-    summary.roomTypeName,
-    summary.nights.toString(),
-    formatCurrency(summary.totalAmount),
-  ]);
+  const tableBody = [
+    // Room Charges
+    ...roomChargeSummaries.map((summary) => [
+      summary.roomTypeName,
+      summary.nights.toString(),
+      formatCurrency(summary.totalAmount),
+    ]),
+  ];
 
   doc.autoTable({
     startY: yPos,
@@ -574,6 +601,11 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
       ? `Taxes (${(taxRate * 100).toFixed(0)}%)`
       : "Taxes";
     drawTotalRow(taxLabel, formatCurrency(taxAmount));
+  }
+
+  if (additionalChargesSubtotal > 0) {
+    drawTotalRow("Additional Charges", formatCurrency(additionalChargesSubtotal));
+    yPos += 2; // Extra gap after additional charges
   }
 
   yPos += 2; // Spacing before grand total

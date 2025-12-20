@@ -51,7 +51,7 @@ export function ReservationHeader({ reservation, bookingStatus }: ReservationHea
 
   const effectiveStatus = bookingStatus ?? reservation.status;
 
-  const canBeModified = !["Checked-in", "Checked-out", "Cancelled", "No-show"].includes(
+  const canBeModified = !["Checked-out", "Cancelled", "No-show"].includes(
     reservation.status
   );
   const canBeCancelled = !["Cancelled", "Checked-out", "No-show"].includes(
