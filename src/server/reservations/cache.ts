@@ -11,57 +11,65 @@ const MAX_PAGE_LIMIT = 500;
 export const RESERVATIONS_CACHE_TAG = "reservations";
 export const RESERVATIONS_COUNT_CACHE_TAG = "reservations:count";
 
-type DbReservationRow = {
-  id: string;
+type DbBookingSummaryRow = {
   booking_id: string;
+  booking_date: string;
   guest_id: string;
-  room_id: string;
-  rate_plan_id: string | null;
+  guest_first_name: string | null;
+  guest_last_name: string | null;
+  guest_name: string | null;
+  guest_email: string | null;
+  guest_phone: string | null;
+  total_amount: number;
+  room_count: number;
   check_in_date: string;
   check_out_date: string;
   number_of_guests: number;
+  adult_count: number;
+  child_count: number;
   status: Reservation["status"];
-  notes: string | null;
-  folio: DbFolioItemRow[] | null;
-  total_amount: number;
-  booking_date: string;
-  source: Reservation["source"];
-  payment_method: Reservation["paymentMethod"] | null;
-  adult_count: number | null;
-  child_count: number | null;
-  tax_enabled_snapshot: boolean | null;
-  tax_rate_snapshot: number | null;
-  external_source: string | null;
-  external_id: string | null;
-  external_metadata: Record<string, unknown> | null;
-  guest: {
-    first_name: string | null;
-    last_name: string | null;
-    email: string | null;
-    phone: string | null;
-  } | null;
-};
-
-type DbFolioItemRow = {
-  id: string;
-  reservation_id: string;
-  description: string;
-  amount: number;
-  timestamp: string | null;
-  payment_method: string | null;
-  external_source: string | null;
-  external_reference: string | null;
-  external_metadata: Record<string, unknown> | null;
+  reservation_rows: (Reservation & { roomNumber: string })[];
 };
 
 type ReservationPageParams = {
   limit?: number;
   offset?: number;
+  query?: string;
+};
+
+export type BookingSummary = {
+  id: string;
+  bookingId: string;
+  bookingDate: string;
+  guestId: string;
+  guestName: string;
+  guestSnapshot: {
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+    phone: string | null;
+  };
+  totalAmount: number;
+  roomCount: number;
+  checkInDate: string;
+  checkOutDate: string;
+  numberOfGuests: number;
+  adultCount: number;
+  childCount: number;
+  status: Reservation["status"];
+  source: string;
+  paymentMethod: string;
+  nights: number;
+  roomNumber: string;
+  displayAmount?: number;
+  folio: FolioItem[];
+  subRows: (Reservation & { guestName: string; nights: number; displayAmount?: number })[];
 };
 
 export type ReservationPageResult = {
-  data: Reservation[];
+  data: BookingSummary[];
   nextOffset: number | null;
+  totalCount: number | null;
 };
 
 const normalizePageParams = (params: ReservationPageParams = {}): Required<ReservationPageParams> => {
@@ -70,86 +78,88 @@ const normalizePageParams = (params: ReservationPageParams = {}): Required<Reser
     MAX_PAGE_LIMIT
   );
   const offset = Math.max(Number(params.offset ?? 0), 0);
-  return { limit, offset };
+  const query = params.query?.trim() ?? "";
+  return { limit, offset, query };
 };
 
-const mapFolioItem = (row: DbFolioItemRow): FolioItem => ({
-  id: row.id,
-  description: row.description,
-  amount: row.amount,
-  timestamp: row.timestamp ?? new Date().toISOString(),
-  paymentMethod: row.payment_method ?? undefined,
-  externalSource: row.external_source ?? undefined,
-  externalReference: row.external_reference ?? undefined,
-  externalMetadata: row.external_metadata ?? undefined,
-});
+const mapBookingSummaryRow = (row: DbBookingSummaryRow) => {
+  const reservationRows = row.reservation_rows || [];
+  const firstRes = reservationRows[0] || {};
 
-const mapReservationRow = (
-  row: DbReservationRow
-): Reservation => ({
-  id: row.id,
-  bookingId: row.booking_id,
-  guestId: row.guest_id,
-  roomId: row.room_id,
-  ratePlanId: row.rate_plan_id ?? null,
-  checkInDate: row.check_in_date,
-  checkOutDate: row.check_out_date,
-  numberOfGuests: row.number_of_guests,
-  status: row.status,
-  notes: row.notes ?? undefined,
-  folio: (row.folio ?? []).map(mapFolioItem),
-  totalAmount: row.total_amount,
-  bookingDate: row.booking_date,
-  source: row.source,
-  paymentMethod: row.payment_method ?? "Not specified",
-  adultCount:
-    typeof row.adult_count === "number"
-      ? row.adult_count
-      : row.number_of_guests,
-  childCount: typeof row.child_count === "number" ? row.child_count : 0,
-  taxEnabledSnapshot: Boolean(row.tax_enabled_snapshot ?? false),
-  taxRateSnapshot: row.tax_rate_snapshot ?? 0,
-  externalSource: row.external_source ?? undefined,
-  externalId: row.external_id,
-  externalMetadata: row.external_metadata ?? undefined,
-  guestSnapshot: row.guest
-    ? {
-        firstName: row.guest.first_name ?? null,
-        lastName: row.guest.last_name ?? null,
-        email: row.guest.email ?? null,
-        phone: row.guest.phone ?? null,
-      }
-    : undefined,
-});
+  return {
+    id: row.booking_id,
+    bookingId: row.booking_id,
+    bookingDate: row.booking_date,
+    guestId: row.guest_id,
+    guestName: row.guest_name || "N/A",
+    guestSnapshot: {
+      firstName: row.guest_first_name,
+      lastName: row.guest_last_name,
+      email: row.guest_email,
+      phone: row.guest_phone,
+    },
+    totalAmount: row.total_amount,
+    roomCount: row.room_count,
+    checkInDate: row.check_in_date,
+    checkOutDate: row.check_out_date,
+    numberOfGuests: row.number_of_guests,
+    adultCount: row.adult_count,
+    childCount: row.child_count,
+    status: row.status,
+    source: firstRes.source || "reception",
+    paymentMethod: firstRes.paymentMethod || "Not specified",
+    nights: 0, 
+    roomNumber: row.room_count === 1 ? (firstRes.roomNumber || "N/A") : "N/A",
+    folio: [], // Folios are in subRows
+    subRows: reservationRows.map((r) => ({
+      ...r,
+      guestName: row.guest_name || "N/A",
+      nights: 0,
+      folio: r.folio || [],
+    })),
+  };
+};
 
 const fetchReservationPage = async (params: Required<ReservationPageParams>) => {
   const supabase = createServerSupabaseClient();
   const toIndex = params.offset + params.limit - 1;
-  const { data, error } = await supabase
-    .from("reservations")
-    .select(
-      "*, guest:guests(first_name,last_name,email,phone), folio:folio_items(id,reservation_id,description,amount,timestamp,payment_method,external_source,external_reference,external_metadata)"
-    )
+
+  let queryBuilder = supabase
+    .from("bookings_summary_view")
+    .select("*", { count: "exact" });
+
+  if (params.query) {
+    const searchTerm = `%${params.query}%`;
+    queryBuilder = queryBuilder.or(
+      `booking_id.ilike.${searchTerm},guest_name.ilike.${searchTerm},guest_email.ilike.${searchTerm}`
+    );
+  }
+
+  const { data, error, count } = await queryBuilder
     .order("booking_date", { ascending: false, nullsFirst: false })
-    .order("id", { ascending: false })
     .range(params.offset, toIndex);
 
   if (error || !data) {
     throw new Error(error?.message ?? "Failed to load reservations");
   }
 
-  const rows = data as DbReservationRow[];
-  const reservations = rows.map((row) => mapReservationRow(row));
-  const nextOffset = reservations.length < params.limit
-    ? null
-    : params.offset + reservations.length;
+  const rows = data as DbBookingSummaryRow[];
+  const bookings = rows.map((row) => mapBookingSummaryRow(row));
+  const nextOffset =
+    bookings.length < params.limit
+      ? null
+      : params.offset + bookings.length;
 
-  return { data: reservations, nextOffset } satisfies ReservationPageResult;
+  return {
+    data: bookings,
+    nextOffset,
+    totalCount: count ?? null,
+  } satisfies ReservationPageResult;
 };
 
 const reservationsPageCache = unstable_cache(
-  async (limit: number, offset: number) => {
-    const normalized = normalizePageParams({ limit, offset });
+  async (limit: number, offset: number, query: string) => {
+    const normalized = normalizePageParams({ limit, offset, query });
     return fetchReservationPage(normalized);
   },
   ["reservations-page"],
@@ -163,7 +173,11 @@ export const getCachedReservationsPage = async (
   params: ReservationPageParams = {}
 ): Promise<ReservationPageResult> => {
   const normalized = normalizePageParams(params);
-  return reservationsPageCache(normalized.limit, normalized.offset);
+  return reservationsPageCache(
+    normalized.limit,
+    normalized.offset,
+    normalized.query
+  );
 };
 
 const reservationsCountCache = unstable_cache(

@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const limitParam = url.searchParams.get("limit");
   const offsetParam = url.searchParams.get("offset");
+  const query = url.searchParams.get("query") ?? undefined;
   const includeCount = parseBoolean(url.searchParams.get("includeCount"));
 
   const limit = limitParam ? Number(limitParam) : undefined;
@@ -45,11 +46,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const normalized = clampReservationPageParams({ limit, offset });
+    const normalized = clampReservationPageParams({ limit, offset, query });
     const page = await getCachedReservationsPage(normalized);
 
-    let count: number | null | undefined;
-    if (includeCount) {
+    let count: number | null | undefined = page.totalCount;
+    if (includeCount && (count === null || typeof count === "undefined")) {
       count = await getCachedReservationsCount();
     }
 
