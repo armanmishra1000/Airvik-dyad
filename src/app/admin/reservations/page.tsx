@@ -7,7 +7,6 @@ import { differenceInDays, parseISO } from "date-fns";
 import { columns, ReservationWithDetails } from "./components/columns";
 import { DataTable } from "./components/data-table";
 import { useDataContext } from "@/context/data-context";
-import { BookingSummary } from "@/server/reservations/cache";
 import type { FolioItem, ReservationStatus } from "@/data/types";
 import { calculateReservationTaxAmount } from "@/lib/reservations/calculate-financials";
 import { PermissionGate } from "@/components/admin/permission-gate";
@@ -51,7 +50,7 @@ export default function ReservationsPage() {
     isReservationsInitialLoading,
     refreshReservations,
     loadReservationsPage,
-    reservations,
+    bookings,
     reservationsTotalCount,
     updateReservationStatus,
     updateBookingReservationStatus,
@@ -103,7 +102,7 @@ export default function ReservationsPage() {
   };
 
   const groupedReservations = React.useMemo(() => {
-    return (reservations as unknown as BookingSummary[]).map((booking) => {
+    return bookings.map((booking) => {
       const detailedBooking: ReservationWithDetails = { ...booking } as unknown as ReservationWithDetails;
       
       // Calculate nights for each row
@@ -112,8 +111,8 @@ export default function ReservationsPage() {
 
       detailedBooking.nights = calculateNights(detailedBooking);
       
-      if (booking.subRows) {
-        detailedBooking.subRows = booking.subRows.map((sub) => {
+      if (booking.subRows && booking.subRows.length > 0) {
+        detailedBooking.subRows = (booking.subRows as unknown as ReservationWithDetails[]).map((sub: ReservationWithDetails) => {
           const subWithDetails = { ...sub } as unknown as ReservationWithDetails;
           subWithDetails.nights = calculateNights(sub);
           subWithDetails.displayAmount = isRevenueReservation(sub.status)
@@ -123,7 +122,7 @@ export default function ReservationsPage() {
         });
 
         // Top level amount is the sum of subRows if it's a multi-room booking
-        if (detailedBooking.subRows.length > 1) {
+        if (detailedBooking.subRows && detailedBooking.subRows.length > 1) {
           detailedBooking.displayAmount = detailedBooking.subRows.reduce((sum, sub) => sum + (sub.displayAmount || 0), 0);
         } else {
           detailedBooking.displayAmount = isRevenueReservation(detailedBooking.status)
@@ -138,7 +137,7 @@ export default function ReservationsPage() {
 
       return detailedBooking;
     });
-  }, [reservations, property]);
+  }, [bookings, property]);
 
   const handleCancelReservation = async (bookingId: string) => {
     await updateBookingReservationStatus(bookingId, "Cancelled");

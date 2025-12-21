@@ -2,7 +2,7 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 
-import type { FolioItem, Reservation } from "@/data/types";
+import type { Reservation, ReservationPageResult } from "@/data/types";
 import { createServerSupabaseClient } from "@/integrations/supabase/server";
 
 const DEFAULT_PAGE_LIMIT = 50;
@@ -35,41 +35,6 @@ type ReservationPageParams = {
   limit?: number;
   offset?: number;
   query?: string;
-};
-
-export type BookingSummary = {
-  id: string;
-  bookingId: string;
-  bookingDate: string;
-  guestId: string;
-  guestName: string;
-  guestSnapshot: {
-    firstName: string | null;
-    lastName: string | null;
-    email: string | null;
-    phone: string | null;
-  };
-  totalAmount: number;
-  roomCount: number;
-  checkInDate: string;
-  checkOutDate: string;
-  numberOfGuests: number;
-  adultCount: number;
-  childCount: number;
-  status: Reservation["status"];
-  source: string;
-  paymentMethod: string;
-  nights: number;
-  roomNumber: string;
-  displayAmount?: number;
-  folio: FolioItem[];
-  subRows: (Reservation & { guestName: string; nights: number; displayAmount?: number })[];
-};
-
-export type ReservationPageResult = {
-  data: BookingSummary[];
-  nextOffset: number | null;
-  totalCount: number | null;
 };
 
 const normalizePageParams = (params: ReservationPageParams = {}): Required<ReservationPageParams> => {

@@ -14,6 +14,7 @@ import {
 } from "@/lib/reservations/guest-allocation";
 import type {
   Reservation,
+  BookingSummary,
   Guest,
   ReservationStatus,
   FolioItem,
@@ -209,7 +210,7 @@ const defaultProperty: Property = {
 };
 
 type ReservationsApiPayload = {
-  data: Reservation[];
+  data: BookingSummary[];
   nextOffset: number | null;
   count?: number | null;
 };
@@ -272,6 +273,7 @@ export function useAppData() {
   const [activeBookingReservations, setActiveBookingReservations] = React.useState<Reservation[]>([]);
   const [reservationsTotalCount, setReservationsTotalCount] = React.useState<number>(0);
   const [property, setProperty] = React.useState<Property>(defaultProperty);
+  const [bookings, setBookings] = React.useState<BookingSummary[]>([]);
   const [reservations, setReservations] = React.useState<Reservation[]>([]);
   const [todayReservations, setTodayReservations] = React.useState<Reservation[]>([]);
   const [guests, setGuests] = React.useState<Guest[]>([]);
@@ -298,7 +300,7 @@ export function useAppData() {
       setLookupStatus(prev => ({ ...prev, [id]: 'pending' }));
       
       try {
-        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
         let targetBookingId = "";
 
         if (isUUID) {
@@ -360,7 +362,9 @@ export function useAppData() {
           query: params.query,
           includeCount: true,
         });
-        setReservations(sortReservationsByBookingDate(response.data || []));
+        const bookingsData = response.data || [];
+        
+        setBookings(bookingsData);
         setReservationsTotalCount(response.count ?? 0);
       } catch (error) {
         console.error("Failed to load reservations page:", error);
@@ -393,7 +397,8 @@ export function useAppData() {
       const [
         propertyRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
         rolesRes, amenitiesRes, stickyNotesRes, usersFuncRes, housekeepingAssignmentsRes,
-        roomTypeAmenitiesRes
+        roomTypeAmenitiesRes,
+        reservationsRes
       ] = await Promise.all([
         api.getProperty(),
         userId ? api.getGuests() : Promise.resolve({ data: [] }),
@@ -406,7 +411,8 @@ export function useAppData() {
         userId ? api.getStickyNotes(userId) : Promise.resolve({ data: [] }),
         userId ? api.getUsers() : Promise.resolve({ data: [] }),
         userId ? api.getHousekeepingAssignments() : Promise.resolve({ data: [] }),
-        api.getRoomTypeAmenities()
+        api.getRoomTypeAmenities(),
+        userId ? api.getReservations() : Promise.resolve({ data: [] })
       ]);
 
       const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
@@ -428,6 +434,7 @@ export function useAppData() {
         setStickyNotes([]);
         setUsers([]);
         setHousekeepingAssignments([]);
+        setBookings([]);
         setReservations([]);
         setTodayReservations([]);
         setReservationsTotalCount(0);
@@ -462,11 +469,16 @@ export function useAppData() {
       setUsers(usersFuncRes.data || []);
       setHousekeepingAssignments(housekeepingAssignmentsRes.data || []);
 
-      const initialReservations = reservationsResponse.data ?? [];
-      setTodayReservations(sortReservationsByBookingDate(initialReservations));
+      if (Array.isArray(reservationsRes.data)) {
+        setReservations(sortReservationsByBookingDate(reservationsRes.data));
+      }
+
+      const bookingsData = reservationsResponse.data ?? [];
+      const flatReservations = bookingsData.flatMap(b => b.subRows || []);
       
-      // We don't set the main 'reservations' state here anymore as it's managed per-page
-      // But we set the total count
+      setTodayReservations(sortReservationsByBookingDate(flatReservations));
+      
+      // Reservations for the calendar are loaded separately via api.getReservations above.
       setReservationsTotalCount(reservationsResponse.count ?? 0);
       setIsReservationsInitialLoading(false);
 
@@ -1353,6 +1365,7 @@ export function useAppData() {
     activeBookingReservations,
     reservationsTotalCount,
     property,
+    bookings,
     reservations,
     todayReservations,
     guests,
