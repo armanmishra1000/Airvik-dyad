@@ -79,6 +79,7 @@ import { useAppData } from "@/hooks/use-app-data";
 import type { BookingValidationResult } from "@/lib/api";
 import type {
   Reservation,
+  BookingSummary,
   Guest,
   ReservationStatus,
   FolioItem,
@@ -143,6 +144,7 @@ interface DataContextType {
   isSessionLoading: boolean;
   lookupStatus: Record<string, 'pending' | 'success' | 'error'>;
   property: Property;
+  bookings: BookingSummary[];
   reservations: Reservation[];
   todayReservations: Reservation[];
   activeBookingReservations: Reservation[];

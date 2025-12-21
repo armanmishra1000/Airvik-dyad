@@ -374,6 +374,41 @@ export interface Reservation {
   guestSnapshot?: ReservationGuestSnapshot;
 }
 
+export type BookingSummary = {
+  id: string;
+  bookingId: string;
+  bookingDate: string;
+  guestId: string;
+  guestName: string;
+  guestSnapshot: {
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+    phone: string | null;
+  };
+  totalAmount: number;
+  roomCount: number;
+  checkInDate: string;
+  checkOutDate: string;
+  numberOfGuests: number;
+  adultCount: number;
+  childCount: number;
+  status: ReservationStatus;
+  source: string;
+  paymentMethod: string;
+  nights: number;
+  roomNumber: string;
+  displayAmount?: number;
+  folio: FolioItem[];
+  subRows: (Reservation & { guestName: string; nights: number; displayAmount?: number })[];
+};
+
+export type ReservationPageResult = {
+  data: BookingSummary[];
+  nextOffset: number | null;
+  totalCount: number | null;
+};
+
 export interface ExternalRoomLink {
   id: string;
   source: string;
