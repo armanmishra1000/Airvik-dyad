@@ -204,11 +204,11 @@ export function DataTable({
       pagination: localPagination,
     },
     meta: {
-        checkInReservation: (res: ReservationWithDetails) =>
-          handleGroupAction(res, onCheckInReservation),
-        checkOutReservation: (res: ReservationWithDetails) =>
-          handleGroupAction(res, onCheckOutReservation),
-        openCancelDialog: handleOpenCancelDialog,
+      checkInReservation: (res: ReservationWithDetails) =>
+        handleGroupAction(res, onCheckInReservation),
+      checkOutReservation: (res: ReservationWithDetails) =>
+        handleGroupAction(res, onCheckOutReservation),
+      openCancelDialog: handleOpenCancelDialog,
     }
   })
 
@@ -216,28 +216,30 @@ export function DataTable({
   const showLoadingState = Boolean(isLoading) && !hasRows
 
   return (
-    <div className="space-y-6">
-      <DataTableToolbar
-        table={table}
-        totalCount={totalCount}
-        onRefresh={onRefresh}
-        isRefreshing={Boolean(isRefreshing)}
-        isLoading={Boolean(isLoading)}
-      />
-      <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-lg">
-        <Table>
-          <TableHeader>
+    <div className="flex flex-col gap-6 h-[calc(100vh-110px)]">
+      <div className="shrink-0">
+        <DataTableToolbar
+          table={table}
+          totalCount={totalCount}
+          onRefresh={onRefresh}
+          isRefreshing={Boolean(isRefreshing)}
+          isLoading={Boolean(isLoading)}
+        />
+      </div>
+      <div className="flex-1 min-h-0 overflow-auto rounded-2xl border border-border/50 bg-card shadow-lg scrollbar-hide">
+        <Table className="relative">
+          <TableHeader className="sticky top-0 z-10 bg-card shadow-[0_1px_0_0_rgba(0,0,0,0.05)] dark:shadow-[0_1px_0_0_rgba(255,255,255,0.05)] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-border/50">
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="hover:bg-transparent border-b-0">
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   )
                 })}
@@ -248,7 +250,7 @@ export function DataTable({
             {showLoadingState ? (
               <TableRow>
                 <TableCell colSpan={columns.length}>
-                  <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+                  <div className="flex flex-col items-center gap-3 py-8 text-muted-foreground">
                     <GeistSpinner size={36} label="Loading reservations" />
                     <p className="text-sm">Loading reservations…</p>
                   </div>
@@ -289,7 +291,9 @@ export function DataTable({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} totalCount={totalCount} />
+      <div className="shrink-0">
+        <DataTablePagination table={table} totalCount={totalCount} />
+      </div>
       <CancelReservationDialog
         isOpen={!!reservationToCancel}
         onOpenChange={(isOpen) => !isOpen && setReservationToCancel(null)}

@@ -104,13 +104,13 @@ export default function ReservationsPage() {
   const groupedReservations = React.useMemo(() => {
     return bookings.map((booking) => {
       const detailedBooking: ReservationWithDetails = { ...booking } as unknown as ReservationWithDetails;
-      
+
       // Calculate nights for each row
-      const calculateNights = (res: { checkInDate: string; checkOutDate: string }) => 
+      const calculateNights = (res: { checkInDate: string; checkOutDate: string }) =>
         differenceInDays(parseISO(res.checkOutDate), parseISO(res.checkInDate));
 
       detailedBooking.nights = calculateNights(detailedBooking);
-      
+
       if (booking.subRows && booking.subRows.length > 0) {
         detailedBooking.subRows = (booking.subRows as unknown as ReservationWithDetails[]).map((sub: ReservationWithDetails) => {
           const subWithDetails = { ...sub } as unknown as ReservationWithDetails;
@@ -156,7 +156,7 @@ export default function ReservationsPage() {
 
   return (
     <PermissionGate feature="reservations">
-      <div className="space-y-6">
+      <div className="h-full">
         <DataTable
           columns={columns}
           data={groupedReservations}
