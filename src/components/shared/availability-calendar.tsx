@@ -328,7 +328,7 @@ export function AvailabilityCalendar() {
           </div>
         )}
         {isLoading ? (
-          <Skeleton className="h-[500px] w-full rounded-2xl" />
+          <Skeleton className="h-[700px] w-full rounded-2xl" />
         ) : hasAvailability ? (
           <TooltipProvider delayDuration={0}>
             <div className="space-y-6">
@@ -353,53 +353,52 @@ export function AvailabilityCalendar() {
                     {visibleMonthRooms.length > 0 ? (
                       <DragScrollContainer
                         ariaLabel={`Availability grid for ${monthLabel}`}
+                        className="max-h-[calc(100vh-280px)] overflow-auto scrollbar-hide"
                       >
-                        <div className="min-w-max">
-                          <Table className="min-w-max">
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="sticky left-0 z-20 w-56 border-r border-border/40 bg-card px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
-                                  <div>
-                                    <p className="text-[11px]">Month</p>
-                                    <p className="text-base font-semibold text-foreground">
-                                      {monthLabel}
-                                    </p>
-                                  </div>
-                                </TableHead>
-                                {headerDays.map((day) => {
-                                  const isTodayColumn = day.iso === todayIso;
-                                  return (
-                                    <TableHead
-                                      key={day.iso}
-                                      className={cn(
-                                        "min-w-[3.5rem] border-l border-border/60 px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide",
-                                        isTodayColumn
-                                          ? "bg-primary text-white shadow-[0_4px_20px_rgba(16,185,129,0.2)]"
-                                          : "text-foreground"
-                                      )}
-                                    >
-                                      <div>{format(day.date, "EEE")}</div>
-                                      <div>{format(day.date, "d")}</div>
-                                    </TableHead>
-                                  );
-                                })}
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {visibleMonthRooms.map((room) => (
-                                <RoomTypeRow
-                                  key={`${monthKey}-${room.roomType.id}`}
-                                  data={room}
-                                  unitsView={unitsView}
-                                  showPartialDays={property.showPartialDays}
-                                  todayIso={todayIso}
-                                  onCellClick={handleCellSelection}
-                                  selectedCell={selectedCell}
-                                />
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
+                        <Table className="min-w-max border-separate border-spacing-0" baseWrapper={false}>
+                          <TableHeader className="sticky top-0 z-30 bg-card/95 backdrop-blur shadow-sm">
+                            <TableRow>
+                              <TableHead className="sticky left-0 z-40 w-56 border-r border-b border-border/40 bg-card/95 backdrop-blur px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+                                <div>
+                                  <p className="text-[11px]">Month</p>
+                                  <p className="text-base font-semibold text-foreground">
+                                    {monthLabel}
+                                  </p>
+                                </div>
+                              </TableHead>
+                              {headerDays.map((day) => {
+                                const isTodayColumn = day.iso === todayIso;
+                                return (
+                                  <TableHead
+                                    key={day.iso}
+                                    className={cn(
+                                      "min-w-[3.5rem] border-l border-b border-border/60 px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide",
+                                      isTodayColumn
+                                        ? "bg-primary text-white shadow-[0_4px_20px_rgba(16,185,129,0.2)]"
+                                        : "bg-card/95 backdrop-blur text-foreground"
+                                    )}
+                                  >
+                                    <div>{format(day.date, "EEE")}</div>
+                                    <div>{format(day.date, "d")}</div>
+                                  </TableHead>
+                                );
+                              })}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {visibleMonthRooms.map((room) => (
+                              <RoomTypeRow
+                                key={`${monthKey}-${room.roomType.id}`}
+                                data={room}
+                                unitsView={unitsView}
+                                showPartialDays={property.showPartialDays}
+                                todayIso={todayIso}
+                                onCellClick={handleCellSelection}
+                                selectedCell={selectedCell}
+                              />
+                            ))}
+                          </TableBody>
+                        </Table>
                       </DragScrollContainer>
                     ) : (
                       <div className="px-4 pb-6">
@@ -427,11 +426,13 @@ export function AvailabilityCalendar() {
 type DragScrollContainerProps = {
   children: React.ReactNode;
   ariaLabel: string;
+  className?: string;
 };
 
 function DragScrollContainer({
   children,
   ariaLabel,
+  className,
 }: DragScrollContainerProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const dragState = React.useRef({
@@ -520,7 +521,7 @@ function DragScrollContainer({
     <div className="relative">
       <div
         ref={containerRef}
-        className="overflow-x-auto"
+        className={cn("overflow-x-auto", className)}
         aria-label={ariaLabel}
         role="region"
         onPointerDown={handlePointerDown}
