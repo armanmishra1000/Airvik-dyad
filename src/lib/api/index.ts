@@ -91,6 +91,18 @@ type DbRoomType = {
   is_visible: boolean | null;
 };
 
+type DbFolioItem = {
+  id: string;
+  reservation_id: string;
+  description: string;
+  amount: number;
+  timestamp: string;
+  payment_method: string | null;
+  external_source: string | null;
+  external_reference: string | null;
+  external_metadata: Record<string, unknown> | null;
+};
+
 type DbReservation = {
   id: string;
   booking_id: string;
@@ -102,7 +114,7 @@ type DbReservation = {
   number_of_guests: number;
   status: ReservationStatus;
   notes?: string | null;
-  folio?: FolioItem[] | null;
+  folio?: DbFolioItem[] | null;
   total_amount: number;
   booking_date: string;
   source: Reservation["source"];
@@ -399,6 +411,17 @@ export const fromDbRoomType = (dbRoomType: DbRoomType): RoomType => ({
   isVisible: dbRoomType.is_visible ?? true,
 });
 
+const fromDbFolioItem = (dbFolio: DbFolioItem): FolioItem => ({
+  id: dbFolio.id,
+  description: dbFolio.description,
+  amount: Number(dbFolio.amount),
+  timestamp: dbFolio.timestamp,
+  paymentMethod: dbFolio.payment_method ?? undefined,
+  externalSource: dbFolio.external_source ?? undefined,
+  externalReference: dbFolio.external_reference ?? undefined,
+  externalMetadata: dbFolio.external_metadata ?? undefined,
+});
+
 const fromDbReservation = (dbReservation: DbReservation): Reservation => ({
   id: dbReservation.id,
   bookingId: dbReservation.booking_id,
@@ -410,7 +433,7 @@ const fromDbReservation = (dbReservation: DbReservation): Reservation => ({
   numberOfGuests: dbReservation.number_of_guests,
   status: dbReservation.status,
   notes: dbReservation.notes ?? undefined,
-  folio: dbReservation.folio ?? [],
+  folio: (dbReservation.folio as DbFolioItem[])?.map(fromDbFolioItem) ?? [],
   totalAmount: dbReservation.total_amount,
   bookingDate: dbReservation.booking_date,
   source: dbReservation.source,
@@ -430,12 +453,24 @@ const fromDbReservation = (dbReservation: DbReservation): Reservation => ({
   externalMetadata: dbReservation.external_metadata ?? undefined,
   guestSnapshot: dbReservation.guest
     ? {
-        firstName: dbReservation.guest.first_name,
-        lastName: dbReservation.guest.last_name,
-        email: dbReservation.guest.email,
-        phone: dbReservation.guest.phone,
-      }
+      firstName: dbReservation.guest.first_name,
+      lastName: dbReservation.guest.last_name,
+      email: dbReservation.guest.email,
+      phone: dbReservation.guest.phone,
+    }
     : undefined,
+});
+
+const toDbFolioItem = (folioItem: FolioItem, reservationId?: string): DbFolioItem => ({
+  id: folioItem.id,
+  reservation_id: reservationId || "",
+  description: folioItem.description,
+  amount: folioItem.amount,
+  timestamp: folioItem.timestamp,
+  payment_method: folioItem.paymentMethod ?? null,
+  external_source: folioItem.externalSource ?? null,
+  external_reference: folioItem.externalReference ?? null,
+  external_metadata: folioItem.externalMetadata ?? null,
 });
 
 const toDbReservation = (
@@ -457,7 +492,11 @@ const toDbReservation = (
   if (typeof appReservation.notes !== "undefined") {
     dbData.notes = appReservation.notes;
   }
-  if (appReservation.folio) dbData.folio = appReservation.folio;
+  if (appReservation.folio) {
+    dbData.folio = appReservation.folio.map((f) =>
+      toDbFolioItem(f, appReservation.id)
+    );
+  }
   if (typeof appReservation.totalAmount === "number") {
     dbData.total_amount = appReservation.totalAmount;
   }
@@ -674,71 +713,71 @@ export const createProperty = (propertyData: Partial<Property>) => supabase.from
 const GUEST_PAGE_SIZE = 1000;
 
 export const getGuests = async () => {
-    const aggregatedRows: DbGuest[] = [];
-    let fromIndex = 0;
-    let toIndex = GUEST_PAGE_SIZE - 1;
-    let status: number | undefined;
-    let statusText: string | undefined;
+  const aggregatedRows: DbGuest[] = [];
+  let fromIndex = 0;
+  let toIndex = GUEST_PAGE_SIZE - 1;
+  let status: number | undefined;
+  let statusText: string | undefined;
 
-    while (true) {
-        const {
-            data,
-            error,
-            status: pageStatus,
-            statusText: pageStatusText,
-        } = await supabase
-            .from('guests')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .range(fromIndex, toIndex);
+  while (true) {
+    const {
+      data,
+      error,
+      status: pageStatus,
+      statusText: pageStatusText,
+    } = await supabase
+      .from('guests')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(fromIndex, toIndex);
 
-        if (typeof status === 'undefined') {
-            status = pageStatus;
-        }
-        if (typeof statusText === 'undefined') {
-            statusText = pageStatusText;
-        }
-
-        if (error) {
-            return {
-                data: null,
-                error,
-                status,
-                statusText,
-            };
-        }
-
-        const rows = (data ?? []) as DbGuest[];
-        aggregatedRows.push(...rows);
-
-        if (rows.length < GUEST_PAGE_SIZE) {
-            break;
-        }
-
-        fromIndex += GUEST_PAGE_SIZE;
-        toIndex += GUEST_PAGE_SIZE;
+    if (typeof status === 'undefined') {
+      status = pageStatus;
+    }
+    if (typeof statusText === 'undefined') {
+      statusText = pageStatusText;
     }
 
-    const dedupedGuests = Array.from(
-        aggregatedRows.reduce((map, guest) => {
-            if (!map.has(guest.id)) {
-                map.set(guest.id, guest);
-            }
-            return map;
-        }, new Map<string, DbGuest>()).values()
-    );
-
-    return {
-        data: dedupedGuests.map(fromDbGuest),
-        error: null,
+    if (error) {
+      return {
+        data: null,
+        error,
         status,
         statusText,
-    };
+      };
+    }
+
+    const rows = (data ?? []) as DbGuest[];
+    aggregatedRows.push(...rows);
+
+    if (rows.length < GUEST_PAGE_SIZE) {
+      break;
+    }
+
+    fromIndex += GUEST_PAGE_SIZE;
+    toIndex += GUEST_PAGE_SIZE;
+  }
+
+  const dedupedGuests = Array.from(
+    aggregatedRows.reduce((map, guest) => {
+      if (!map.has(guest.id)) {
+        map.set(guest.id, guest);
+      }
+      return map;
+    }, new Map<string, DbGuest>()).values()
+  );
+
+  return {
+    data: dedupedGuests.map(fromDbGuest),
+    error: null,
+    status,
+    statusText,
+  };
 };
 export const getGuestById = async (id: string) => {
-    const { data, error, ...rest } = await supabase.from('guests').select('*').eq('id', id).single();
-    if (error || !data) return { data: null, error, ...rest };
-    return { data: fromDbGuest(data), error, ...rest };
+  const { data, error, ...rest } = await supabase.from('guests').select('*').eq('id', id).single();
+  if (error || !data) return { data: null, error, ...rest };
+  return { data: fromDbGuest(data), error, ...rest };
 };
 export const getOrCreateGuestByEmail = async (
   args: GetOrCreateGuestArgs
@@ -765,14 +804,14 @@ export const getOrCreateGuestByEmail = async (
   return { data: fromDbGuest(data as DbGuest), error: null };
 };
 export const addGuest = async (guestData: Omit<Guest, "id">) => {
-    const { data, error, ...rest } = await supabase.from('guests').insert([toDbGuest(guestData)]).select().single();
-    if (error || !data) return { data, error, ...rest };
-    return { data: fromDbGuest(data), error, ...rest };
+  const { data, error, ...rest } = await supabase.from('guests').insert([toDbGuest(guestData)]).select().single();
+  if (error || !data) return { data, error, ...rest };
+  return { data: fromDbGuest(data), error, ...rest };
 };
 export const updateGuest = async (id: string, updatedData: Partial<Guest>) => {
-    const { data, error, ...rest } = await supabase.from('guests').update(toDbGuest(updatedData)).eq('id', id).select().single();
-    if (error || !data) return { data, error, ...rest };
-    return { data: fromDbGuest(data), error, ...rest };
+  const { data, error, ...rest } = await supabase.from('guests').update(toDbGuest(updatedData)).eq('id', id).select().single();
+  if (error || !data) return { data, error, ...rest };
+  return { data: fromDbGuest(data), error, ...rest };
 };
 export const deleteGuest = (id: string) => supabase.from('guests').delete().eq('id', id);
 
@@ -801,7 +840,7 @@ export const getReservationsPage = async (
   const { limit, offset, includeCount } = normalizePageParams(params);
   const toIndex = offset + limit - 1;
   const reservationColumns =
-    '*, guest:guests(first_name,last_name,email,phone)';
+    '*, guest:guests(first_name,last_name,email,phone), folio:folio_items(*)';
 
   const { data, error, status, statusText, count } = await supabase
     .from('reservations')
@@ -830,60 +869,60 @@ export const getReservationsPage = async (
 };
 
 export const getReservations = async () => {
-    const aggregatedRows: DbReservation[] = [];
-    let fromIndex = 0;
-    let toIndex = RESERVATION_PAGE_SIZE - 1;
-    let status: number | undefined;
-    let statusText: string | undefined;
-    let count: number | null | undefined;
+  const aggregatedRows: DbReservation[] = [];
+  let fromIndex = 0;
+  let toIndex = RESERVATION_PAGE_SIZE - 1;
+  let status: number | undefined;
+  let statusText: string | undefined;
+  let count: number | null | undefined;
 
-    while (true) {
-        const includeCount = fromIndex === 0;
-        const { data, error, status: pageStatus, statusText: pageStatusText, count: pageCount } = await supabase
-            .from('reservations')
-            .select('*', includeCount ? { count: 'estimated' } : undefined)
-            .order('booking_date', { ascending: false, nullsFirst: false })
-            .order('id', { ascending: false })
-            .range(fromIndex, toIndex);
+  while (true) {
+    const includeCount = fromIndex === 0;
+    const { data, error, status: pageStatus, statusText: pageStatusText, count: pageCount } = await supabase
+      .from('reservations')
+      .select('*, guest:guests(first_name,last_name,email,phone), folio:folio_items(*)', includeCount ? { count: 'estimated' } : undefined)
+      .order('booking_date', { ascending: false, nullsFirst: false })
+      .order('id', { ascending: false })
+      .range(fromIndex, toIndex);
 
-        if (typeof status === 'undefined') {
-            status = pageStatus;
-        }
-        if (typeof statusText === 'undefined') {
-            statusText = pageStatusText;
-        }
-        if (includeCount) {
-            count = typeof pageCount === 'number' ? pageCount : null;
-        }
-
-        if (error) {
-            return {
-                data: null,
-                error,
-                status,
-                statusText,
-                count,
-            };
-        }
-
-        const pageRows = (data ?? []) as DbReservation[];
-        aggregatedRows.push(...pageRows);
-
-        if (pageRows.length < RESERVATION_PAGE_SIZE) {
-            break;
-        }
-
-        fromIndex += RESERVATION_PAGE_SIZE;
-        toIndex += RESERVATION_PAGE_SIZE;
+    if (typeof status === 'undefined') {
+      status = pageStatus;
+    }
+    if (typeof statusText === 'undefined') {
+      statusText = pageStatusText;
+    }
+    if (includeCount) {
+      count = typeof pageCount === 'number' ? pageCount : null;
     }
 
-    return {
-        data: aggregatedRows.map(fromDbReservation),
-        error: null,
+    if (error) {
+      return {
+        data: null,
+        error,
         status,
         statusText,
         count,
-    };
+      };
+    }
+
+    const pageRows = (data ?? []) as DbReservation[];
+    aggregatedRows.push(...pageRows);
+
+    if (pageRows.length < RESERVATION_PAGE_SIZE) {
+      break;
+    }
+
+    fromIndex += RESERVATION_PAGE_SIZE;
+    toIndex += RESERVATION_PAGE_SIZE;
+  }
+
+  return {
+    data: aggregatedRows.map(fromDbReservation),
+    error: null,
+    status,
+    statusText,
+    count,
+  };
 };
 
 export const getReservationsTotalCount = async () => {
@@ -911,8 +950,8 @@ export const getTotalBookingsCount = async () => {
     typeof data === 'number'
       ? data
       : data === null || typeof data === 'undefined'
-      ? 0
-      : Number(data);
+        ? 0
+        : Number(data);
 
   return {
     count: Number.isFinite(numericCount) ? numericCount : 0,
@@ -923,23 +962,23 @@ export const getTotalBookingsCount = async () => {
 };
 
 export const getReservationById = async (id: string) => {
-    const { data, error, ...rest } = await supabase
-      .from('reservations')
-      .select('*, guest:guests(first_name,last_name,email,phone)')
-      .eq('id', id)
-      .single();
-    if (error || !data) return { data: null, error, ...rest };
-    return { data: fromDbReservation(data), error, ...rest };
+  const { data, error, ...rest } = await supabase
+    .from('reservations')
+    .select('*, guest:guests(first_name,last_name,email,phone), folio:folio_items(*)')
+    .eq('id', id)
+    .single();
+  if (error || !data) return { data: null, error, ...rest };
+  return { data: fromDbReservation(data as unknown as DbReservation), error, ...rest };
 };
 
 export const getReservationsByBookingId = async (bookingId: string) => {
   const { data, error, ...rest } = await supabase
     .from('reservations')
-    .select('*, guest:guests(first_name,last_name,email,phone)')
+    .select('*, guest:guests(first_name,last_name,email,phone), folio:folio_items(*)')
     .eq('booking_id', bookingId);
-  
+
   if (error || !data) return { data: [], error, ...rest };
-  return { data: (data as DbReservation[]).map(fromDbReservation), error, ...rest };
+  return { data: (data as unknown as DbReservation[]).map(fromDbReservation), error, ...rest };
 };
 
 export const addReservation = async (reservationsData: DbReservationInsert[]) => {
@@ -982,7 +1021,7 @@ export const createReservationsWithTotal = async (
     p_booking_id: resolvedBookingId,
     p_check_in_date: formatDateForPostgres(args.p_check_in_date),
     p_check_out_date: formatDateForPostgres(args.p_check_out_date),
-    p_booking_date: args.p_booking_date 
+    p_booking_date: args.p_booking_date
       ? formatTimestampForPostgres(args.p_booking_date)
       : null,
     p_source: args.p_source ?? 'website',
@@ -1004,9 +1043,9 @@ export const createReservationsWithTotal = async (
   return { data: typedData.map(fromDbReservation), error: null };
 };
 export const updateReservation = async (id: string, updatedData: Partial<Reservation>) => {
-    const { data, error, ...rest } = await supabase.from('reservations').update(toDbReservation(updatedData)).eq('id', id).select().single();
-    if (error || !data) return { data, error, ...rest };
-    return { data: fromDbReservation(data), error, ...rest };
+  const { data, error, ...rest } = await supabase.from('reservations').update(toDbReservation(updatedData)).eq('id', id).select().single();
+  if (error || !data) return { data, error, ...rest };
+  return { data: fromDbReservation(data), error, ...rest };
 };
 export const updateReservationStatus = (id: string, status: string) =>
   supabase.from("reservations").update({ status }).eq("id", id);
@@ -1039,10 +1078,10 @@ export const addFolioItem = (itemData: FolioItemInsertPayload) =>
         description: itemData.description,
         amount: itemData.amount,
         payment_method: itemData.payment_method ?? null,
-        timestamp: itemData.timestamp,
         external_source: itemData.external_source ?? INTERNAL_FOLIO_SOURCE,
         external_reference: itemData.external_reference ?? null,
         external_metadata: itemData.external_metadata ?? {},
+        ...(itemData.timestamp ? { timestamp: itemData.timestamp } : {}),
       },
     ])
     .select()
@@ -1091,19 +1130,19 @@ export const createReservationActivityLog = async (
 
 // Rooms
 export const getRooms = async () => {
-    const { data, error, ...rest } = await supabase.from('rooms').select('*');
-    if (error || !data) return { data, error, ...rest };
-    return { data: data.map(fromDbRoom), error, ...rest };
+  const { data, error, ...rest } = await supabase.from('rooms').select('*');
+  if (error || !data) return { data, error, ...rest };
+  return { data: data.map(fromDbRoom), error, ...rest };
 };
 export const addRoom = async (roomData: Omit<Room, "id">) => {
-    const { data, error, ...rest } = await supabase.from('rooms').insert([toDbRoom(roomData)]).select().single();
-    if (error || !data) return { data, error, ...rest };
-    return { data: fromDbRoom(data), error, ...rest };
+  const { data, error, ...rest } = await supabase.from('rooms').insert([toDbRoom(roomData)]).select().single();
+  if (error || !data) return { data, error, ...rest };
+  return { data: fromDbRoom(data), error, ...rest };
 };
 export const updateRoom = async (id: string, updatedData: Partial<Room>) => {
-    const { data, error, ...rest } = await supabase.from('rooms').update(toDbRoom(updatedData)).eq('id', id).select().single();
-    if (error || !data) return { data, error, ...rest };
-    return { data: fromDbRoom(data), error, ...rest };
+  const { data, error, ...rest } = await supabase.from('rooms').update(toDbRoom(updatedData)).eq('id', id).select().single();
+  if (error || !data) return { data, error, ...rest };
+  return { data: fromDbRoom(data), error, ...rest };
 };
 export const deleteRoom = (id: string) => supabase.from('rooms').delete().eq('id', id);
 
@@ -1209,7 +1248,7 @@ export const getBookingRestrictions = async (): Promise<BookingRestriction[]> =>
     .from('booking_restrictions')
     .select('*')
     .order('created_at');
-  
+
   if (error) throw error;
   return (data ?? []).map((row) => fromDbBookingRestriction(row as DbBookingRestriction));
 };
@@ -1233,7 +1272,7 @@ export const getMonthlyAvailability = async (
 export type BookingValidationResult = {
   isValid: boolean;
   message?: string;
-  conflicts?: Array<Pick<Reservation, "id" | "bookingId" | "roomId" | "checkInDate" | "checkOutDate" | "status" >>;
+  conflicts?: Array<Pick<Reservation, "id" | "bookingId" | "roomId" | "checkInDate" | "checkOutDate" | "status">>;
 };
 
 export const validateBookingRequest = async (
@@ -1251,7 +1290,7 @@ export const validateBookingRequest = async (
     p_adults: adults,
     p_children: children
   });
-  
+
   if (error) throw error;
   if (data && data.isValid === false) {
     return data as BookingValidationResult;
@@ -1319,7 +1358,7 @@ export const createCategory = async (categoryData: Omit<Category, "id" | "create
     description: categoryData.description,
     parent_id: categoryData.parent_id,
   }]).select().single();
-  
+
   if (error) throw error;
   return fromDbCategory(data);
 };
@@ -1361,7 +1400,7 @@ export const createPost = async (postData: Omit<Post, "id" | "created_at" | "upd
     published_at: postData.status === 'published' ? new Date().toISOString() : null,
     author_id: postData.author_id // Assuming passed or handled by RLS default
   }]).select().single();
-  
+
   if (error) throw error;
 
   // 2. Insert Categories
@@ -1392,7 +1431,7 @@ export const updatePost = async (
   if (postData.status) {
     updatePayload.status = postData.status;
     if (postData.status === 'published' && !postData.published_at) {
-        updatePayload.published_at = new Date().toISOString();
+      updatePayload.published_at = new Date().toISOString();
     }
   }
 
@@ -1410,11 +1449,11 @@ export const updatePost = async (
     await supabase.from('post_categories').delete().eq('post_id', id);
     // Add new
     if (postData.categoryIds.length > 0) {
-       const categoryInserts = postData.categoryIds.map(catId => ({
-          post_id: id,
-          category_id: catId
-        }));
-        await supabase.from('post_categories').insert(categoryInserts);
+      const categoryInserts = postData.categoryIds.map(catId => ({
+        post_id: id,
+        category_id: catId
+      }));
+      await supabase.from('post_categories').insert(categoryInserts);
     }
   }
 

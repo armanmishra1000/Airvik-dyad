@@ -8,7 +8,18 @@ declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: AutoTableOptions) => jsPDF;
     lastAutoTable: { finalY: number };
+    putTotalPages(pageExpression: string): jsPDF;
   }
+}
+
+/**
+ * Internal jsPDF state for type safety without 'any'
+ */
+interface jsPDFInternal {
+  getNumberOfPages: () => number;
+  getCurrentPageInfo: () => { pageNumber: number };
+  getFontSize: () => number;
+  getTextColor: () => string;
 }
 
 interface AutoTableOptions {
@@ -28,7 +39,7 @@ interface AutoTableOptions {
     textColor?: [number, number, number] | string;
   };
   columnStyles?: Record<number, { halign?: "left" | "center" | "right"; cellWidth?: number | "auto" }>;
-  margin?: { left?: number; right?: number };
+  margin?: { top?: number; right?: number; bottom?: number; left?: number };
   tableWidth?: "auto" | "wrap" | number;
   didDrawPage?: (data: { doc: jsPDF; pageNumber: number }) => void;
   styles?: {
@@ -85,6 +96,10 @@ const COLORS = {
   BORDER: "#e0e0e0",
   WHITE: "#ffffff",
 };
+
+// Layout Constants
+const MARGIN = 20;
+const FOOTER_HEIGHT = 20; // Reserved height for the footer at page bottom
 
 const LOGO_PATH = "/logo.png"; // Stored in E:\SW\Airvik-dyad\public\logo.png
 const APEXTURE_LOGO_PATH = "/apexture-logo.svg"; // Stored in E:\SW\Airvik-dyad\public\apexture-logo.svg
@@ -165,6 +180,22 @@ function calculateAdditionalCharges(reservations: Reservation[]): { description:
       .map((item) => ({
         description: item.description,
         amount: item.amount,
+      }))
+  );
+}
+
+/**
+ * Extract payment records from folio
+ */
+function calculatePayments(reservations: Reservation[]): { description: string; amount: number; date: string; method: string }[] {
+  return reservations.flatMap((r) =>
+    (r.folio || [])
+      .filter((item) => item.amount < 0)
+      .map((item) => ({
+        description: item.description,
+        amount: Math.abs(item.amount),
+        date: item.timestamp ? format(parseISO(item.timestamp), "dd MMM yyyy") : "-",
+        method: item.paymentMethod || "-",
       }))
   );
 }
@@ -279,6 +310,57 @@ function drawRoundedCard(doc: jsPDF, x: number, y: number, width: number, height
 }
 
 /**
+ * Draw footer on every page
+ */
+function drawFooter(doc: jsPDF) {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Use a type-safe cast for internal methods not in base types
+  const internal = (doc as unknown as { internal: jsPDFInternal }).internal;
+  const currentPage = internal.getCurrentPageInfo().pageNumber;
+
+  // Save state
+  const oldFontSize = internal.getFontSize();
+  const oldTextColor = internal.getTextColor();
+
+  // Draw Footer Content
+  const footerTextY = pageHeight - FOOTER_HEIGHT + 5;
+
+  doc.setFontSize(10);
+  doc.setTextColor(COLORS.PRIMARY);
+  doc.setFont("helvetica", "normal");
+  doc.text("Thank you for choosing Sahajanand Wellness!", pageWidth / 2, footerTextY, { align: "center" });
+
+  doc.setFontSize(8);
+  doc.setTextColor(COLORS.TEXT_LIGHT);
+  doc.text("We look forward to welcoming you.", pageWidth / 2, footerTextY + 5, { align: "center" });
+
+  // Page Numbers
+  doc.setFontSize(8);
+  doc.text(`Page ${currentPage} of {total_pages_count_string}`, pageWidth - MARGIN, footerTextY + 5, { align: "right" });
+
+  // Restore state
+  doc.setFontSize(oldFontSize);
+  // jsPDF doesn't have a simple getTextColor object, we assume standard for now or just set back to dark
+  doc.setTextColor(COLORS.TEXT_DARK);
+}
+
+/**
+ * Ensure enough space remains on page for a section
+ */
+function ensureSpace(doc: jsPDF, currentY: number, requiredHeight: number): number {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const threshold = pageHeight - FOOTER_HEIGHT - 10; // Extra buffer
+
+  if (currentY + requiredHeight > threshold) {
+    doc.addPage();
+    return MARGIN;
+  }
+  return currentY;
+}
+
+/**
  * Generate and download invoice PDF (Async)
  */
 export async function generateInvoice(data: InvoiceData): Promise<void> {
@@ -297,12 +379,15 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
 
   const roomChargeSummaries = calculateRoomChargeSummaries(reservations, rooms, roomTypes);
   const additionalCharges = calculateAdditionalCharges(reservations);
+  const payments = calculatePayments(reservations);
 
   const roomSubtotal = reservations.reduce((sum, r) => sum + r.totalAmount, 0);
   const additionalChargesSubtotal = additionalCharges.reduce((sum, c) => sum + c.amount, 0);
+  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
 
   const { taxAmount, taxRate } = calculateTaxTotals(reservations);
   const grandTotal = roomSubtotal + additionalChargesSubtotal + taxAmount;
+  const balanceDue = Math.max(0, grandTotal - totalPaid);
 
   const nights = differenceInDays(parseISO(checkOutDate), parseISO(checkInDate));
   const invoiceNumber = generateInvoiceNumber(bookingId, bookingDate);
@@ -322,7 +407,7 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20;
+  const margin = MARGIN;
 
   let yPos = margin;
 
@@ -559,13 +644,71 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
       lineColor: [224, 224, 224],
       lineWidth: 0.1,
     },
-    didDrawPage: (data) => {
-      // Optional: Header/Footer recurring on new pages could go here
+    margin: { left: margin, right: margin, bottom: FOOTER_HEIGHT + 5 },
+    didDrawPage: (_data) => {
+      drawFooter(doc);
     },
-    margin: { left: margin, right: margin },
   });
 
-  yPos = doc.lastAutoTable.finalY + 15; // Increased gap after table as per request
+  yPos = doc.lastAutoTable.finalY + 10;
+
+  // ========== PAYMENTS TABLE ==========
+  if (payments.length > 0) {
+    // Ensure space for table title and at least one row
+    yPos = ensureSpace(doc, yPos, 20);
+
+    // Add Payments Section Title
+    doc.setTextColor(COLORS.PRIMARY);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Payments Record", margin, yPos);
+    yPos += 5;
+
+    const paymentHead = [["Date", "Description", "Method", "Amount"]];
+    const paymentBody = payments.map((p) => [
+      p.date,
+      p.description,
+      p.method,
+      formatCurrency(p.amount),
+    ]);
+
+    doc.autoTable({
+      startY: yPos,
+      head: paymentHead,
+      body: paymentBody,
+      theme: "plain",
+      headStyles: {
+        fillColor: [240, 240, 240],
+        textColor: [51, 51, 51],
+        fontSize: 8,
+        fontStyle: "bold",
+        halign: "left",
+      },
+      bodyStyles: {
+        fontSize: 8,
+        textColor: [51, 51, 51],
+      },
+      columnStyles: {
+        0: { cellWidth: 30, halign: "left" },
+        1: { cellWidth: "auto", halign: "left" },
+        2: { cellWidth: 30, halign: "left" },
+        3: { cellWidth: 30, halign: "right" },
+      },
+      styles: {
+        cellPadding: 3,
+        lineColor: [224, 224, 224],
+        lineWidth: 0.1,
+      },
+      margin: { left: margin, right: margin, bottom: FOOTER_HEIGHT + 5 },
+      didDrawPage: (_data) => {
+        drawFooter(doc);
+      },
+    });
+
+    yPos = doc.lastAutoTable.finalY + 10;
+  } else {
+    yPos += 5;
+  }
 
   // ========== TOTALS ==========
   const totalsWidth = 80;
@@ -573,6 +716,9 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
 
   const drawTotalRow = (label: string, value: string, isGrand: boolean = false) => {
     const rowHeight = isGrand ? 12 : 7;
+
+    // Ensure space for this row
+    yPos = ensureSpace(doc, yPos, rowHeight);
 
     if (isGrand) {
       // Background for Grand Total
@@ -593,8 +739,9 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
     yPos += rowHeight;
   };
 
-  // Subtotal removed as per request
-  // drawTotalRow("Subtotal", formatCurrency(subtotal));
+  // Estimate total height of totals block to keep it together if possible
+  const totalSummaryHeight = 35; // Rough estimate for tax + additional + grand + paid + balance
+  yPos = ensureSpace(doc, yPos, totalSummaryHeight);
 
   if (taxAmount > 0) {
     const taxLabel = taxRate
@@ -609,21 +756,20 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   }
 
   yPos += 2; // Spacing before grand total
-  drawTotalRow("Grand Total", formatCurrency(grandTotal), true);
+  drawTotalRow("Grand Total", formatCurrency(grandTotal));
+
+  if (totalPaid > 0) {
+    drawTotalRow("Total Paid", formatCurrency(totalPaid));
+  }
+
+  yPos += 2;
+  drawTotalRow("Balance Due (Total)", formatCurrency(balanceDue), true);
 
   // ========== FOOTER SECTION ==========
-  // Thank you text centered
-  const footerTextY = pageHeight - 30;
-  doc.setFontSize(10);
-  doc.setTextColor(COLORS.PRIMARY);
-  doc.setFont("helvetica", "normal");
-  doc.text("Thank you for choosing Sahajanand Wellness!", pageWidth / 2, footerTextY, { align: "center" });
-
-  doc.setFontSize(9);
-  doc.setTextColor(COLORS.TEXT_LIGHT);
-  doc.text("We look forward to welcoming you.", pageWidth / 2, footerTextY + 5, { align: "center" });
-
-  // Managed By + Logo REMOVED as per request
+  // Finalize page count and replace placeholders
+  if (typeof doc.putTotalPages === "function") {
+    doc.putTotalPages("{total_pages_count_string}");
+  }
 
   // Save PDF
   const fileName = `Invoice-${invoiceNumber}.pdf`;
