@@ -12,7 +12,7 @@ import {
   parseISO,
   isSameDay,
 } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +50,7 @@ import {
 } from "@/hooks/use-monthly-availability";
 import { RoomTypeRow } from "@/components/shared/room-type-row";
 import { cn } from "@/lib/utils";
+import { useFullscreen } from "@/hooks/use-fullscreen";
 
 const reservationStatusStyles: Record<
   ReservationStatus,
@@ -126,6 +127,8 @@ export function AvailabilityCalendar() {
   const [useLegacyView, setUseLegacyView] = React.useState(false);
   const [rpcError, setRpcError] = React.useState<Error | null>(null);
   const [visibleMonths, setVisibleMonths] = React.useState(1);
+  const { elementRef, isFullscreen, toggleFullscreen } = useFullscreen<HTMLDivElement>();
+
   const monthSequence = React.useMemo(() => {
     return Array.from({ length: visibleMonths }, (_, index) =>
       startOfMonth(addMonths(currentMonth, index))
@@ -208,7 +211,13 @@ export function AvailabilityCalendar() {
   }
 
   return (
-    <div className="rounded-3xl border border-border/60 bg-card shadow-xl">
+    <div
+      ref={elementRef}
+      className={cn(
+        "rounded-3xl border border-border/60 bg-card shadow-xl transition-all duration-300",
+        isFullscreen && "fixed inset-0 z-[100] h-screen w-screen overflow-auto rounded-none border-none shadow-none"
+      )}
+    >
       <div className="border-b border-border/50 px-4 py-5 sm:px-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -279,6 +288,27 @@ export function AvailabilityCalendar() {
                 <SelectItem value="booked">Units booked</SelectItem>
               </SelectContent>
             </Select>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-14 w-14 rounded-xl border border-border/60 bg-card/60 flex-shrink-0"
+                    onClick={toggleFullscreen}
+                  >
+                    {isFullscreen ? (
+                      <Minimize2 className="h-5 w-5" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-muted-foreground">
             {legendStatuses
@@ -328,7 +358,7 @@ export function AvailabilityCalendar() {
           </div>
         )}
         {isLoading ? (
-          <Skeleton className="h-[500px] w-full rounded-2xl" />
+          <Skeleton className="h-[700px] w-full rounded-2xl" />
         ) : hasAvailability ? (
           <TooltipProvider delayDuration={0}>
             <div className="space-y-6">
@@ -353,53 +383,52 @@ export function AvailabilityCalendar() {
                     {visibleMonthRooms.length > 0 ? (
                       <DragScrollContainer
                         ariaLabel={`Availability grid for ${monthLabel}`}
+                        className="max-h-[calc(100vh-280px)] overflow-auto scrollbar-hide"
                       >
-                        <div className="min-w-max">
-                          <Table className="min-w-max">
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="sticky left-0 z-20 w-56 border-r border-border/40 bg-card px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
-                                  <div>
-                                    <p className="text-[11px]">Month</p>
-                                    <p className="text-base font-semibold text-foreground">
-                                      {monthLabel}
-                                    </p>
-                                  </div>
-                                </TableHead>
-                                {headerDays.map((day) => {
-                                  const isTodayColumn = day.iso === todayIso;
-                                  return (
-                                    <TableHead
-                                      key={day.iso}
-                                      className={cn(
-                                        "min-w-[3.5rem] border-l border-border/60 px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide",
-                                        isTodayColumn
-                                          ? "bg-primary text-white shadow-[0_4px_20px_rgba(16,185,129,0.2)]"
-                                          : "text-foreground"
-                                      )}
-                                    >
-                                      <div>{format(day.date, "EEE")}</div>
-                                      <div>{format(day.date, "d")}</div>
-                                    </TableHead>
-                                  );
-                                })}
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {visibleMonthRooms.map((room) => (
-                                <RoomTypeRow
-                                  key={`${monthKey}-${room.roomType.id}`}
-                                  data={room}
-                                  unitsView={unitsView}
-                                  showPartialDays={property.showPartialDays}
-                                  todayIso={todayIso}
-                                  onCellClick={handleCellSelection}
-                                  selectedCell={selectedCell}
-                                />
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
+                        <Table className="min-w-max border-separate border-spacing-0" baseWrapper={false}>
+                          <TableHeader className="sticky top-0 z-30 bg-card/95 backdrop-blur shadow-sm">
+                            <TableRow>
+                              <TableHead className="sticky left-0 z-40 w-56 border-r border-b border-border/40 bg-card/95 backdrop-blur px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+                                <div>
+                                  <p className="text-[11px]">Month</p>
+                                  <p className="text-base font-semibold text-foreground">
+                                    {monthLabel}
+                                  </p>
+                                </div>
+                              </TableHead>
+                              {headerDays.map((day) => {
+                                const isTodayColumn = day.iso === todayIso;
+                                return (
+                                  <TableHead
+                                    key={day.iso}
+                                    className={cn(
+                                      "min-w-[3.5rem] border-l border-b border-border/60 px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide",
+                                      isTodayColumn
+                                        ? "bg-primary text-white shadow-[0_4px_20px_rgba(16,185,129,0.2)]"
+                                        : "bg-card/95 backdrop-blur text-foreground"
+                                    )}
+                                  >
+                                    <div>{format(day.date, "EEE")}</div>
+                                    <div>{format(day.date, "d")}</div>
+                                  </TableHead>
+                                );
+                              })}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {visibleMonthRooms.map((room) => (
+                              <RoomTypeRow
+                                key={`${monthKey}-${room.roomType.id}`}
+                                data={room}
+                                unitsView={unitsView}
+                                showPartialDays={property.showPartialDays}
+                                todayIso={todayIso}
+                                onCellClick={handleCellSelection}
+                                selectedCell={selectedCell}
+                              />
+                            ))}
+                          </TableBody>
+                        </Table>
                       </DragScrollContainer>
                     ) : (
                       <div className="px-4 pb-6">
@@ -427,11 +456,13 @@ export function AvailabilityCalendar() {
 type DragScrollContainerProps = {
   children: React.ReactNode;
   ariaLabel: string;
+  className?: string;
 };
 
 function DragScrollContainer({
   children,
   ariaLabel,
+  className,
 }: DragScrollContainerProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const dragState = React.useRef({
@@ -520,7 +551,7 @@ function DragScrollContainer({
     <div className="relative">
       <div
         ref={containerRef}
-        className="overflow-x-auto"
+        className={cn("overflow-x-auto", className)}
         aria-label={ariaLabel}
         role="region"
         onPointerDown={handlePointerDown}
