@@ -24,6 +24,7 @@ import { ThemeToggle } from "../theme-toggle";
 import { supabase } from "@/integrations/supabase/client";
 import type { Permission } from "@/data/types";
 import { getPermissionsForFeature, type PermissionFeature } from "@/lib/permissions/map";
+import Image from "next/image";
 
 type HeaderNavItem = {
   href: string;
@@ -65,7 +66,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/50 px-4 shadow-sm lg:h-20 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/50 px-4 shadow-sm lg:h-24 lg:px-8">
       <Sheet>
         <SheetTrigger asChild>
           <Button
@@ -82,14 +83,19 @@ export function Header() {
           className="flex flex-col gap-6 overflow-y-auto rounded-r-3xl border-border/50 bg-card/95 p-0 pb-8 pl-6 pr-4 shadow-lg backdrop-blur"
         >
           <nav className="flex flex-col gap-4">
-            <div className="flex items-center gap-3 border-b border-border/50 pb-4 pt-6 pr-2">
-              <Package2 className="h-6 w-6 text-primary" />
-              <div className="flex flex-col">
-                <span className="text-lg font-serif font-semibold text-foreground">
-                  {property.name}
-                </span>
-                <span className="text-sm text-muted-foreground">Quick navigation</span>
-              </div>
+            <div className="flex items-center gap-3 border-b border-border/50 p-2">
+              <Link
+              href="/"
+              className="flex items-center gap-3 overflow-hidden text-foreground transition-colors focus-visible:outline-none"
+            >
+              <Image
+                src="/logo.png"
+                alt="admin-logo"
+                height={160}
+                width={160}
+                quality={100}
+              />
+            </Link>
             </div>
             <div className="flex flex-col gap-2">
               {accessibleNavItems.map(({ href, label }) => (

@@ -41,7 +41,11 @@ import {
 } from "@/components/ui/collapsible";
 import type { Permission } from "@/data/types";
 import { ENGAGEMENT_SECTIONS } from "@/data/engagement-nav";
-import { getPermissionsForFeature, type PermissionFeature } from "@/lib/permissions/map";
+import {
+  getPermissionsForFeature,
+  type PermissionFeature,
+} from "@/lib/permissions/map";
+import Image from "next/image";
 
 type SidebarChildItem = {
   label: string;
@@ -86,23 +90,68 @@ const engagementSubItems: SidebarSubItem[] = [
 
 const navItems: SidebarNavItem[] = [
   { href: "/admin", icon: Home, label: "Dashboard", feature: "dashboard" },
-  { href: "/admin/reservations", icon: Calendar, label: "Reservations", feature: "reservations" },
-  { href: "/admin/calendar", icon: Calendar, label: "Calendar", feature: "calendar" },
+  {
+    href: "/admin/reservations",
+    icon: Calendar,
+    label: "Reservations",
+    feature: "reservations",
+  },
+  {
+    href: "/admin/calendar",
+    icon: Calendar,
+    label: "Calendar",
+    feature: "calendar",
+  },
   {
     href: "/admin/posts",
     icon: Megaphone,
     label: "Engagement",
     subItems: engagementSubItems,
   },
-  { href: "/admin/housekeeping", icon: ClipboardList, label: "Housekeeping", feature: "housekeeping" },
+  {
+    href: "/admin/housekeeping",
+    icon: ClipboardList,
+    label: "Housekeeping",
+    feature: "housekeeping",
+  },
   { href: "/admin/guests", icon: Users, label: "Guests", feature: "guests" },
-  { href: "/admin/room-categories", icon: FolderOpen, label: "Room Categories", feature: "roomCategories" },
-  { href: "/admin/room-types", icon: Layers, label: "Room Types", feature: "roomTypes" },
+  {
+    href: "/admin/room-categories",
+    icon: FolderOpen,
+    label: "Room Categories",
+    feature: "roomCategories",
+  },
+  {
+    href: "/admin/room-types",
+    icon: Layers,
+    label: "Room Types",
+    feature: "roomTypes",
+  },
   { href: "/admin/rooms", icon: BedDouble, label: "Rooms", feature: "rooms" },
-  { href: "/admin/rates", icon: DollarSign, label: "Rate Plans", feature: "ratePlans" },
-  { href: "/admin/feedback", icon: MessageSquare, label: "Feedback", feature: "feedback" },
-  { href: "/admin/reports", icon: BarChart3, label: "Reports", feature: "reports" },
-  { href: "/admin/donations", icon: HeartHandshake, label: "Donations", feature: "donations" },
+  {
+    href: "/admin/rates",
+    icon: DollarSign,
+    label: "Rate Plans",
+    feature: "ratePlans",
+  },
+  {
+    href: "/admin/feedback",
+    icon: MessageSquare,
+    label: "Feedback",
+    feature: "feedback",
+  },
+  {
+    href: "/admin/reports",
+    icon: BarChart3,
+    label: "Reports",
+    feature: "reports",
+  },
+  {
+    href: "/admin/donations",
+    icon: HeartHandshake,
+    label: "Donations",
+    feature: "donations",
+  },
 ] satisfies SidebarNavItem[];
 
 interface SidebarProps {
@@ -114,7 +163,9 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   const pathname = usePathname() ?? "";
   const { hasPermission, hasAnyPermission } = useAuthContext();
   const { property } = useDataContext();
-  const [openDropdowns, setOpenDropdowns] = React.useState<Record<string, boolean>>({});
+  const [openDropdowns, setOpenDropdowns] = React.useState<
+    Record<string, boolean>
+  >({});
 
   const canAccessItem = (
     item:
@@ -122,7 +173,9 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
       | Pick<SidebarSubItem, "feature" | "permissions">
       | Pick<SidebarChildItem, "feature" | "permissions">
   ): boolean => {
-    const featurePermissions = item.feature ? getPermissionsForFeature(item.feature) : [];
+    const featurePermissions = item.feature
+      ? getPermissionsForFeature(item.feature)
+      : [];
     const required = [...featurePermissions, ...(item.permissions ?? [])];
     if (required.length === 0) {
       return true;
@@ -149,7 +202,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
 
   const accessibleNavItems = navItems.filter(canAccessItem);
   if (canAccessItem({ feature: "activity" })) {
-    accessibleNavItems.push({ href: "/admin/activity", icon: History, label: "Activity", feature: "activity" });
+    accessibleNavItems.push({
+      href: "/admin/activity",
+      icon: History,
+      label: "Activity",
+      feature: "activity",
+    });
   }
 
   React.useEffect(() => {
@@ -176,19 +234,24 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
   return (
     <aside className="hidden h-screen flex-col border-r border-border/50 bg-card/80 shadow-lg transition-colors duration-300 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:flex">
       <TooltipProvider delayDuration={0}>
-        <div className={cn(
-          "flex h-16 items-center border-b border-border/50 px-6 lg:h-20 transition-all duration-300",
-          isCollapsed ? "justify-center px-3" : "justify-between"
-        )}>
+        <div
+          className={cn(
+            "flex h-16 items-center border-b border-border/50 px-4 lg:h-24 transition-all duration-300",
+            isCollapsed ? "justify-center px-3" : "justify-between"
+          )}
+        >
           {!isCollapsed && (
             <Link
               href="/"
               className="flex items-center gap-3 overflow-hidden text-foreground transition-colors focus-visible:outline-none"
             >
-              <Package2 className="h-6 w-6 flex-shrink-0" />
-              <span className="whitespace-nowrap text-lg font-serif font-semibold tracking-tight">
-                {property.name}
-              </span>
+              <Image
+                src="/logo.png"
+                alt="admin-logo"
+                height={200}
+                width={200}
+                quality={100}
+              />
             </Link>
           )}
           <Button
@@ -199,14 +262,21 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
               "h-9 w-9 rounded-xl border border-border/40 hover:border-primary/40 bg-card/50 text-muted-foreground shadow-sm transition-colors hover:text-primary flex-shrink-0"
             )}
           >
-            <ChevronsLeft className={cn("h-4 w-4 transition-transform", isCollapsed && "rotate-180")} />
+            <ChevronsLeft
+              className={cn(
+                "h-4 w-4 transition-transform",
+                isCollapsed && "rotate-180"
+              )}
+            />
             <span className="sr-only">Toggle sidebar</span>
           </Button>
         </div>
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
           {accessibleNavItems.map((item) => {
             const { href, icon: Icon, label, subItems } = item;
-            const isActive = isPathActive(href) || (subItems?.some((sub) => isSubItemActive(sub)) ?? false);
+            const isActive =
+              isPathActive(href) ||
+              (subItems?.some((sub) => isSubItemActive(sub)) ?? false);
 
             if (isCollapsed) {
               return (
@@ -234,7 +304,9 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
             }
 
             if (subItems) {
-              const visibleSubItems = subItems.filter((subItem) => canAccessItem(subItem));
+              const visibleSubItems = subItems.filter((subItem) =>
+                canAccessItem(subItem)
+              );
               if (visibleSubItems.length === 0) {
                 return null;
               }
@@ -264,7 +336,9 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                       {visibleSubItems.map((sub) => {
                         const hasChildren = Boolean(sub.children?.length);
                         const childItems = hasChildren
-                          ? sub.children!.filter((child) => canAccessItem(child))
+                          ? sub.children!.filter((child) =>
+                              canAccessItem(child)
+                            )
                           : [];
                         const isSubActive = isSubItemActive(sub);
                         if (!hasChildren || childItems.length === 0) {
@@ -274,7 +348,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                               href={sub.href}
                               className={cn(
                                 "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
-                                isExactPathActive(sub.href) && "bg-primary/10 text-primary"
+                                isExactPathActive(sub.href) &&
+                                  "bg-primary/10 text-primary"
                               )}
                             >
                               {sub.label}
@@ -309,7 +384,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                                     href={child.href}
                                     className={cn(
                                       "rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary",
-                                      isExactPathActive(child.href) && "bg-primary/10 text-primary"
+                                      isExactPathActive(child.href) &&
+                                        "bg-primary/10 text-primary"
                                     )}
                                   >
                                     {child.label}
@@ -342,15 +418,16 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
           })}
         </nav>
         <div className="mt-auto border-t border-border/50 px-3 py-4">
-          {hasPermission("update:setting") && (
-            isCollapsed ? (
+          {hasPermission("update:setting") &&
+            (isCollapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
                     href="/admin/settings"
                     className={cn(
                       "flex h-11 w-11 items-center justify-center rounded-2xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                      pathname === "/admin/settings" && "bg-primary/10 text-primary shadow-sm"
+                      pathname === "/admin/settings" &&
+                        "bg-primary/10 text-primary shadow-sm"
                     )}
                   >
                     <Settings className="h-5 w-5" />
@@ -365,18 +442,18 @@ export function Sidebar({ isCollapsed, setIsCollapsed }: SidebarProps) {
                 </TooltipContent>
               </Tooltip>
             ) : (
-                  <Link
-                    href="/admin/settings"
+              <Link
+                href="/admin/settings"
                 className={cn(
                   "flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-visible:outline-none",
-                  pathname === "/admin/settings" && "bg-primary/10 text-primary shadow-sm"
+                  pathname === "/admin/settings" &&
+                    "bg-primary/10 text-primary shadow-sm"
                 )}
               >
                 <Settings className="h-4 w-4" />
                 Settings
               </Link>
-            )
-          )}
+            ))}
         </div>
       </TooltipProvider>
     </aside>
