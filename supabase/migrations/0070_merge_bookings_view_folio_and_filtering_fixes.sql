@@ -1,9 +1,20 @@
--- Redefine bookings_summary_view to include nested folio items
--- This allows the client-side list view to calculate grand totals accurately including additional charges.
+-- Merged Query: Includes Folio Items (accurate totals) + Room Filtering (handled room deletions)
+-- This replaces migrations 0068 and 0069 for production environments.
 
 DROP VIEW IF EXISTS public.bookings_summary_view;
 
 CREATE VIEW public.bookings_summary_view AS
+WITH filtered_reservations AS (
+  SELECT 
+    r.*,
+    rooms.room_number as room_number_actual
+  FROM public.reservations r
+  LEFT JOIN public.rooms ON r.room_id = rooms.id
+  WHERE 
+    r.external_metadata IS NULL OR 
+    (r.external_metadata ->> 'removedDuringEdit') IS NULL OR 
+    (r.external_metadata ->> 'removedDuringEdit') != 'true'
+)
 SELECT 
   r.booking_id,
   MIN(r.booking_date) as booking_date,
@@ -64,8 +75,7 @@ SELECT
       'externalSource', r.external_source,
       'externalId', r.external_id,
       'externalMetadata', r.external_metadata,
-      'roomNumber', rooms.room_number,
-      -- Include nested folio items
+      'roomNumber', r.room_number_actual,
       'folio', COALESCE((
         SELECT jsonb_agg(jsonb_build_object(
           'id', fi.id,
@@ -82,7 +92,6 @@ SELECT
       ), '[]'::jsonb)
     )
   ) as reservation_rows
-FROM public.reservations r
+FROM filtered_reservations r
 LEFT JOIN public.guests g ON r.guest_id = g.id
-LEFT JOIN public.rooms ON r.room_id = rooms.id
 GROUP BY r.booking_id;
