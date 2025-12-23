@@ -12,7 +12,7 @@ import {
   parseISO,
   isSameDay,
 } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +50,7 @@ import {
 } from "@/hooks/use-monthly-availability";
 import { RoomTypeRow } from "@/components/shared/room-type-row";
 import { cn } from "@/lib/utils";
+import { useFullscreen } from "@/hooks/use-fullscreen";
 
 const reservationStatusStyles: Record<
   ReservationStatus,
@@ -126,6 +127,8 @@ export function AvailabilityCalendar() {
   const [useLegacyView, setUseLegacyView] = React.useState(false);
   const [rpcError, setRpcError] = React.useState<Error | null>(null);
   const [visibleMonths, setVisibleMonths] = React.useState(1);
+  const { elementRef, isFullscreen, toggleFullscreen } = useFullscreen<HTMLDivElement>();
+
   const monthSequence = React.useMemo(() => {
     return Array.from({ length: visibleMonths }, (_, index) =>
       startOfMonth(addMonths(currentMonth, index))
@@ -208,7 +211,13 @@ export function AvailabilityCalendar() {
   }
 
   return (
-    <div className="rounded-3xl border border-border/60 bg-card shadow-xl">
+    <div
+      ref={elementRef}
+      className={cn(
+        "rounded-3xl border border-border/60 bg-card shadow-xl transition-all duration-300",
+        isFullscreen && "fixed inset-0 z-[100] h-screen w-screen overflow-auto rounded-none border-none shadow-none"
+      )}
+    >
       <div className="border-b border-border/50 px-4 py-5 sm:px-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -279,6 +288,27 @@ export function AvailabilityCalendar() {
                 <SelectItem value="booked">Units booked</SelectItem>
               </SelectContent>
             </Select>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-14 w-14 rounded-xl border border-border/60 bg-card/60 flex-shrink-0"
+                    onClick={toggleFullscreen}
+                  >
+                    {isFullscreen ? (
+                      <Minimize2 className="h-5 w-5" />
+                    ) : (
+                      <Maximize2 className="h-5 w-5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold text-muted-foreground">
             {legendStatuses
