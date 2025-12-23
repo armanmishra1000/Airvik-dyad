@@ -18,10 +18,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type {
   Reservation,
@@ -41,14 +41,14 @@ export type ReservationWithDetails = Reservation & {
 };
 
 export const statuses = [
-    { value: "Tentative", label: "Tentative", icon: HelpCircle },
-    { value: "Standby", label: "Standby", icon: Clock3 },
-    { value: "Confirmed", label: "Confirmed", icon: CheckCircle2 },
-    { value: "Checked-in", label: "Checked-in", icon: LogIn },
-    { value: "Checked-out", label: "Checked-out", icon: LogOut },
-    { value: "Cancelled", label: "Cancelled", icon: XCircle },
-    { value: "No-show", label: "No-show", icon: AlertCircle },
-  ]
+  { value: "Tentative", label: "Tentative", icon: HelpCircle },
+  { value: "Standby", label: "Standby", icon: Clock3 },
+  { value: "Confirmed", label: "Confirmed", icon: CheckCircle2 },
+  { value: "Checked-in", label: "Checked-in", icon: LogIn },
+  { value: "Checked-out", label: "Checked-out", icon: LogOut },
+  { value: "Cancelled", label: "Cancelled", icon: XCircle },
+  { value: "No-show", label: "No-show", icon: AlertCircle },
+]
 
 function ReservationActions({ reservation, table }: { reservation: ReservationWithDetails; table: Table<ReservationWithDetails> }) {
   const router = useRouter();
@@ -70,7 +70,7 @@ function ReservationActions({ reservation, table }: { reservation: ReservationWi
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => router.push(`/admin/reservations/${detailsId}`)}>
-            View Details
+          View Details
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => navigator.clipboard.writeText(formatBookingCode(reservation.bookingId))}
@@ -150,129 +150,140 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     accessorKey: "bookingId",
     header: "Booking ID",
     filterFn: (row, id, value) => {
-        const input = String(value ?? "").trim().toLowerCase();
-        if (!input) return true;
-        const rawValue = String(row.getValue(id) ?? "");
-        const normalized = rawValue
-          .replace(/^booking-/i, "")
-          .replace(/^vik-/i, "")
-          .toLowerCase();
-        const formatted = formatBookingCode(rawValue).toLowerCase();
-        return normalized.includes(input) || formatted.includes(input);
+      const input = String(value ?? "").trim().toLowerCase();
+      if (!input) return true;
+      const rawValue = String(row.getValue(id) ?? "");
+      const normalized = rawValue
+        .replace(/^booking-/i, "")
+        .replace(/^vik-/i, "")
+        .toLowerCase();
+      const formatted = formatBookingCode(rawValue).toLowerCase();
+      return normalized.includes(input) || formatted.includes(input);
     },
     cell: ({ row }) => {
-        if (row.depth > 0) {
-            return null;
-        }
-        const reservation = row.original;
-        const isGroup = !!reservation.subRows;
-        
-        const displayId = reservation.bookingId;
-        const linkId = isGroup ? reservation.subRows![0].id : reservation.id;
+      if (row.depth > 0) {
+        return null;
+      }
+      const reservation = row.original;
+      const isGroup = !!reservation.subRows;
 
-        if (!displayId) {
-            return <span className="font-mono text-xs">N/A</span>;
-        }
+      const displayId = reservation.bookingId;
+      const linkId = isGroup ? reservation.subRows![0].id : reservation.id;
 
-        return (
-            <Link href={`/admin/reservations/${linkId}`} className="font-mono text-xs text-primary hover:underline">
-                {formatBookingCode(displayId)}
-            </Link>
-        )
+      if (!displayId) {
+        return <span className="font-mono text-xs">N/A</span>;
+      }
+
+      return (
+        <Link href={`/admin/reservations/${linkId}`} className="font-mono text-xs text-primary hover:underline">
+          {formatBookingCode(displayId)}
+        </Link>
+      )
     }
   },
   {
     accessorKey: "bookingDate",
     header: "Booking Date",
     cell: ({ row }) => {
-        if (row.depth > 0) return null;
-        const dateValue = row.getValue("bookingDate") as string;
-        if (!dateValue) return null;
-        return format(new Date(dateValue), "MMM d, yyyy");
+      if (row.depth > 0) return null;
+      const dateValue = row.getValue("bookingDate") as string;
+      if (!dateValue) return null;
+      return format(new Date(dateValue), "MMM d, yyyy");
     }
   },
   {
     accessorKey: "guestName",
     header: "Customer Name",
     filterFn: (row, id, value) => {
-        const input = String(value ?? "").trim().toLowerCase();
-        if (!input) return true;
-        const guestName = String(row.getValue(id) ?? "").toLowerCase();
-        return guestName.includes(input);
+      const input = String(value ?? "").trim().toLowerCase();
+      if (!input) return true;
+      const guestName = String(row.getValue(id) ?? "").toLowerCase();
+      return guestName.includes(input);
     },
     cell: ({ row, getValue }) => {
-        if (row.depth > 0) return null;
-        return getValue();
+      if (row.depth > 0) return null;
+      return getValue();
     }
   },
   {
     accessorKey: "roomNumber",
     header: "Room",
     cell: ({ row, getValue }) => {
-        const original = row.original;
-        if (row.depth > 0) {
-          return (
-            <div style={{ paddingLeft: `${row.depth * 1}rem` }}>
-              Room {getValue() as string}
-            </div>
-          );
-        }
-
-        const roomCount = original.roomCount ?? original.subRows?.length ?? 1;
-        const childRooms = original.subRows?.map((sub) => sub.roomNumber).filter(Boolean) ?? [];
+      const original = row.original;
+      if (row.depth > 0) {
         return (
-          <div className="space-y-1">
-            <span className="font-medium">
-              {roomCount === 1 ? "1 Room" : `${roomCount} Rooms`}
-            </span>
-            {roomCount === 1 && original.roomNumber && original.roomNumber !== "N/A" && (
-              <span className="block text-xs text-muted-foreground">
-                Room {original.roomNumber}
-              </span>
-            )}
-            {roomCount > 1 && childRooms.length > 0 && (
-              <span className="block text-xs text-muted-foreground">
-                {childRooms.join(", ")}
-              </span>
-            )}
+          <div style={{ paddingLeft: `${row.depth * 1}rem` }}>
+            Room {getValue() as string}
           </div>
         );
+      }
+
+      const subRows = original.subRows ?? [];
+      const roomCount = original.roomCount ?? (subRows.length > 0 ? subRows.length : 1);
+
+      // Extract room numbers from subRows, filtering out "N/A" if possible
+      const childRooms = subRows
+        .map((sub) => sub.roomNumber)
+        .filter((num): num is string => !!num && num !== "N/A");
+
+      // If childRooms is empty but firstRes has a room number, use it
+      const primaryRoomNumber = original.roomNumber && original.roomNumber !== "N/A"
+        ? original.roomNumber
+        : (childRooms[0] ?? "N/A");
+
+      return (
+        <div className="space-y-1">
+          <span className="font-medium text-sm">
+            {roomCount === 1 ? "1 Room" : `${roomCount} Rooms`}
+          </span>
+          {roomCount === 1 && primaryRoomNumber !== "N/A" && (
+            <span className="block text-xs text-muted-foreground">
+              Room {primaryRoomNumber}
+            </span>
+          )}
+          {roomCount > 1 && childRooms.length > 0 && (
+            <span className="block text-xs text-muted-foreground leading-tight">
+              {childRooms.join(", ")}
+            </span>
+          )}
+        </div>
+      );
     }
   },
   {
     accessorKey: "numberOfGuests",
     header: "Guests",
     cell: ({ row, getValue }) => {
-        if (row.depth > 0) return null;
-        return getValue();
+      if (row.depth > 0) return null;
+      return getValue();
     }
   },
   {
     accessorKey: "checkInDate",
     header: "Check-in",
     cell: ({ row }) => {
-        if (row.depth > 0) return null;
-        const dateValue = row.getValue("checkInDate") as string;
-        if (!dateValue) return null;
-        return format(new Date(dateValue), "MMM d, yyyy");
+      if (row.depth > 0) return null;
+      const dateValue = row.getValue("checkInDate") as string;
+      if (!dateValue) return null;
+      return format(new Date(dateValue), "MMM d, yyyy");
     }
   },
   {
     accessorKey: "checkOutDate",
     header: "Check-out",
     cell: ({ row }) => {
-        if (row.depth > 0) return null;
-        const dateValue = row.getValue("checkOutDate") as string;
-        if (!dateValue) return null;
-        return format(new Date(dateValue), "MMM d, yyyy");
+      if (row.depth > 0) return null;
+      const dateValue = row.getValue("checkOutDate") as string;
+      if (!dateValue) return null;
+      return format(new Date(dateValue), "MMM d, yyyy");
     }
   },
   {
     accessorKey: "nights",
     header: "Nights",
     cell: ({ row, getValue }) => {
-        if (row.depth > 0) return null;
-        return getValue();
+      if (row.depth > 0) return null;
+      return getValue();
     }
   },
   {
@@ -284,18 +295,18 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     accessorKey: "status",
     header: "Status",
     filterFn: (row, id, value) => {
-        return value.includes(row.getValue(id))
+      return value.includes(row.getValue(id))
     },
     cell: ({ row }) => {
-        const status = statuses.find(s => s.value === row.getValue("status"))
-        if (!status) return null;
-        if (row.depth > 0) return null;
+      const status = statuses.find(s => s.value === row.getValue("status"))
+      if (!status) return null;
+      if (row.depth > 0) return null;
 
-        const variant: "default" | "secondary" | "destructive" | "outline" = 
-            status.value === "Checked-in" ? "default" :
-            status.value === "Confirmed" ? "secondary" :
+      const variant: "default" | "secondary" | "destructive" | "outline" =
+        status.value === "Checked-in" ? "default" :
+          status.value === "Confirmed" ? "secondary" :
             status.value === "Cancelled" ? "destructive" : "outline";
-        return <Badge variant={variant}>{status.label}</Badge>
+      return <Badge variant={variant}>{status.label}</Badge>
     }
   },
   {
@@ -311,36 +322,36 @@ export const columns: ColumnDef<ReservationWithDetails>[] = [
     accessorKey: "source",
     header: "Source",
     cell: ({ row }) => {
-        if (row.depth > 0) return null;
-        const source = row.getValue("source") as ReservationSource;
-        const iconMap: Record<
-          ReservationSource,
-          React.ComponentType<React.SVGProps<SVGSVGElement>>
-        > = {
-          website: Monitor,
-          reception: User,
-          vikbooking: DownloadCloud,
-        };
-        const Icon = iconMap[source] ?? User;
-        const label =
-          source === "vikbooking"
-            ? "Imported from VikBooking"
-            : source === "website"
+      if (row.depth > 0) return null;
+      const source = row.getValue("source") as ReservationSource;
+      const iconMap: Record<
+        ReservationSource,
+        React.ComponentType<React.SVGProps<SVGSVGElement>>
+      > = {
+        website: Monitor,
+        reception: User,
+        vikbooking: DownloadCloud,
+      };
+      const Icon = iconMap[source] ?? User;
+      const label =
+        source === "vikbooking"
+          ? "Imported from VikBooking"
+          : source === "website"
             ? "Website"
             : "Reception";
 
-        return (
-            <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger>
-                        <Icon className="h-5 w-5" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>{label}</p>
-                    </TooltipContent>
-                </Tooltip>
-            </TooltipProvider>
-        )
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Icon className="h-5 w-5" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{label}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )
     }
   },
   {

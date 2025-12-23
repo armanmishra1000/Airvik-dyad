@@ -298,7 +298,7 @@ export function useAppData() {
       console.log(`[Lookup] Starting lookup for ID: ${id}`);
       setIsBookingLookupLoading(true);
       setLookupStatus(prev => ({ ...prev, [id]: 'pending' }));
-      
+
       try {
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
         let targetBookingId = "";
@@ -363,7 +363,7 @@ export function useAppData() {
           includeCount: true,
         });
         const bookingsData = response.data || [];
-        
+
         setBookings(bookingsData);
         setReservationsTotalCount(response.count ?? 0);
       } catch (error) {
@@ -475,9 +475,9 @@ export function useAppData() {
 
       const bookingsData = reservationsResponse.data ?? [];
       const flatReservations = bookingsData.flatMap(b => b.subRows || []);
-      
+
       setTodayReservations(sortReservationsByBookingDate(flatReservations));
-      
+
       // Reservations for the calendar are loaded separately via api.getReservations above.
       setReservationsTotalCount(reservationsResponse.count ?? 0);
       setIsReservationsInitialLoading(false);
@@ -589,10 +589,10 @@ export function useAppData() {
     const { roomIds, roomOccupancies, customRoomTotals, ...reservationDetails } = payload;
 
     // Check if rate plan exists, but don't fail if it doesn't
-    const ratePlan = reservationDetails.ratePlanId 
-      ? ratePlans.find((rp) => rp.id === reservationDetails.ratePlanId) 
+    const ratePlan = reservationDetails.ratePlanId
+      ? ratePlans.find((rp) => rp.id === reservationDetails.ratePlanId)
       : null;
-      
+
     if (reservationDetails.ratePlanId && !ratePlan) {
       console.warn(`Rate plan with id ${reservationDetails.ratePlanId} not found, proceeding with room type pricing`);
     }
@@ -850,7 +850,28 @@ export function useAppData() {
     setReservations(prev =>
       prev.map(r =>
         r.id === reservationId
-          ? { ...r, folio: [...r.folio, folioItem] }
+          ? { ...r, folio: [...(r.folio || []), folioItem] }
+          : r
+      )
+    );
+    setBookings(prev =>
+      prev.map(b => {
+        const hasReservation = b.subRows?.some(sr => sr.id === reservationId);
+        if (!hasReservation) return b;
+        return {
+          ...b,
+          subRows: b.subRows.map(sr =>
+            sr.id === reservationId
+              ? { ...sr, folio: [...(sr.folio || []), folioItem] }
+              : sr
+          ),
+        };
+      })
+    );
+    setActiveBookingReservations(prev =>
+      prev.map(r =>
+        r.id === reservationId
+          ? { ...r, folio: [...(r.folio || []), folioItem] }
           : r
       )
     );

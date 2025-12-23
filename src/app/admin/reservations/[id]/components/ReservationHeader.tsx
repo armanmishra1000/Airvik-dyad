@@ -105,6 +105,7 @@ export function ReservationHeader({ reservation, bookingStatus }: ReservationHea
             property={property}
             rooms={rooms}
             roomTypes={roomTypes}
+            invoiceType="invoice"
             variant="outline"
             size="sm"
           />
