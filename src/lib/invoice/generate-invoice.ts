@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { format, parseISO, differenceInDays } from "date-fns";
 import type { Guest, Property, Reservation, Room, RoomType } from "@/data/types";
+import { isReservationRemovedDuringEdit } from "@/lib/reservations/filters";
 
 // Extend jsPDF type to include autoTable
 declare module "jspdf" {
@@ -64,6 +65,7 @@ export interface InvoiceData {
 
 interface RoomChargeSummary {
   roomTypeName: string;
+  roomNumbers: string[];
   quantity: number;
   nights: number;
   ratePerNight: number;
@@ -148,17 +150,22 @@ function calculateRoomChargeSummaries(
       1
     );
 
+    const roomNumber = room.roomNumber;
+
     const existing = summaryByRoomType.get(roomType.id);
     if (existing) {
       existing.quantity += 1;
       existing.totalAmount += reservation.totalAmount;
-      // We keep the highest night count or average? Usually nights should be same for a booking
       existing.nights = Math.max(existing.nights, nights);
+      if (roomNumber && !existing.roomNumbers.includes(roomNumber)) {
+        existing.roomNumbers.push(roomNumber);
+      }
     } else {
       const ratePerNight = reservation.totalAmount / nights;
 
       summaryByRoomType.set(roomType.id, {
         roomTypeName: roomType.name,
+        roomNumbers: roomNumber ? [roomNumber] : [],
         quantity: 1,
         nights,
         ratePerNight,
@@ -203,15 +210,28 @@ function calculatePayments(reservations: Reservation[]): { description: string; 
 /**
  * Calculate tax
  */
-function calculateTaxTotals(reservations: Reservation[]): { taxAmount: number; taxRate: number | null } {
+function calculateTaxTotals(reservations: Reservation[], property: Property): { taxAmount: number; taxRate: number | null } {
   let totalTax = 0;
   const taxRates = new Set<number>();
 
   for (const reservation of reservations) {
-    if (reservation.taxEnabledSnapshot && reservation.taxRateSnapshot) {
-      const taxAmount = reservation.totalAmount * reservation.taxRateSnapshot;
-      totalTax += taxAmount;
-      taxRates.add(reservation.taxRateSnapshot);
+    // Determine tax config: snapshot favored, property as fallback
+    let isTaxEnabled = false;
+    let taxRateValue = 0;
+
+    if (typeof reservation.taxEnabledSnapshot === "boolean") {
+      isTaxEnabled = reservation.taxEnabledSnapshot;
+      taxRateValue = isTaxEnabled ? reservation.taxRateSnapshot ?? 0 : 0;
+    } else {
+      isTaxEnabled = !!property.tax_enabled;
+      taxRateValue = isTaxEnabled ? property.tax_percentage ?? 0 : 0;
+    }
+
+    const taxAmount = reservation.totalAmount * taxRateValue;
+    totalTax += taxAmount;
+
+    if (isTaxEnabled && taxRateValue > 0) {
+      taxRates.add(taxRateValue);
     }
   }
 
@@ -364,10 +384,13 @@ function ensureSpace(doc: jsPDF, currentY: number, requiredHeight: number): numb
  * Generate and download invoice PDF (Async)
  */
 export async function generateInvoice(data: InvoiceData): Promise<void> {
-  const { reservations, guest, property, rooms, roomTypes } = data;
+  const { reservations: allReservations, guest, property, rooms, roomTypes } = data;
+
+  // Filter out removed reservations
+  const reservations = allReservations.filter(r => !isReservationRemovedDuringEdit(r));
 
   if (reservations.length === 0) {
-    console.error("No reservations provided for invoice generation");
+    console.error("No active reservations provided for invoice generation");
     return;
   }
 
@@ -385,16 +408,16 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   const additionalChargesSubtotal = additionalCharges.reduce((sum, c) => sum + c.amount, 0);
   const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
 
-  const { taxAmount, taxRate } = calculateTaxTotals(reservations);
+  const { taxAmount, taxRate } = calculateTaxTotals(reservations, property);
   const grandTotal = roomSubtotal + additionalChargesSubtotal + taxAmount;
   const balanceDue = Math.max(0, grandTotal - totalPaid);
 
-  const nights = differenceInDays(parseISO(checkOutDate), parseISO(checkInDate));
+  const nights = Math.max(differenceInDays(parseISO(checkOutDate), parseISO(checkInDate)), 1);
   const invoiceNumber = generateInvoiceNumber(bookingId, bookingDate);
   const invoiceDate = format(new Date(), "dd MMM yyyy");
 
   // Load Images Async
-  const [logoResult, apextureLogoResult] = await Promise.all([
+  const [logoResult] = await Promise.all([
     loadImage(LOGO_PATH),
     loadImage(APEXTURE_LOGO_PATH),
   ]);
@@ -406,7 +429,6 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   });
 
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = MARGIN;
 
   let yPos = margin;
@@ -612,7 +634,9 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   const tableBody = [
     // Room Charges
     ...roomChargeSummaries.map((summary) => [
-      summary.roomTypeName,
+      summary.roomNumbers.length > 0
+        ? `${summary.roomTypeName} (${summary.roomNumbers.join(", ")})`
+        : summary.roomTypeName,
       summary.nights.toString(),
       formatCurrency(summary.totalAmount),
     ]),
@@ -645,12 +669,62 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
       lineWidth: 0.1,
     },
     margin: { left: margin, right: margin, bottom: FOOTER_HEIGHT + 5 },
-    didDrawPage: (_data) => {
+    didDrawPage: () => {
       drawFooter(doc);
     },
   });
 
   yPos = doc.lastAutoTable.finalY + 10;
+
+  // ========== ADDITIONAL CHARGES TABLE ==========
+  if (additionalCharges.length > 0) {
+    yPos = ensureSpace(doc, yPos, 20);
+
+    doc.setTextColor(COLORS.PRIMARY);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Additional Charges", margin, yPos);
+    yPos += 5;
+
+    const chargesHead = [["Description", "Amount"]];
+    const chargesBody = additionalCharges.map((c) => [
+      c.description,
+      formatCurrency(c.amount),
+    ]);
+
+    doc.autoTable({
+      startY: yPos,
+      head: chargesHead,
+      body: chargesBody,
+      theme: "plain",
+      headStyles: {
+        fillColor: [240, 240, 240],
+        textColor: [51, 51, 51],
+        fontSize: 8,
+        fontStyle: "bold",
+        halign: "left",
+      },
+      bodyStyles: {
+        fontSize: 8,
+        textColor: [51, 51, 51],
+      },
+      columnStyles: {
+        0: { cellWidth: "auto", halign: "left" },
+        1: { cellWidth: 40, halign: "right" },
+      },
+      styles: {
+        cellPadding: 3,
+        lineColor: [224, 224, 224],
+        lineWidth: 0.1,
+      },
+      margin: { left: margin, right: margin, bottom: FOOTER_HEIGHT + 5 },
+      didDrawPage: () => {
+        drawFooter(doc);
+      },
+    });
+
+    yPos = doc.lastAutoTable.finalY + 10;
+  }
 
   // ========== PAYMENTS TABLE ==========
   if (payments.length > 0) {
@@ -700,7 +774,7 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
         lineWidth: 0.1,
       },
       margin: { left: margin, right: margin, bottom: FOOTER_HEIGHT + 5 },
-      didDrawPage: (_data) => {
+      didDrawPage: () => {
         drawFooter(doc);
       },
     });
@@ -748,11 +822,6 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
       ? `Taxes (${(taxRate * 100).toFixed(0)}%)`
       : "Taxes";
     drawTotalRow(taxLabel, formatCurrency(taxAmount));
-  }
-
-  if (additionalChargesSubtotal > 0) {
-    drawTotalRow("Additional Charges", formatCurrency(additionalChargesSubtotal));
-    yPos += 2; // Extra gap after additional charges
   }
 
   yPos += 2; // Spacing before grand total

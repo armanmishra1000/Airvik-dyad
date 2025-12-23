@@ -49,7 +49,19 @@ const normalizePageParams = (params: ReservationPageParams = {}): Required<Reser
 
 const mapBookingSummaryRow = (row: DbBookingSummaryRow) => {
   const reservationRows = row.reservation_rows || [];
-  const firstRes = reservationRows[0] || {};
+
+  const validSubRows = reservationRows.map((r) => ({
+    ...r,
+    guestName: row.guest_name || "N/A",
+    nights: 0,
+    folio: r.folio || [],
+  }));
+
+  // Resolve the best primary room number
+  const firstValidRoom = validSubRows.find(sub => sub.roomNumber && sub.roomNumber !== "N/A");
+  const primaryRoomNumber = row.room_count === 1
+    ? (firstValidRoom?.roomNumber || "N/A")
+    : "N/A";
 
   return {
     id: row.booking_id,
@@ -71,17 +83,12 @@ const mapBookingSummaryRow = (row: DbBookingSummaryRow) => {
     adultCount: row.adult_count,
     childCount: row.child_count,
     status: row.status,
-    source: firstRes.source || "reception",
-    paymentMethod: firstRes.paymentMethod || "Not specified",
-    nights: 0, 
-    roomNumber: row.room_count === 1 ? (firstRes.roomNumber || "N/A") : "N/A",
+    source: validSubRows[0]?.source || "reception",
+    paymentMethod: validSubRows[0]?.paymentMethod || "Not specified",
+    nights: 0,
+    roomNumber: primaryRoomNumber,
     folio: [], // Folios are in subRows
-    subRows: reservationRows.map((r) => ({
-      ...r,
-      guestName: row.guest_name || "N/A",
-      nights: 0,
-      folio: r.folio || [],
-    })),
+    subRows: validSubRows,
   };
 };
 
@@ -157,8 +164,8 @@ const reservationsCountCache = unstable_cache(
       typeof data === "number"
         ? data
         : data === null || typeof data === "undefined"
-        ? 0
-        : Number(data);
+          ? 0
+          : Number(data);
     return Number.isFinite(numericCount) ? numericCount : 0;
   },
   ["reservations-count"],
