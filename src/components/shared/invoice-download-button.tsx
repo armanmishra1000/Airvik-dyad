@@ -13,6 +13,7 @@ interface InvoiceDownloadButtonProps {
     property: Property;
     rooms: Room[];
     roomTypes: RoomType[];
+    invoiceType?: "invoice" | "donation";
     variant?: "default" | "outline" | "secondary" | "ghost" | "link" | "destructive";
     size?: "default" | "sm" | "lg" | "icon";
     className?: string;
@@ -28,6 +29,7 @@ export function InvoiceDownloadButton({
     property,
     rooms,
     roomTypes,
+    invoiceType = "donation",
     variant = "outline",
     size = "default",
     className = "",
@@ -36,32 +38,43 @@ export function InvoiceDownloadButton({
 
     const handleDownload = async () => {
         if (reservations.length === 0) {
-            toast.error("No reservation data available for invoice generation.");
+            toast.error("No reservation data available for generation.");
             return;
         }
 
         setIsGenerating(true);
 
         try {
-            // Dynamic import to ensure client-side only loading
-            const { generateInvoice } = await import("@/lib/invoice/generate-invoice");
-
-            await generateInvoice({
-                reservations,
-                guest,
-                property,
-                rooms,
-                roomTypes,
-            });
-
-            toast.success("Invoice downloaded successfully!");
+            if (invoiceType === "invoice") {
+                const { generateInvoice } = await import("@/lib/invoice/generate-invoice");
+                await generateInvoice({
+                    reservations,
+                    guest,
+                    property,
+                    rooms,
+                    roomTypes,
+                });
+                toast.success("Invoice downloaded successfully!");
+            } else {
+                const { generateDonationReceipt } = await import("@/lib/invoice/generate-donation-receipt");
+                await generateDonationReceipt({
+                    reservations,
+                    guest,
+                    property,
+                    rooms,
+                    roomTypes,
+                });
+                toast.success("Donation Receipt downloaded successfully!");
+            }
         } catch (error) {
-            console.error("Failed to generate invoice:", error);
-            toast.error("Failed to generate invoice. Please try again.");
+            console.error("Failed to generate document:", error);
+            toast.error("Failed to generate document. Please try again.");
         } finally {
             setIsGenerating(false);
         }
     };
+
+    const buttonLabel = invoiceType === "invoice" ? "Invoice" : "Donation";
 
     return (
         <Button
@@ -79,7 +92,7 @@ export function InvoiceDownloadButton({
             ) : (
                 <>
                     <FileText className="mr-2 h-4 w-4" />
-                    Invoice Download
+                    {buttonLabel}
                 </>
             )}
         </Button>

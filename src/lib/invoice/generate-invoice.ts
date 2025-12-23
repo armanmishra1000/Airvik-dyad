@@ -336,34 +336,40 @@ function drawFooter(doc: jsPDF) {
   const pageHeight = doc.internal.pageSize.getHeight();
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Use a type-safe cast for internal methods not in base types
   const internal = (doc as unknown as { internal: jsPDFInternal }).internal;
   const currentPage = internal.getCurrentPageInfo().pageNumber;
 
-  // Save state
-  const oldFontSize = internal.getFontSize();
-  const oldTextColor = internal.getTextColor();
+  doc.saveGraphicsState();
 
-  // Draw Footer Content
-  const footerTextY = pageHeight - FOOTER_HEIGHT + 5;
+  // Page Numbers - Properly set at bottom right
+  doc.setFontSize(9);
+  doc.setTextColor(COLORS.TEXT_LIGHT);
+  doc.setFont("helvetica", "normal");
+  const pageText = `Page ${currentPage} of {total_pages_count_string}`;
+  doc.text(pageText, pageWidth - MARGIN, pageHeight - 10, { align: "right" });
+
+  doc.restoreGraphicsState();
+}
+
+/**
+ * Draw the final footer branding (logos and thank you)
+ * Should only be called once at the very end
+ */
+function drawFinalBranding(doc: jsPDF, yPos: number): number {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const currentY = yPos;
 
   doc.setFontSize(10);
   doc.setTextColor(COLORS.PRIMARY);
-  doc.setFont("helvetica", "normal");
-  doc.text("Thank you for choosing Sahajanand Wellness!", pageWidth / 2, footerTextY, { align: "center" });
+  doc.setFont("helvetica", "bold"); // Made Bold for better branding
+  doc.text("Thank you for choosing Sahajanand Wellness!", pageWidth / 2, currentY, { align: "center" });
 
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setTextColor(COLORS.TEXT_LIGHT);
-  doc.text("We look forward to welcoming you.", pageWidth / 2, footerTextY + 5, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.text("We look forward to welcoming you.", pageWidth / 2, currentY + 5, { align: "center" });
 
-  // Page Numbers
-  doc.setFontSize(8);
-  doc.text(`Page ${currentPage} of {total_pages_count_string}`, pageWidth - MARGIN, footerTextY + 5, { align: "right" });
-
-  // Restore state
-  doc.setFontSize(oldFontSize);
-  // jsPDF doesn't have a simple getTextColor object, we assume standard for now or just set back to dark
-  doc.setTextColor(COLORS.TEXT_DARK);
+  return currentY + 10;
 }
 
 /**
@@ -375,7 +381,7 @@ function ensureSpace(doc: jsPDF, currentY: number, requiredHeight: number): numb
 
   if (currentY + requiredHeight > threshold) {
     doc.addPage();
-    return MARGIN;
+    return MARGIN + 10; // Extra top margin on new page
   }
   return currentY;
 }
@@ -417,7 +423,7 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   const invoiceDate = format(new Date(), "dd MMM yyyy");
 
   // Load Images Async
-  const [logoResult] = await Promise.all([
+  const [logoResult, apextureLogoResult] = await Promise.all([
     loadImage(LOGO_PATH),
     loadImage(APEXTURE_LOGO_PATH),
   ]);
@@ -472,7 +478,7 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   // Use a sensible offset if auto calculation makes the logo very small or large
   // A safe fixed offset is often better for layout stability, or we can use the configured logo height.
   // Using fixed offset from Top margin + reasonable gap
-  const hotelDetailsY = yPos + (typeof LOGO_CONFIG.HOTEL_LOGO.height === 'number' ? LOGO_CONFIG.HOTEL_LOGO.height : 30) + 5;
+  const hotelDetailsY = yPos + (typeof LOGO_CONFIG.HOTEL_LOGO.height === 'number' ? LOGO_CONFIG.HOTEL_LOGO.height : 30) + 10;
 
   doc.setFontSize(11);
   doc.setTextColor(COLORS.TEXT_DARK);
@@ -483,161 +489,191 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
   doc.setTextColor(COLORS.TEXT_LIGHT);
   doc.setFont("helvetica", "normal");
 
-  const addressLines = doc.splitTextToSize(property.address, 90);
-  doc.text(addressLines, margin, hotelDetailsY + 5);
+  // Address in a single line
+  const fullAddress = property.address.replace(/\n/g, ", ");
+  doc.text(fullAddress, margin, hotelDetailsY + 5);
 
-  let currentDetailY = hotelDetailsY + 5 + (addressLines.length * 4);
+  let currentDetailY = hotelDetailsY + 9;
 
+  // Phone and Email in a single line with bold labels
+  let contactX = margin;
   if (property.phone) {
-    doc.text(`Phone: ${property.phone}`, margin, currentDetailY);
-    currentDetailY += 4;
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(COLORS.TEXT_DARK);
+    doc.text("Phone:", contactX, currentDetailY);
+    const labelWidth = doc.getTextWidth("Phone: ");
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(COLORS.TEXT_LIGHT);
+    doc.text(property.phone, contactX + labelWidth, currentDetailY);
+    contactX += labelWidth + doc.getTextWidth(property.phone) + 8;
   }
   if (property.email) {
-    doc.text(`Email: ${property.email}`, margin, currentDetailY);
-    currentDetailY += 4;
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(COLORS.TEXT_DARK);
+    doc.text("Email:", contactX, currentDetailY);
+    const labelWidth = doc.getTextWidth("Email: ");
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(COLORS.TEXT_LIGHT);
+    doc.text(property.email, contactX + labelWidth, currentDetailY);
   }
+  currentDetailY += 6; // Added extra space between contact and trust info
 
-  // --- Trust / NGO Details ---
-  currentDetailY += 2; // small gap
+  // --- Trust / NGO Details (Compact with bold labels) ---
+  const trustY = currentDetailY;
+  let trustX = margin;
+
+  const drawTrustItem = (label: string, value: string) => {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(COLORS.TEXT_DARK);
+    doc.text(label, trustX, trustY);
+    const lWidth = doc.getTextWidth(label + " ");
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(COLORS.TEXT_LIGHT);
+    doc.text(value, trustX + lWidth, trustY);
+    trustX += lWidth + doc.getTextWidth(value) + 5;
+  };
+
   if (property.trust_registration_no) {
-    doc.text(`Trust Reg. No: ${property.trust_registration_no}`, margin, currentDetailY);
-    currentDetailY += 4;
+    drawTrustItem("Trust Reg. No:", property.trust_registration_no);
   }
   if (property.trust_date) {
-    doc.text(`Dtd.: ${property.trust_date}`, margin, currentDetailY);
-    currentDetailY += 4;
+    drawTrustItem("Dtd:", property.trust_date);
   }
   if (property.pan_no) {
-    doc.text(`PAN No: ${property.pan_no}`, margin, currentDetailY);
-    currentDetailY += 4;
+    drawTrustItem("PAN:", property.pan_no);
   }
   if (property.certificate_no) {
-    doc.text(`Certificate No: ${property.certificate_no}`, margin, currentDetailY);
-    currentDetailY += 4;
+    drawTrustItem("Certificate No:", property.certificate_no);
   }
 
-  yPos = currentDetailY + 10; // Ensure dynamic spacing based on content height
+  yPos = trustY + 4; // Tightened spacing
 
-  // ========== CARDS: BILL TO & RESERVATION ==========
-  const cardGap = 10;
-  const cardWidth = (pageWidth - (margin * 2) - cardGap) / 2;
-  const cardHeight = 55;
+  // ========== CARDS: GUEST & RESERVATION (Stacked Full-Width) ==========
+  const cardWidth = pageWidth - (margin * 2);
+  const cardHeight = 26; // Reduced height to remove bottom whitespace
 
-  // -- Bill To Card --
+  // Helper for grid item
+  const drawGridItem = (label: string, value: string, x: number, y: number, labelWidthOffset: number = 0) => {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(COLORS.TEXT_DARK);
+    doc.text(label, x, y);
+    const lWidth = labelWidthOffset || doc.getTextWidth(label + " ");
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(COLORS.TEXT_LIGHT);
+    doc.text(value, x + lWidth, y);
+    return lWidth + doc.getTextWidth(value);
+  };
+
+  // -- Guest Details Card --
   drawRoundedCard(doc, margin, yPos, cardWidth, cardHeight);
 
-  const billToContentX = margin + 5;
-  const billToContentY = yPos + 10;
+  const guestContentX = margin + 5;
+  const guestContentY = yPos + 8;
 
   doc.setFontSize(9);
   doc.setTextColor(COLORS.PRIMARY);
   doc.setFont("helvetica", "bold");
-  doc.text("BILL TO", billToContentX, billToContentY);
+  doc.text("Guests Details", guestContentX, guestContentY);
 
-  // Separator Line
   doc.setDrawColor(COLORS.BORDER);
-  doc.line(billToContentX, billToContentY + 3, margin + cardWidth - 5, billToContentY + 3);
+  doc.line(guestContentX, guestContentY + 2, margin + cardWidth - 5, guestContentY + 2);
 
   const guestName = guest
     ? [guest.firstName, guest.lastName].filter(Boolean).join(" ")
     : "Guest";
 
-  doc.setTextColor(COLORS.TEXT_DARK);
-  doc.setFontSize(11);
-  doc.text(guestName, billToContentX, billToContentY + 12);
+  let row1Y = guestContentY + 8;
+  let nextX = guestContentX;
 
-  doc.setFontSize(9);
-  doc.setTextColor(COLORS.TEXT_LIGHT);
-  doc.setFont("helvetica", "normal");
-
-  let guestDetailY = billToContentY + 18;
+  // Row 1: Name, Email, Phone No
+  nextX += drawGridItem("Name:", guestName, nextX, row1Y) + 15;
   if (guest?.email) {
-    doc.text(guest.email, billToContentX, guestDetailY);
-    guestDetailY += 5;
+    nextX += drawGridItem("Email:", guest.email, nextX, row1Y) + 15;
   }
   if (guest?.phone) {
-    doc.text(guest.phone, billToContentX, guestDetailY);
-    guestDetailY += 5;
+    drawGridItem("Phone No:", guest.phone, nextX, row1Y);
   }
 
-  // Address Composite: Address, City, Pincode, Country
-  const guestAddressParts = [
-    guest?.address,
-    guest?.city,
-    guest?.pincode,
-    guest?.country
-  ].filter(Boolean);
-
-  if (guestAddressParts.length > 0) {
-    const addressText = doc.splitTextToSize(guestAddressParts.join(", "), cardWidth - 10);
-    doc.text(addressText, billToContentX, guestDetailY);
+  // Row 2: Address, City, Pincode, Country
+  let row2Y = row1Y + 6;
+  nextX = guestContentX;
+  if (guest?.address) {
+    nextX += drawGridItem("Address:", guest.address, nextX, row2Y) + 10;
   }
+  if (guest?.city) {
+    nextX += drawGridItem("City:", guest.city, nextX, row2Y) + 10;
+  }
+  if (guest?.pincode) {
+    nextX += drawGridItem("Pincode:", guest.pincode, nextX, row2Y) + 10;
+  }
+  if (guest?.country) {
+    drawGridItem("Country:", guest.country, nextX, row2Y);
+  }
+
+  yPos += cardHeight + 4;
 
   // -- Reservation Details Card --
-  const resCardX = margin + cardWidth + cardGap;
-  drawRoundedCard(doc, resCardX, yPos, cardWidth, cardHeight);
+  drawRoundedCard(doc, margin, yPos, cardWidth, cardHeight);
 
-  const resContentX = resCardX + 5;
-  const resContentY = yPos + 10;
+  const resContentX = margin + 5;
+  const resContentY = yPos + 8;
 
   doc.setFontSize(9);
   doc.setTextColor(COLORS.PRIMARY);
   doc.setFont("helvetica", "bold");
-  doc.text("RESERVATION DETAILS", resContentX, resContentY);
+  doc.text("Reservation", resContentX, resContentY);
 
-  doc.setDrawColor(COLORS.BORDER);
-  doc.line(resContentX, resContentY + 3, resCardX + cardWidth - 5, resContentY + 3);
+  doc.line(resContentX, resContentY + 2, margin + cardWidth - 5, resContentY + 2);
 
-  // Details Grid
-  doc.setFontSize(9);
-  const labelX = resContentX;
-  const valueX = resContentX + 25;
-  let detailRowY = resContentY + 12;
-  const rowSpace = 5;
+  // Row 1: Booking ID, Check-in, Check-out, Duration
+  row1Y = resContentY + 8;
+  nextX = resContentX;
+  nextX += drawGridItem("Booking ID:", bookingId.substring(0, 8).toUpperCase(), nextX, row1Y) + 12;
+  nextX += drawGridItem("Check-in:", format(parseISO(checkInDate), "dd MMM yyyy"), nextX, row1Y) + 12;
+  nextX += drawGridItem("Check-out:", format(parseISO(checkOutDate), "dd MMM yyyy"), nextX, row1Y) + 12;
+  drawGridItem("Duration:", `${nights} night${nights === 1 ? "" : "s"}`, nextX, row1Y);
 
-  // Helper for row
-  const drawResRow = (label: string, value: string) => {
-    doc.setTextColor(COLORS.TEXT_LIGHT);
-    doc.setFont("helvetica", "normal");
-    doc.text(label, labelX, detailRowY);
-
-    doc.setTextColor(COLORS.TEXT_DARK);
-    doc.setFont("helvetica", "bold"); // Provide contrast
-    doc.text(value, valueX, detailRowY);
-    detailRowY += rowSpace;
-  };
-
-  drawResRow("Booking ID:", bookingId.substring(0, 8).toUpperCase());
-  drawResRow("Check-in:", format(parseISO(checkInDate), "EEE, dd MMM yyyy"));
-  drawResRow("Check-out:", format(parseISO(checkOutDate), "EEE, dd MMM yyyy"));
-  drawResRow("Duration:", `${nights} night${nights === 1 ? "" : "s"}`);
+  // Row 2: Guests, Bank
+  row2Y = row1Y + 6;
+  nextX = resContentX;
 
   const totalGuests = reservations.reduce((sum, r) => sum + (r.numberOfGuests || 0), 0);
   const totalAdults = reservations.reduce((sum, r) => sum + (r.adultCount || 0), 0);
   const totalChildren = reservations.reduce((sum, r) => sum + (r.childCount || 0), 0);
-  const guestDetails: string[] = [];
-  if (totalAdults > 0) {
-    guestDetails.push(`${totalAdults} adult${totalAdults === 1 ? "" : "s"}`);
-  }
-  if (totalChildren > 0) {
-    guestDetails.push(`${totalChildren} ${totalChildren === 1 ? "child" : "children"}`);
-  }
-  const guestDetailText = guestDetails.length ? ` (${guestDetails.join(", ")})` : "";
-  drawResRow("Guests:", `${totalGuests}${guestDetailText}`);
 
-  yPos += cardHeight + 5; // Reduced gap between cards and table (was +15)
+  let guestText = totalGuests.toString();
+  const breakdown: string[] = [];
+  if (totalAdults > 0) breakdown.push(`${totalAdults} adult${totalAdults === 1 ? "" : "s"}`);
+  if (totalChildren > 0) breakdown.push(`${totalChildren} ${totalChildren === 1 ? "child" : "children"}`);
+
+  if (breakdown.length > 0) {
+    guestText += ` (${breakdown.join(", ")})`;
+  }
+
+  nextX += drawGridItem("Guests:", guestText, nextX, row2Y) + 20;
+
+  // Bank field with underline
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(COLORS.TEXT_DARK);
+  doc.text("Bank:", nextX, row2Y);
+  const bankLabelWidth = doc.getTextWidth("Bank: ");
+  doc.setDrawColor(COLORS.TEXT_LIGHT);
+  doc.setLineWidth(0.1);
+  doc.line(nextX + bankLabelWidth, row2Y + 1, margin + cardWidth - 5, row2Y + 1);
+
+  yPos += cardHeight + 4; // Gap before table
 
   // ========== TABLE ==========
-  // Columns: Description, Nights, Amount
-  // Removed: Qty, Rate/Night
-  const tableHead = [["Description", "Nights", "Amount"]];
+  // Columns: Room Name, Quantity, Donation (per night), Amount
+
+  const tableHead = [["Room Name", "Quantity", "Donation (per night)", "Amount"]];
+
   const tableBody = [
     // Room Charges
     ...roomChargeSummaries.map((summary) => [
-      summary.roomNumbers.length > 0
-        ? `${summary.roomTypeName} (${summary.roomNumbers.join(", ")})`
-        : summary.roomTypeName,
-      summary.nights.toString(),
+      summary.roomTypeName,
+      summary.quantity.toString(),
+      formatCurrency(summary.ratePerNight),
       formatCurrency(summary.totalAmount),
     ]),
   ];
@@ -660,11 +696,12 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
     },
     columnStyles: {
       0: { cellWidth: "auto", halign: "left" },
-      1: { cellWidth: 30, halign: "center" },
+      1: { cellWidth: 25, halign: "center" },
       2: { cellWidth: 40, halign: "right" },
+      3: { cellWidth: 40, halign: "right" },
     },
     styles: {
-      cellPadding: 4,
+      cellPadding: 2.5,
       lineColor: [224, 224, 224],
       lineWidth: 0.1,
     },
@@ -674,57 +711,7 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
     },
   });
 
-  yPos = doc.lastAutoTable.finalY + 10;
-
-  // ========== ADDITIONAL CHARGES TABLE ==========
-  if (additionalCharges.length > 0) {
-    yPos = ensureSpace(doc, yPos, 20);
-
-    doc.setTextColor(COLORS.PRIMARY);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("Additional Charges", margin, yPos);
-    yPos += 5;
-
-    const chargesHead = [["Description", "Amount"]];
-    const chargesBody = additionalCharges.map((c) => [
-      c.description,
-      formatCurrency(c.amount),
-    ]);
-
-    doc.autoTable({
-      startY: yPos,
-      head: chargesHead,
-      body: chargesBody,
-      theme: "plain",
-      headStyles: {
-        fillColor: [240, 240, 240],
-        textColor: [51, 51, 51],
-        fontSize: 8,
-        fontStyle: "bold",
-        halign: "left",
-      },
-      bodyStyles: {
-        fontSize: 8,
-        textColor: [51, 51, 51],
-      },
-      columnStyles: {
-        0: { cellWidth: "auto", halign: "left" },
-        1: { cellWidth: 40, halign: "right" },
-      },
-      styles: {
-        cellPadding: 3,
-        lineColor: [224, 224, 224],
-        lineWidth: 0.1,
-      },
-      margin: { left: margin, right: margin, bottom: FOOTER_HEIGHT + 5 },
-      didDrawPage: () => {
-        drawFooter(doc);
-      },
-    });
-
-    yPos = doc.lastAutoTable.finalY + 10;
-  }
+  yPos = doc.lastAutoTable.finalY + 8; // Added extra space before payments table
 
   // ========== PAYMENTS TABLE ==========
   if (payments.length > 0) {
@@ -769,7 +756,7 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
         3: { cellWidth: 30, halign: "right" },
       },
       styles: {
-        cellPadding: 3,
+        cellPadding: 2.5,
         lineColor: [224, 224, 224],
         lineWidth: 0.1,
       },
@@ -779,28 +766,28 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
       },
     });
 
-    yPos = doc.lastAutoTable.finalY + 10;
-  } else {
-    yPos += 5;
+    yPos = doc.lastAutoTable.finalY + 10; // Increased space before totals
+  } else if (payments.length === 0) {
+    yPos += 8;
   }
 
   // ========== TOTALS ==========
   const totalsWidth = 80;
   const totalsX = pageWidth - margin - totalsWidth;
 
-  const drawTotalRow = (label: string, value: string, isGrand: boolean = false) => {
-    const rowHeight = isGrand ? 12 : 7;
+  const drawTotalRow = (label: string, value: string, isSpecial: boolean = false) => {
+    const rowHeight = 8; // Consistent row height for equal spacing
 
     // Ensure space for this row
     yPos = ensureSpace(doc, yPos, rowHeight);
 
-    if (isGrand) {
-      // Background for Grand Total
-      doc.setFillColor(255, 240, 230); // Very light orange
-      doc.roundedRect(totalsX - 5, yPos - 8, totalsWidth + 5, rowHeight + 4, 1, 1, "F");
-
-      doc.setTextColor(COLORS.PRIMARY);
-      doc.setFontSize(12);
+    if (isSpecial) {
+      if (label === "Grand Total") {
+        doc.setTextColor(COLORS.TEXT_DARK); // Grand Total in Black as requested
+      } else {
+        doc.setTextColor(COLORS.PRIMARY);
+      }
+      doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
     } else {
       doc.setTextColor(COLORS.TEXT_DARK);
@@ -824,15 +811,33 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
     drawTotalRow(taxLabel, formatCurrency(taxAmount));
   }
 
-  yPos += 2; // Spacing before grand total
-  drawTotalRow("Grand Total", formatCurrency(grandTotal));
-
-  if (totalPaid > 0) {
-    drawTotalRow("Total Paid", formatCurrency(totalPaid));
+  if (additionalChargesSubtotal > 0) {
+    drawTotalRow("Additional Donations", formatCurrency(additionalChargesSubtotal));
   }
 
-  yPos += 2;
+  yPos += 1; // Small consistent gap
+  drawTotalRow("Grand Total", formatCurrency(grandTotal), true);
+
+  if (totalPaid > 0) {
+    drawTotalRow("Total Donated", formatCurrency(totalPaid));
+  }
+
   drawTotalRow("Balance Due (Total)", formatCurrency(balanceDue), true);
+
+  // FINAL FOOTER (Thank you and branding) - Displayed ONLY ONCE at the end of Page 1
+  const internal = (doc as unknown as { internal: jsPDFInternal }).internal;
+  const originalPage = internal.getCurrentPageInfo().pageNumber;
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  doc.setPage(1); // Set branding to Page 1
+
+  const brandingBottomY = pageHeight - FOOTER_HEIGHT - 10; // Fixed bottom anchor on Page 1
+
+  drawFinalBranding(doc, brandingBottomY);
+
+  if (originalPage > 1) {
+    doc.setPage(originalPage); // Return to original page flow if needed
+  }
 
   // ========== FOOTER SECTION ==========
   // Finalize page count and replace placeholders
