@@ -250,9 +250,9 @@ export function DataTable({
             {showLoadingState ? (
               <TableRow>
                 <TableCell colSpan={columns.length}>
-                  <div className="flex flex-col items-center gap-3 py-8 text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center gap-3 lg:py-60 text-muted-foreground">
                     <GeistSpinner size={36} label="Loading reservations" />
-                    <p className="text-sm">Loading reservations…</p>
+                    <p className="text-sm font-medium">Loading reservations...</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -282,9 +282,9 @@ export function DataTable({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className="lg:py-60 text-center text-muted-foreground"
                 >
-                  No results.
+                  No results founds.
                 </TableCell>
               </TableRow>
             )}
