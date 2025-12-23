@@ -131,7 +131,7 @@ export function RoomTypeRow({
     <>
       {/* Aggregated Room Type Row */}
       <TableRow className="bg-transparent text-sm hover:bg-transparent data-[state=selected]:bg-transparent">
-        <TableCell className="sticky left-0 z-10 border-r border-border/50 bg-card/90 backdrop-blur">
+        <TableCell className="sticky left-0 z-20 border-r border-b border-border/50 bg-card">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -163,119 +163,119 @@ export function RoomTypeRow({
           </div>
         </TableCell>
         {availability.map((day) => {
-            const baseStatus = getDisplayStatus(day.status);
-            const isSelected =
-              selectedCell?.roomTypeId === roomType.id &&
-              selectedCell?.date === day.date;
-            const bookedUnits = day.bookedCount;
-            const remainingUnits = Math.max(day.unitsTotal - bookedUnits, 0);
-            const showNumber =
-              unitsView === "booked"
-                ? bookedUnits || ""
-                : bookedUnits === 0
-                  ? ""
-                  : remainingUnits;
+          const baseStatus = getDisplayStatus(day.status);
+          const isSelected =
+            selectedCell?.roomTypeId === roomType.id &&
+            selectedCell?.date === day.date;
+          const bookedUnits = day.bookedCount;
+          const remainingUnits = Math.max(day.unitsTotal - bookedUnits, 0);
+          const showNumber =
+            unitsView === "booked"
+              ? bookedUnits || ""
+              : bookedUnits === 0
+                ? ""
+                : remainingUnits;
 
-            const hasBookings = day.reservationIds && day.reservationIds.length > 0;
+          const hasBookings = day.reservationIds && day.reservationIds.length > 0;
 
-            const isDisabled =
-              baseStatus === "busy" || baseStatus === "closed" || day.isClosed;
+          const isDisabled =
+            baseStatus === "busy" || baseStatus === "closed" || day.isClosed;
 
-            const isTodayColumn = todayIso === day.date;
-            const formattedDate = format(parseISO(day.date), "MMMM d, yyyy");
-            const metricLabel =
-              unitsView === "booked"
-                ? bookedUnits === 0
-                  ? "No units booked"
-                  : `${bookedUnits} ${bookedUnits === 1 ? "unit" : "units"} booked`
-                : remainingUnits === 0
-                  ? "No units left"
-                  : `${remainingUnits} ${remainingUnits === 1 ? "unit" : "units"} left`;
-            const ariaLabel = `${metricLabel} on ${formattedDate}`;
-            const columnTextClass = isTodayColumn
-              ? "text-white"
-              : "text-white";
+          const isTodayColumn = todayIso === day.date;
+          const formattedDate = format(parseISO(day.date), "MMMM d, yyyy");
+          const metricLabel =
+            unitsView === "booked"
+              ? bookedUnits === 0
+                ? "No units booked"
+                : `${bookedUnits} ${bookedUnits === 1 ? "unit" : "units"} booked`
+              : remainingUnits === 0
+                ? "No units left"
+                : `${remainingUnits} ${remainingUnits === 1 ? "unit" : "units"} left`;
+          const ariaLabel = `${metricLabel} on ${formattedDate}`;
+          const columnTextClass = isTodayColumn
+            ? "text-white"
+            : "text-white";
 
-            const cellContent = (
-              <button
-                type="button"
-                className={cn(
-                  cellBaseClasses,
-                  availabilityStatusClasses[baseStatus],
-                  columnTextClass,
-                  isDisabled && "cursor-not-allowed",
-                  isSelected && "outline outline-2 outline-offset-[-2px]",
-                  isTodayColumn && "bg-primary border-0 text-white"
-                )}
-                onClick={() =>
-                  handleCellClick(day.date, baseStatus, day.isClosed)
-                }
-                disabled={isDisabled}
-                aria-label={ariaLabel}
-              >
-                <div className="flex items-center justify-center">
-                  {/* — line */}
-                  <span
-                    className={cn(
-                      "leading-none",
-                      columnTextClass
-                    )}
-                  >
-                    {showNumber === "" ? "—" : showNumber}
-                  </span>
+          const cellContent = (
+            <button
+              type="button"
+              className={cn(
+                cellBaseClasses,
+                availabilityStatusClasses[baseStatus],
+                columnTextClass,
+                isDisabled && "cursor-not-allowed",
+                isSelected && "outline outline-2 outline-offset-[-2px]",
+                isTodayColumn && "bg-primary border-0 text-white"
+              )}
+              onClick={() =>
+                handleCellClick(day.date, baseStatus, day.isClosed)
+              }
+              disabled={isDisabled}
+              aria-label={ariaLabel}
+            >
+              <div className="flex items-center justify-center">
+                {/* — line */}
+                <span
+                  className={cn(
+                    "leading-none",
+                    columnTextClass
+                  )}
+                >
+                  {showNumber === "" ? "—" : showNumber}
+                </span>
+              </div>
+              {day.isClosed && (
+                <div
+                  className={cn(
+                    "absolute inset-x-2 bottom-1 flex items-center justify-center gap-1 text-[10px] font-medium",
+                    columnTextClass
+                  )}
+                >
+                  <Lock className={cn("h-3 w-3", columnTextClass)} />
+                  <span>Closed</span>
                 </div>
-                {day.isClosed && (
-                  <div
-                    className={cn(
-                      "absolute inset-x-2 bottom-1 flex items-center justify-center gap-1 text-[10px] font-medium",
-                      columnTextClass
-                    )}
-                  >
-                    <Lock className={cn("h-3 w-3", columnTextClass)} />
-                    <span>Closed</span>
-                  </div>
-                )}
-              </button>
-            );
+              )}
+            </button>
+          );
 
-            return (
-              <TableCell key={day.date} className="p-0">
-                {bookedUnits === 0 ? (
-                  cellContent
-                ) : hasBookings ? (
-                  <ReservationHoverCard
-                    reservationIds={day.reservationIds}
-                    date={day.date}
-                  >
+          return (
+            <TableCell key={day.date} className="p-0">
+              {bookedUnits === 0 ? (
+                cellContent
+              ) : hasBookings ? (
+                <ReservationHoverCard
+                  reservationIds={day.reservationIds}
+                  date={day.date}
+                >
+                  {cellContent}
+                </ReservationHoverCard>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     {cellContent}
-                  </ReservationHoverCard>
-                ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      {cellContent}
-                    </TooltipTrigger>
-                    <TooltipContent className="text-sm">
-                      <div className="space-y-1">
-                        <p className="font-medium text-foreground">
-                          {day.bookedCount} of {day.unitsTotal} units booked
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(parseISO(day.date), "MMM d, yyyy")}
-                        </p>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </TableCell>
-            );
-          })}
+                  </TooltipTrigger>
+                  <TooltipContent className="text-sm">
+                    <div className="space-y-1">
+                      <p className="font-medium text-foreground">
+                        {day.bookedCount} of {day.unitsTotal} units booked
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(parseISO(day.date), "MMM d, yyyy")}
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </TableCell>
+          );
+        })}
       </TableRow>
 
       {/* Expanded: Individual Room Number Rows */}
       {isExpanded &&
         roomType.rooms.map((room) => (
           <TableRow key={room.id} className="text-sm hover:bg-transparent data-[state=selected]:bg-transparent">
-            <TableCell className="sticky left-0 z-10 border-r border-border/40 bg-card/80">
+            <TableCell className="sticky left-0 z-20 border-r border-b border-border/40 bg-card">
               <div className="flex items-center gap-2 pl-8 text-muted-foreground">
                 <span>→</span>
                 <span className="font-semibold text-foreground">

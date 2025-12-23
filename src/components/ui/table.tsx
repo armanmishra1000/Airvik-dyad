@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils"
 
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-x-auto">
+  React.HTMLAttributes<HTMLTableElement> & { baseWrapper?: boolean }
+>(({ className, baseWrapper = true, ...props }, ref) => {
+  const table = (
     <table
       ref={ref}
       className={cn(
@@ -15,8 +15,16 @@ const Table = React.forwardRef<
       )}
       {...props}
     />
-  </div>
-))
+  )
+
+  if (!baseWrapper) return table
+
+  return (
+    <div className="relative w-full overflow-x-auto">
+      {table}
+    </div>
+  )
+})
 Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<
