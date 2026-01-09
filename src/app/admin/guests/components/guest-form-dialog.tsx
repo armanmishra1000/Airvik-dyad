@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -25,8 +25,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { CountryCombobox } from "@/components/ui/country-combobox";
 import type { Guest } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
+import { validatePhoneByCountry, validatePincodeByCountry } from "@/lib/validators/country-validation";
+import { getCountryDialCode } from "@/lib/countries";
 
 const optionalEmailSchema = z
   .string()
@@ -38,16 +41,41 @@ const optionalEmailSchema = z
     ])
   );
 
-const guestSchema = z.object({
-  firstName: z.string().min(1, "First name is required."),
-  lastName: z.string().min(1, "Last name is required."),
-  email: optionalEmailSchema,
-  phone: z.string().min(1, "Phone number is required."),
-  address: z.string().trim().min(1, "Address is required."),
-  pincode: z.string().trim().min(1, "Pincode is required."),
-  city: z.string().trim().min(1, "City is required."),
-  country: z.string().trim().min(1, "Country is required."),
-});
+const guestSchema = z
+  .object({
+    firstName: z.string().min(1, "First name is required."),
+    lastName: z.string().min(1, "Last name is required."),
+    email: optionalEmailSchema,
+    phone: z.string().min(1, "Phone number is required."),
+    address: z.string().trim().min(1, "Address is required."),
+    pincode: z.string().trim().min(1, "Postal code is required."),
+    city: z.string().trim().min(1, "City is required."),
+    country: z.string().trim().min(2, "Country is required."),
+  })
+  .refine(
+    (data) => {
+      if (!data.country) {
+        return true;
+      }
+      return validatePhoneByCountry(data.phone, data.country);
+    },
+    {
+      message: "Invalid phone number format for this country",
+      path: ["phone"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (!data.country) {
+        return true;
+      }
+      return validatePincodeByCountry(data.pincode, data.country);
+    },
+    {
+      message: "Invalid postal code format for this country",
+      path: ["pincode"],
+    }
+  );
 
 interface GuestFormDialogProps {
   guest?: Guest;
@@ -66,12 +94,6 @@ export function GuestFormDialog({
   const { addGuest, updateGuest } = useDataContext();
   const isEditing = !!guest;
 
-  React.useEffect(() => {
-    if (defaultOpen) {
-      setOpen(true);
-    }
-  }, [defaultOpen]);
-
   const form = useForm<z.infer<typeof guestSchema>>({
     resolver: zodResolver(guestSchema),
     defaultValues: {
@@ -85,6 +107,23 @@ export function GuestFormDialog({
       country: guest?.country || "",
     },
   });
+
+  const countryValue = useWatch({
+    control: form.control,
+    name: "country",
+  });
+
+  const dialCode = getCountryDialCode(countryValue);
+  const isIndia = countryValue === "IN";
+  const isUSA = countryValue === "US";
+  const isUK = countryValue === "GB";
+  const isCanada = countryValue === "CA";
+
+  React.useEffect(() => {
+    if (defaultOpen) {
+      setOpen(true);
+    }
+  }, [defaultOpen]);
 
   async function onSubmit(values: z.infer<typeof guestSchema>) {
     try {
@@ -219,18 +258,23 @@ export function GuestFormDialog({
                 <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <FormControl>
+                  <div className="flex items-center">
+                    <span className="mr-2 text-sm text-muted-foreground whitespace-nowrap">
+                      {dialCode}
+                    </span>
                     <Input
-                      placeholder="555-1234"
+                      placeholder={isIndia ? "1234567890" : isUSA ? "5551234567" : "123456"}
                       type="tel"
                       inputMode="numeric"
                       pattern="[0-9]*"
-                      maxLength={10}
+                      maxLength={isIndia ? 10 : 15}
                       {...field}
                       onChange={(event) => {
                         const digitsOnly = event.target.value.replace(/\D/g, "");
-                        field.onChange(digitsOnly.slice(0, 10));
+                        field.onChange(digitsOnly);
                       }}
                     />
+                  </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -257,17 +301,27 @@ export function GuestFormDialog({
                 name="pincode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pincode</FormLabel>
+                    <FormLabel>
+                      {isUSA ? "ZIP Code" : isUK ? "Postcode" : isCanada ? "Postal Code" : "Pincode"}
+                    </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="000000"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={6}
+                        placeholder={
+                          isUSA
+                            ? "12345"
+                            : isUK
+                            ? "SW1A 0AA"
+                              : isCanada
+                              ? "K1A 0B1"
+                                : "110001"
+                        }
+                        inputMode={isUK ? "text" : "numeric"}
+                        pattern={isUK ? "[A-Z0-9 ]*" : "[0-9]*"}
+                        maxLength={isIndia ? 6 : 10}
                         {...field}
                         onChange={(event) => {
                           const digitsOnly = event.target.value.replace(/\D/g, "");
-                          field.onChange(digitsOnly.slice(0, 6));
+                          field.onChange(isUK ? event.target.value : digitsOnly);
                         }}
                       />
                     </FormControl>
@@ -295,11 +349,15 @@ export function GuestFormDialog({
               name="country"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Country" {...field} />
-                  </FormControl>
-                  <FormMessage />
+                    <FormLabel>Country</FormLabel>
+                    <FormControl>
+                      <CountryCombobox
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select country..."
+                      />
+                    </FormControl>
+                    <FormMessage />
                 </FormItem>
               )}
             />
