@@ -1,8 +1,16 @@
 import { isValidCountryCode } from '../countries';
 
+// Countries without postal codes
+const NO_POSTAL_CODES: string[] = [
+  'AE', 'AG', 'AW', 'BS', 'BQ', 'CV', 'CI', 'CK', 'CM', 'CU', 'DJ', 'DM', 'ER',
+  'FJ', 'GA', 'GD', 'GY', 'HK', 'KI', 'KM', 'KN', 'KP', 'KW', 'LY', 'MH',
+  'MO', 'MR', 'MU', 'NA', 'OM', 'PA', 'QA', 'RW', 'SB', 'SC', 'ST', 'SY',
+  'TC', 'TO', 'TT', 'TV', 'VC', 'VG', 'WS', 'YE',
+];
+
 export function validatePhoneByCountry(phone: string, countryCode: string): boolean {
   const digitsOnly = phone.replace(/\D/g, '');
-  
+
   if (!digitsOnly) {
     return false;
   }
@@ -40,22 +48,41 @@ export function validatePhoneByCountry(phone: string, countryCode: string): bool
 }
 
 export function validatePincodeByCountry(pincode: string, countryCode: string): boolean {
+  const normalizedCode = countryCode.toUpperCase();
+
+  // Countries without postal codes - allow empty or alphanumeric
+  if (NO_POSTAL_CODES.includes(normalizedCode)) {
+    if (!pincode || pincode.trim().length === 0) {
+      return true;
+    }
+    // For countries without postal codes, allow any 3-10 character alphanumeric string
+    const cleanPincode = pincode.trim();
+    return /^[A-Z0-9]{3,10}$/i.test(cleanPincode);
+  }
+
   if (!pincode || pincode.trim().length === 0) {
     return false;
   }
 
   const cleanPincode = pincode.trim();
-  const length = cleanPincode.length;
 
-  switch (countryCode) {
+  switch (normalizedCode) {
     case 'IN':
       return /^\d{6}$/.test(cleanPincode);
     case 'US':
       return /^\d{5}(-\d{4})?$/.test(cleanPincode);
     case 'GB':
-      return /^[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}$/.test(cleanPincode.replace(/\s+/g, '').toUpperCase());
+      // UK Postcode format: A9 9AA or AA9 9AA or A9A 9AA or AA9A 9AA
+      return /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i.test(cleanPincode);
     case 'CA':
-      return /^[A-Z]\d[A-Z] \d[A-Z]\d$/.test(cleanPincode.replace(/\s+/g, '').toUpperCase());
+      // Canada Postal Code format: A1A 1A1
+      return /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i.test(cleanPincode);
+    case 'NL':
+      // Netherlands Postal Code format: 1234 AB
+      return /^\d{4}\s?[A-Z]{2}$/i.test(cleanPincode);
+    case 'IE':
+      // Ireland Eircode format: A65 F4E2
+      return /^[A-Z]\d{2}\s?[A-Z]\d{2}$/i.test(cleanPincode);
     case 'AU':
       return /^\d{4}$/.test(cleanPincode);
     case 'DE':
@@ -73,7 +100,8 @@ export function validatePincodeByCountry(pincode: string, countryCode: string): 
     case 'RU':
       return /^\d{6}$/.test(cleanPincode);
     default:
-      return length >= 3 && length <= 10;
+      // Fallback for unknown countries: allow 3-10 alphanumeric characters
+      return /^[A-Z0-9]{3,10}$/i.test(cleanPincode);
   }
 }
 

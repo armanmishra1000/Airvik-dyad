@@ -29,7 +29,7 @@ import { CountryCombobox } from "@/components/ui/country-combobox";
 import type { Guest } from "@/data/types";
 import { useDataContext } from "@/context/data-context";
 import { validatePhoneByCountry, validatePincodeByCountry } from "@/lib/validators/country-validation";
-import { getCountryDialCode } from "@/lib/countries";
+import { getCountryDialCode, getCountryPhoneConfig, getCountryPincodeConfig } from "@/lib/countries";
 
 const optionalEmailSchema = z
   .string()
@@ -48,7 +48,7 @@ const guestSchema = z
     email: optionalEmailSchema,
     phone: z.string().min(1, "Phone number is required."),
     address: z.string().trim().min(1, "Address is required."),
-    pincode: z.string().trim().min(1, "Postal code is required."),
+    pincode: z.string().trim(),
     city: z.string().trim().min(1, "City is required."),
     country: z.string().trim().min(2, "Country is required."),
   })
@@ -69,10 +69,30 @@ const guestSchema = z
       if (!data.country) {
         return true;
       }
+      const pincodeConfig = getCountryPincodeConfig(data.country);
+      if (!pincodeConfig.required && !data.pincode) {
+        return true;
+      }
       return validatePincodeByCountry(data.pincode, data.country);
     },
     {
       message: "Invalid postal code format for this country",
+      path: ["pincode"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (!data.country) {
+        return true;
+      }
+      const pincodeConfig = getCountryPincodeConfig(data.country);
+      if (!pincodeConfig.required) {
+        return true;
+      }
+      return data.pincode && data.pincode.trim().length > 0;
+    },
+    {
+      message: "Postal code is required for this country",
       path: ["pincode"],
     }
   );
@@ -114,10 +134,8 @@ export function GuestFormDialog({
   });
 
   const dialCode = getCountryDialCode(countryValue);
-  const isIndia = countryValue === "IN";
-  const isUSA = countryValue === "US";
-  const isUK = countryValue === "GB";
-  const isCanada = countryValue === "CA";
+  const phoneConfig = React.useMemo(() => getCountryPhoneConfig(countryValue), [countryValue]);
+  const pincodeConfig = React.useMemo(() => getCountryPincodeConfig(countryValue), [countryValue]);
 
   React.useEffect(() => {
     if (defaultOpen) {
@@ -263,15 +281,18 @@ export function GuestFormDialog({
                       {dialCode}
                     </span>
                     <Input
-                      placeholder={isIndia ? "1234567890" : isUSA ? "5551234567" : "123456"}
+                      placeholder="123456"
                       type="tel"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={isIndia ? 10 : 15}
+                      inputMode={phoneConfig.inputMode}
+                      maxLength={phoneConfig.maxLength}
                       {...field}
                       onChange={(event) => {
-                        const digitsOnly = event.target.value.replace(/\D/g, "");
-                        field.onChange(digitsOnly);
+                        if (phoneConfig.allowsNonNumeric) {
+                          field.onChange(event.target.value);
+                        } else {
+                          const digitsOnly = event.target.value.replace(/\D/g, "");
+                          field.onChange(digitsOnly);
+                        }
                       }}
                     />
                   </div>
@@ -301,27 +322,34 @@ export function GuestFormDialog({
                 name="pincode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      {isUSA ? "ZIP Code" : isUK ? "Postcode" : isCanada ? "Postal Code" : "Pincode"}
-                    </FormLabel>
+                    <FormLabel>{pincodeConfig.label}</FormLabel>
                     <FormControl>
                       <Input
                         placeholder={
-                          isUSA
-                            ? "12345"
-                            : isUK
-                            ? "SW1A 0AA"
-                              : isCanada
+                          pincodeConfig.allowsLetters
+                            ? countryValue === "GB"
+                              ? "SW1A 0AA"
+                              : countryValue === "CA"
                               ? "K1A 0B1"
-                                : "110001"
+                              : countryValue === "NL"
+                              ? "1234 AB"
+                              : countryValue === "IE"
+                              ? "A65 F4E2"
+                              : "Postal Code"
+                            : "110001"
                         }
-                        inputMode={isUK ? "text" : "numeric"}
-                        pattern={isUK ? "[A-Z0-9 ]*" : "[0-9]*"}
-                        maxLength={isIndia ? 6 : 10}
+                        inputMode={pincodeConfig.inputMode}
+                        pattern={pincodeConfig.pattern}
+                        maxLength={pincodeConfig.maxLength}
                         {...field}
                         onChange={(event) => {
-                          const digitsOnly = event.target.value.replace(/\D/g, "");
-                          field.onChange(isUK ? event.target.value : digitsOnly);
+                          if (pincodeConfig.allowsLetters) {
+                            const uppercaseValue = event.target.value.toUpperCase();
+                            field.onChange(uppercaseValue);
+                          } else {
+                            const digitsOnly = event.target.value.replace(/\D/g, "");
+                            field.onChange(digitsOnly);
+                          }
                         }}
                       />
                     </FormControl>
