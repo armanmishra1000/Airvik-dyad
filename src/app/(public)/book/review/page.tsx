@@ -36,13 +36,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CountryCombobox } from "@/components/ui/country-combobox";
+import { useWatch } from "react-hook-form";
+import { getCountryPincodeConfig, getCountryDialCode } from "@/lib/countries";
+import { validatePincodeByCountry } from "@/lib/validators/country-validation";
 import type { RoomType } from "@/data/types";
 
 const optionalEmailSchema = z
@@ -60,12 +57,45 @@ const paymentSchema = z.object({
   lastName: z.string().min(1, "Last name is required."),
   email: optionalEmailSchema,
   address: z.string().trim().min(1,"Address is required."),
-  pincode: z.string().trim().min(1,"Pincode is required."),
+  pincode: z.string().trim(),
   city: z.string().trim().min(1,"City is required."),
+  state: z.string().trim().min(2, "State must be at least 2 characters.").max(50, "State must not exceed 50 characters.").optional(),
   country: z.string({ required_error: "Country is required." }),
   phoneCountryCode: z.string(),
   phone: z.string().min(10, "Phone number must be at least 10 digits."),
-});
+})
+.refine(
+  (data) => {
+    if (!data.country) {
+      return true;
+    }
+    const pincodeConfig = getCountryPincodeConfig(data.country);
+    if (!pincodeConfig.required && !data.pincode) {
+      return true;
+    }
+    return validatePincodeByCountry(data.pincode, data.country);
+  },
+  {
+    message: "Invalid postal code format for this country",
+    path: ["pincode"],
+  }
+)
+.refine(
+  (data) => {
+    if (!data.country) {
+      return true;
+    }
+    const pincodeConfig = getCountryPincodeConfig(data.country);
+    if (!pincodeConfig.required) {
+      return true;
+    }
+    return data.pincode && data.pincode.trim().length > 0;
+  },
+  {
+    message: "Postal code is required for this country",
+    path: ["pincode"],
+  }
+);
 
 const DEFAULT_BOOKING_ERROR_MESSAGE =
   "An unexpected error occurred. Please try again or contact support.";
@@ -196,11 +226,19 @@ function BookingReviewContent() {
       address: "",
       pincode: "",
       city: "",
+      state: "",
       country: "India",
       phoneCountryCode: "+91",
       phone: "",
     },
   });
+
+  const countryValue = useWatch({
+    control: form.control,
+    name: "country",
+  });
+
+  const pincodeConfig = React.useMemo(() => getCountryPincodeConfig(countryValue), [countryValue]);
 
   // Validate query parameters and date range
   const { hasValidParams, hasValidDates, fromDate, toDate, nights } = React.useMemo(() => {
@@ -447,6 +485,7 @@ function BookingReviewContent() {
         address: values.address,
         pincode: values.pincode,
         city: values.city,
+        state: values.state,
         country: values.country,
       });
 
@@ -881,17 +920,26 @@ function BookingReviewContent() {
                         name="pincode"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Pincode</FormLabel>
+                            <FormLabel>{pincodeConfig.label}</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="000000"
-                                inputMode="numeric"
-                                pattern="[0-9]*"
-                                maxLength={6}
+                                placeholder={
+                                  pincodeConfig.allowsLetters
+                                    ? "SW1A 0AA"
+                                    : "110001"
+                                }
+                                inputMode={pincodeConfig.inputMode}
+                                pattern={pincodeConfig.pattern}
+                                maxLength={pincodeConfig.maxLength}
                                 {...field}
                                 onChange={(event) => {
-                                  const digitsOnly = event.target.value.replace(/\D/g, "");
-                                  field.onChange(digitsOnly.slice(0, 6));
+                                  if (pincodeConfig.allowsLetters) {
+                                    const uppercaseValue = event.target.value.toUpperCase();
+                                    field.onChange(uppercaseValue);
+                                  } else {
+                                    const digitsOnly = event.target.value.replace(/\D/g, "");
+                                    field.onChange(digitsOnly);
+                                  }
                                 }}
                               />
                             </FormControl>
@@ -912,6 +960,19 @@ function BookingReviewContent() {
                           </FormItem>
                         )}
                       />
+                      <FormField
+                        control={form.control}
+                        name="state"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>State/Province/Region (optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="State" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
 
                     <div className="grid sm:grid-cols-2 grid-cols-1 gap-4">
@@ -921,26 +982,13 @@ function BookingReviewContent() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Country/region</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select your country" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="India">India</SelectItem>
-                                <SelectItem value="United States">
-                                  United States
-                                </SelectItem>
-                                <SelectItem value="United Kingdom">
-                                  United Kingdom
-                                </SelectItem>
-                                <SelectItem value="Canada">Canada</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <FormControl>
+                              <CountryCombobox
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder="Select your country"
+                              />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -956,27 +1004,19 @@ function BookingReviewContent() {
                                 control={form.control}
                                 name="phoneCountryCode"
                                 render={({ field: codeField }) => (
-                                  <Select
-                                    value={codeField.value}
-                                    onValueChange={codeField.onChange}
-                                  >
-                                    <SelectTrigger className="w-[120px]">
-                                      <SelectValue placeholder="Code" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="+91">IN +91</SelectItem>
-                                      <SelectItem value="+1">US +1</SelectItem>
-                                      <SelectItem value="+44">UK +44</SelectItem>
-                                      <SelectItem value="+61">AU +61</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                  <Input
+                                    {...codeField}
+                                    value={getCountryDialCode(countryValue)}
+                                    disabled
+                                    className="w-[120px]"
+                                  />
                                 )}
                               />
                               <FormControl>
                                 <Input
+                                  {...field}
                                   type="tel"
                                   placeholder="Your phone number"
-                                  {...field}
                                   inputMode="numeric"
                                   pattern="[0-9]*"
                                   maxLength={10}
