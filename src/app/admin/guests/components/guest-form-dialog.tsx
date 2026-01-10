@@ -50,6 +50,7 @@ const guestSchema = z
     address: z.string().trim().min(1, "Address is required."),
     pincode: z.string().trim(),
     city: z.string().trim().min(1, "City is required."),
+    state: z.string().trim().min(2, "State must be at least 2 characters.").max(50, "State must not exceed 50 characters.").optional(),
     country: z.string().trim().min(2, "Country is required."),
   })
   .refine(
@@ -124,6 +125,7 @@ export function GuestFormDialog({
       address: guest?.address || "",
       pincode: guest?.pincode || "",
       city: guest?.city || "",
+      state: guest?.state || "",
       country: guest?.country || "",
     },
   });
@@ -155,6 +157,7 @@ export function GuestFormDialog({
           address: values.address,
           pincode: values.pincode,
           city: values.city,
+          state: values.state,
           country: values.country,
         });
       } else {
@@ -167,6 +170,7 @@ export function GuestFormDialog({
           address: "",
           pincode: "",
           city: "",
+          state: "",
           country: "",
         });
         onGuestCreated?.(created);
@@ -194,6 +198,7 @@ export function GuestFormDialog({
         address: guest.address || "",
         pincode: guest.pincode || "",
         city: guest.city || "",
+        state: guest.state || "",
         country: guest.country || "",
       });
     } else {
@@ -205,6 +210,7 @@ export function GuestFormDialog({
         address: "",
         pincode: "",
         city: "",
+        state: "",
         country: "",
       });
     }
@@ -371,6 +377,20 @@ export function GuestFormDialog({
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="state"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>State/Province/Region (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="State" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

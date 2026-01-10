@@ -44,6 +44,7 @@ type DbGuest = {
   address: string | null;
   pincode: string | null;
   city: string | null;
+  state: string | null;
   country: string | null;
 };
 
@@ -52,7 +53,7 @@ type DbCategoryUpdatePayload = Partial<
 >;
 
 type GuestUpdatePayload = Partial<
-  Pick<DbGuest, "first_name" | "last_name" | "email" | "phone" | "address" | "pincode" | "city" | "country">
+  Pick<DbGuest, "first_name" | "last_name" | "email" | "phone" | "address" | "pincode" | "city" | "state" | "country">
 >;
 
 type GetOrCreateGuestArgs = {
@@ -63,6 +64,7 @@ type GetOrCreateGuestArgs = {
   address?: string;
   pincode?: string;
   city?: string;
+  state?: string;
   country?: string;
 };
 
@@ -341,6 +343,7 @@ const fromDbGuest = (dbGuest: DbGuest): Guest => ({
   address: dbGuest.address ?? "",
   pincode: dbGuest.pincode ?? "",
   city: dbGuest.city ?? "",
+  state: dbGuest.state ?? "",
   country: dbGuest.country ?? "",
 });
 
@@ -373,6 +376,9 @@ const toDbGuest = (appGuest: Partial<Omit<Guest, "id">>): GuestUpdatePayload => 
   }
   if (typeof appGuest.city === "string") {
     dbData.city = normalizeNullableText(appGuest.city);
+  }
+  if (typeof appGuest.state === "string") {
+    dbData.state = normalizeNullableText(appGuest.state);
   }
   if (typeof appGuest.country === "string") {
     dbData.country = normalizeNullableText(appGuest.country);
@@ -797,11 +803,28 @@ export const getOrCreateGuestByEmail = async (
     return { data: null, error };
   }
 
+  // If state is provided and was not handled by the stored procedure, update the guest
+  let guestData = data as unknown as DbGuest;
+  if (args.state && guestData) {
+    const { data: updatedGuest, error: updateError } = await supabase
+      .from('guests')
+      .update({ state: args.state })
+      .eq('id', guestData.id)
+      .select()
+      .single();
+    
+    if (updateError) {
+      console.error('Failed to update guest state:', updateError);
+    } else if (updatedGuest) {
+      guestData = updatedGuest;
+    }
+  }
+
   if (!data) {
     return { data: null, error: null };
   }
 
-  return { data: fromDbGuest(data as DbGuest), error: null };
+  return { data: fromDbGuest(guestData), error: null };
 };
 export const addGuest = async (guestData: Omit<Guest, "id">) => {
   const { data, error, ...rest } = await supabase.from('guests').insert([toDbGuest(guestData)]).select().single();

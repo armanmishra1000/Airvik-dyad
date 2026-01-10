@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Globe, Hash, Mail, MapPin, Phone, User } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Guest } from "@/data/types";
+import { getCountryByCode } from "@/lib/countries";
 
 interface GuestDetailsCardProps {
   guest?: Guest;
@@ -39,33 +39,39 @@ export function GuestDetailsCard({ guest }: GuestDetailsCardProps) {
           Details of the primary guest for this reservation.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5 text-sm">
-        <div className="flex items-center gap-3 text-base font-semibold">
-          <User className="h-5 w-5 text-muted-foreground" />
-          {guest.firstName} {guest.lastName}
+      <CardContent className="space-y-4 text-sm">
+        <div className="flex justify-between items-start">
+          <p className="font-semibold">Name</p>
+          <span className="font-medium text-base">{guest.firstName} {guest.lastName}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Mail className="h-4 w-4 text-muted-foreground" />
+        <div className="flex justify-between items-start">
+          <p className="font-semibold">Email</p>
           <span>{guest.email || "Not provided"}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Phone className="h-4 w-4 text-muted-foreground" />
+        <div className="flex justify-between items-start">
+          <p className="font-semibold">Phone</p>
           <span>{guest.phone || "Not provided"}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Globe className="h-4 w-4 text-muted-foreground" />
-          <span>{guest.country || "Not provided"}</span>
+        <div className="flex justify-between items-start">
+          <p className="font-semibold">Country</p>
+          <span>{getCountryByCode(guest.country || "")?.name || guest.country || "Not provided"}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <MapPin className="h-4 w-4 text-muted-foreground" />
+        <div className="flex justify-between items-start">
+          <p className="font-semibold">City</p>
           <span>{guest.city || "Not provided"}</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Hash className="h-4 w-4 text-muted-foreground" />
+        <div className="flex justify-between items-start">
+          <p className="font-semibold">State</p>
+          <span>{guest.state || "Not provided"}</span>
+        </div>
+        <div className="flex justify-between items-start">
+          <p className="font-semibold">Pincode/Postal Code</p>
           <span>{guest.pincode || "Not provided"}</span>
         </div>
-        <div className="flex items-start gap-3">
-          <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
+        <div className="flex justify-start gap-3">
+          <div className="flex flex-col gap-1 min-w-[100px]">
+            <p className="font-semibold">Address</p>
+          </div>
           <span className="leading-relaxed">{guest.address || "Not provided"}</span>
         </div>
       </CardContent>

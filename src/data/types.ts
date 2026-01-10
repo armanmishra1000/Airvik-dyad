@@ -199,6 +199,7 @@ export interface Guest {
   pincode?: string;
   city?: string;
   country?: string;
+  state?: string;
   avatarUrl?: string;
 }
 

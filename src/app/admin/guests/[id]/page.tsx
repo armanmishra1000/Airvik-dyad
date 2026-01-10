@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getCountryByCode } from "@/lib/countries";
 
 export default function GuestDetailsPage() {
   const params = useParams<{ id: string }>();
@@ -73,11 +74,15 @@ export default function GuestDetailsPage() {
             </div>
             <div>
               <p className="text-muted-foreground">Country</p>
-              <p>{guest.country || "Not provided"}</p>
+              <p>{getCountryByCode(guest.country || "")?.name || guest.country || "Not provided"}</p>
             </div>
             <div>
               <p className="text-muted-foreground">City</p>
               <p>{guest.city || "Not provided"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">State/Province/Region</p>
+              <p>{guest.state || "Not provided"}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Pincode</p>
