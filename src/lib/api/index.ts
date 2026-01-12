@@ -796,6 +796,7 @@ export const getOrCreateGuestByEmail = async (
     p_address: args.address,
     p_pincode: args.pincode,
     p_city: args.city,
+    p_state: args.state,
     p_country: args.country,
   });
 
@@ -803,28 +804,11 @@ export const getOrCreateGuestByEmail = async (
     return { data: null, error };
   }
 
-  // If state is provided and was not handled by the stored procedure, update the guest
-  let guestData = data as unknown as DbGuest;
-  if (args.state && guestData) {
-    const { data: updatedGuest, error: updateError } = await supabase
-      .from('guests')
-      .update({ state: args.state })
-      .eq('id', guestData.id)
-      .select()
-      .single();
-    
-    if (updateError) {
-      console.error('Failed to update guest state:', updateError);
-    } else if (updatedGuest) {
-      guestData = updatedGuest;
-    }
-  }
-
   if (!data) {
     return { data: null, error: null };
   }
 
-  return { data: fromDbGuest(guestData), error: null };
+  return { data: fromDbGuest(data as unknown as DbGuest), error: null };
 };
 export const addGuest = async (guestData: Omit<Guest, "id">) => {
   const { data, error, ...rest } = await supabase.from('guests').insert([toDbGuest(guestData)]).select().single();
