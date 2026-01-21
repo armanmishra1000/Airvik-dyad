@@ -35,6 +35,11 @@ import {
 
 const INTERNAL_FOLIO_SOURCE = "internal" as const;
 
+// Column selection constants to reduce egress
+const PROPERTY_SELECT_COLUMNS = 'id, name, description, address, city, state, country, phone, email, currency, timezone, tax_rate, tax_enabled, logo_url' as const;
+const GUEST_SELECT_COLUMNS = 'id, first_name, last_name, email, phone, address, pincode, city, state, country, created_at' as const;
+const ROOM_SELECT_COLUMNS = 'id, room_number, room_type_id, status, photos' as const;
+
 type DbGuest = {
   id: string;
   first_name: string | null;
@@ -733,7 +738,7 @@ export const getGuests = async () => {
       statusText: pageStatusText,
     } = await supabase
       .from('guests')
-      .select('*')
+      .select(GUEST_SELECT_COLUMNS)
       .order('created_at', { ascending: false })
       .range(fromIndex, toIndex);
 
@@ -781,7 +786,7 @@ export const getGuests = async () => {
   };
 };
 export const getGuestById = async (id: string) => {
-  const { data, error, ...rest } = await supabase.from('guests').select('*').eq('id', id).single();
+  const { data, error, ...rest } = await supabase.from('guests').select(GUEST_SELECT_COLUMNS).eq('id', id).single();
   if (error || !data) return { data: null, error, ...rest };
   return { data: fromDbGuest(data), error, ...rest };
 };
@@ -1137,7 +1142,7 @@ export const createReservationActivityLog = async (
 
 // Rooms
 export const getRooms = async () => {
-  const { data, error, ...rest } = await supabase.from('rooms').select('*');
+  const { data, error, ...rest } = await supabase.from('rooms').select(ROOM_SELECT_COLUMNS);
   if (error || !data) return { data, error, ...rest };
   return { data: data.map(fromDbRoom), error, ...rest };
 };

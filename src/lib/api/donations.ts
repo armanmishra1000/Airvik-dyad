@@ -6,6 +6,9 @@ import type {
 } from "@/data/types";
 import { createServerSupabaseClient } from "@/integrations/supabase/server";
 
+// Column selection to reduce egress
+const DONATION_SELECT_COLUMNS = 'id, donor_name, email, phone, amount_in_minor, currency, frequency, message, consent, payment_provider, payment_status, razorpay_order_id, razorpay_payment_id, razorpay_signature, upi_reference, metadata, created_at, updated_at' as const;
+
 type DbDonation = {
   id: string;
   donor_name: string;
@@ -142,7 +145,7 @@ export async function createDonationRecord(input: CreateDonationInput): Promise<
 
 export async function getDonations(filters: DonationListFilters = {}): Promise<Donation[]> {
   const supabase = createServerSupabaseClient();
-  let query = supabase.from("donations").select("*").order("created_at", { ascending: false });
+  let query = supabase.from("donations").select(DONATION_SELECT_COLUMNS).order("created_at", { ascending: false });
 
   if (filters.status) {
     query = query.eq("payment_status", filters.status);
@@ -227,7 +230,7 @@ export async function getDonationById(id: string): Promise<Donation | null> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("donations")
-    .select("*")
+    .select(DONATION_SELECT_COLUMNS)
     .eq("id", id)
     .maybeSingle();
 
@@ -242,7 +245,7 @@ export async function getDonationByOrderId(orderId: string): Promise<Donation | 
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("donations")
-    .select("*")
+    .select(DONATION_SELECT_COLUMNS)
     .eq("razorpay_order_id", orderId)
     .maybeSingle();
 
