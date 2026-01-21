@@ -7,13 +7,16 @@ import { eventBannerRowSchema, mapEventBannerRow } from "@/lib/event-banners";
 import type { EventBanner } from "@/data/types";
 import { z } from "zod";
 
+// Column selection to reduce egress
+const EVENT_SELECT_COLUMNS = 'id, title, description, image_url, is_active, starts_at, ends_at, created_at, updated_at, updated_by' as const;
+
 // --- Data Fetching ---
 
 export async function getAllEvents(): Promise<EventBanner[]> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("event_banners")
-    .select("*")
+    .select(EVENT_SELECT_COLUMNS)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -77,7 +80,7 @@ export async function getUpcomingEvents(): Promise<EventBanner[]> {
   try {
     const supabase = createServerSupabaseClient();
     const now = new Date().toISOString();
-    
+
     const { data, error } = await supabase
       .from("event_banners")
       .select("*")
@@ -118,7 +121,7 @@ const eventSchema = z.object({
 export async function createEvent(rawFormData: z.infer<typeof eventSchema>) {
   const supabase = await createSessionClient();
   const formData = eventSchema.parse(rawFormData);
-  
+
   // Prepare DB payload
   const dbPayload = {
     title: formData.title,
@@ -152,7 +155,7 @@ export async function createEvent(rawFormData: z.infer<typeof eventSchema>) {
 export async function updateEvent(id: string, rawFormData: z.infer<typeof eventSchema>) {
   const supabase = await createSessionClient();
   const formData = eventSchema.parse(rawFormData);
-  
+
   const dbPayload = {
     title: formData.title,
     description: formData.description || null,
@@ -179,7 +182,7 @@ export async function updateEvent(id: string, rawFormData: z.infer<typeof eventS
   // Let's assume the Edit Form uses a specific flow. 
   // If the user sets Active in the form, we call the toggle RPC.
   if (formData.isActive !== undefined) {
-      await toggleEventBanner(id, formData.isActive);
+    await toggleEventBanner(id, formData.isActive);
   }
 
   revalidatePath("/admin/events");
@@ -191,7 +194,7 @@ export async function deleteEvent(id: string) {
   const supabase = await createSessionClient();
   const { error } = await supabase.from("event_banners").delete().eq("id", id);
   if (error) throw error;
-  
+
   revalidatePath("/admin/events");
   revalidatePath("/events");
   revalidatePath("/");
@@ -199,7 +202,7 @@ export async function deleteEvent(id: string) {
 
 export async function toggleEventBanner(id: string, isActive: boolean) {
   const supabase = await createSessionClient();
-  
+
   const { error } = await supabase.rpc("toggle_event_banner", {
     target_event_id: id,
     new_status: isActive,

@@ -9,6 +9,9 @@ import { reviewRowSchema, mapReviewRow } from "@/lib/reviews";
 import { createServerSupabaseClient, createSessionClient } from "@/integrations/supabase/server";
 import { requirePagePermissions } from "@/lib/server/page-auth";
 
+// Column selection to reduce egress
+const REVIEW_SELECT_COLUMNS = 'id, reviewer_name, reviewer_title, content, image_url, is_published, created_at, updated_at, updated_by' as const;
+
 const reviewFormSchema = z.object({
   reviewerName: z.string().trim().min(1).max(150),
   reviewerTitle: z.string().trim().max(150).optional(),
@@ -34,7 +37,7 @@ export async function getAllReviews(): Promise<Review[]> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("testimonials")
-    .select("*")
+    .select(REVIEW_SELECT_COLUMNS)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -50,7 +53,7 @@ export async function getReviewById(id: string): Promise<Review | null> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("testimonials")
-    .select("*")
+    .select(REVIEW_SELECT_COLUMNS)
     .eq("id", id)
     .maybeSingle();
 
@@ -71,7 +74,7 @@ export async function getPublishedReviews(limit = 10): Promise<Review[]> {
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("testimonials")
-    .select("*")
+    .select(REVIEW_SELECT_COLUMNS)
     .eq("is_published", true)
     .order("created_at", { ascending: false })
     .limit(limit);
