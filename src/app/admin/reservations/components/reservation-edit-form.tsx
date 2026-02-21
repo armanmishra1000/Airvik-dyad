@@ -141,6 +141,7 @@ export function ReservationEditForm({
     roomTypes,
     guests,
     ratePlans,
+    seasonalPrices,
     property,
     validateBookingRequest,
     refreshReservations,
@@ -570,6 +571,10 @@ export function ReservationEditForm({
     [customRatesValue, roomMap, roomTypeMap]
   );
 
+  const editCheckInDate = watchedDateRange?.from
+    ? formatISO(watchedDateRange.from, { representation: "date" })
+    : undefined;
+
   const pricing = React.useMemo(() => {
     if (!selectedRoomTypes.length || nights <= 0 || !ratePlan) return null;
     return calculateMultipleRoomPricing({
@@ -578,8 +583,10 @@ export function ReservationEditForm({
       nights: nights || 1,
       taxConfig,
       nightlyOverrides,
+      seasonalPrices,
+      checkInDate: editCheckInDate,
     });
-  }, [selectedRoomTypes, ratePlan, nights, taxConfig, nightlyOverrides]);
+  }, [selectedRoomTypes, ratePlan, nights, taxConfig, nightlyOverrides, seasonalPrices, editCheckInDate]);
 
   const resolveRoomCharge = React.useCallback(
     (roomId: string, stayNights: number) => {
@@ -595,10 +602,12 @@ export function ReservationEditForm({
         rooms: 1,
         taxConfig,
         nightlyRateOverride: roomType ? customRatesValue[roomType.id] : undefined,
+        seasonalPrices,
+        checkInDate: editCheckInDate,
       });
       return pricingResult.totalCost;
     },
-    [roomMap, roomTypeMap, ratePlan, taxConfig, customRatesValue]
+    [roomMap, roomTypeMap, ratePlan, taxConfig, customRatesValue, seasonalPrices, editCheckInDate]
   );
 
   const handleRoomToggle = (roomId: string) => {

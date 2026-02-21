@@ -98,6 +98,7 @@ export default function CreateReservationPage() {
     roomTypes,
     reservations,
     ratePlans,
+    seasonalPrices,
     addReservation,
     isLoading,
     property,
@@ -311,6 +312,10 @@ export default function CreateReservationPage() {
     return entries.length ? Object.fromEntries(entries) : undefined;
   }, [customRatesValue]);
 
+  const adminCheckInDate = watchedDateRange?.from
+    ? formatISO(watchedDateRange.from, { representation: "date" })
+    : undefined;
+
   const pricing = React.useMemo(() => {
     if (!selectedRoomTypes.length || nights <= 0) return null;
     return calculateMultipleRoomPricing({
@@ -319,8 +324,10 @@ export default function CreateReservationPage() {
       nights: nights || 1,
       taxConfig,
       nightlyOverrides,
+      seasonalPrices,
+      checkInDate: adminCheckInDate,
     });
-  }, [selectedRoomTypes, defaultRatePlan, nights, taxConfig, nightlyOverrides]);
+  }, [selectedRoomTypes, defaultRatePlan, nights, taxConfig, nightlyOverrides, seasonalPrices, adminCheckInDate]);
 
   const formatCurrency = useCurrencyFormatter({ maximumFractionDigits: 0 });
   const customRateErrors = form.formState.errors.customRates as CustomRateFieldErrors | undefined;

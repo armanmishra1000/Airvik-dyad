@@ -137,6 +137,7 @@ function BookingReviewContent() {
     rooms,
     addReservation,
     ratePlans,
+    seasonalPrices,
     isLoading,
     property,
   } = useDataContext();
@@ -302,12 +303,15 @@ function BookingReviewContent() {
   );
 
   const pricing = React.useMemo(() => {
+    const checkInDate = bookingDetails.from ?? undefined;
     if (selectedRoomTypes.length === 1) {
       return calculateRoomPricing({
         roomType: selectedRoomTypes[0],
         ratePlan,
         nights,
         taxConfig,
+        seasonalPrices,
+        checkInDate,
       });
     } else {
       return calculateMultipleRoomPricing({
@@ -315,9 +319,11 @@ function BookingReviewContent() {
         ratePlan,
         nights,
         taxConfig,
+        seasonalPrices,
+        checkInDate,
       });
     }
-  }, [selectedRoomTypes, ratePlan, nights, taxConfig]);
+  }, [selectedRoomTypes, ratePlan, nights, taxConfig, seasonalPrices, bookingDetails.from]);
 
   const primaryRoomType = React.useMemo(() => {
     if (groupedRoomTypes.length > 0) {

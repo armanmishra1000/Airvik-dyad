@@ -127,6 +127,7 @@ export default function RoomDetailsPage() {
     amenities: allAmenities,
     rooms,
     ratePlans,
+    seasonalPrices,
     isLoading,
     property,
   } = useDataContext();
@@ -431,6 +432,9 @@ export default function RoomDetailsPage() {
       : 2;
 
   // Use shared pricing calculation
+  const checkInDate = dateRange?.from
+    ? format(dateRange.from, "yyyy-MM-dd")
+    : undefined;
   const pricing = React.useMemo(() => {
     return calculateRoomPricing({
       roomType,
@@ -438,8 +442,10 @@ export default function RoomDetailsPage() {
       nights: nightCount,
       rooms: roomsCount,
       taxConfig,
+      seasonalPrices,
+      checkInDate,
     });
-  }, [roomType, standardRatePlan, nightCount, roomsCount, taxConfig]);
+  }, [roomType, standardRatePlan, nightCount, roomsCount, taxConfig, seasonalPrices, checkInDate]);
 
   // Show loading skeleton while data is loading
   if (isLoading) {

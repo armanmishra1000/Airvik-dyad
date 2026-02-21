@@ -27,7 +27,7 @@ export function BookingSummary({
   onClear,
 }: BookingSummaryProps) {
   const router = useRouter();
-  const { ratePlans, property } = useDataContext();
+  const { ratePlans, seasonalPrices, property } = useDataContext();
   const formatCurrency = useCurrencyFormatter();
   const { dateRange } = searchValues;
   const requestedRooms = searchValues.roomOccupancies.length;
@@ -44,12 +44,16 @@ export function BookingSummary({
     percentage: property.tax_percentage ?? 0,
   };
   
+  const checkInDate = format(dateRange.from!, "yyyy-MM-dd");
+
   // Use shared pricing calculation utility
   const pricing = calculateMultipleRoomPricing({
     roomTypes: selection,
     ratePlan,
     nights,
     taxConfig,
+    seasonalPrices,
+    checkInDate,
   });
   
   const { totalCost, taxesAndFees, grandTotal, taxesApplied, taxRatePercent } = pricing;
@@ -64,6 +68,8 @@ export function BookingSummary({
       roomTypes: [roomType],
       ratePlan,
       nights,
+      seasonalPrices,
+      checkInDate,
     });
     return roomPricing.totalCost;
   });
