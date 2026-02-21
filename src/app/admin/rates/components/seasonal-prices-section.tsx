@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog";
 import { useDataContext } from "@/context/data-context";
 import { useAuthContext } from "@/context/auth-context";
 import { useCurrencyFormatter } from "@/hooks/use-currency";
@@ -23,6 +25,10 @@ export function SeasonalPricesSection() {
   const { seasonalPrices, roomTypes, deleteSeasonalPrice } = useDataContext();
   const { hasPermission } = useAuthContext();
   const formatCurrency = useCurrencyFormatter();
+  const [deleteTarget, setDeleteTarget] = React.useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const roomTypeNameMap = React.useMemo(() => {
     const map = new Map<string, string>();
@@ -46,7 +52,7 @@ export function SeasonalPricesSection() {
         {hasPermission("create:rate_plan") && (
           <SeasonalPriceFormDialog>
             <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
               Add Seasonal Price
             </Button>
           </SeasonalPriceFormDialog>
@@ -59,11 +65,12 @@ export function SeasonalPricesSection() {
       ) : (
         <div className="rounded-md border">
           <Table>
+            <TableCaption className="sr-only">Seasonal pricing rules by room type</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>Room Type</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Price / Night</TableHead>
+                <TableHead className="text-right">Price / Night</TableHead>
                 <TableHead>Start Date</TableHead>
                 <TableHead>End Date</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
@@ -76,7 +83,7 @@ export function SeasonalPricesSection() {
                     {roomTypeNameMap.get(sp.roomTypeId) ?? "Unknown"}
                   </TableCell>
                   <TableCell>{sp.name}</TableCell>
-                  <TableCell>{formatCurrency(sp.price)}</TableCell>
+                  <TableCell className="tabular-nums text-right">{formatCurrency(sp.price)}</TableCell>
                   <TableCell>
                     {format(new Date(sp.startDate + "T00:00:00"), "MMM d, yyyy")}
                   </TableCell>
@@ -87,8 +94,8 @@ export function SeasonalPricesSection() {
                     <div className="flex items-center gap-1">
                       {hasPermission("update:rate_plan") && (
                         <SeasonalPriceFormDialog seasonalPrice={sp}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Pencil className="h-4 w-4" />
+                          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit seasonal price">
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         </SeasonalPriceFormDialog>
                       )}
@@ -97,9 +104,10 @@ export function SeasonalPricesSection() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-destructive"
-                          onClick={() => handleDelete(sp.id, sp.name)}
+                          aria-label={`Delete seasonal price ${sp.name}`}
+                          onClick={() => setDeleteTarget({ id: sp.id, name: sp.name })}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       )}
                     </div>
@@ -110,6 +118,19 @@ export function SeasonalPricesSection() {
           </Table>
         </div>
       )}
+      <DeleteConfirmationDialog
+        isOpen={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        onConfirm={() => {
+          if (deleteTarget) {
+            handleDelete(deleteTarget.id, deleteTarget.name);
+            setDeleteTarget(null);
+          }
+        }}
+        itemName={deleteTarget?.name ? `"${deleteTarget.name}"` : undefined}
+      />
     </div>
   );
 }

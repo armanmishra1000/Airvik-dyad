@@ -72,6 +72,18 @@ export function SeasonalPriceFormDialog({
     },
   });
 
+  React.useEffect(() => {
+    if (open) {
+      form.reset({
+        roomTypeId: seasonalPrice?.roomTypeId ?? "",
+        name: seasonalPrice?.name ?? "",
+        price: seasonalPrice?.price ?? 0,
+        startDate: seasonalPrice?.startDate ?? "",
+        endDate: seasonalPrice?.endDate ?? "",
+      });
+    }
+  }, [open, seasonalPrice, form]);
+
   async function onSubmit(values: z.infer<typeof seasonalPriceSchema>) {
     try {
       if (isEditing && seasonalPrice) {

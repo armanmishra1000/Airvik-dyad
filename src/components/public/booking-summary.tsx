@@ -117,8 +117,8 @@ export function BookingSummary({
         <CardHeader>
           <CardTitle className="flex justify-between items-center text-foreground font-serif">
             <span>Your Booking</span>
-            <Button variant="ghost" size="icon" onClick={onClear}>
-              <Trash2 className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={onClear} aria-label="Clear booking">
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
             </Button>
           </CardTitle>
         </CardHeader>
@@ -137,8 +137,9 @@ export function BookingSummary({
                     size="icon"
                     className="h-6 w-6"
                     onClick={() => onRemove(index)}
+                    aria-label={`Remove ${roomType.name}`}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </div>
               </div>
@@ -163,7 +164,7 @@ export function BookingSummary({
               {totalGuests === 1 ? "" : "s"}
             </p>
             {!coversGuests && hasSelection && (
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-destructive">
                 Selected rooms do not yet cover all guests. Add more rooms so
                 the total capacity is at least {totalGuests} guest
                 {totalGuests === 1 ? "" : "s"} to continue.
@@ -173,13 +174,13 @@ export function BookingSummary({
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Subtotal</span>
-              <span className="text-gray-900">{formatCurrency(totalCost)}</span>
+              <span className="text-muted-foreground">Subtotal</span>
+              <span className="text-foreground">{formatCurrency(totalCost)}</span>
             </div>
             {taxesApplied && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Taxes &amp; fees ({formattedTaxRate}%)</span>
-                <span className="text-gray-900">{formatCurrency(taxesAndFees)}</span>
+                <span className="text-muted-foreground">Taxes &amp; fees ({formattedTaxRate}%)</span>
+                <span className="text-foreground">{formatCurrency(taxesAndFees)}</span>
               </div>
             )}
           </div>
@@ -187,7 +188,7 @@ export function BookingSummary({
           <div className="flex justify-between items-center font-bold text-lg">
             <span>Grand Total</span>
             <div className="flex items-center gap-1">
-              <IndianRupee className="h-5 w-5" />
+              <IndianRupee className="h-5 w-5" aria-hidden="true" />
               <span>{formatCurrency(grandTotal)}</span>
             </div>
           </div>
