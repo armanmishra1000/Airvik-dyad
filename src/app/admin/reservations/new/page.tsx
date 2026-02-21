@@ -43,6 +43,7 @@ import { cn } from "@/lib/utils";
 import {
   calculateMultipleRoomPricing,
   resolveRoomNightlyRate,
+  getSeasonalPrice,
   type RoomPricingOverrides,
 } from "@/lib/pricing-calculator";
 import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
@@ -381,13 +382,20 @@ export default function CreateReservationPage() {
         const roomType = roomTypeMap.get(room.roomTypeId);
         if (!roomType) return null;
         const override = customRatesValue[roomType.id];
-        if (typeof override !== "number" || override <= 0) {
-          return null;
+        if (typeof override === "number" && override > 0) {
+          return override * stayNights;
         }
-        return override * stayNights;
+        // Fall back to seasonal price when no manual override
+        if (adminCheckInDate) {
+          const seasonal = getSeasonalPrice(roomType.id, adminCheckInDate, seasonalPrices);
+          if (seasonal !== null) {
+            return seasonal * stayNights;
+          }
+        }
+        return null;
       });
     },
-    [customRatesValue, roomMap, roomTypeMap]
+    [customRatesValue, roomMap, roomTypeMap, adminCheckInDate, seasonalPrices]
   );
 
   const onSubmit = async (values: ReservationFormValues) => {

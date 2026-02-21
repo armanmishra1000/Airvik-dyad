@@ -8,6 +8,8 @@ import {
 } from "@/components/public/booking-widget";
 import { useAvailabilitySearch } from "@/hooks/use-availability-search";
 import { useDataContext } from "@/context/data-context";
+import { getSeasonalPrice } from "@/lib/pricing-calculator";
+import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { BookingSummary } from "@/components/public/booking-summary";
@@ -136,7 +138,7 @@ function RoomAvailabilityPanel({
 }
 
 export default function RoomsPage() {
-  const { roomTypes, isLoading: isInitialLoading } = useDataContext();
+  const { roomTypes, seasonalPrices, isLoading: isInitialLoading } = useDataContext();
   const visibleRoomTypes = React.useMemo(
     () => (roomTypes ?? []).filter((roomType) => roomType.isVisible !== false),
     [roomTypes]
@@ -543,11 +545,19 @@ export default function RoomsPage() {
                     </div>
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
-                    {roomsToDisplay.map((roomType) => (
+                    {roomsToDisplay.map((roomType) => {
+                      const checkInDate = searchValues?.dateRange?.from
+                        ? format(searchValues.dateRange.from, "yyyy-MM-dd")
+                        : undefined;
+                      const displayPrice = checkInDate
+                        ? getSeasonalPrice(roomType.id, checkInDate, seasonalPrices) ?? roomType.price
+                        : roomType.price;
+
+                      return (
                       <div key={roomType.id} className="space-y-2">
                         <RoomTypeCard
                           roomType={roomType}
-                          price={roomType.price}
+                          price={displayPrice}
                           // Selection is now handled via checkbox + quantity below
                           onSelect={() => {}}
                           isSelectionComplete
@@ -588,7 +598,8 @@ export default function RoomsPage() {
                             })()
                           )}
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                   {hasSearched && searchValues && !hasNoInventory && (
                     <div className="mt-8 max-w-xl space-y-1 text-sm">
