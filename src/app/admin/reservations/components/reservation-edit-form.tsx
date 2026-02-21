@@ -35,6 +35,7 @@ import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
 import {
   calculateMultipleRoomPricing,
   calculateRoomPricing,
+  getSeasonalPrice,
   resolveRoomNightlyRate,
   type RoomPricingOverrides,
 } from "@/lib/pricing-calculator";
@@ -141,6 +142,7 @@ export function ReservationEditForm({
     roomTypes,
     guests,
     ratePlans,
+    seasonalPrices,
     property,
     validateBookingRequest,
     refreshReservations,
@@ -570,6 +572,50 @@ export function ReservationEditForm({
     [customRatesValue, roomMap, roomTypeMap]
   );
 
+  const editCheckInDate = watchedDateRange?.from
+    ? formatISO(watchedDateRange.from, { representation: "date" })
+    : undefined;
+
+  // When the check-in date changes, clear auto-filled custom rates that no longer match
+  // the correct price for the new date. "Auto-filled" means the value was derived from
+  // the saved totalAmount and equals derivedCustomRates[roomTypeId]. If the user typed a
+  // different value, it won't match and will be left untouched.
+  React.useEffect(() => {
+    if (!editCheckInDate) return;
+
+    const currentRates = form.getValues("customRates") ?? {};
+    let changed = false;
+    const nextRates: Record<string, number> = { ...currentRates };
+
+    uniqueSelectedRoomTypes.forEach((roomType) => {
+      const currentOverride = currentRates[roomType.id];
+      if (typeof currentOverride !== "number" || currentOverride <= 0) return;
+
+      // Only clear if this rate matches the auto-filled derived value (not a manual override).
+      const autoFilledRate = derivedCustomRates[roomType.id];
+      if (autoFilledRate !== currentOverride) return;
+
+      // Compute the correct rate for the new check-in date.
+      const seasonalRate = getSeasonalPrice(roomType.id, editCheckInDate, seasonalPrices);
+      const defaultRate = roomType.price > 0 ? roomType.price : (ratePlan?.price ?? 0);
+      const correctRate = seasonalRate ?? defaultRate;
+
+      // If the stored rate is wrong for these dates, remove the override so the
+      // pricing engine recalculates with the seasonal or default price.
+      if (currentOverride !== correctRate) {
+        delete nextRates[roomType.id];
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      form.setValue("customRates", nextRates, { shouldDirty: true, shouldValidate: true });
+    }
+    // We intentionally depend only on editCheckInDate so this runs exactly when the date
+    // changes, not on every re-render. The other values are read inside and are stable refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editCheckInDate]);
+
   const pricing = React.useMemo(() => {
     if (!selectedRoomTypes.length || nights <= 0 || !ratePlan) return null;
     return calculateMultipleRoomPricing({
@@ -578,8 +624,10 @@ export function ReservationEditForm({
       nights: nights || 1,
       taxConfig,
       nightlyOverrides,
+      seasonalPrices,
+      checkInDate: editCheckInDate,
     });
-  }, [selectedRoomTypes, ratePlan, nights, taxConfig, nightlyOverrides]);
+  }, [selectedRoomTypes, ratePlan, nights, taxConfig, nightlyOverrides, seasonalPrices, editCheckInDate]);
 
   const resolveRoomCharge = React.useCallback(
     (roomId: string, stayNights: number) => {
@@ -595,10 +643,12 @@ export function ReservationEditForm({
         rooms: 1,
         taxConfig,
         nightlyRateOverride: roomType ? customRatesValue[roomType.id] : undefined,
+        seasonalPrices,
+        checkInDate: editCheckInDate,
       });
       return pricingResult.totalCost;
     },
-    [roomMap, roomTypeMap, ratePlan, taxConfig, customRatesValue]
+    [roomMap, roomTypeMap, ratePlan, taxConfig, customRatesValue, seasonalPrices, editCheckInDate]
   );
 
   const handleRoomToggle = (roomId: string) => {
@@ -1163,17 +1213,17 @@ export function ReservationEditForm({
             </section>
           </div>
 
-        <div className="flex w-full flex-col gap-6 lg:w-2/5 lg:min-w-0">
-          {!reservation.ratePlanId && ratePlan && (
-            <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-              <p className="font-medium">Legacy Reservation</p>
-              <p>
-                This reservation was imported without a rate plan. &ldquo;{ratePlan.name}&rdquo; has been automatically assigned for
-                editing purposes.
-              </p>
-            </section>
-          )}
-          {ratePlanUnavailable && (
+          <div className="flex w-full flex-col gap-6 lg:w-2/5 lg:min-w-0">
+            {!reservation.ratePlanId && ratePlan && (
+              <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                <p className="font-medium">Legacy Reservation</p>
+                <p>
+                  This reservation was imported without a rate plan. &ldquo;{ratePlan.name}&rdquo; has been automatically assigned for
+                  editing purposes.
+                </p>
+              </section>
+            )}
+            {ratePlanUnavailable && (
               <section className="rounded-2xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
                 No rate plan is available for this booking. Configure a rate plan to enable pricing and room assignment changes.
               </section>

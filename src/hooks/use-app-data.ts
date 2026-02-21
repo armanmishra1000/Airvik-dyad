@@ -23,6 +23,7 @@ import type {
   RoomType,
   RoomCategory,
   RatePlan,
+  SeasonalPrice,
   Property,
   User,
   Role,
@@ -281,6 +282,7 @@ export function useAppData() {
   const [roomTypes, setRoomTypes] = React.useState<RoomType[]>([]);
   const [roomCategories, setRoomCategories] = React.useState<RoomCategory[]>([]);
   const [ratePlans, setRatePlans] = React.useState<RatePlan[]>([]);
+  const [seasonalPrices, setSeasonalPrices] = React.useState<SeasonalPrice[]>([]);
   const [users, setUsers] = React.useState<User[]>([]);
   const [roles, setRoles] = React.useState<Role[]>([]);
   const [amenities, setAmenities] = React.useState<Amenity[]>([]);
@@ -396,6 +398,7 @@ export function useAppData() {
       console.log(`[AppData] Fetching global data (userId: ${userId})`);
       const [
         propertyRes, guestsRes, roomsRes, roomTypesRes, roomCategoriesRes, ratePlansRes,
+        seasonalPricesRes,
         rolesRes, amenitiesRes, stickyNotesRes, usersFuncRes, housekeepingAssignmentsRes,
         roomTypeAmenitiesRes,
         reservationsRes
@@ -406,6 +409,7 @@ export function useAppData() {
         api.getRoomTypes(),
         api.getRoomCategories(),
         api.getRatePlans(),
+        api.getSeasonalPrices(),
         userId ? api.getRoles() : Promise.resolve({ data: [] }),
         api.getAmenities(),
         userId ? api.getStickyNotes(userId) : Promise.resolve({ data: [] }),
@@ -429,6 +433,7 @@ export function useAppData() {
         setGuests([]);
         setRooms(roomsRes.data || []);
         setRatePlans(ratePlansRes.data || []);
+        setSeasonalPrices(seasonalPricesRes.data || []);
         setRoles([]);
         setAmenities(amenitiesRes.data || []);
         setStickyNotes([]);
@@ -463,6 +468,7 @@ export function useAppData() {
       setGuests(guestsRes.data || []);
       setRooms(roomsRes.data || []);
       setRatePlans(ratePlansRes.data || []);
+      setSeasonalPrices(seasonalPricesRes.data || []);
       setRoles((rolesRes.data || []).map(mapDbRole));
       setAmenities(amenitiesRes.data || []);
       setStickyNotes(stickyNotesRes.data || []);
@@ -1120,6 +1126,54 @@ export function useAppData() {
     return true;
   };
 
+  const addSeasonalPrice = async (data: Omit<SeasonalPrice, "id">) => {
+    const { data: created, error } = await api.addSeasonalPrice(data);
+    if (error || !created) throw error ?? new Error("Failed to create seasonal price");
+    setSeasonalPrices(prev => [...prev, created]);
+    const roomType = roomTypes.find(rt => rt.id === created.roomTypeId);
+    recordActivity({
+      section: "seasonal_prices",
+      entityType: "seasonal_price",
+      entityId: created.id,
+      entityLabel: created.name || `${roomType?.name ?? "Room"} seasonal price`,
+      action: "seasonal_price_created",
+      details: `Created seasonal price ${created.name || ""} for ${roomType?.name ?? "room"}`,
+    });
+    return created;
+  };
+
+  const updateSeasonalPrice = async (id: string, updatedData: Partial<Omit<SeasonalPrice, "id">>) => {
+    const { data: updated, error } = await api.updateSeasonalPrice(id, updatedData);
+    if (error || !updated) throw error ?? new Error("Failed to update seasonal price");
+    setSeasonalPrices(prev => prev.map(sp => sp.id === id ? updated : sp));
+    recordActivity({
+      section: "seasonal_prices",
+      entityType: "seasonal_price",
+      entityId: id,
+      entityLabel: updated.name || id,
+      action: "seasonal_price_updated",
+      details: `Updated seasonal price ${updated.name || ""}`,
+    });
+  };
+
+  const deleteSeasonalPrice = async (id: string) => {
+    const existing = seasonalPrices.find(sp => sp.id === id);
+    const { error } = await api.deleteSeasonalPrice(id);
+    if (error) { console.error(error); return false; }
+    setSeasonalPrices(prev => prev.filter(sp => sp.id !== id));
+    if (existing) {
+      recordActivity({
+        section: "seasonal_prices",
+        entityType: "seasonal_price",
+        entityId: existing.id,
+        entityLabel: existing.name || id,
+        action: "seasonal_price_deleted",
+        details: `Deleted seasonal price ${existing.name || ""}`,
+      });
+    }
+    return true;
+  };
+
   const addRole = async (roleData: Omit<Role, "id">) => {
     const { data, error } = await api.addRole(roleData);
     if (error) throw error;
@@ -1394,6 +1448,7 @@ export function useAppData() {
     roomTypes,
     roomCategories,
     ratePlans,
+    seasonalPrices,
     users,
     roles,
     amenities,
@@ -1425,6 +1480,9 @@ export function useAppData() {
     addRatePlan,
     updateRatePlan,
     deleteRatePlan,
+    addSeasonalPrice,
+    updateSeasonalPrice,
+    deleteSeasonalPrice,
     addRole,
     updateRole,
     deleteRole,

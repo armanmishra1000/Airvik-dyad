@@ -121,8 +121,8 @@ export default function ReservationsPage() {
           return subWithDetails;
         });
 
-        // Top level amount is the sum of subRows if it's a multi-room booking
-        if (detailedBooking.subRows && detailedBooking.subRows.length > 1) {
+        // Top level amount is always the sum of subRows
+        if (detailedBooking.subRows && detailedBooking.subRows.length > 0) {
           detailedBooking.displayAmount = detailedBooking.subRows.reduce((sum, sub) => sum + (sub.displayAmount || 0), 0);
         } else {
           detailedBooking.displayAmount = isRevenueReservation(detailedBooking.status)

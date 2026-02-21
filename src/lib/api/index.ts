@@ -8,6 +8,7 @@ import type {
   RoomType,
   RoomCategory,
   RatePlan,
+  SeasonalPrice,
   Role,
   Amenity,
   StickyNote,
@@ -1216,6 +1217,71 @@ export const getRatePlans = () => supabase.from('rate_plans').select('*');
 export const addRatePlan = (ratePlanData: Omit<RatePlan, "id">) => supabase.from('rate_plans').insert([ratePlanData]).select().single();
 export const updateRatePlan = (id: string, updatedData: Partial<RatePlan>) => supabase.from('rate_plans').update(updatedData).eq('id', id).select().single();
 export const deleteRatePlan = (id: string) => supabase.from('rate_plans').delete().eq('id', id);
+
+// Seasonal Prices
+type DbSeasonalPrice = {
+  id: string;
+  room_type_id: string;
+  name: string | null;
+  price: number;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+};
+
+const fromDbSeasonalPrice = (row: DbSeasonalPrice): SeasonalPrice => ({
+  id: row.id,
+  roomTypeId: row.room_type_id,
+  name: row.name ?? "",
+  price: Number(row.price),
+  startDate: row.start_date,
+  endDate: row.end_date,
+});
+
+const toDbSeasonalPrice = (
+  data: Omit<SeasonalPrice, "id"> | Partial<SeasonalPrice>
+): Record<string, unknown> => {
+  const payload: Record<string, unknown> = {};
+  if ("roomTypeId" in data && data.roomTypeId) payload.room_type_id = data.roomTypeId;
+  if ("name" in data && typeof data.name === "string") payload.name = data.name;
+  if ("price" in data && typeof data.price === "number") payload.price = data.price;
+  if ("startDate" in data && data.startDate) payload.start_date = data.startDate;
+  if ("endDate" in data && data.endDate) payload.end_date = data.endDate;
+  return payload;
+};
+
+export const getSeasonalPrices = async () => {
+  const { data, error, ...rest } = await supabase
+    .from('seasonal_prices')
+    .select('*')
+    .order('start_date');
+  if (error || !data) return { data: [] as SeasonalPrice[], error, ...rest };
+  return { data: (data as DbSeasonalPrice[]).map(fromDbSeasonalPrice), error, ...rest };
+};
+
+export const addSeasonalPrice = async (seasonalPriceData: Omit<SeasonalPrice, "id">) => {
+  const { data, error, ...rest } = await supabase
+    .from('seasonal_prices')
+    .insert([toDbSeasonalPrice(seasonalPriceData)])
+    .select()
+    .single();
+  if (error || !data) return { data: null, error, ...rest };
+  return { data: fromDbSeasonalPrice(data as DbSeasonalPrice), error, ...rest };
+};
+
+export const updateSeasonalPrice = async (id: string, updatedData: Partial<SeasonalPrice>) => {
+  const { data, error, ...rest } = await supabase
+    .from('seasonal_prices')
+    .update(toDbSeasonalPrice(updatedData))
+    .eq('id', id)
+    .select()
+    .single();
+  if (error || !data) return { data: null, error, ...rest };
+  return { data: fromDbSeasonalPrice(data as DbSeasonalPrice), error, ...rest };
+};
+
+export const deleteSeasonalPrice = (id: string) =>
+  supabase.from('seasonal_prices').delete().eq('id', id);
 
 // Roles
 export const getRoles = () => supabase.from('roles').select('*');
