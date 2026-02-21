@@ -4,9 +4,9 @@
   "private": true,
   "packageManager": "pnpm@10.14.0",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
+    "dev": "NODE_OPTIONS='--no-webstorage' next dev --turbopack",
+    "build": "NODE_OPTIONS='--no-webstorage' next build",
+    "start": "NODE_OPTIONS='--no-webstorage' next start",
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -94,6 +94,9 @@
       "react": "^19.2.1",
       "react-dom": "^19.2.1"
     }
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "devDependencies": {
     "@dyad-sh/nextjs-webpack-component-tagger": "^0.8.0",
