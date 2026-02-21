@@ -137,6 +137,7 @@ function BookingReviewContent() {
     rooms,
     addReservation,
     ratePlans,
+    seasonalPrices,
     isLoading,
     property,
   } = useDataContext();
@@ -302,12 +303,15 @@ function BookingReviewContent() {
   );
 
   const pricing = React.useMemo(() => {
+    const checkInDate = bookingDetails.from ?? undefined;
     if (selectedRoomTypes.length === 1) {
       return calculateRoomPricing({
         roomType: selectedRoomTypes[0],
         ratePlan,
         nights,
         taxConfig,
+        seasonalPrices,
+        checkInDate,
       });
     } else {
       return calculateMultipleRoomPricing({
@@ -315,9 +319,11 @@ function BookingReviewContent() {
         ratePlan,
         nights,
         taxConfig,
+        seasonalPrices,
+        checkInDate,
       });
     }
-  }, [selectedRoomTypes, ratePlan, nights, taxConfig]);
+  }, [selectedRoomTypes, ratePlan, nights, taxConfig, seasonalPrices, bookingDetails.from]);
 
   const primaryRoomType = React.useMemo(() => {
     if (groupedRoomTypes.length > 0) {
@@ -340,15 +346,21 @@ function BookingReviewContent() {
   }, [activeRoomTypeId, primaryRoomType, visibleRoomTypes]);
 
   const roomLineItems = groupedRoomTypes.map(({ roomType, quantity }) => {
-    const baseNightly = typeof roomType.price === "number" ? roomType.price : 0;
-    const lineBase = baseNightly * nights * quantity;
+    const roomPricing = calculateRoomPricing({
+      roomType,
+      ratePlan,
+      nights,
+      rooms: quantity,
+      seasonalPrices,
+      checkInDate: bookingDetails.from ?? undefined,
+    });
     return {
       id: roomType.id,
       name: roomType.name,
       quantity,
       nights,
-      baseNightly,
-      lineBase,
+      baseNightly: roomPricing.nightlyRate,
+      lineBase: roomPricing.totalCost,
     };
   });
   const formattedTaxRate = pricing.taxRatePercent.toLocaleString("en-IN", {
@@ -504,6 +516,19 @@ function BookingReviewContent() {
         ...slice,
       }));
 
+      // Calculate seasonal room totals so the DB stores the correct amount
+      const customRoomTotals = selectedRoomTypes.map((roomType) => {
+        const roomPricing = calculateRoomPricing({
+          roomType,
+          ratePlan,
+          nights,
+          rooms: 1,
+          seasonalPrices,
+          checkInDate: bookingDetails.from ?? undefined,
+        });
+        return roomPricing.totalCost;
+      });
+
       const newReservations = await addReservation({
         guestId: guest.id,
         roomIds: assignedRoomIds,
@@ -519,6 +544,7 @@ function BookingReviewContent() {
         source: "website",
         paymentMethod: "UPI",
         roomOccupancies: occupancySlices,
+        customRoomTotals,
       });
 
       // Redirect to the confirmation page of the first reservation in the group

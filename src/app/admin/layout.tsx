@@ -6,6 +6,8 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { cn } from "@/lib/utils";
 import { useAuthContext } from "@/context/auth-context";
+import { useDataContext } from "@/context/data-context";
+import { GeistSpinner } from "@/components/shared/vercel-spinner";
 
 export default function AdminLayout({
   children,
@@ -22,6 +24,7 @@ function AdminLayoutInner({
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const { currentUser, userRole, isLoading } = useAuthContext();
+  const { isLoading: isDataLoading } = useDataContext();
   const router = useRouter();
   const pathname = usePathname();
   const isAuthRoute = pathname === "/admin/login" || pathname === "/admin/forget-password";
@@ -77,7 +80,13 @@ function AdminLayoutInner({
         <Header />
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto bg-transparent px-4 py-4 lg:px-8 lg:py-6">
-            <div className="flex w-full min-w-0 flex-1 flex-col gap-6">{children}</div>
+            {isDataLoading ? (
+              <div className="flex flex-1 items-center justify-center h-full">
+                <GeistSpinner size={40} label="Loading data..." />
+              </div>
+            ) : (
+              <div className="flex w-full min-w-0 flex-1 flex-col gap-6">{children}</div>
+            )}
           </div>
         </main>
       </div>

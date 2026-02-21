@@ -8,6 +8,7 @@ export type PermissionResource =
   | "room_type"
   | "room_category"
   | "rate_plan"
+  | "seasonal_price"
   | "report"
   | "setting"
   | "user"
@@ -23,6 +24,7 @@ export const allPermissions: readonly Permission[] = [
   "create:room_type", "read:room_type", "update:room_type", "delete:room_type",
   "create:room_category", "read:room_category", "update:room_category", "delete:room_category",
   "create:rate_plan", "read:rate_plan", "update:rate_plan", "delete:rate_plan",
+  "create:seasonal_price", "read:seasonal_price", "update:seasonal_price", "delete:seasonal_price",
   "create:post", "read:post", "update:post", "delete:post",
   "create:feedback", "read:feedback", "update:feedback", "delete:feedback",
   "create:review", "read:review", "update:review", "delete:review",
@@ -189,6 +191,15 @@ export interface RatePlan {
   };
 }
 
+export interface SeasonalPrice {
+  id: string;
+  roomTypeId: string;
+  name: string;
+  price: number;
+  startDate: string; // YYYY-MM-DD
+  endDate: string;   // YYYY-MM-DD
+}
+
 export interface Guest {
   id: string;
   firstName: string;
@@ -238,6 +249,7 @@ export type ActivitySection =
   | "room_types"
   | "room_categories"
   | "rate_plans"
+  | "seasonal_prices"
   | "housekeeping"
   | "property"
   | "roles"
@@ -258,6 +270,7 @@ export type ActivityEntityType =
   | "room_type"
   | "room_category"
   | "rate_plan"
+  | "seasonal_price"
   | "housekeeping_assignment"
   | "property"
   | "role"

@@ -88,6 +88,7 @@ import type {
   RoomType,
   RoomCategory,
   RatePlan,
+  SeasonalPrice,
   Property,
   User,
   Role,
@@ -154,6 +155,7 @@ interface DataContextType {
   roomTypes: RoomType[];
   roomCategories: RoomCategory[];
   ratePlans: RatePlan[];
+  seasonalPrices: SeasonalPrice[];
   users: User[];
   roles: Role[];
   amenities: Amenity[];
@@ -212,6 +214,12 @@ interface DataContextType {
     updatedData: Partial<Omit<RatePlan, "id">>
   ) => void;
   deleteRatePlan: (ratePlanId: string) => Promise<boolean>;
+  addSeasonalPrice: (data: Omit<SeasonalPrice, "id">) => Promise<SeasonalPrice>;
+  updateSeasonalPrice: (
+    id: string,
+    updatedData: Partial<Omit<SeasonalPrice, "id">>
+  ) => Promise<void>;
+  deleteSeasonalPrice: (id: string) => Promise<boolean>;
   addRole: (role: Omit<Role, "id">) => void;
   updateRole: (roleId: string, updatedData: Partial<Omit<Role, "id">>) => void;
   deleteRole: (roleId: string) => Promise<boolean>;

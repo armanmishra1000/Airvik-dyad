@@ -43,6 +43,7 @@ import { cn } from "@/lib/utils";
 import {
   calculateMultipleRoomPricing,
   resolveRoomNightlyRate,
+  getSeasonalPrice,
   type RoomPricingOverrides,
 } from "@/lib/pricing-calculator";
 import { isBookableRoom, ROOM_STATUS_LABELS } from "@/lib/rooms";
@@ -98,6 +99,7 @@ export default function CreateReservationPage() {
     roomTypes,
     reservations,
     ratePlans,
+    seasonalPrices,
     addReservation,
     isLoading,
     property,
@@ -311,6 +313,10 @@ export default function CreateReservationPage() {
     return entries.length ? Object.fromEntries(entries) : undefined;
   }, [customRatesValue]);
 
+  const adminCheckInDate = watchedDateRange?.from
+    ? formatISO(watchedDateRange.from, { representation: "date" })
+    : undefined;
+
   const pricing = React.useMemo(() => {
     if (!selectedRoomTypes.length || nights <= 0) return null;
     return calculateMultipleRoomPricing({
@@ -319,8 +325,10 @@ export default function CreateReservationPage() {
       nights: nights || 1,
       taxConfig,
       nightlyOverrides,
+      seasonalPrices,
+      checkInDate: adminCheckInDate,
     });
-  }, [selectedRoomTypes, defaultRatePlan, nights, taxConfig, nightlyOverrides]);
+  }, [selectedRoomTypes, defaultRatePlan, nights, taxConfig, nightlyOverrides, seasonalPrices, adminCheckInDate]);
 
   const formatCurrency = useCurrencyFormatter({ maximumFractionDigits: 0 });
   const customRateErrors = form.formState.errors.customRates as CustomRateFieldErrors | undefined;
@@ -374,13 +382,20 @@ export default function CreateReservationPage() {
         const roomType = roomTypeMap.get(room.roomTypeId);
         if (!roomType) return null;
         const override = customRatesValue[roomType.id];
-        if (typeof override !== "number" || override <= 0) {
-          return null;
+        if (typeof override === "number" && override > 0) {
+          return override * stayNights;
         }
-        return override * stayNights;
+        // Fall back to seasonal price when no manual override
+        if (adminCheckInDate) {
+          const seasonal = getSeasonalPrice(roomType.id, adminCheckInDate, seasonalPrices);
+          if (seasonal !== null) {
+            return seasonal * stayNights;
+          }
+        }
+        return null;
       });
     },
-    [customRatesValue, roomMap, roomTypeMap]
+    [customRatesValue, roomMap, roomTypeMap, adminCheckInDate, seasonalPrices]
   );
 
   const onSubmit = async (values: ReservationFormValues) => {

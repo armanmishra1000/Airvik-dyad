@@ -1,4 +1,4 @@
-import type { RoomType, RatePlan } from "@/data/types";
+import type { RoomType, RatePlan, SeasonalPrice } from "@/data/types";
 
 export type RoomPricingOverrides = Record<string, number>;
 
@@ -30,17 +30,41 @@ function resolveTaxSummary(totalCost: number, taxConfig?: TaxConfig) {
   };
 }
 
+/**
+ * Find a seasonal price override for a room type on a specific check-in date.
+ * Returns the seasonal price per night, or null if no match.
+ */
+export function getSeasonalPrice(
+  roomTypeId: string,
+  checkInDate: string,
+  seasonalPrices: SeasonalPrice[]
+): number | null {
+  const match = seasonalPrices.find(
+    (sp) =>
+      sp.roomTypeId === roomTypeId &&
+      checkInDate >= sp.startDate &&
+      checkInDate <= sp.endDate
+  );
+  return match ? match.price : null;
+}
+
 export function resolveRoomNightlyRate({
   roomType,
   ratePlan,
   nightlyRateOverride,
+  seasonalPrice,
 }: {
   roomType?: RoomType | null;
   ratePlan?: RatePlan | null;
   nightlyRateOverride?: number;
+  seasonalPrice?: number;
 }): number {
   if (typeof nightlyRateOverride === "number" && nightlyRateOverride > 0) {
     return nightlyRateOverride;
+  }
+
+  if (typeof seasonalPrice === "number" && seasonalPrice > 0) {
+    return seasonalPrice;
   }
 
   if (roomType?.price && roomType.price > 0) {
@@ -65,6 +89,8 @@ export function calculateRoomPricing({
   rooms = 1,
   taxConfig,
   nightlyRateOverride,
+  seasonalPrices: seasonalPricesList,
+  checkInDate,
 }: {
   roomType?: RoomType | null;
   ratePlan?: RatePlan | null;
@@ -72,12 +98,15 @@ export function calculateRoomPricing({
   rooms?: number;
   taxConfig?: TaxConfig;
   nightlyRateOverride?: number;
+  seasonalPrices?: SeasonalPrice[];
+  checkInDate?: string;
 }): PricingCalculation {
-  // Determine the nightly rate with consistent priority
-  // Priority 1: Use room type price (matches single room page display)
-  // Priority 2: Use rate plan price
-  // Priority 3: Default fallback
-  const nightlyRate = resolveRoomNightlyRate({ roomType, ratePlan, nightlyRateOverride });
+  const resolvedSeasonalPrice =
+    roomType && checkInDate && seasonalPricesList?.length
+      ? getSeasonalPrice(roomType.id, checkInDate, seasonalPricesList) ?? undefined
+      : undefined;
+
+  const nightlyRate = resolveRoomNightlyRate({ roomType, ratePlan, nightlyRateOverride, seasonalPrice: resolvedSeasonalPrice });
 
   const totalCost = nightlyRate * nights * rooms;
   const { taxesAndFees, taxesApplied, taxRatePercent } = resolveTaxSummary(totalCost, taxConfig);
@@ -102,12 +131,16 @@ export function calculateMultipleRoomPricing({
   nights,
   taxConfig,
   nightlyOverrides,
+  seasonalPrices: seasonalPricesList,
+  checkInDate,
 }: {
   roomTypes: RoomType[];
   ratePlan?: RatePlan | null;
   nights: number;
   taxConfig?: TaxConfig;
   nightlyOverrides?: RoomPricingOverrides;
+  seasonalPrices?: SeasonalPrice[];
+  checkInDate?: string;
 }): PricingCalculation {
   const rooms = roomTypes.length;
   if (rooms === 0) {
@@ -123,6 +156,8 @@ export function calculateMultipleRoomPricing({
       rooms: 1,
       taxConfig: undefined,
       nightlyRateOverride: nightlyOverrides?.[roomType.id],
+      seasonalPrices: seasonalPricesList,
+      checkInDate,
     });
     return sum + roomPricing.totalCost;
   }, 0);
