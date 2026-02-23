@@ -921,10 +921,22 @@ export function ReservationEditForm({
         }
       }
       await refreshReservations();
-      toast.error("Failed to update reservation", {
-        description:
-          (error as Error)?.message ?? "We rolled back partial changes. Please try again.",
-      });
+
+      const isConflict =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code: string }).code === "23P01";
+
+      toast.error(
+        isConflict ? "Room No Longer Available" : "Failed to update reservation",
+        {
+          description: isConflict
+            ? (error as { message?: string }).message ||
+              "One or more rooms are already booked for the selected dates."
+            : (error as Error)?.message ?? "We rolled back partial changes. Please try again.",
+        },
+      );
     }
   };
 

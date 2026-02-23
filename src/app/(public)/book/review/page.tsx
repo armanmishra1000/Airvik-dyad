@@ -550,18 +550,32 @@ function BookingReviewContent() {
       // Redirect to the confirmation page of the first reservation in the group
       router.push(`/book/confirmation/${newReservations[0].id}`);
     } catch (error: unknown) {
-      const errorMessage = toErrorMessage(error);
-      
       console.error("Booking failed:", error);
-      
-      setBookingError({
-        type: "payment",
-        message: errorMessage,
-      });
-      
-      toast.error("Booking Failed", {
-        description: errorMessage,
-      });
+
+      const isConflict =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code: string }).code === "23P01";
+
+      if (isConflict) {
+        setBookingError({
+          type: "availability",
+          message: toErrorMessage(error),
+        });
+        setHasAvailabilityConflict(true);
+        toast.error("Room No Longer Available", {
+          description: "Please select different dates or return to search.",
+        });
+      } else {
+        setBookingError({
+          type: "payment",
+          message: toErrorMessage(error),
+        });
+        toast.error("Booking Failed", {
+          description: toErrorMessage(error),
+        });
+      }
       setIsProcessing(false);
     }
   }
