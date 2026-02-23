@@ -453,9 +453,21 @@ export default function CreateReservationPage() {
       toast.success("Reservation created successfully.");
       router.replace(`/admin/reservations/${result[0].id}?createdBooking=1`);
     } catch (error) {
-      toast.error("Failed to create reservation", {
-        description: (error as Error).message,
-      });
+      const isConflict =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code: string }).code === "23P01";
+
+      toast.error(
+        isConflict ? "Room No Longer Available" : "Failed to create reservation",
+        {
+          description: isConflict
+            ? (error as { message?: string }).message ||
+              "One or more rooms are already booked for the selected dates."
+            : (error as Error).message,
+        },
+      );
     }
   };
 
