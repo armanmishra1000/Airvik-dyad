@@ -6,6 +6,46 @@ type BrowserSupabaseClient = SupabaseClient;
 
 let cachedClient: BrowserSupabaseClient | undefined;
 
+const FETCH_TIMEOUT_MS = 15_000;
+const MAX_RETRIES = 2;
+
+async function fetchWithRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(input, {
+        ...init,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (response.status >= 500 && attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
+        continue;
+      }
+
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      if (attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
+        continue;
+      }
+    }
+  }
+
+  throw lastError ?? new Error("Fetch failed after retries");
+}
+
 function getBrowserSupabaseConfig(): { url: string; anonKey: string } {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -24,7 +64,9 @@ function getBrowserSupabaseConfig(): { url: string; anonKey: string } {
 function createBrowserSupabaseClient(): BrowserSupabaseClient {
   if (!cachedClient) {
     const { url, anonKey } = getBrowserSupabaseConfig();
-    cachedClient = createBrowserClient(url, anonKey);
+    cachedClient = createBrowserClient(url, anonKey, {
+      global: { fetch: fetchWithRetry },
+    });
   }
   return cachedClient;
 }

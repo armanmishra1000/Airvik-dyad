@@ -32,6 +32,17 @@ interface ProfileWithRoles {
   } | null;
 }
 
+function isNetworkError(error: { message?: string }): boolean {
+  const msg = error.message?.toLowerCase() ?? "";
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("timed out") ||
+    msg.includes("timeout") ||
+    msg.includes("network") ||
+    msg.includes("aborted")
+  );
+}
+
 export function AdminLoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -43,43 +54,57 @@ export function AdminLoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({ email: values.email, password: values.password });
-    if (error) {
-      toast.error("Login failed", { description: error.message });
-      setIsLoading(false);
-      return;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: values.email, password: values.password });
+      if (error) {
+        if (isNetworkError(error)) {
+          toast.error("Connection error", {
+            description:
+              "Unable to reach the server. Please check your firewall or antivirus settings, try a different browser, or contact support.",
+          });
+        } else {
+          toast.error("Login failed", { description: error.message });
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      let roleName: string | null = null;
+      const user = data.user ?? (await supabase.auth.getUser()).data.user;
+      const metaRole =
+        (user?.user_metadata as UserMetadataWithRole | undefined)?.role_name ??
+        null;
+      roleName = typeof metaRole === "string" ? metaRole : null;
+      if (!roleName && user?.id) {
+        try {
+          const { data: profile } = await getUserProfile(user.id);
+          const profileRoles = (profile as ProfileWithRoles | null | undefined)
+            ?.roles;
+          const profileRoleName =
+            profileRoles && typeof profileRoles.name === "string"
+              ? profileRoles.name
+              : null;
+          roleName = profileRoleName ?? roleName;
+        } catch {}
+      }
+
+      const isAdminRole = ADMIN_ROLES.some((adminRole) => adminRole === roleName);
+
+      if (!roleName || !isAdminRole) {
+        await supabase.auth.signOut();
+        toast.error("Admins only", { description: "Use the guest portal at /login." });
+        setIsLoading(false);
+        return;
+      }
+
+      toast.success("Welcome back", { description: "Redirecting to Admin..." });
+      router.push("/admin");
+    } catch {
+      toast.error("Connection error", {
+        description:
+          "The request timed out. Please check your internet connection, disable any VPN/proxy, or try a different browser.",
+      });
     }
-
-    let roleName: string | null = null;
-    const user = data.user ?? (await supabase.auth.getUser()).data.user;
-    const metaRole =
-      (user?.user_metadata as UserMetadataWithRole | undefined)?.role_name ??
-      null;
-    roleName = typeof metaRole === "string" ? metaRole : null;
-    if (!roleName && user?.id) {
-      try {
-        const { data: profile } = await getUserProfile(user.id);
-        const profileRoles = (profile as ProfileWithRoles | null | undefined)
-          ?.roles;
-        const profileRoleName =
-          profileRoles && typeof profileRoles.name === "string"
-            ? profileRoles.name
-            : null;
-        roleName = profileRoleName ?? roleName;
-      } catch {}
-    }
-
-    const isAdminRole = ADMIN_ROLES.some((adminRole) => adminRole === roleName);
-
-    if (!roleName || !isAdminRole) {
-      await supabase.auth.signOut();
-      toast.error("Admins only", { description: "Use the guest portal at /login." });
-      setIsLoading(false);
-      return;
-    }
-
-    toast.success("Welcome back", { description: "Redirecting to Admin..." });
-    router.push("/admin");
     setIsLoading(false);
   }
 

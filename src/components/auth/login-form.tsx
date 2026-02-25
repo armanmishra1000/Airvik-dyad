@@ -49,6 +49,17 @@ interface ProfileWithRoles {
   } | null;
 }
 
+function isNetworkError(error: { message?: string }): boolean {
+  const msg = error.message?.toLowerCase() ?? "";
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("timed out") ||
+    msg.includes("timeout") ||
+    msg.includes("network") ||
+    msg.includes("aborted")
+  );
+}
+
 export function LoginForm({ redirectTo = "/dashboard", forgotPasswordHref = "/forgot-password", allowedRoleNames }: LoginFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -63,16 +74,27 @@ export function LoginForm({ redirectTo = "/dashboard", forgotPasswordHref = "/fo
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-
-    if (error) {
-      toast.error("Login failed", {
-        description: error.message,
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
       });
-    } else {
+
+      if (error) {
+        if (isNetworkError(error)) {
+          toast.error("Connection error", {
+            description:
+              "Unable to reach the server. Please check your firewall or antivirus settings, try a different browser, or contact support.",
+          });
+        } else {
+          toast.error("Login failed", {
+            description: error.message,
+          });
+        }
+        setIsLoading(false);
+        return;
+      }
+
       let roleName: string | null = null;
       const user = data.user ?? (await supabase.auth.getUser()).data.user;
       const metaRole =
@@ -105,6 +127,11 @@ export function LoginForm({ redirectTo = "/dashboard", forgotPasswordHref = "/fo
         });
         router.push(redirectTo);
       }
+    } catch {
+      toast.error("Connection error", {
+        description:
+          "The request timed out. Please check your internet connection, disable any VPN/proxy, or try a different browser.",
+      });
     }
     setIsLoading(false);
   }
