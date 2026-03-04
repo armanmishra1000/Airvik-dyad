@@ -474,6 +474,7 @@ export function useAppData() {
       const flatReservations = bookingsData.flatMap(b => b.subRows || []);
 
       setTodayReservations(sortReservationsByBookingDate(flatReservations));
+      setReservations(sortReservationsByBookingDate(flatReservations));
       setReservationsTotalCount(dashboardReservationsRes.count ?? 0);
       setIsReservationsInitialLoading(false);
 
