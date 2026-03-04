@@ -389,7 +389,10 @@ function ensureSpace(doc: jsPDF, currentY: number, requiredHeight: number): numb
 /**
  * Generate and download invoice PDF (Async)
  */
-export async function generateInvoice(data: InvoiceData): Promise<void> {
+export async function generateInvoice(
+  data: InvoiceData,
+  options?: { returnBlob?: boolean },
+): Promise<Blob | void> {
   const { reservations: allReservations, guest, property, rooms, roomTypes } = data;
 
   // Filter out removed reservations
@@ -845,7 +848,10 @@ export async function generateInvoice(data: InvoiceData): Promise<void> {
     doc.putTotalPages("{total_pages_count_string}");
   }
 
-  // Save PDF
+  // Return blob or save PDF
+  if (options?.returnBlob) {
+    return doc.output("blob") as Blob;
+  }
   const fileName = `Invoice-${invoiceNumber}.pdf`;
   doc.save(fileName);
 }

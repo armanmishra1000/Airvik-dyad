@@ -12,6 +12,7 @@ import type { ReservationWithDetails } from "@/app/admin/reservations/components
 import type { ReservationStatus } from "@/data/types";
 import { CancelReservationDialog } from "@/app/admin/reservations/components/cancel-reservation-dialog";
 import { InvoiceDownloadButton } from "@/components/shared/invoice-download-button";
+import { SendInvoiceWhatsAppButton } from "@/components/shared/send-invoice-whatsapp-button";
 import * as React from "react";
 
 interface ReservationHeaderProps {
@@ -106,6 +107,15 @@ export function ReservationHeader({ reservation, bookingStatus }: ReservationHea
             rooms={rooms}
             roomTypes={roomTypes}
             invoiceType="invoice"
+            variant="outline"
+            size="sm"
+          />
+          <SendInvoiceWhatsAppButton
+            reservations={bookingReservations}
+            guest={guest}
+            property={property}
+            rooms={rooms}
+            roomTypes={roomTypes}
             variant="outline"
             size="sm"
           />
