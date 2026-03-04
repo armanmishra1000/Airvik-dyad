@@ -401,7 +401,7 @@ export function useAppData() {
         seasonalPricesRes,
         rolesRes, amenitiesRes, stickyNotesRes, usersFuncRes, housekeepingAssignmentsRes,
         roomTypeAmenitiesRes,
-        reservationsRes
+        dashboardReservationsRes
       ] = await Promise.all([
         api.getProperty(),
         userId ? api.getGuests() : Promise.resolve({ data: [] }),
@@ -416,7 +416,9 @@ export function useAppData() {
         userId ? api.getUsers() : Promise.resolve({ data: [] }),
         userId ? api.getHousekeepingAssignments() : Promise.resolve({ data: [] }),
         api.getRoomTypeAmenities(),
-        userId ? api.getReservations() : Promise.resolve({ data: [] })
+        userId
+          ? fetchReservationsFromApi({ limit: 1000, offset: 0, includeCount: true })
+          : Promise.resolve({ data: [], nextOffset: null, count: 0 } as ReservationsApiPayload)
       ]);
 
       const roomTypeAmenities = (roomTypeAmenitiesRes.data || []) as RoomTypeAmenityRecord[];
@@ -457,13 +459,6 @@ export function useAppData() {
         return;
       }
 
-      console.log("[AppData] Loading dashboard reservations");
-      // Fetch only "today's" reservations for dashboard overview
-      const reservationsResponse = await fetchReservationsFromApi({
-        limit: 1000, // Reasonable limit for today's data
-        offset: 0,
-        includeCount: true,
-      });
       if (propertyRes.data) setProperty({ ...defaultProperty, ...propertyRes.data });
       setGuests(guestsRes.data || []);
       setRooms(roomsRes.data || []);
@@ -475,17 +470,11 @@ export function useAppData() {
       setUsers(usersFuncRes.data || []);
       setHousekeepingAssignments(housekeepingAssignmentsRes.data || []);
 
-      if (Array.isArray(reservationsRes.data)) {
-        setReservations(sortReservationsByBookingDate(reservationsRes.data));
-      }
-
-      const bookingsData = reservationsResponse.data ?? [];
+      const bookingsData = dashboardReservationsRes.data ?? [];
       const flatReservations = bookingsData.flatMap(b => b.subRows || []);
 
       setTodayReservations(sortReservationsByBookingDate(flatReservations));
-
-      // Reservations for the calendar are loaded separately via api.getReservations above.
-      setReservationsTotalCount(reservationsResponse.count ?? 0);
+      setReservationsTotalCount(dashboardReservationsRes.count ?? 0);
       setIsReservationsInitialLoading(false);
 
       setRoomTypes(roomTypesData);
@@ -510,6 +499,23 @@ export function useAppData() {
   React.useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Lazy-load full reservations in the background after initial render
+  React.useEffect(() => {
+    if (isLoading || isSessionLoading || !userId) return;
+
+    let cancelled = false;
+    api.getReservations().then((res) => {
+      if (cancelled) return;
+      if (Array.isArray(res.data)) {
+        setReservations(sortReservationsByBookingDate(res.data));
+      }
+    }).catch((err) => {
+      console.error("[AppData] Failed to lazy-load reservations:", err);
+    });
+
+    return () => { cancelled = true; };
+  }, [isLoading, isSessionLoading, userId]);
 
   const refreshReservations = React.useCallback(() => fetchData({ keepExisting: true }), [fetchData]);
 
