@@ -58,7 +58,7 @@ export function SendInvoiceWhatsAppButton({
 
       const formData = new FormData();
       formData.append("phone", guest.phone);
-      formData.append("file", blob, "invoice.pdf");
+      formData.append("file", blob, "Donation-Receipt.pdf");
 
       const response = await authorizedFetch("/api/admin/send-invoice-whatsapp", {
         method: "POST",
