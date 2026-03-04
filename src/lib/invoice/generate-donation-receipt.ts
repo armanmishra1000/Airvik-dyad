@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { format } from "date-fns";
-import type { Guest, Property, Reservation, Room, RoomType, FolioItem } from "@/data/types";
+import type { Guest, Property, Reservation, Room, RoomType } from "@/data/types";
 
 // Types
 export interface DonationReceiptData {
@@ -80,7 +80,10 @@ const formatCurrency = (amount: number) => {
 /**
  * Generate bespoke Donation Receipt PDF
  */
-export async function generateDonationReceipt(data: DonationReceiptData): Promise<void> {
+export async function generateDonationReceipt(
+    data: DonationReceiptData,
+    options?: { returnBlob?: boolean },
+): Promise<Blob | void> {
     const { reservations, guest, property } = data;
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -234,6 +237,9 @@ export async function generateDonationReceipt(data: DonationReceiptData): Promis
     });
 
     // Save/Download
+    if (options?.returnBlob) {
+        return doc.output("blob") as Blob;
+    }
     const filename = `Donation_Receipt_${receiptNo}.pdf`;
     doc.save(filename);
 }

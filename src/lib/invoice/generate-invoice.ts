@@ -655,14 +655,10 @@ export async function generateInvoice(
 
   nextX += drawGridItem("Guests:", guestText, nextX, row2Y) + 20;
 
-  // Bank field with underline
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(COLORS.TEXT_DARK);
-  doc.text("Bank:", nextX, row2Y);
-  const bankLabelWidth = doc.getTextWidth("Bank: ");
-  doc.setDrawColor(COLORS.TEXT_LIGHT);
-  doc.setLineWidth(0.1);
-  doc.line(nextX + bankLabelWidth, row2Y + 1, margin + cardWidth - 5, row2Y + 1);
+  // Transaction ID field
+  const firstPaymentFolio = reservations.flatMap(r => r.folio).find(f => f.amount < 0);
+  const transactionRef = firstPaymentFolio?.externalReference || "N/A";
+  drawGridItem("Transaction ID:", transactionRef, nextX, row2Y);
 
   yPos += cardHeight + 4; // Gap before table
 

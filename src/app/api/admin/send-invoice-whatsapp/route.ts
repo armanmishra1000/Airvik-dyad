@@ -14,7 +14,7 @@ function normalizePhone(phone: string): string {
 
 export async function POST(request: Request) {
   try {
-    await requireFeature(request, "reservations");
+    await requireFeature(request, ["reservations", "donations"]);
   } catch (error) {
     if (error instanceof HttpError) {
       return NextResponse.json({ message: error.message }, { status: error.status });
