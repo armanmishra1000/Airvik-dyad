@@ -21,6 +21,7 @@ import {
   HeartHandshake,
   History,
   Megaphone,
+  Receipt,
 } from "lucide-react";
 import * as React from "react";
 
@@ -150,6 +151,12 @@ const navItems: SidebarNavItem[] = [
     href: "/admin/donations",
     icon: HeartHandshake,
     label: "Donations",
+    feature: "donations",
+  },
+  {
+    href: "/admin/manual-receipt",
+    icon: Receipt,
+    label: "Manual Receipt",
     feature: "donations",
   },
 ] satisfies SidebarNavItem[];
