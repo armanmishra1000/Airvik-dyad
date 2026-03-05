@@ -87,6 +87,7 @@ export default function ManualReceiptPage() {
     const bookingId = crypto.randomUUID();
     const roomTypeId = crypto.randomUUID();
     const roomId = crypto.randomUUID();
+    const amount = Number(values.amount);
 
     const guest: Guest = {
       id: crypto.randomUUID(),
@@ -103,7 +104,7 @@ export default function ManualReceiptPage() {
       description: "",
       maxOccupancy: 1,
       bedTypes: [],
-      price: values.amount,
+      price: amount,
       amenities: [],
       photos: [],
       isVisible: false,
@@ -130,13 +131,13 @@ export default function ManualReceiptPage() {
         {
           id: crypto.randomUUID(),
           description: `Donation – ${values.paymentMethod}`,
-          amount: -values.amount,
+          amount: -amount,
           timestamp: now,
           paymentMethod: values.paymentMethod,
           externalReference: values.transactionId || null,
         },
       ],
-      totalAmount: values.amount,
+      totalAmount: amount,
       bookingDate: now,
       source: "reception",
       paymentMethod: values.paymentMethod as ReservationPaymentMethod,
