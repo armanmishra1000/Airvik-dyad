@@ -580,3 +580,22 @@ export interface FeedbackFilters {
   endDate?: string;
   roomOrFacility?: string;
 }
+
+export interface ManualReceipt {
+  id: string;
+  slipNo: number;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string | null;
+  address: string | null;
+  amount: number;
+  paymentMethod: string;
+  transactionId: string | null;
+  note: string | null;
+  status: string;
+  byHand: string | null;
+  creator: string | null;
+  imgLink: string | null;
+  createdAt: string;
+}
