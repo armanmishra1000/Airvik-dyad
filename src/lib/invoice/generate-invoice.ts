@@ -362,7 +362,7 @@ function drawFinalBranding(doc: jsPDF, yPos: number): number {
   doc.setFontSize(10);
   doc.setTextColor(COLORS.PRIMARY);
   doc.setFont("helvetica", "bold"); // Made Bold for better branding
-  doc.text("Thank you for choosing Sahajanand Wellness!", pageWidth / 2, currentY, { align: "center" });
+  doc.text("Thank you for choosing Sahajanand Wellness Trust!", pageWidth / 2, currentY, { align: "center" });
 
   doc.setFontSize(9);
   doc.setTextColor(COLORS.TEXT_LIGHT);
