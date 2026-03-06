@@ -14,7 +14,8 @@ export type PermissionResource =
   | "user"
   | "post"
   | "feedback"
-  | "review";
+  | "review"
+  | "donation";
 export type Permission = `${PermissionAction}:${PermissionResource}`;
 
 export const allPermissions: readonly Permission[] = [
@@ -28,6 +29,7 @@ export const allPermissions: readonly Permission[] = [
   "create:post", "read:post", "update:post", "delete:post",
   "create:feedback", "read:feedback", "update:feedback", "delete:feedback",
   "create:review", "read:review", "update:review", "delete:review",
+  "create:donation", "read:donation", "update:donation", "delete:donation",
   "read:report",
   "update:setting",
   "create:user", "read:user", "update:user", "delete:user",

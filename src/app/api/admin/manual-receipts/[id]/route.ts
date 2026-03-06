@@ -78,7 +78,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireFeature(request, "donations");
+    await requireFeature(request, "donationsManage");
     const body = await request.json();
     const payload = UpdateSchema.parse(body);
     const { id } = await params;
@@ -152,7 +152,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireFeature(request, "donations");
+    await requireFeature(request, "donationsManage");
     const { id } = await params;
 
     if (!id) {

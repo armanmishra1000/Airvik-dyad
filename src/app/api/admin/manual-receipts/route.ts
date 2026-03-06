@@ -111,7 +111,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await requireFeature(request, "donations");
+    await requireFeature(request, "donationsCreate");
 
     const body = await request.json();
     const parsed = CreateSchema.parse(body);
