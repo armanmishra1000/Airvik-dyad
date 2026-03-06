@@ -9,7 +9,7 @@ const activities = [
   {
     title: "Gaushala",
     description: "A sanctuary for cows, embodying selfless service.",
-    imageUrl: "/about-goshala-2.jpg",
+    imageUrl: "/Gaushala.jpeg",
     href: "/about-us",
   },
   {
@@ -124,7 +124,7 @@ export function WelcomeSection() {
                     Welcome Home
                   </span>
                 </div>
-                
+
                 <h2 className="2xl:text-5xl md:text-4xl text-3xl font-bold text-foreground">
                   <span className="block sm:inline lg:block">A Sacred Space for</span>
                   <span className="sm:inline lg:block"> the Welfare of All</span>
@@ -133,10 +133,10 @@ export function WelcomeSection() {
                 <p className="text-base text-muted-foreground md:text-lg">
                   Sahajanand Wellness is a registered religious trust on the banks of the Ganges at Muni-Ki-Reti, Rishikesh. It offers simple dharmshala stays, yoga, daily Ganga Aarti and community services (langar, Vedic classes, gaushala) for pilgrims and spiritual seekers.
                 </p>
-                
+
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 variants={itemVariants}
                 className="sm:flex flex-wrap justify-center lg:justify-start gap-3 mt-4 hidden"
               >
