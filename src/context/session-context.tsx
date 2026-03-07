@@ -37,16 +37,34 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
     init();
 
+    const nullDebounceRef: { current: ReturnType<typeof setTimeout> | null } = { current: null };
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      const metaRole =
-        (s?.user?.user_metadata as UserMetadataWithRole | undefined)
-          ?.role_name ?? null;
-      setRoleName(typeof metaRole === "string" ? metaRole : null);
+      if (nullDebounceRef.current) {
+        clearTimeout(nullDebounceRef.current);
+        nullDebounceRef.current = null;
+      }
+
+      if (s) {
+        setSession(s);
+        const metaRole =
+          (s.user?.user_metadata as UserMetadataWithRole | undefined)
+            ?.role_name ?? null;
+        setRoleName(typeof metaRole === "string" ? metaRole : null);
+      } else {
+        nullDebounceRef.current = setTimeout(() => {
+          nullDebounceRef.current = null;
+          setSession(null);
+          setRoleName(null);
+        }, 300);
+      }
     });
 
     return () => {
       isMounted = false;
+      if (nullDebounceRef.current) {
+        clearTimeout(nullDebounceRef.current);
+      }
       sub.subscription.unsubscribe();
     };
   }, []);
