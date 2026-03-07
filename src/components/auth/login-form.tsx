@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { signOutUser } from "@/context/session-context";
 import { getUserProfile } from "@/lib/api";
 
 const formSchema = z.object({
@@ -117,7 +118,7 @@ export function LoginForm({ redirectTo = "/dashboard", forgotPasswordHref = "/fo
       }
 
       if (allowedRoleNames && roleName && !allowedRoleNames.includes(roleName)) {
-        await supabase.auth.signOut();
+        await signOutUser();
         toast.error("You cannot sign in here.", {
           description: "Use the appropriate portal for your role.",
         });

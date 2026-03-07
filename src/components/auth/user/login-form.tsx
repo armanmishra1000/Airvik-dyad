@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { signOutUser } from "@/context/session-context";
 import { getUserProfile } from "@/lib/api";
 
 const formSchema = z.object({
@@ -86,7 +87,7 @@ export function UserLoginForm() {
       }
 
       if (roleName && roleName !== "Guest") {
-        await supabase.auth.signOut();
+        await signOutUser();
         toast.error("Guests only", { description: "Use the admin portal at /admin/login." });
         setIsLoading(false);
         return;

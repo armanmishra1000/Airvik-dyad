@@ -21,7 +21,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useDataContext } from "@/context/data-context";
 import { useAuthContext } from "@/context/auth-context";
 import { ThemeToggle } from "../theme-toggle";
-import { supabase } from "@/integrations/supabase/client";
+import { signOutUser } from "@/context/session-context";
 import type { Permission } from "@/data/types";
 import { getPermissionsForFeature, type PermissionFeature } from "@/lib/permissions/map";
 import Image from "next/image";
@@ -61,7 +61,7 @@ export function Header() {
   const userRole = roles.find(r => r.id === currentUser?.roleId);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await signOutUser();
     router.push("/admin/login");
   };
 

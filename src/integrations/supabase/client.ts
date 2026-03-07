@@ -7,7 +7,7 @@ type BrowserSupabaseClient = SupabaseClient;
 let cachedClient: BrowserSupabaseClient | undefined;
 
 const FETCH_TIMEOUT_MS = 15_000;
-const MAX_RETRIES = 2;
+const MAX_RETRIES = 3;
 
 async function fetchWithRetry(
   input: RequestInfo | URL,
@@ -25,6 +25,15 @@ async function fetchWithRetry(
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
+
+      if (response.status === 429 && attempt < MAX_RETRIES) {
+        const retryAfter = response.headers.get("Retry-After");
+        const delay = retryAfter
+          ? parseInt(retryAfter, 10) * 1000
+          : Math.min(2000 * 2 ** attempt, 15_000);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
 
       if (response.status >= 500 && attempt < MAX_RETRIES) {
         await new Promise((r) => setTimeout(r, 1000 * 2 ** attempt));
