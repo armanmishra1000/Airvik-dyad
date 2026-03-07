@@ -8,12 +8,10 @@ export async function getValidSession() {
     return data.session;
   }
 
-  const { data: refreshed, error: refreshError } =
-    await supabase.auth.refreshSession();
-  if (refreshError || !refreshed.session) {
-    return null;
-  }
-  return refreshed.session;
+  // getSession() already handles token refresh internally.
+  // Explicit refreshSession() fallback doubled refresh requests,
+  // accelerating rate limit exhaustion on shared IPs (CGNAT).
+  return null;
 }
 
 export type AuthorizedFetchOptions = RequestInit & { retryOnUnauthorized?: boolean };
