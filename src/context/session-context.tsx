@@ -4,6 +4,13 @@ import * as React from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+let pendingIntentionalSignOut = false;
+
+export async function signOutUser(): Promise<void> {
+  pendingIntentionalSignOut = true;
+  await supabase.auth.signOut();
+}
+
 interface UserMetadataWithRole {
   role_name?: string;
 }
@@ -37,14 +44,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
     init();
 
-    const nullDebounceRef: { current: ReturnType<typeof setTimeout> | null } = { current: null };
-
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      if (nullDebounceRef.current) {
-        clearTimeout(nullDebounceRef.current);
-        nullDebounceRef.current = null;
-      }
-
       if (s) {
         setSession(s);
         const metaRole =
@@ -52,19 +52,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             ?.role_name ?? null;
         setRoleName(typeof metaRole === "string" ? metaRole : null);
       } else {
-        nullDebounceRef.current = setTimeout(() => {
-          nullDebounceRef.current = null;
+        if (pendingIntentionalSignOut) {
+          pendingIntentionalSignOut = false;
           setSession(null);
           setRoleName(null);
-        }, 300);
+        }
+        // If not intentional (likely 429 on token refresh), keep existing session.
       }
     });
 
     return () => {
       isMounted = false;
-      if (nullDebounceRef.current) {
-        clearTimeout(nullDebounceRef.current);
-      }
       sub.subscription.unsubscribe();
     };
   }, []);

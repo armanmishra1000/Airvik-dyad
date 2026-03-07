@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ShieldCheck, CalendarCheck, LineChart } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { signOutUser } from "@/context/session-context";
 import { getUserProfile } from "@/lib/api";
 import { ADMIN_ROLES } from "@/constants/roles";
 
@@ -91,7 +92,7 @@ export function AdminLoginForm() {
       const isAdminRole = ADMIN_ROLES.some((adminRole) => adminRole === roleName);
 
       if (!roleName || !isAdminRole) {
-        await supabase.auth.signOut();
+        await signOutUser();
         toast.error("Admins only", { description: "Use the guest portal at /login." });
         setIsLoading(false);
         return;
