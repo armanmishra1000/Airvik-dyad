@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import type { User as AuthUser } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
 import { useSessionContext } from "@/context/session-context";
 import type { User, Role, Permission } from "@/data/types";
 import { getPermissionsForFeature, type PermissionFeature } from "@/lib/permissions/map";
@@ -62,8 +61,10 @@ export function useAuth() {
 
       lastLoadedUserIdRef.current = user.id;
     } catch (error) {
-      console.error("Failed to fetch user profile, signing out.", error);
-      await supabase.auth.signOut();
+      console.error("Failed to fetch user profile:", error);
+      // Don't call signOut() — transient errors (429-caused expired token, network)
+      // shouldn't trigger logout. If session is genuinely invalid, Supabase's
+      // auto-refresh will fire SIGNED_OUT via onAuthStateChange automatically.
     } finally {
       if (fetchInFlightUserIdRef.current === user.id) {
         fetchInFlightUserIdRef.current = null;
@@ -87,6 +88,12 @@ export function useAuth() {
     if (isSessionLoading) return;
 
     if (session?.user) {
+      // Skip profile fetch if access token is expired (e.g., 429 returned stale session).
+      // Supabase auto-refresh will deliver a fresh session via onAuthStateChange.
+      const now = Math.floor(Date.now() / 1000);
+      if (session.expires_at && session.expires_at < now) {
+        return;
+      }
       fetchUserProfile(session.user);
     } else {
       clearAuthData();
