@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { supabase } from "@/integrations/supabase/client";
 import type { User as AuthUser } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { useSessionContext } from "@/context/session-context";
 import type { User, Role, Permission } from "@/data/types";
 import { getPermissionsForFeature, type PermissionFeature } from "@/lib/permissions/map";
 
@@ -80,25 +81,17 @@ export function useAuth() {
     setIsLoading(false);
   };
 
+  const { session, isLoading: isSessionLoading } = useSessionContext();
+
   React.useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        fetchUserProfile(session.user);
-      } else {
-        setIsLoading(false);
-      }
-    });
+    if (isSessionLoading) return;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        fetchUserProfile(session.user);
-      } else if (event === 'SIGNED_OUT') {
-        clearAuthData();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [fetchUserProfile]);
+    if (session?.user) {
+      fetchUserProfile(session.user);
+    } else {
+      clearAuthData();
+    }
+  }, [session, isSessionLoading, fetchUserProfile]);
 
   const hasPermission = (permission: Permission): boolean => {
     if (!userRole) return false;
