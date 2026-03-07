@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, lastRefreshRateLimited } from "@/integrations/supabase/client";
 
 let pendingIntentionalSignOut = false;
 
@@ -30,17 +30,33 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = React.useState(true);
   const [roleName, setRoleName] = React.useState<string | null>(null);
 
+  const initRetryCount = React.useRef(0);
+  const MAX_INIT_RETRIES = 3;
+
   React.useEffect(() => {
     let isMounted = true;
     async function init() {
       const { data } = await supabase.auth.getSession();
       if (!isMounted) return;
-      setSession(data.session);
-      const metaRole =
-        (data.session?.user?.user_metadata as UserMetadataWithRole | undefined)
-          ?.role_name ?? null;
-      setRoleName(typeof metaRole === "string" ? metaRole : null);
-      setIsLoading(false);
+
+      if (data.session) {
+        initRetryCount.current = 0;
+        setSession(data.session);
+        const metaRole =
+          (data.session?.user?.user_metadata as UserMetadataWithRole | undefined)
+            ?.role_name ?? null;
+        setRoleName(typeof metaRole === "string" ? metaRole : null);
+        setIsLoading(false);
+      } else if (lastRefreshRateLimited && initRetryCount.current < MAX_INIT_RETRIES) {
+        // Token refresh hit 429 — don't set null, keep loading, retry after delay
+        initRetryCount.current += 1;
+        setTimeout(() => { if (isMounted) init(); }, 30_000);
+      } else {
+        // Genuinely not logged in (or retries exhausted)
+        setSession(null);
+        setRoleName(null);
+        setIsLoading(false);
+      }
     }
     init();
 

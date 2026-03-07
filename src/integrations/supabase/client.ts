@@ -9,7 +9,61 @@ let cachedClient: BrowserSupabaseClient | undefined;
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_RETRIES = 3;
 
+// --- Token refresh dedup + cooldown ---
+let inflightRefresh: Promise<Response> | null = null;
+let refreshCooldownUntil = 0;
+
+/** Exported so session-context can check if a 429 caused the null session */
+export let lastRefreshRateLimited = false;
+
+function isTokenRefresh(input: RequestInfo | URL, init?: RequestInit): boolean {
+  const url =
+    typeof input === "string"
+      ? input
+      : input instanceof URL
+        ? input.href
+        : input.url;
+  return url.includes("/auth/v1/token") && init?.method?.toUpperCase() === "POST";
+}
+
 async function fetchWithRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
+  // --- Dedup: only one token refresh in-flight at a time ---
+  if (isTokenRefresh(input, init)) {
+    // Cooldown: return synthetic 429 without hitting network
+    if (Date.now() < refreshCooldownUntil) {
+      return new Response(JSON.stringify({ message: "rate limited (local cooldown)" }), {
+        status: 429,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (inflightRefresh) {
+      // Another refresh is already in-flight; share its result
+      return (await inflightRefresh).clone();
+    }
+
+    inflightRefresh = doFetch(input, init);
+    try {
+      const res = await inflightRefresh;
+      if (res.status === 429) {
+        lastRefreshRateLimited = true;
+        refreshCooldownUntil = Date.now() + 30_000;
+      } else {
+        lastRefreshRateLimited = false;
+      }
+      return res.clone();
+    } finally {
+      inflightRefresh = null;
+    }
+  }
+
+  return doFetch(input, init);
+}
+
+async function doFetch(
   input: RequestInfo | URL,
   init?: RequestInit
 ): Promise<Response> {
