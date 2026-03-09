@@ -715,8 +715,7 @@ export default function BookingConfirmationPage() {
                   <div className="flex items-start gap-3 text-muted-foreground">
                     <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0" />
                     <span>
-                      Street No.12, Shisham Jhadi, Muni Ki Reti, Near Ganga
-                      Kinare, Rishikesh U.K Pin Code: 249201
+                      Gali No.13, Shisham Jhadi, Muni Ki Reti, Near Ganga Kinare, Rishikesh, Uttarakhand, Pin Code: 249201
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-muted-foreground">
