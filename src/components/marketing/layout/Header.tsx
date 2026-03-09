@@ -4,16 +4,12 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, ChevronDown } from "lucide-react";
-import type { IconType } from "react-icons";
+import { Menu, ChevronDown, MapPin } from "lucide-react";
 import {
-  FaFacebook,
-  FaInstagram,
-  FaLinkedin,
   FaRegCalendarCheck,
   FaWhatsapp,
-  FaXTwitter,
 } from "react-icons/fa6";
+import type { Property } from "@/data/types";
 import {
   Sheet,
   SheetClose,
@@ -33,15 +29,14 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { cn } from "@/lib/utils";
 import {
-  MdDialpad,
-  MdEmojiEvents,
-  MdEvent,
-  MdOutlineEvent,
-} from "react-icons/md";
-import { TbCalendarEvent } from "react-icons/tb";
-
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { FaRegCalendarAlt } from "react-icons/fa";
 import { FiPhone } from "react-icons/fi";
 
@@ -64,42 +59,23 @@ const navLinks = [
   // { href: "/feedback", label: "Feedback" },
 ];
 
-type SocialLink = {
-  href: string;
-  name: string;
-  icon: IconType;
-};
-
-const socialLinks: SocialLink[] = [
-  {
-    href: "https://instagram.com/rishikeshdhamofficial",
-    name: "Instagram",
-    icon: FaInstagram,
-  },
-  {
-    href: "https://facebook.com/Rishikeshdhamofficial",
-    name: "Facebook",
-    icon: FaFacebook,
-  },
-  {
-    href: "https://linkedin.com/company/rishikeshdham",
-    name: "LinkedIn",
-    icon: FaLinkedin,
-  },
-  {
-    href: "https://x.com/Rishikeshdham",
-    name: "X (Twitter)",
-    icon: FaXTwitter,
-  },
-];
-
 const whatsappNumber = "918511151708";
 const whatsappMessage = encodeURIComponent(
   "Hi! I'd like to know more about staying at Swaminarayan Ashram."
 );
 const whatsappContactUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
-export function Header() {
+type HeaderProps = {
+  propertyLocation: Pick<Property, "address" | "google_maps_url">;
+};
+
+export function Header({ propertyLocation }: HeaderProps) {
+  const [isLocationDialogOpen, setIsLocationDialogOpen] = React.useState(false);
+  const locationSrc = propertyLocation.google_maps_url?.trim() ?? "";
+  const addressText =
+    propertyLocation.address?.trim() || "View the property location on the map.";
+  const hasLocationMap = locationSrc.length > 0;
+
   return (
     <>
       <header className="border-b border-border bg-white sticky top-0 z-40 w-full">
@@ -110,16 +86,27 @@ export function Header() {
               Swaminarayan Ashram (Estd: 2002)
             </p>
             <div className="flex items-center space-x-4 ">
-
               {/* contact number add */}
-              <a 
-                href="tel:+918511151708" 
+              <a
+                href="tel:+918511151708"
                 className="text-sm font-medium text-white/90 flex items-center gap-1.5 hover:text-white transition-colors"
               >
                 <FiPhone className="size-5" aria-hidden="true" />
                 +91 85111 51708
               </a>
-              
+
+              {hasLocationMap ? (
+                <button
+                  type="button"
+                  aria-label="Open property location map"
+                  onClick={() => setIsLocationDialogOpen(true)}
+                  className="text-sm font-medium text-white/90 flex items-center gap-1.5 hover:text-white transition-colors"
+                >
+                  <MapPin className="size-5" aria-hidden="true" />
+                  Location
+                </button>
+              ) : null}
+
               {/* event button */}
               <Button
                 asChild
@@ -267,6 +254,19 @@ export function Header() {
                   )}
                 </nav>
                 <div className="mt-8 flex w-full flex-col gap-3">
+                  {hasLocationMap ? (
+                    <SheetClose asChild>
+                      <button
+                        type="button"
+                        aria-label="Open property location map"
+                        onClick={() => setIsLocationDialogOpen(true)}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none"
+                      >
+                        <MapPin className="h-4 w-4" aria-hidden="true" />
+                        View Location
+                      </button>
+                    </SheetClose>
+                  ) : null}
                   <SheetClose asChild>
                     <Button
                       asChild
@@ -299,6 +299,28 @@ export function Header() {
           </div>
         </div>
       </header>
+      {hasLocationMap ? (
+        <Dialog open={isLocationDialogOpen} onOpenChange={setIsLocationDialogOpen}>
+          <DialogContent className="max-w-[95vw] overflow-hidden p-0 md:max-w-4xl">
+            <DialogHeader className="border-b border-border/40 px-6 py-5">
+              <DialogTitle>Property Location</DialogTitle>
+              <DialogDescription>{addressText}</DialogDescription>
+            </DialogHeader>
+            <div className="aspect-video w-full">
+              <iframe
+                src={locationSrc}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen={false}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Property location map"
+              ></iframe>
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
   );
 }
